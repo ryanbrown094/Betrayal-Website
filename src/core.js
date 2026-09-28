@@ -1127,11 +1127,8 @@ function startNight() {
   if (state && !isFinal(state) && state.players.length > 5 && aliveOf(state).length <= 5) { toast("Five left: no night. The final round is next — its Reckoning takes five to four."); return nextRound(true) }
   act(s => {
     s.phase = "night"; s.mission = null; s.mingle = null;
-    const seerOn = s.seer && !s.seer.used && P2(s, s.seer.id) && P2(s, s.seer.id).alive && P2(s, s.seer.id).role === "faithful";
-    const ts = s.players.filter(p => p.alive && p.role === "traitor");
     s.night = {
       mode: autoMode(s), step: 0, targetId: null, targetName: null, answer: null, victimId: null,
-      seerId: seerOn && ts.length ? s.seer.id : null, seerTraitorId: seerOn && ts.length ? ts[Math.floor(Math.random() * ts.length)].id : null,
       quest: null, questTarget: null, questOpts: s.questsOn === false ? [] : questOptions(s), confirmed: false
     };
     s.quest = null;
@@ -1188,7 +1185,6 @@ function finishNight() {
       }
       else { t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]); m = { kind: "recruit", refused: true }; log = t.name + " refused " + n.mode }
     }
-    if (n.seerId && n.seerTraitorId && s.seer && !s.seer.used) { s.seer.used = true; s.seer.metId = n.seerTraitorId; log += " · Seer " + P2(s, s.seer.id).name + " met " + P2(s, n.seerTraitorId).name }
     if (m.kind === "recruit") { m.kind = "quiet"; m.recruit = true } // the host's log has it; the room hears nothing
     if (m.kind === "murder") { s.stats = s.stats || {}; s.stats.murders = (s.stats.murders || []).concat([{ id: m.victimId, round: s.round }]) }
     m.revealed = false; m.lastEnd = null; m.lastDone = false;
@@ -1221,11 +1217,12 @@ function pace() {
 }
 function advice() {
   const t = traitors().length, f = faithful().length, a = t + f;
-  if (t === 0) return { lvl: "end", text: isFinal(state) ? "No Traitors left, but the table doesn’t know it. Run End or Banish: a unanimous END and the Faithful win; every BANISH costs them another Faithful." : "No Traitors left. End the game now — the Faithful win." };
-  if (t >= f) return { lvl: "end", text: "Traitors equal or outnumber the Faithful (" + t + " v " + f + "). End the game — the Traitors win." };
+  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, one banishment, then End or Banish.";
+  if (t === 0) return isFinal(state) ? { lvl: "end", text: "No Traitors left, but the table doesn’t know it. Run End or Banish: a unanimous END and the Faithful win; every BANISH costs them another Faithful." } : { lvl: "final", text: "No Traitors left, but the table doesn’t know it." + callIt };
+  if (t >= f) return isFinal(state) ? { lvl: "end", text: "Traitors equal or outnumber the Faithful (" + t + " v " + f + "), but the table doesn’t know it. Run End or Banish: a unanimous END and the Traitors win." } : { lvl: "final", text: "Traitors equal or outnumber the Faithful (" + t + " v " + f + "), but the table doesn’t know it." + callIt };
   if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, the Reckoning, then End or Banish — the vote decides when it ends." };
   if (state.finalRound && state.finalRound > state.round) return { lvl: "final", text: "Next round is the final. Finish this round normally." };
-  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Traitor") + "). Make " + (state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next") + " round the final: one mission, one banishment, then End or Banish." };
+  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Traitor") + "). Make " + which + " round the final: one mission, one banishment, then End or Banish." };
   const rk = ["recruit", "ultimatum"].filter(k => modeOn(state, k)).map(k => MODES[k].label);
   if (t === 1 && f >= 4 && rk.length) return { lvl: "recruit", text: "One Traitor left against " + f + ". Your plan allows " + (rk.length > 1 ? "a Recruit, then an Ultimatum" : rk[0] === "Recruit" ? "a Recruit" : "an Ultimatum") + " — the phone sets the night for it, or the endgame dies early." };
   if (a <= 6) return { lvl: "soon", text: a + " left, " + t + " Traitors. One more normal round, then call the final. Two missions this round if the night is young." };
@@ -1413,12 +1410,9 @@ function playerLeft(id) {
     if (s.seer && s.seer.id === id) s.seer.used = true;
     const n = s.night;
     if (n) {
-      const met = n.confirmed && n.seerId && n.step > nightScript(n, s).findIndex(l => norm(l).who === "Both");
-      const involved = n.victimId === id || n.targetId === id || n.seerTraitorId === id || n.seerId === id;
+      const involved = n.victimId === id || n.targetId === id;
       if (n.victimId === id) n.victimId = null;
       if (n.targetId === id) { n.targetId = null; n.targetName = null; n.answer = null }
-      if (n.seerTraitorId === id && met && s.seer) { s.seer.used = true; s.seer.metId = id } // the meeting already happened
-      if (n.seerTraitorId === id || n.seerId === id) { n.seerId = null; n.seerTraitorId = null }
       n.step = involved ? 0 : Math.min(n.step || 0, nightScript(n, s).length - 1);
     }
     if (s.table) { const t = s.table; if (t.revote) { t.revote = t.revote.filter(x => x !== id); if (t.revote.length < 2) t.revote = null } if (t.ballots) { delete t.ballots[id]; for (const k in t.ballots) if (t.ballots[k] === id) delete t.ballots[k] } if (t.immune) t.immune = t.immune.filter(x => x !== id); if (t.last === id) t.last = null; tally(s) }

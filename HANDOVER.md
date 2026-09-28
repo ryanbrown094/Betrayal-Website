@@ -252,8 +252,6 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 - **Name clearance.** The working name was "Betrayal" until 28 Sep 2026; it was dropped because Hasbro/Avalon Hill sell a family of "Betrayal" hidden-traitor board games. "Cloak & Candle" had no matching US marks (Trademarkia, 28 Sep 2026) and cloakandcandle.com / .co.uk were unregistered. The one nearby mark: Mattel owns "CLOAK AND DAGGER" for toys and games (US class 28) — different second word, but get a UK IPO / EUIPO search (classes 9, 28, 41) done before launch.
 - Not deployed; Stripe not tried live; no emails are sent (the pass appears on the thank-you page — a receipt email from Stripe should repeat it: add the pass to the Payment Link's custom fields/metadata or send one from the Worker).
 - No terms, privacy policy or refund policy yet — needed before taking payment.
-- The host's pace advice still says "end the game" at Traitor parity (host phone only); the game itself runs End or Banish at four.
-- `nightScript` still has the old night-time Seer lines (unused).
 - A few crowded screens can overrun a 4:3 TV.
 - Ideas: a printable guest guide in the new brand; per-mission lengths in the plan; an admin page instead of `tools/passes.sh`; bundle passes (3 parties).
 
