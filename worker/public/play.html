@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928210837">
+<meta name="build" content="20260928212926">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1215,6 +1215,7 @@ const SAY={
   lobbyWait:"Take your seats, everyone, and fill your glasses. When the titles roll on the screen, the game begins.",
   lobby:"Welcome to Cloak & Candle. Look at the screen: there is a candle burning for every one of you. Tonight, around this table, sit the Candles — and the Cloaks, hidden under the cloak. Each night the Cloaks will poison one of you, and a candle will go out. Each day the Candles must find them and exile them. Trust no one. Not the person who poured your wine. Not the person who drove you here.",
   day:r=>r>1?vr(["Round "+numWord(r)+". The table is smaller, and the pot is still hungry. Before you can point fingers, you must earn the right. Today's mission…","Round "+numWord(r)+". Fewer chairs, longer memories. The pot won't fill itself — and a Cloak would quite like it to stay empty. Today's mission…","Round "+numWord(r)+". You know each other a little better now. That should worry you. First, the pot. Today's mission…"],r-1):"Good morning, and welcome to round one. Before you can point fingers, you must earn the right. The pot only grows if you work together — which is a strange thing to ask of a table with Cloaks on it. Today's mission…",
+  lastMission:"Five of you left. Before the last vote, one more mission — and whatever it is worth, it may be the last thing any of you wins tonight.",
   final:"This is the final round. A last mission, then the Reckoning — and after that, you decide whether it's over. If a Cloak is still sitting here when it ends, the Candles get nothing.",
   missionDone:r=>vr(["The mission is over. Look at the scores — and remember, a Candle who plays badly looks a lot like a Cloak who's sabotaging.","That's the mission. Some of you tried very hard. Some of you tried very hard to look like you were trying.","Mission over. The pot remembers who helped it — and so should you."],r),
   afterCeremony:"Remember who played badly tonight. A Candle who plays badly looks a lot like a Cloak who's sabotaging.",
@@ -1636,7 +1637,8 @@ function perRoundOf(s) {
 // the next planned mission not yet played (skipped ones stay skipped); a swap on the day screen replaces it
 function nextPlanned(s) {
   const p = s.plan || [], i = s.planAt || 0;
-  const ok = k => k && (k !== "statue" || ghostsOf(s).length > 0);
+  // the final's mission must be able to carry a prize (the Witness is won there), so never the icebreaker
+  const ok = k => k && (k !== "statue" || ghostsOf(s).length > 0) && !(isFinal(s) && k === "likely");
   for (let j = i; j < p.length; j++) if (ok(p[j])) return p[j];
   const pool = poolOf(rulesIn(s)).filter(ok), done = s.done || {};
   return pool.sort((a, b) => (done[a] || 0) - (done[b] || 0))[0] || "quiz";
@@ -2642,6 +2644,9 @@ function nextRound(final) {
 }
 // Dinner is one sitting: once served, the option goes away. Served from dawn, it leads straight into the next round.
 function startBreak(kind, then) { act(s => { const din = kind === "dinner"; s.phase = "mingle"; s.mingle = { end: null, dur: din ? 1500000 : 600000, kind, then: then || null }; if (din) s.dinnerDone = true }, kind === "dinner" ? "Dinner break" : "Mingle") }
+// A final that opened with more than five (a shield held on the last night) votes down to five, then plays one more
+// mission before the last vote: that is where the Witness can be won.
+function fiveMission() { act(s => { s.phase = "day"; s.table = null; s.fiveMission = true; return { log: "Five left in the final: one more mission before the last vote" } }) }
 function declareFinal() { act(s => { s.finalRound = (s.phase === "day" && !(s.roundMissions || 0)) ? s.round : s.round + 1; return { log: "Final round: round " + s.finalRound } }) }
 function pace() {
   const s = state; if (!s.startedAt || s.round < 2) return null;
@@ -3804,7 +3809,7 @@ function renderHost() {
     }
     case "day": {
       const nx = nextPlanned(s), nd = MISSIONS.find(m => m.key === nx) || MISSIONS[0], want = perRoundOf(s), k = (s.roundMissions || 0) + 1;
-      body = `<h2>Round ${s.round}${fin ? " — the final" : ""}</h2>${say((s.roundMissions || 0) > 0 ? SAY.secondMission(s.round) : fin ? SAY.final : SAY.day(s.round))}${advicePanel()}<div class="plannext"><div class="eyebrow">mission ${k}${want > 1 && k <= want ? " of " + want : ""} this round · next in your plan</div><h3>${esc(nd.title)}</h3><p class="note">${esc(defRules(nd))}</p></div><div class="row"><button class="ghost slim" onclick="swapOpen=!swapOpen;renderHost()">${swapOpen ? "Keep the plan" : "Swap for a different mission"}</button></div>`;
+      body = `<h2>Round ${s.round}${fin ? " — the final" : ""}</h2>${say(fin && s.fiveMission && s.roundMissions > 0 ? SAY.lastMission : (s.roundMissions || 0) > 0 ? SAY.secondMission(s.round) : fin ? SAY.final : SAY.day(s.round))}${advicePanel()}<div class="plannext"><div class="eyebrow">mission ${k}${want > 1 && k <= want ? " of " + want : ""} this round · next in your plan</div><h3>${esc(nd.title)}</h3><p class="note">${esc(defRules(nd))}</p></div><div class="row"><button class="ghost slim" onclick="swapOpen=!swapOpen;renderHost()">${swapOpen ? "Keep the plan" : "Swap for a different mission"}</button></div>`;
       foot = nextBtn("Start " + esc(nd.title), "swapOpen=false;pickMission('" + nx + "')");
       if (!swapOpen) break;
       body += `<h3>swap — pick any mission</h3><div class="mlist">${MISSIONS.map(m => { const noRoom = m.key === "dilemma" && (shieldRoom(s) === 0 || !!(s.done || {}).dilemma); return `<button class="${(s.done || {})[m.key] ? "dim" : ""}" onclick="swapOpen=false;pickMission('${m.key}')" ${noRoom ? "disabled" : ""}>${esc(m.title)}<em>${esc(m.when)} · ${m.kind === "screen" ? "on screen" : "up from the table"}${(s.done || {})[m.key] ? " · played ×" + s.done[m.key] : ""}${noRoom ? " · no shield left to give" + (fin ? " in the final" : "") : ""}${m.key === "statue" && !ghostsOf(s).length ? " · no Ghosts yet" : ""}</em><small>${esc(defRules(m))}</small></button>` }).join("")}</div>`; break;
@@ -3850,7 +3855,7 @@ function renderHost() {
       else if (lore) foot = nextBtn("Next: " + esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
       // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
       // the end game always starts with four left: they vote End or Exile, whoever is left
-      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("End or Exile — " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin ? nextBtn("Another vote — " + numWord(alive().length - 4) + " more to go before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Cloaks left — straight to the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five — the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote — boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
+      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("End or Exile — " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("Five left — one more mission, then the last vote", "fiveMission()", "danger") : fin ? nextBtn("Another vote — " + numWord(alive().length - 4) + " more to go before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Cloaks left — straight to the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five — the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote — boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
     }
     case "endvote": {
@@ -4146,7 +4151,7 @@ ${P_("The <b>Dilemma</b> is a quick bonus game, offered <b>once in the whole gam
 ${P_("If exactly one person writes SHIELD, they get the shield (in public) and the pot grows. If nobody does, the pot grows by double. If two or more reach for it, nobody gets the shield and the pot <b>loses</b> points. It tests greed and trust: who takes the shield for themselves?")}
 <div class="wopts">${wopt(d, "dilemma", true, "Yes, offer it once", "The phone suggests it at the right moment. You can still skip it on the night.")}${wopt(d, "dilemma", false, "No Dilemma", "The game never offers it.")}</div>` },
   { id: "witness", sec: "Powers", title: () => "The Witness", body: d => `
-${P_("The <b>Witness</b> can only appear in the final, and only if the final starts with <b>exactly one Cloak among the five</b>. One mission then offers “a special prize”, and the TV doesn’t say what it is. While everyone else is blindfolded, the winner and the last Cloak take their blindfolds off and look at each other for thirty seconds. A Candle Witness now <b>knows who the Cloak is</b>, and the Cloak can’t kill them. Then the Witness has to convince the others at the last votes.")}
+${P_("The <b>Witness</b> can only appear in the final, and only if <b>exactly one Cloak is among the last five</b>. The mission played with five left then offers “a special prize”, and the TV doesn’t say what it is. While everyone else is blindfolded, the winner and the last Cloak take their blindfolds off and look at each other for thirty seconds. A Candle Witness now <b>knows who the Cloak is</b>, and the Cloak can’t kill them. Then the Witness has to convince the others at the last votes.")}
 <div class="wopts">${wopt(d, "witness", true, "Yes, if the final allows it", "A dramatic twist when the end is close. If the conditions never happen (two or more Cloaks in the final), nothing changes.")}${wopt(d, "witness", false, "No Witness", "The final plays with no special prize.")}</div>
 ${why("If a Cloak wins it", "The ceremony still happens for show, so nobody can tell. The Cloak just meets nobody.")}` },
   { id: "convert", sec: "Twists", title: () => "Conversion", body: d => `
