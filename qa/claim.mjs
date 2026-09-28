@@ -5,9 +5,9 @@ import worker, { Registry } from "../worker/src/index.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond };
 const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { m.set(k, v) }, list: async ({ prefix }) => new Map([...m].filter(([k]) => k.startsWith(prefix))) } };
-const GAME = { idFromName: n => n, get: () => ({ fetch: async () => new Response("{}") }) };
+const closed = []; const GAME = { idFromName: n => n, get: id => ({ fetch: async (u) => { if (String(u).endsWith("/_close")) closed.push(id); return new Response("{}") } }) };
 const reg = new Registry({ storage: store() }, { GAME });
-const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
+const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_SUB_PRICE_ID: "price_sub", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
 
 // the stubbed Stripe: sessions made, sessions read back
 const made = [], sessions = {}; let failCreate = false;
@@ -17,9 +17,11 @@ globalThis.fetch = async (u, init) => {
     if (failCreate) return new Response(JSON.stringify({ error: { message: "nope" } }), { status: 400 });
     const q = new URLSearchParams(init.body), id = "cs_test_" + String(made.length).padStart(12, "0");
     made.push({ q, auth: init.headers.Authorization });
-    sessions[id] = { id, payment_status: "unpaid", metadata: { pass: q.get("metadata[pass]") }, customer_details: { email: "buyer@example.com" }, payment_intent: "pi_" + made.length };
+    const sub = q.get("mode") === "subscription";
+    sessions[id] = { id, mode: q.get("mode"), payment_status: "unpaid", metadata: { pass: q.get("metadata[pass]") }, customer_details: { email: "buyer@example.com" }, payment_intent: sub ? null : "pi_" + made.length, subscription: sub ? "sub_" + made.length : null, customer: "cus_" + made.length };
     return new Response(JSON.stringify({ id, url: "https://checkout.stripe.com/c/pay/" + id }));
   }
+  if (u === "https://api.stripe.com/v1/billing_portal/sessions") return new Response(JSON.stringify({ url: "https://billing.stripe.com/p/session/" + new URLSearchParams(init.body).get("customer") }));
   const m = u.match(/^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions\/(cs_\w+)$/);
   if (m) return sessions[m[1]] ? new Response(JSON.stringify(sessions[m[1]])) : new Response("{}", { status: 404 });
   return new Response("{}", { status: 404 });
@@ -27,7 +29,7 @@ globalThis.fetch = async (u, init) => {
 const W = (path, init, env) => worker.fetch(new Request("https://cloakandcandle.co.uk" + path, init), env || base);
 const J = async r => [r.status, await r.json().catch(() => ({}))];
 const checkout = (body, env, ip) => W("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip || "203.0.113.1" }, body: JSON.stringify(body) }, env).then(J);
-const redeem = pass => W("/api/games", { method: "POST", body: JSON.stringify({ pass }) }).then(J);
+const redeem = (pass, fresh) => W("/api/games", { method: "POST", body: JSON.stringify({ pass, fresh }) }).then(J);
 const claim = id => W("/api/claim?session_id=" + id, {}).then(J);
 const passOf = async p => (await reg.storage.get("pass:" + p));
 async function hook(ev, secret, t) {
@@ -84,5 +86,32 @@ check("no webhook secret configured: every webhook refused", (await W("/api/stri
 sessions.cs_test_paymentlink1 = { id: "cs_test_paymentlink1", payment_status: "paid", metadata: {}, customer_details: { email: "x@y.z" } };
 const pl = await claim("cs_test_paymentlink1");
 check("a checkout without a pending pass mints one when paid", pl[0] === 200 && /^CNDL-/.test(pl[1].pass) && (await passOf(pl[1].pass)).source === "stripe:cs_test_paymentlink1");
+
+// the monthly subscription: one code, a new game whenever they like, one at a time, only while it's paid
+check("subscription not on sale: 503", (await checkout({ plan: "sub", terms: true, supply: true }, { ...base, STRIPE_SUB_PRICE_ID: "" }, "203.0.113.20"))[0] === 503);
+const [ss, sc] = await checkout({ plan: "sub", terms: true, supply: true }, base, "203.0.113.21"), sid = sc.url.split("/").pop(), sq = made[made.length - 1].q, spass = sessions[sid].metadata.pass;
+check("subscription checkout: subscription mode, the monthly price, the code on the subscription, no one-off invoice", ss === 200 && sq.get("mode") === "subscription" && sq.get("line_items[0][price]") === "price_sub" && sq.get("subscription_data[metadata][pass]") === spass && /your code: CNDL-/.test(sq.get("subscription_data[description]")) && !sq.get("invoice_creation[enabled]") && !sq.get("payment_intent_data[metadata][pass]"));
+check("the one-off checkout is still payment mode at £15's price", made[0].q.get("mode") === "payment" && made[0].q.get("line_items[0][price]") === "price_123");
+check("a pending subscription code opens nothing", (await redeem(spass))[0] === 402);
+await hook({ type: "checkout.session.completed", data: { object: { ...sessions[sid], payment_status: "paid" } } });
+const sp = await passOf(spass);
+check("paid: the code is active, tied to its subscription and customer", sp.kind === "sub" && sp.subActive === true && sp.subId === sessions[sid].subscription && sp.customer === sessions[sid].customer, sp);
+sessions[sid].payment_status = "paid"; const scl = await claim(sid);
+check("the thank-you page gets the same code, marked as a subscription", scl[1].pass === spass && scl[1].sub === true, scl);
+const g1 = await redeem(spass), g1b = await redeem(spass), g2 = await redeem(spass, true), g2b = await redeem(spass);
+check("entering it again brings the current game back", g1[0] === 200 && g1b[1].room === g1[1].room && g1b[1].again && g1b[1].sub);
+check("a fresh game: a new room, and the old one is closed", g2[0] === 200 && g2[1].room !== g1[1].room && closed.includes("room:" + g1[1].room) && g2b[1].room === g2[1].room);
+check("…and it counts the games", (await passOf(spass)).games === 2);
+await hook({ type: "customer.subscription.updated", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "past_due", metadata: { pass: spass } } } });
+const lapsed = await redeem(spass);
+check("payment failed (past_due): no games, and the message says why", lapsed[0] === 402 && /didn’t go through/.test(lapsed[1].error), lapsed);
+await hook({ type: "customer.subscription.updated", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "active", metadata: { pass: spass } } } });
+check("paid again: games again", (await redeem(spass))[0] === 200);
+await hook({ type: "customer.subscription.deleted", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "canceled", metadata: { pass: spass } } } });
+check("cancelled: no more games", (await redeem(spass))[0] === 402 && (await passOf(spass)).subStatus === "canceled");
+const portal = await W("/api/portal", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.22" }, body: JSON.stringify({ pass: spass }) }).then(J);
+check("Manage subscription: the billing portal for that code's customer", portal[0] === 200 && portal[1].url === "https://billing.stripe.com/p/session/" + sessions[sid].customer, portal);
+check("…a one-off pass has no portal", (await W("/api/portal", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.23" }, body: JSON.stringify({ pass: pass1 }) }).then(J))[0] === 404);
+check("a one-off pass still opens only its one game", (await redeem(pass1, true))[1].room === (await redeem(pass1))[1].room);
 
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

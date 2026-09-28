@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928184234">
+<meta name="build" content="20260928191008">
 <title>Cloak &amp; Candle — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="Cloak &amp; Candle turns your dinner party into a game of hidden Cloaks, secret shields and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
@@ -89,9 +89,9 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section id="start">
     <div class="eyebrow">start</div><h2>Open your room</h2>
-    <div class="panel claim" id="claim"><div class="eyebrow">thank you — here is your party pass</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Keep it safe: it opens your room, and entering it again brings the same room back.</p><button class="btn" id="claimgo">Start my game</button></div>
+    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your party pass</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Keep it safe: it opens your room, and entering it again brings the same room back.</p><button class="btn" id="claimgo">Start my game</button></div>
     <div class="forms">
-      <div class="panel"><label for="pass">Party pass code</label><div class="row"><input id="pass" placeholder="CNDL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="go">Open room</button></div><p class="msg" id="passmsg">One pass, one party: your room stays open for 48 hours from the moment you open it. Do this on the phone you’ll host with.</p></div>
+      <div class="panel"><label for="pass">Party pass or subscription code</label><div class="row"><input id="pass" placeholder="CNDL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="go">Open room</button></div><p class="msg" id="passmsg">One pass, one party: your room stays open for 48 hours from the moment you open it. Do this on the phone you’ll host with.</p><p class="msg">Subscribers: enter your code to start a game, or <a href="#" id="manage">manage your subscription</a>.</p></div>
       <div class="panel"><label for="room">Setting up the TV? Room code</label><div class="row"><input id="room" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg">Open this on the laptop you’ll cast to the TV.</p></div>
     </div>
   </section>
@@ -104,7 +104,8 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
     <details><summary>Does everyone need a phone?</summary><p>No. Only the host uses one. Guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. At a few moments the host hands the phone round for a secret vote.</p></details>
-    <details><summary>What does a pass get me?</summary><p>One room for one party. It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>What does a pass get me?</summary><p>One room for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>What about the monthly subscription?</summary><p>£20 a month gets you one code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>The host runs the game — like a presenter. They know who the Cloaks are from the start, so they don’t play a role.</p></details>
     <details><summary>Why “Cloak &amp; Candle”?</summary><p>Every guest has a candle burning on the TV. The Cloaks hide under the cloak. Each night a candle goes out — and the Candles have until the last one to pull the cloak away.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave.</p></details>
@@ -116,22 +117,44 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 <script>
 "use strict";
 // Shop settings: the price shown and a contact address. The Stripe Payment Link goes in BUY at the bottom of site/pages/buy.html.
-const SHOP = { price: "", contact: "" };
+const SHOP = { price: "£15 a party · or £20 a month for unlimited games", contact: "" };
 const $ = s => document.querySelector(s);
 $("#buy").href = "/buy";
-$("#price").textContent = SHOP.price ? SHOP.price + " per party · one pass, one night, 8 to 24 players" : "";
+$("#price").textContent = SHOP.price ? SHOP.price + " · 8 to 24 players" : "";
 if (SHOP.contact) $("#contact").innerHTML = ' · <a href="mailto:' + SHOP.contact + '">' + SHOP.contact + "</a>";
 const say = (el, t, err) => { el.textContent = t; el.className = "msg" + (err ? " err" : "") };
-async function open(pass) {
+async function open(pass, fresh) {
   const b = $("#go"); b.disabled = true; say($("#passmsg"), "Opening your room…");
   try {
-    const r = await fetch("/api/games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass }) });
+    const r = await fetch("/api/games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass, fresh: !!fresh }) });
     const j = await r.json().catch(() => ({}));
+    // a subscriber with a game still open: carry on with it, or start a new one (which closes it)
+    if (r.ok && j.room && j.sub && j.again) { b.disabled = false; return subChoice(pass, j.room) }
     if (r.ok && j.room) { location.href = "/g/" + j.room + "#host"; return }
     say($("#passmsg"), j.error || "That didn’t work — try again.", true);
   } catch (e) { say($("#passmsg"), "Can’t reach the server. Check you’re online.", true) }
   b.disabled = false;
 }
+function subChoice(pass, room) {
+  const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
+  m.append("You have a game open. Carry on with it, or start a new one? A new game closes the one that’s open.");
+  const row = document.createElement("div"); row.className = "row";
+  const a = document.createElement("button"); a.className = "btn"; a.textContent = "Carry on"; a.onclick = () => { location.href = "/g/" + room + "#host" };
+  const n = document.createElement("button"); n.className = "btn ghost"; n.textContent = "Start a new game"; n.onclick = () => open(pass, true);
+  row.append(a, n); m.append(row);
+}
+async function manage() {
+  const v = $("#pass").value.trim(), m = $("#passmsg");
+  if (!v) return say(m, "Enter your subscription code above, then tap Manage subscription.", true);
+  say(m, "Opening your subscription…");
+  try {
+    const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass: v }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.url) { location.href = j.url; return }
+    say(m, j.error || "That didn’t work — try again.", true);
+  } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
+}
+$("#manage").onclick = e => { e.preventDefault(); manage() };
 $("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter the code from your receipt.", true); open(v) };
 $("#pass").onkeydown = e => { if (e.key === "Enter") $("#go").click() };
 $("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.length !== 6) return say($("#roommsg"), "Room codes are six letters and numbers.", true); location.href = "/g/" + v };
@@ -141,7 +164,7 @@ const sid = new URLSearchParams(location.search).get("session_id");
 if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
-    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (j.sub) { $("#claimhead").textContent = "thank you — here is your subscription code"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
   say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your pass will appear here.", true);

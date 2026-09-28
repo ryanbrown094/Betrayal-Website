@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928184234">
+<meta name="build" content="20260928191008">
 <title>Contact and company information — Cloak &amp; Candle</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -45,7 +45,10 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed }
 .panel { padding: 22px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.35); margin: 20px 0 }
 label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) }
-.price { font: 600 44px/1 var(--disp); color: var(--ivory) }
+.price { display: block; font: 600 44px/1.1 var(--disp); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 12px; padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); cursor: pointer } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose) }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
 footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2) }
 </style>

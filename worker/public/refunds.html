@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928184234">
+<meta name="build" content="20260928191008">
 <title>Refunds and cancellations — Cloak &amp; Candle</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -45,7 +45,10 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed }
 .panel { padding: 22px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.35); margin: 20px 0 }
 label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) }
-.price { font: 600 44px/1 var(--disp); color: var(--ivory) }
+.price { display: block; font: 600 44px/1.1 var(--disp); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 12px; padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); cursor: pointer } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose) }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
 footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2) }
 </style>
@@ -61,6 +64,9 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 <h2>Changed your mind?</h2>
 <p><strong>If you haven’t used your pass yet</strong>, you can cancel within 14 days of buying it and we’ll refund you in full. Email <span class="ph">[contact email]</span> with your pass code or the email address you paid with. Or use this model form: “I cancel my contract for the Cloak &amp; Candle party pass <em>[code]</em>, bought on <em>[date]</em>. Name, email, date.” We’ll cancel the pass and refund you within 14 days. The refund goes to the card you paid with.</p>
 <p><strong>Once you’ve opened a room with your pass</strong>, the 14-day right to cancel no longer applies. At checkout you agreed that the pass could be supplied straight away, and confirmed you understood you would lose the right to cancel once you started using it. This is allowed under the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013.</p>
+
+<h2>Subscriptions</h2>
+<p>Cancel any time with “Manage subscription” on the home page, using your code. There’s no charge for cancelling: you won’t be billed again, and your code keeps working until the end of the month you’ve paid for. We don’t refund part-months, except where the law requires it or something went wrong on our side. If you haven’t used your code to open a room yet, you can cancel within 14 days of subscribing and get the first month back in full.</p>
 
 <h2>Something went wrong?</h2>
 <p>If the game didn’t work properly, whether or not you’d started, tell us what happened at <span class="ph">[contact email]</span>. Please write within <span class="ph">[30]</span> days of your party if you can. Under the Consumer Rights Act 2015 we will:</p>
