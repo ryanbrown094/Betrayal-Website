@@ -10,7 +10,7 @@ function blobPath(cx, cy, r, wob, n, seed) {
 const ICONS = {
   moon: '<path d="M43 7a25 25 0 1 0 14 39A21 21 0 0 1 43 7z"/><path class="f" d="M17 12l1.4 3.6L22 17l-3.6 1.4L17 22l-1.4-3.6L12 17l3.6-1.4zM27 28l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/>',
   sun: '<path d="M14 44a18 18 0 0 1 36 0"/><path d="M4 44h56M10 52h44M18 59h28M32 8v9M9 21l6 6M55 21l-6 6M2 36h6M56 36h6"/>',
-  dagger: '<path d="M32 60L27 24h10z"/><path d="M32 24v26"/><path d="M19 24c4-3 22-3 26 0"/><path d="M32 24V12"/><circle cx="32" cy="8" r="4"/>',
+  blade: '<path d="M32 60L27 24h10z"/><path d="M32 24v26"/><path d="M19 24c4-3 22-3 26 0"/><path d="M32 24V12"/><circle cx="32" cy="8" r="4"/>',
   crown: '<path d="M9 46L13 19l11 14 8-20 8 20 11-14 4 27z"/><path d="M9 53h46"/><circle class="f" cx="13" cy="16" r="2.6"/><circle class="f" cx="32" cy="10" r="2.6"/><circle class="f" cx="51" cy="16" r="2.6"/>',
   shield: '<path d="M32 5l22 8v17c0 14-10 24-22 30C20 54 10 44 10 30V13z"/><path d="M32 14v36M19 27h26"/>',
   table: '<circle cx="32" cy="32" r="17"/><circle cx="32" cy="32" r="9"/><circle class="f" cx="32" cy="7" r="3"/><circle class="f" cx="53.6" cy="19.5" r="3"/><circle class="f" cx="53.6" cy="44.5" r="3"/><circle class="f" cx="32" cy="57" r="3"/><circle class="f" cx="10.4" cy="44.5" r="3"/><circle class="f" cx="10.4" cy="19.5" r="3"/>',

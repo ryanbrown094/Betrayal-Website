@@ -8,7 +8,7 @@ srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "--direc
 time.sleep(1)
 FREEZE = "*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition:none!important}"
 SETUP = r"""() => { window.__noCards = true; try { localStorage.clear() } catch (e) {}
-  startGame({names:["Annie","Bartholomew","Claire-Louise","Dev","Hannah","Jess","Marcus","Oliver","Priya","Ryan","Sophie","Wilhelmina"],traitors:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4,pin:'1'});
+  startGame({names:["Annie","Bartholomew","Claire-Louise","Dev","Hannah","Jess","Marcus","Oliver","Priya","Ryan","Sophie","Wilhelmina"],cloaks:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4,pin:'1'});
   act(s=>{s.phase='day'}); }"""
 SHEET = r"""() => {
   const norm = t => String(t).toLowerCase().replace(/[^a-z0-9]/g, ""), out = [];
@@ -42,7 +42,7 @@ SWEEP = r"""(kind) => {
   for (const [key, bank] of [['charades', CHARADES], ['hum', SONGS], ['draw', PICTIONARY]]) if (kind === key) { mission(key); bank.forEach((w, i) => { state.mission.order = [i]; state.mission.qi = 0; state.mission.actorId = state.players[state.players.length - 1].id; state.mission.showA = true; state.mission.timerEnd = null; measure(key + ' ' + i + ' ' + w) }) }
   if (kind === 'memory') { mission('memory'); MEMSETS.forEach((m, i) => { state.mission.order = [i]; state.mission.qi = 0; state.mission.timerEnd = null; state.mission.showA = true; measure('memory set ' + i) }) }
   if (kind === 'countdown') { mission('countdown'); CODEWORDS.forEach(w => { state.mission.letters = letters12(w); state.mission.timerEnd = null; measure('countdown ' + w) }) }
-  if (kind === 'quests') { act(s => { s.phase = 'day'; s.mission = null }); startNight(); QUESTS.forEach((q, i) => { const n = state.night; n.mode = 'murder'; n.confirmed = true; n.quest = q.replace(/\{F\}/g, 'Claire-Louise').replace(/\{T\}/g, 'Bartholomew'); n.questTarget = /\{T\}/.test(q) ? 'Bartholomew' : null; const sc = nightScript(n, state); n.step = sc.findIndex(l => norm(l).who === 'Traitors' && /next break/.test(norm(l).tv)); n.revealStep = 99; measure('quest ' + i + ' ' + q.slice(0, 40)) }) }
+  if (kind === 'quests') { act(s => { s.phase = 'day'; s.mission = null }); startNight(); QUESTS.forEach((q, i) => { const n = state.night; n.mode = 'murder'; n.confirmed = true; n.quest = q.replace(/\{F\}/g, 'Claire-Louise').replace(/\{T\}/g, 'Bartholomew'); n.questTarget = /\{T\}/.test(q) ? 'Bartholomew' : null; const sc = nightScript(n, state); n.step = sc.findIndex(l => norm(l).who === 'Cloaks' && /next break/.test(norm(l).tv)); n.revealStep = 99; measure('quest ' + i + ' ' + q.slice(0, 40)) }) }
   return bad;
 }"""
 ok = True

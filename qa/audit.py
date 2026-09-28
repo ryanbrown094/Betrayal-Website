@@ -10,7 +10,7 @@ NAMES14 = ["Annie", "Ryan", "Bartholomew", "Sophie", "Marcus", "Priya", "Jess", 
 # host screens to visit (state builders run on the host page)
 HOST_STATES = [
   ("setup", "newGame()"),
-  ("lobby", "startGame({names:NAMES,traitors:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})"),
+  ("lobby", "startGame({names:NAMES,cloaks:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})"),
   ("day", "act(s=>{s.phase='day';s.startedAt=now()})"),
   ("quiz_rules", "pickMission('quiz');mWin('public')"),
   ("quiz_play", "startMission();startMission()"),
@@ -27,9 +27,9 @@ HOST_STATES = [
   ("mingle", "startMission();startMission();act(s=>finishPlay(s));endMission();act(s=>{s.phase='mingle';s.mingle={end:null,dur:600000,kind:'mingle'}})"),
   ("table", "openTable()"),
   ("table_votes", "act(s=>{s.table.stage='votes'});const A=aliveOf(state);A.slice(0,5).forEach((p,i)=>castBallot(p.id,A[(i+1)%A.length].id))"),
-  ("table_banish", "act(s=>{s.table.stage='banish'})"),
+  ("table_exile", "act(s=>{s.table.stage='exile'})"),
   ("seats", "seatOpen=true;renderHost()"),
-  ("reveal", "seatOpen=false;banish(state.players[1].id);askGo()"),
+  ("reveal", "seatOpen=false;exile(state.players[1].id);askGo()"),
   ("reveal_lore", "revealRole();act(s=>{s.table.step=2})"),
   ("night_pick", "startNight()"),
   ("night_script", "beginNight();act(s=>{s.night.step=3})"),
@@ -41,7 +41,7 @@ HOST_STATES = [
   ("endvote", "bankOpen=false;menuOpen=false;act(s=>{s.finalRound=s.round});openEndvote()"),
   ("endvote_hand", "handoff={kind:'endvote',id:state.players[3].id};renderHost()"),
   ("ceremony", "handoff=null;startCeremony();revealSurvivor(aliveOf(state)[0].id)"),
-  ("final", "aliveOf(state).forEach(p=>revealSurvivor(p.id));act(s=>{s.phase='final';s.winner='faithful';s.prizeTo='the Faithful';s.players.forEach(p=>p.revealed=true)})"),
+  ("final", "aliveOf(state).forEach(p=>revealSurvivor(p.id));act(s=>{s.phase='final';s.winner='candles';s.prizeTo='the Candles';s.players.forEach(p=>p.revealed=true)})"),
 ]
 TV_SIZES = [(1024, 768), (1366, 768), (1440, 900), (1920, 1080), (2560, 1080), (3840, 2160)]
 TV_STATES = [
@@ -50,11 +50,11 @@ TV_STATES = [
   ("memory", "act(s=>finishPlay(s));endMission();act(s=>{s.phase='day'});pickMission('memory');startMission();startMission();act(s=>{s.mission.timerEnd=now()+45000;s.mission.timerDur=45000})"),
   ("change", "act(s=>{s.mission.timerEnd=null;finishPlay(s)});endMission();act(s=>{s.phase='day'});pickMission('change');startMission();startMission();changeStudy();changeBlind();changeLook();changeAward(aliveOf(state)[0].id)"),
   ("hilo", "act(s=>finishPlay(s));endMission();act(s=>{s.phase='day'});pickMission('hilo');startMission();startMission();act(s=>{s.mission.showA=true})"),
-  ("table", "act(s=>finishPlay(s));endMission();openTable();act(s=>{s.warrior={id:s.players[0].id,round:s.round};s.players[3].shield='secret';s.table.stage='votes'});const A=aliveOf(state);A.slice(0,5).forEach((p,i)=>castBallot(p.id,A[(i+4)%A.length].id))"),
-  ("reveal", "banish(state.players[1].id);askGo();revealRole()"),
-  ("endvote", "act(s=>{s.finalRound=s.round});openEndvote();act(s=>{const A=aliveOf(s);A.forEach((p,i)=>s.endvote.votes[p.id]=i%4?'end':'banish')});startEndReveal();act(s=>{s.endvote.revealed=s.endvote.order.length})"),
+  ("table", "act(s=>finishPlay(s));endMission();openTable();act(s=>{s.champion={id:s.players[0].id,round:s.round};s.players[3].shield='secret';s.table.stage='votes'});const A=aliveOf(state);A.slice(0,5).forEach((p,i)=>castBallot(p.id,A[(i+4)%A.length].id))"),
+  ("reveal", "exile(state.players[1].id);askGo();revealRole()"),
+  ("endvote", "act(s=>{s.finalRound=s.round});openEndvote();act(s=>{const A=aliveOf(s);A.forEach((p,i)=>s.endvote.votes[p.id]=i%4?'end':'exile')});startEndReveal();act(s=>{s.endvote.revealed=s.endvote.order.length})"),
   ("ceremony", "startCeremony();aliveOf(state).slice(0,2).forEach(p=>revealSurvivor(p.id))"),
-  ("final", "act(s=>{s.phase='final';s.winner='faithful';s.prizeTo='the Faithful';s.players.forEach(p=>p.revealed=true)})"),
+  ("final", "act(s=>{s.phase='final';s.winner='candles';s.prizeTo='the Candles';s.players.forEach(p=>p.revealed=true)})"),
 ]
 CHECK_HOST = r"""() => {
   const out = {w: document.documentElement.scrollWidth, small: [], tiny: [], dialogs: 0};
@@ -73,7 +73,7 @@ CHECK_TV = r"""() => { const out = [], sg = document.querySelector('#stage'), tv
   const row = document.querySelector('#rail .row'); if (row && !tv.classList.contains('norail')) { const seats = [...row.querySelectorAll('.seat')]; const rr = row.getBoundingClientRect(); if (seats.length) { const w = seats.reduce((a, s) => a + s.getBoundingClientRect().width, 0); if (w > rr.width + 1) out.push('rail too wide ' + Math.round(w) + '>' + Math.round(rr.width)) }
     for (const p of row.querySelectorAll('.plaque')) if (p.scrollWidth > p.clientWidth + 1) out.push('plaque clipped: ' + p.textContent) }
   const rt = sg.querySelector('.rt'); if (rt) for (const el of rt.querySelectorAll('.nm,.chairseal')) { const r = el.getBoundingClientRect(); if (r.left < 0 || r.right > innerWidth || r.top < 0 || r.bottom > innerHeight) { out.push('round table off-screen: ' + el.textContent); break } }
-  // overlapping name plaques on the round table
+  // overlapping name plaques around the table
   if (rt) { const nm = [...rt.querySelectorAll('.nm')].map(e => e.getBoundingClientRect()); for (let i = 0; i < nm.length; i++) for (let j = i + 1; j < nm.length; j++) { const a = nm[i], b = nm[j]; if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) { out.push('table names overlap'); i = nm.length; break } } }
   if (document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1) out.push('page scrolls');
   return out.slice(0, 4) }"""
@@ -119,7 +119,7 @@ with sync_playwright() as p:
         for (W, H) in TV_SIZES:
             ctx = b.new_context(viewport={"width": W, "height": H}); pg = ctx.new_page(); pg.on("pageerror", lambda e: errs.append("TV " + str(e))); pg.on("dialog", lambda d: d.accept())
             pg.goto(URL + "#host"); pg.wait_for_timeout(600)
-            pg.evaluate("(n)=>{try{localStorage.clear()}catch(e){};startGame({names:n,traitors:n.length>=11?3:n.length<=5?1:2,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})}", NAMES14[:n])
+            pg.evaluate("(n)=>{try{localStorage.clear()}catch(e){};startGame({names:n,cloaks:n.length>=11?3:n.length<=5?1:2,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})}", NAMES14[:n])
             tv = ctx.new_page(); tv.on("pageerror", lambda e: errs.append("TV " + str(e))); tv.goto(URL); tv.wait_for_timeout(700); tv.add_style_tag(content=FREEZE); tv.evaluate("()=>{window.__noCards=true}")
             for name, js in TV_STATES:
                 pg.evaluate("()=>{" + js + "}"); tv.evaluate("()=>{state=JSON.parse(localStorage.getItem(KEY));renderTV()}"); tv.wait_for_timeout(40)

@@ -24,6 +24,11 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
 } > worker/public/play.html
 # the home page: sell, redeem a pass, join a room (site/index.html, self-contained)
 awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
+# the legal and checkout pages: site/pages/NAME.html (first line <!-- title: … -->) in site/page.html → worker/public/NAME.html, served at /NAME
+for f in site/pages/*.html; do
+  t=$(sed -n '1s/^<!-- title: \(.*\) -->$/\1/p' "$f")
+  awk -v b="$BUILD" -v t="$t" -v body="$f" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) print l; next} {gsub("__BUILD__", b); gsub("__TITLE__", t); print}' site/page.html > "worker/public/$(basename "$f")"
+done
 mkdir -p worker/public/media && if [ -d media/web ]; then cp media/web/* worker/public/media/; fi
 printf '%s\n' "$BUILD" > worker/public/build.txt
 echo "wrote worker/public/play.html + index.html (build $BUILD)"

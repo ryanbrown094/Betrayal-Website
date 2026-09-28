@@ -1,6 +1,6 @@
 # Cloak & Candle
 
-A hosted dinner-party game for 4–14 players. The TV (a laptop cast to it) runs the show; the host's phone runs the game.
+A hosted dinner-party game for 8–24 players. The TV (a laptop cast to it) runs the show; the host's phone runs the game.
 Sold as a **party pass**: one pass opens one room for 48 hours. Many parties play at once, each in its own room.
 
 - Home page: `https://cloakandcandle.co.uk/` — buy a pass, open a room, join a room on the TV
@@ -59,10 +59,13 @@ Deploys don't wipe games. Once, per environment: `npx wrangler secret put ADMIN_
 ## Selling passes
 
 - **By hand:** `tools/passes.sh mint 10 "launch friends"` prints codes (`CNDL-XXXX-XXXX`). Send one per party.
-- **Stripe:** make a Payment Link whose success URL is `https://<domain>/claim?session_id={CHECKOUT_SESSION_ID}`,
-  set the Worker secret `STRIPE_SECRET_KEY` (a restricted key with read access to Checkout Sessions is enough), and put
-  the link and price in `SHOP` at the bottom of `site/index.html`. After paying, the buyer lands on the home page, which
-  shows their pass (one per checkout, however often they reload) and opens their room.
+- **Stripe Checkout** (the `/buy` page): once per environment, run
+  `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> <price-in-pence>`. It creates the product, the price
+  and the webhook endpoint. Put the printed `price_…` in `STRIPE_PRICE_ID` in that environment's wrangler `.toml`, then
+  `npx wrangler secret put STRIPE_SECRET_KEY` and `… STRIPE_WEBHOOK_SECRET` (the printed `whsec_…`). Show the price in
+  `SHOP` (home page) and `BUY` (`site/pages/buy.html`). Test keys on staging, live keys on production.
+  The buyer ticks the two consent boxes, pays on Stripe, and comes back to the home page with their pass on screen.
+  Stripe's emailed invoice/receipt carries the pass too. See HANDOVER §6.2.
 - `tools/passes.sh list` shows every pass, whether it was redeemed, its room and when it runs out; `revoke` cancels one.
 
 ## The domain, GitHub and the password gate
