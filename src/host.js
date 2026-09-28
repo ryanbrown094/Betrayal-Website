@@ -43,7 +43,7 @@ function renderHost() {
       body = `<h2>Round ${s.round}${fin ? " — the final" : ""}</h2>${say((s.roundMissions || 0) > 0 ? SAY.secondMission(s.round) : fin ? SAY.final : SAY.day(s.round))}${advicePanel()}<div class="plannext"><div class="eyebrow">mission ${k}${want > 1 && k <= want ? " of " + want : ""} this round · next in your plan</div><h3>${esc(nd.title)}</h3><p class="note">${esc(defRules(nd))}</p></div><div class="row"><button class="ghost slim" onclick="swapOpen=!swapOpen;renderHost()">${swapOpen ? "Keep the plan" : "Swap for a different mission"}</button></div>`;
       foot = nextBtn("Start " + esc(nd.title), "swapOpen=false;pickMission('" + nx + "')");
       if (!swapOpen) break;
-      body += `<h3>swap — pick any mission</h3><div class="mlist">${MISSIONS.map(m => { const noRoom = m.key === "dilemma" && shieldRoom(s) === 0; return `<button class="${(s.done || {})[m.key] ? "dim" : ""}" onclick="swapOpen=false;pickMission('${m.key}')" ${noRoom ? "disabled" : ""}>${esc(m.title)}<em>${esc(m.when)} · ${m.kind === "screen" ? "on screen" : "up from the table"}${(s.done || {})[m.key] ? " · played ×" + s.done[m.key] : ""}${noRoom ? " · no shield left to give" + (fin ? " in the final" : "") : ""}${m.key === "statue" && !ghostsOf(s).length ? " · no Ghosts yet" : ""}</em><small>${esc(defRules(m))}</small></button>` }).join("")}</div>`; break;
+      body += `<h3>swap — pick any mission</h3><div class="mlist">${MISSIONS.map(m => { const noRoom = m.key === "dilemma" && (shieldRoom(s) === 0 || !!(s.done || {}).dilemma); return `<button class="${(s.done || {})[m.key] ? "dim" : ""}" onclick="swapOpen=false;pickMission('${m.key}')" ${noRoom ? "disabled" : ""}>${esc(m.title)}<em>${esc(m.when)} · ${m.kind === "screen" ? "on screen" : "up from the table"}${(s.done || {})[m.key] ? " · played ×" + s.done[m.key] : ""}${noRoom ? " · no shield left to give" + (fin ? " in the final" : "") : ""}${m.key === "statue" && !ghostsOf(s).length ? " · no Ghosts yet" : ""}</em><small>${esc(defRules(m))}</small></button>` }).join("")}</div>`; break;
     }
     case "mission": { const r = missionHost(s); body = r.body; foot = r.foot; break }
     case "shield": {
@@ -137,7 +137,7 @@ function secretPanel() {
   return `<div class="secret"><b>Private — never aloud.</b><br><b>Cloaks:</b> ${esc(state.players.filter(p => p.role === "cloak").map(p => p.name + (p.alive ? "" : " ✝")).join(", "))}<br><b>Alive:</b> ${plural(t.length, "cloak")}, ${f.length} candle${shs.length ? `<br><b>Shield:</b> ${esc(shs.map(p => p.name + " (" + p.shield + ")").join(", "))}` : ""}</div>`;
 }
 function dilemmaOffer(s, cond, line) {
-  if (!cond || !rulesIn(s).dilemma || isFinal(s) || s.players.some(p => p.alive && p.shield) || (s.done || {}).dilemma_r === s.round) return "";
+  if (!cond || !rulesIn(s).dilemma || isFinal(s) || s.players.some(p => p.alive && p.shield) || !dilemmaFree(s)) return "";
   return `<div class="advice offer"><b>Nobody holds a shield tonight.</b> ${esc(line)}<div class="row"><button class="primary" onclick="pickMission('dilemma')">Play The Dilemma now</button></div></div>`;
 }
 function questBox(s, label) { const q = s.quest; return q && !q.resolved ? `<div class="secret"><b>${esc(label)}</b> ${esc(q.text.replace(/\{F\}/g, "‹a Candle›"))}<div class="row"><button onclick="questResolve(true)">They did it</button><button class="danger" onclick="questResolve(false)">They failed (pot −25)</button></div></div>` : "" }
@@ -197,94 +197,276 @@ function bankSheet() {
   return `<div class="sheet bank" data-k="bank"><div class="eyebrow">master settings · every game</div><h2>Question bank</h2><p class="note">Tap to switch an item off and it is never drawn, in this game or any later one, until you switch it back on. Saved ${where}${bankErr ? " — <b>not saved yet, retrying</b>" : ""}.</p><div class="banktabs">${tabs}</div><input id="bankq" type="search" enterkeyhint="search" autocomplete="off" placeholder="Search ${esc(d.label)}" value="${esc(bankQ)}" oninput="bankQ=this.value;renderHost()" aria-label="Search ${esc(d.label)}"><div class="bankbar"><span class="note">${items.length - off.length} of ${items.length} on${q ? " · " + rows.length + " shown" : ""} · at least ${d.min} must stay on</span>${off.length ? `<button class="ghost slim" onclick="bankAllOn('${d.key}')">Switch all on</button>` : ""}</div><div class="banklist">${rows.map(r => { const o = off.includes(r.i); return `<button class="bankrow ${o ? "off" : ""}" data-k="${d.key}-${r.i}" onclick="bankToggle('${d.key}',${r.i})" aria-pressed="${o ? "false" : "true"}"><span class="tick" aria-hidden="true">${o ? "" : "✓"}</span><span class="bt">${esc(r.t[0])}${r.t[1] ? `<small>${esc(r.t[1])}</small>` : ""}</span><span class="st">${o ? "off" : "on"}</span></button>` }).join("") || `<p class="note">Nothing matches “${esc(bankQ)}”.</p>`}</div><div class="foot"><button class="primary" onclick="bankOpen=false;renderHost()">Done</button></div></div>`;
 }
 
-/* ---- setup: every decision up front, so the game can run itself ---- */
+/* ---- setup: one decision a page, each explained in full, then one page to check it all before the game starts ---- */
+// Every choice has a recommendation worked out from the choices before it. Until the host picks something themselves
+// (d.touched), a page follows its recommendation, so changing the table size or the evening's length re-plans the rest.
 const SETUP0 = () => ({ names: "", cloaks: "", title: "Cloak & Candle", host: "", unit: "pts", potCap: "2000", wrong: "cloaks", prize: "", hours: "4", pin: "",
   rounds: 0, perRound: 0, dinnerAfter: 1, mingle: true, pool: null, kill: "poison", ghosts: true, convert: true, bargain: true, quests: true,
-  shield: "mix", blade: true, champion: true, witness: true, dilemma: true, open: ["who"] });
+  shield: "mix", blade: true, champion: true, witness: true, dilemma: true, step: "welcome", touched: [], back: null });
 const namesOf = d => d.names.split(/\n|,/).map(x => x.trim()).filter(Boolean);
 const poolAll = () => MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key);
 const draftPool = d => Array.isArray(d.pool) ? d.pool : poolAll();
-function setD(k, v) { draft(); setupDraft[k] = v; if (k === "blade" && !v || k === "shield" && v === "off") setupDraft.champion = false; if (k === "shield" && v === "off") setupDraft.dilemma = false; saveDraft(); renderHost() }
-// Rounds: Auto, or any number from the fewest this table can play (every round at full stretch) to the most (one exile
-// and one victim a round). Whatever is chosen, the game sizes each round so the final opens with five.
-function stepRounds(d) {
-  draft(); const n = namesOf(setupDraft).length || MINP, [lo, hi] = roundsRange(n), vals = [0]; for (let r = lo; r <= hi; r++) vals.push(r);
-  const cur = +setupDraft.rounds ? Math.max(lo, Math.min(hi, +setupDraft.rounds)) : 0, i = vals.indexOf(cur);
-  setupDraft.rounds = vals[Math.max(0, Math.min(vals.length - 1, i + d))]; saveDraft(); renderHost();
+const tableOf = d => Math.max(MINP, Math.min(MAXP, namesOf(d).length || 12));
+// the round-by-round shape of a plan: who is at the table at each round's start, how many are exiled, how many die that night
+function simPlan(n, R) {
+  const out = []; let a = n;
+  for (let r = 1; r < R && a > 5; r++) {
+    const t = roundTarget({ round: r, rules: { rounds: R }, players: Array.from({ length: a }, (_, i) => ({ id: "p" + i, alive: true })) });
+    out.push(t); a -= t.exiles + t.kills;
+  }
+  return out;
 }
-function roundsRow(d, n) {
-  const [lo, hi] = roundsRange(n || MINP), cur = +d.rounds || 0, v = cur ? Math.max(lo, Math.min(hi, cur)) : 0;
-  return `<div class="vote setrow"><span>Rounds</span><button onclick="stepRounds(-1)" ${!cur ? "disabled" : ""} aria-label="Rounds: fewer">−</button><b class="n num wide">${v ? v + " (last is the final)" : "Auto (" + lo + ")"}</b><button onclick="stepRounds(1)" ${v >= hi ? "disabled" : ""} aria-label="Rounds: more">+</button></div><p class="note">${n ? n + " players" : "Your table"} can play ${lo === hi ? lo + " rounds" : lo + " to " + hi + " rounds"}. More rounds, fewer exiles and victims each round — whichever you pick, the final opens with five at the table and the end game starts with four.</p>`;
+// a rough length for the evening, in minutes: welcome and roles, each round (missions, mingle, the Reckoning, the night),
+// dinner, then the final. Only ever shown as "about".
+function estMins(d, n, over) {
+  d = Object.assign({}, d, over || {}); n = n || tableOf(d);
+  const R = +d.rounds || autoRounds(n), per = +d.perRound || (R <= 3 ? 2 : 1);
+  let t = 20;
+  for (const r of simPlan(n, R)) t += per * 12 + (d.mingle ? 10 : 0) + 8 + Math.round(r.start * 0.25) * r.exiles + 6;
+  if (+d.dinnerAfter) t += 30;
+  return t + 45;
 }
-function stepD(k, d, lo, hi) { draft(); setupDraft[k] = Math.max(lo, Math.min(hi, (+setupDraft[k] || 0) + d)); saveDraft(); renderHost() }
-function poolD(k) { draft(); const p = draftPool(setupDraft).slice(), i = p.indexOf(k); if (i >= 0) p.splice(i, 1); else p.push(k); setupDraft.pool = p.length === poolAll().length ? null : p; saveDraft(); renderHost() }
-function poolPreset(which) { draft(); setupDraft.pool = which === "all" ? null : MISSIONS.filter(m => !m.addon && m.key !== "custom" && m.kind === "screen").map(m => m.key); saveDraft(); renderHost() }
-function secToggle(id, open) { if (!setupDraft) return; const o = new Set(setupDraft.open || []); open ? o.add(id) : o.delete(id); setupDraft.open = [...o]; saveDraft() }
+const HOURS = [2.5, 3, 3.5, 4, 4.5, 5, 6, 7];
+const aboutH = t => { let h = Math.floor(t / 60), q = Math.round((t % 60) / 15); if (q === 4) { h++; q = 0 } return "about " + (h ? h + (["", "¼", "½", "¾"][q]) + (h === 1 && !q ? " hour" : " hours") : (q * 15) + " minutes") };
+function recRounds(d, n) {
+  const [lo, hi] = roundsRange(n), want = (+d.hours || 4) * 60; let best = lo, gap = 1e9;
+  for (let R = lo; R <= hi; R++) { const g = Math.abs(estMins(d, n, { rounds: R }) - want); if (g < gap - 5) { best = R; gap = g } }
+  return best;
+}
+// the recommendation for each choice, in the order the pages ask them
+const RECS = [
+  ["cloaks", (d, n) => String(defaults(n).t)],
+  ["hours", (d, n) => { const t = estMins(d, n, { rounds: roundsRange(n)[0], mingle: true, dinnerAfter: 1, perRound: 0 }) / 60; return HOURS.reduce((a, h) => Math.abs(h - t) < Math.abs(a - t) ? h : a, 4) + "" }],
+  ["mingle", d => +d.hours >= 3],
+  ["dinnerAfter", (d, n) => { const R = +d.rounds || recRounds(d, n); return +d.hours < 3 || R < 3 ? 0 : Math.max(1, Math.ceil((R - 1) / 2)) }],
+  ["rounds", (d, n) => recRounds(d, n)],
+  ["perRound", () => 0],
+  ["kill", () => "poison"],
+  ["ghosts", () => true],
+  ["shield", () => "mix"],
+  ["blade", () => true],
+  ["champion", d => d.shield !== "off"],
+  ["dilemma", d => d.shield !== "off"],
+  ["witness", () => true],
+  ["convert", () => true],
+  ["bargain", () => true],
+  ["quests", d => !!d.mingle],
+  ["wrong", () => "cloaks"]
+];
+function settle(d) {
+  const n = tableOf(d), t = new Set(d.touched || []);
+  for (const [k, f] of RECS) if (!t.has(k)) d[k] = f(d, n);
+  const [lo, hi] = roundsRange(n); d.rounds = Math.max(lo, Math.min(hi, +d.rounds || lo));
+  d.dinnerAfter = Math.min(+d.dinnerAfter || 0, d.rounds - 1);
+  if (+d.cloaks > maxCloaks(n)) d.cloaks = String(maxCloaks(n));
+  if (d.shield === "off") { d.champion = false; d.dilemma = false }
+  return d;
+}
+const recOf = (d, k) => { const r = RECS.find(x => x[0] === k); return r ? r[1](d, tableOf(d)) : undefined };
+const blades = d => { const s = { rules: { rounds: +d.rounds || 3 }, players: [] }; return { blade: onceRound(s, "blade"), champion: onceRound(s, "champion") } };
 function saveDraft() { try { sessionStorage.setItem("candle-draft", JSON.stringify(setupDraft)) } catch (e) {} } // survives a reload for a new version
-// what the plan comes to, in plain words: shown at the foot of setup and in the Menu during the game
-function planLines(d, n) {
-  const r = d.rounds || autoRounds(n || 8), per = +d.perRound === 1 ? "one mission a round" : +d.perRound === 2 ? "two missions a round" : "one or two missions a round, by the clock";
-  const pool = draftPool(d), sh = { mix: "hidden in round-by-round missions, public in the rest", public: "won openly by the winner", secret: "hidden wherever a mission allows", off: "no shields" }[d.shield];
-  const roles = [d.blade ? "the blade" : null, d.champion ? "the Champion every other round" : null, d.witness ? "the Witness in the final (if one Cloak is left)" : null, d.dilemma ? "the Dilemma when nobody holds a shield" : null].filter(Boolean);
-  return [
-    (d.rounds ? r + " rounds — the last is the final" : "About " + r + " rounds for " + (n || "your") + " players — the final starts once five or fewer are left") + "; " + per + ".",
-    (+d.dinnerAfter ? "Dinner after round " + d.dinnerAfter : "No dinner break") + (d.mingle ? "; a 10-minute mingle before each Reckoning." : "; straight from missions to the Reckoning."),
-    (pool.length === poolAll().length ? "Every mission in the pool" : pool.length + " of " + poolAll().length + " missions in the pool (" + andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title)).replace(/\?$/, "?") + ")") + ", dealt in a fresh order.",
-    (d.kill === "murder" ? "Murder: the victim is tapped in the night and leaves the table under blindfold" : "Poison: the victim is told in the night, announces it at dawn, then leaves the table") + ". " + (d.ghosts ? "The dead become Ghosts and judge from beyond the table." : "No Ghosts: the dead are out.") + " " + ([d.convert ? "Conversion" : null, d.bargain ? "Bargain" : null].filter(Boolean).length ? cap1(andList([d.convert ? "a Conversion" : null, d.bargain ? "a Bargain" : null].filter(Boolean))) + " when one Cloak is left against four or more." : "Never a Conversion or a Bargain.") + (d.quests ? " A side-quest for the Cloaks each night." : ""),
-    "Shields: " + sh + ". " + (roles.length ? cap1(andList(roles)) + "." : "No secret roles.")
-  ];
-}
-function setupForm() {
-  if (!setupDraft) try { setupDraft = JSON.parse(sessionStorage.getItem("candle-draft") || "null") } catch (e) {}
-  const d = setupDraft = Object.assign(SETUP0(), setupDraft || {}), names = namesOf(d), n = names.length, open = new Set(d.open || []);
-  const opt = (k, v, label, sub) => `<button class="${d[k] === v ? "sel" : ""}" aria-pressed="${d[k] === v}" onclick="setD('${k}',${JSON.stringify(v).replace(/"/g, "'")})">${label}${sub ? `<small>${sub}</small>` : ""}</button>`;
-  const onoff = (k, label, sub, dis) => `<button class="tog ${d[k] ? "sel" : ""}" aria-pressed="${!!d[k]}" onclick="setD('${k}',${!d[k]})" ${dis ? "disabled" : ""}><span class="tk" aria-hidden="true">${d[k] ? "✓" : ""}</span><span>${label}${sub ? `<small>${sub}</small>` : ""}</span></button>`;
-  const stepper = (k, label, lo, hi, show) => `<div class="vote setrow"><span>${esc(label)}</span><button onclick="stepD('${k}',-1,${lo},${hi})" ${+d[k] <= lo ? "disabled" : ""} aria-label="${esc(label)}: less">−</button><b class="n num wide">${esc(show(+d[k]))}</b><button onclick="stepD('${k}',1,${lo},${hi})" ${+d[k] >= hi ? "disabled" : ""} aria-label="${esc(label)}: more">+</button></div>`;
-  const sec = (id, num, title, summary, inner) => `<details class="setsec" data-k="sec-${id}" ${open.has(id) ? "open" : ""} ontoggle="secToggle('${id}',this.open)"><summary><span class="sn">${num}</span><span class="st">${title}<small>${esc(summary)}</small></span></summary><div class="sb">${inner}</div></details>`;
-  const pool = draftPool(d), ar = autoRounds(n || 8);
-  const mchips = MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => { const on = pool.includes(m.key), off = m.key === "statue" && !d.ghosts; return `<button class="chip ${on && !off ? "sel" : ""}" aria-pressed="${on}" onclick="poolD('${m.key}')" ${off ? "disabled" : ""}>${esc(m.title)}<small>${m.kind === "screen" ? "on screen" : "up from the table"}${off ? " · needs Ghosts" : ""}</small></button>` }).join("");
-  return `<div class="eyebrow">game master</div><h2>Plan your game</h2><p class="note">Make every decision now. Once you start, the phone walks you through the night one tap at a time — you read, the game does the rest.</p>
-${ROOM ? `<div class="advice offer roombox"><b>Your room: ${esc(ROOM)}</b><br>On the laptop for the TV, open <b>${esc(location.host)}/g/${esc(ROOM)}</b>. Keep this phone on <b>${esc(location.host)}/g/${esc(ROOM)}#host</b> — bookmark it.${roomInfo ? "<br>Your pass runs until " + esc(until(roomInfo.expires)) + "." : ""}</div>` : ""}
-${syncErr ? `<div class="secret">Still clearing the last game from the server — this retries by itself once the phone is back online.</div>` : ""}
-${sec("who", 1, "Players", n ? n + " players · " + (d.cloaks ? plural(+d.cloaks, "Cloak") : plural(defaults(n).t, "Cloak") + " (auto)") : "who’s at the table", `<label for="names">Names in seating order, clockwise round the table (one per line, up to ${NAMEMAX} characters)</label><textarea id="names" rows="8" oninput="draft()">${esc(d.names)}</textarea>
-<div class="note" id="count">${n} players${n ? " · " + plural(defaults(n).t, "Cloak") + " suggested" : ""}</div>
-<div class="row"><div><label for="cloaks">Cloaks (blank = auto)</label><input id="cloaks" type="number" min="1" inputmode="numeric" value="${esc(d.cloaks)}" oninput="draft()"></div><div><label for="pinset">Host PIN</label><input id="pinset" inputmode="numeric" autocomplete="off" value="${esc(d.pin)}" oninput="draft()"></div></div>
-<div class="row"><div><label for="hostn">Your name (the host)</label><input id="hostn" value="${esc(d.host)}" placeholder="e.g. Sam" oninput="draft()"></div><div><label for="hours">Target length (hours)</label><input id="hours" type="number" step="0.5" value="${esc(d.hours)}" oninput="draft()"></div></div>`)}
-${sec("eve", 2, "The evening", (d.rounds ? d.rounds + " rounds" : "rounds by table size (~" + ar + ")") + " · " + (+d.perRound ? plural(+d.perRound, "mission") + "/round" : "missions by the clock") + " · " + (+d.dinnerAfter ? "dinner after R" + d.dinnerAfter : "no dinner"), `${roundsRow(d, n)}
-<p class="note">Auto: two leave each round (an exile and a night) until five or fewer are left — then the final. A fixed number makes its last round the final, whoever is left.</p>
-<p class="ask">Missions each round</p><div class="row wrap">${opt("perRound", 0, "By the clock", "one, or two when time allows")}${opt("perRound", 1, "One")}${opt("perRound", 2, "Two")}</div>
-${stepper("dinnerAfter", "Dinner break after round", 0, 10, v => v ? "round " + v : "no dinner break")}
-<div class="row wrap">${onoff("mingle", "Mingle before each Reckoning", "10 minutes up from the table — side-quests need it")}</div>`)}
-${sec("mis", 3, "Missions", pool.length + " of " + poolAll().length + " in the pool", `<p class="note">Switch off anything that won’t work in your room. The game deals the rest in a fresh order: the icebreaker first, the Ghost games later. You can still swap one on the night.</p><div class="row wrap">${`<button class="slim" onclick="poolPreset('all')">All on</button><button class="slim" onclick="poolPreset('screen')">Nothing physical — screen games only</button>`}</div><div class="chips">${mchips}</div>`)}
-${sec("night", 4, "Nights & Ghosts", (d.kill === "murder" ? "murder" : "poison") + " · Ghosts " + (d.ghosts ? "on" : "off") + (d.convert || d.bargain ? " · convert" : ""), `<p class="ask">How the Cloaks kill</p><div class="row wrap big2">${opt("kill", "murder", "Murder", "tapped in the night, they leave the table under blindfold — an empty chair at dawn")}${opt("kill", "poison", "Poison", "told in the night, they announce it at dawn, say last words, then leave")}</div>
-<div class="row wrap">${onoff("ghosts", "Ghosts", "the dead watch, give one secret verdict, and can win at the end")}${onoff("convert", "Conversion", "a lone Cloak may invite a Candle to join")}${onoff("bargain", "Bargain", "join the Cloaks or die — if a Conversion was refused")}${onoff("quests", "Cloak side-quests", "a secret task each night; a failed one costs the pot")}</div>`)}
-${sec("roles", 5, "Secret roles & prizes", [d.shield === "off" ? "no shields" : "shields " + d.shield, d.blade ? "blade" : null, d.champion ? "Champion" : null, d.witness ? "Witness" : null].filter(Boolean).join(" · "), `<p class="ask">⛨ Shields <small>— safe from the night</small></p><div class="row wrap">${opt("shield", "mix", "Mixed", "hidden in round games, public in the rest")}${opt("shield", "public", "Public", "the winner, named on TV")}${opt("shield", "secret", "Hidden", "whenever a mission allows")}${opt("shield", "off", "None")}</div>
-<div class="row wrap">${onoff("blade", "⚔ Blade", "one a round: its holder’s vote counts twice")}${onoff("champion", "Champion", "shield and blade together, every other round", !d.blade || d.shield === "off")}${onoff("witness", "Witness", "in the final, if one Cloak is left: the winner meets them")}${onoff("dilemma", "The Dilemma", "offered when nobody holds a shield", d.shield === "off")}</div>`)}
-${sec("pot", 6, "Pot & prize", moneyOf({ potUnit: d.unit || "pts" }, d.potCap || 2000) + " target" + (d.prize ? " · prize set" : " · set a prize"), `<div class="row"><div><label for="unit">Pot unit</label><input id="unit" value="${esc(d.unit)}" oninput="draft()"></div><div><label for="potCap">Pot target (it stops there)</label><input id="potCap" type="number" inputmode="numeric" value="${esc(d.potCap || "2000")}" oninput="draft()"></div></div>
-<p class="ask">Wrong shouts cost the pot</p><div class="row wrap">${opt("wrong", "cloaks", "Cloaks’ only")}${opt("wrong", "all", "Everyone’s", "a Cloak’s double")}</div>
-<label for="prize">The prize</label><input id="prize" value="${esc(d.prize)}" placeholder="${esc(PRIZE0)}" oninput="draft()">
-<p class="note">Nothing names the prize — not the TV, not your lines — until the game is won. Two or more winners play rock, paper, scissors for it.</p>
-<label for="title">Title on the TV</label><input id="title" value="${esc(d.title)}" oninput="draft()">
-<div class="row"><button class="ghost" onclick="openBank()">Question bank — ${bankSummary()}</button></div>`)}
-<div class="planbox"><div class="eyebrow">your game plan</div>${planLines(d, n).map(l => `<p>${esc(l)}</p>`).join("")}<p class="note">Roles are dealt at random when you start; you’ll see them on the next screens.</p></div>
-${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}<div class="foot"><button class="primary" onclick="submitSetup()">Start game</button></div>`;
-}
 function draft() {
   const g = (id, k) => { const el = $("#" + id); if (el) setupDraft[k] = el.value };
   setupDraft = Object.assign(SETUP0(), setupDraft || {});
-  g("names", "names"); g("cloaks", "cloaks"); g("title", "title"); g("hostn", "host"); g("unit", "unit"); g("potCap", "potCap"); g("prize", "prize"); g("hours", "hours"); g("pinset", "pin");
+  g("names", "names"); g("title", "title"); g("hostn", "host"); g("unit", "unit"); g("potCap", "potCap"); g("prize", "prize"); g("pinset", "pin");
   saveDraft();
-  const n = namesOf(setupDraft).length, c = $("#count");
-  if (c) c.textContent = n + " players" + (n ? " · " + plural(defaults(n).t, "Cloak") + " suggested" : "");
+  const c = $("#count"); if (c) c.innerHTML = countLine(setupDraft);
+}
+function countLine(d) {
+  const n = namesOf(d).length;
+  if (!n) return "No names yet.";
+  if (n < MINP) return `<b>${n}</b> so far — the game needs at least ${MINP}.`;
+  if (n > MAXP) return `<b>${n}</b> — that’s ${n - MAXP} too many. The game takes ${MAXP} at most.`;
+  return `<b>${n} players.</b> ${n <= 9 ? "A small, intense table — every vote matters." : n <= 16 ? "The sweet spot." : "A big table: bigger rounds, and two exiles a Reckoning while more than sixteen are left."}`;
+}
+function wSet(k, v) { draft(); const d = setupDraft; d[k] = v; if (!d.touched.includes(k)) d.touched = [...d.touched, k]; saveDraft(); renderHost() }
+function poolD(k) { draft(); const p = draftPool(setupDraft).slice(), i = p.indexOf(k); if (i >= 0) p.splice(i, 1); else p.push(k); setupDraft.pool = p.length === poolAll().length ? null : p; saveDraft(); renderHost() }
+function poolPreset(which) { draft(); setupDraft.pool = which === "all" ? null : MISSIONS.filter(m => !m.addon && m.key !== "custom" && m.kind === "screen").map(m => m.key); saveDraft(); renderHost() }
+// what each mission needs from the room
+const NEEDS = { likely: "chalkboards", quiz: "nothing — players shout", countdown: "chalkboards", estimate: "chalkboards", memory: "chalkboards", snap: "nothing — players shout", rps: "room for everyone to stand and pair up", oneleg: "room for everyone to stand", charades: "blindfolds", hum: "blindfolds", statue: "room to stand, and Ghosts", truths: "nothing", draw: "blindfolds and one chalkboard", hilo: "room for everyone to stand", change: "nothing — players shout" };
+
+/* the pages, in order. show: whether the page applies, given the choices so far. check: what stops Next. */
+const wopt = (d, k, v, title, text) => { const on = d[k] === v, rec = recOf(d, k) === v; return `<button class="wopt ${on ? "sel" : ""}" aria-pressed="${on}" onclick="wSet('${k}',${JSON.stringify(v).replace(/"/g, "'")})"><span class="wt">${title}${rec ? `<em>recommended</em>` : ""}</span><span class="wd">${text}</span></button>` };
+const why = (head, body) => `<div class="why"><b>${head}</b>${body}</div>`;
+const P_ = t => `<p class="wp">${t}</p>`;
+function timeline(d, n, mark) {
+  const R = +d.rounds, plan = simPlan(n, R), b = blades(d), rows = [];
+  plan.forEach((r, i) => {
+    const bits = [plural(r.exiles, "exile"), r.kills ? plural(r.kills, "victim") + " in the night" : "no one dies that night"];
+    const extra = [d.blade && b.blade === i + 1 ? "the blade" : null, d.champion && b.champion === i + 1 ? "the Champion" : null].filter(Boolean);
+    rows.push(`<li><b>Round ${i + 1}</b> — ${r.start} at the table · ${bits.join(" · ")}${extra.length ? ` · <i>${andList(extra)} on offer</i>` : ""}</li>`);
+    if (+d.dinnerAfter === i + 1) rows.push(`<li class="din"><b>Dinner</b> — ${mark === "dinner" ? "here" : "a 25-minute break"}</li>`);
+  });
+  rows.push(`<li class="fin"><b>Round ${R} — the final</b> — 5 at the table · one exile in secret leaves 4 · then the vote to end it</li>`);
+  return `<ol class="tline">${rows.join("")}</ol>`;
+}
+const WIZ = [
+  { id: "welcome", sec: "Welcome", title: () => "Let’s plan your game", body: d => `
+${P_("This takes about five minutes. You’ll get one question a page, and every page explains what the choice means for your evening and what happens if you pick something else.")}
+${P_("Every page has a recommended answer already picked for you, worked out from what you chose before. If you’re not sure, the recommendation is a safe choice. <b>Back</b> takes you to the previous page, and nothing reaches the TV until you press <b>Start game</b> on the last page.")}
+${ROOM ? `<div class="advice offer roombox"><b>Your room: ${esc(ROOM)}</b><br>On the laptop you’ll show on the TV, open <b>${esc(location.host)}/g/${esc(ROOM)}</b>. Keep this phone on <b>${esc(location.host)}/g/${esc(ROOM)}#host</b> and bookmark it.${roomInfo ? "<br>Your pass runs until " + esc(until(roomInfo.expires)) + "." : ""}</div>` : ""}
+${why("Before your guests arrive", `<ul><li>The TV showing the room link above, from a laptop plugged in or cast to it. Turn the volume up: the game has music and sound effects.</li><li>This phone charged, with auto-lock set long or off. You’ll be tapping it all evening.</li><li>A small chalkboard and chalk (or a whiteboard and pen) for every guest. They write names on it to vote, and answers in the missions.</li><li>A blindfold for every guest. Sleep masks are perfect. The Cloaks are chosen, and do their work, while everyone else can’t see.</li><li>A prize. Something worth lying to your friends for.</li></ul>`)}
+${why("What the host does", "You run the game like a presenter. You don’t play: the phone shows you who the Cloaks are from the start, and it gives you every line to read out, one tap at a time. The TV shows everyone else what they need to see.")}` },
+  { id: "names", sec: "The table", title: () => "Who’s playing?", check: d => { const names = namesOf(d), long = names.find(x => x.length > NAMEMAX); return names.length < MINP ? "The game needs at least " + MINP + " players." : names.length > MAXP ? MAXP + " players at most." : long ? "“" + long + "” is too long for the TV. Use " + NAMEMAX + " characters at most." : new Set(names.map(x => x.toLowerCase())).size !== names.length ? "Two players have the same name. Add an initial so they’re different." : "" }, body: d => `
+${P_("Type every player’s name, one per line, <b>in the order they’re sitting, going clockwise round the table</b>. Don’t include yourself: the host doesn’t play.")}
+<label for="names">Players (${MINP} to ${MAXP})</label><textarea id="names" rows="10" oninput="draft()" placeholder="Annie&#10;Ben&#10;Chloe&#10;…">${esc(d.names)}</textarea>
+<p class="note" id="count">${countLine(d)}</p>
+${why("Why seating order matters", "The TV shows everyone’s candle in this order, and at every vote the chalkboards are turned one at a time in this order. When the order matches the table, everyone can follow who wrote what.")}
+${why("Names", "Keep them short: first names or nicknames up to " + NAMEMAX + " characters. Every name must be different, so two Sams become Sam B and Sam K. If someone’s spelling is wrong on the night, you can fix it from the Menu. If someone has to go home early, the Menu takes them out of the game.")}` },
+  { id: "host", sec: "The table", title: () => "What’s your name?", body: d => `
+${P_("You’re the host. The TV and your script mention you by name. For example, when a player can’t act out a word, the TV tells them to ask you to skip it.")}
+<label for="hostn">Your name</label><input id="hostn" value="${esc(d.host)}" placeholder="e.g. Sam" oninput="draft()" autocomplete="off">
+${why("Optional", "Leave it blank and the game says “the host” instead.")}` },
+  { id: "pin", sec: "The table", title: () => "Choose a host PIN", check: d => !d.pin.trim() ? "Choose a PIN. It keeps the Cloaks’ names off anyone else’s phone." : !/^[\x21-\x7E]+$/.test(d.pin.trim()) ? "Use letters, numbers and plain keyboard symbols (no spaces, accents or emoji)." : "", body: d => `
+${P_("The PIN guards this screen, which shows who the Cloaks are and controls the game.")}
+<label for="pinset">Host PIN</label><input id="pinset" inputmode="numeric" autocomplete="off" value="${esc(d.pin)}" oninput="draft()" placeholder="e.g. 4821">
+${why("When you’ll need it", "If this phone’s battery dies, or you switch to another phone, open the host link on the new phone and type the PIN. The game carries on exactly where you left off. Without the PIN, nobody else can open the host screen, even with the link.")}
+${why("Pick something private", "Not your bank PIN, and not something your guests would guess. Anyone who has it can see every secret in the game. Write it down somewhere your guests won’t see.")}` },
+  { id: "cloaks", sec: "The table", title: () => "How many Cloaks?", body: d => { const n = tableOf(d), rec = defaults(n).t, opts = [...new Set([rec - 1, rec, rec + 1])].filter(x => x >= 1 && x <= maxCloaks(n)); return `
+${P_(`The Cloaks are the secret killers. They’re chosen at random when the game starts, they learn who each other are, and every night they choose who dies. Everyone else is a <b>Candle</b>, and the Candles win by exiling every Cloak before the end.`)}
+<div class="wopts">${opts.map(c => wopt(d, "cloaks", String(c), plural(c, "Cloak") + " among " + n, c === rec ? `About one player in ${Math.round(n / c)}. The balance we’ve tested most for ${n} players: the Cloaks have allies, and the Candles have a fair chance of finding them.` : c < rec ? `About one in ${Math.round(n / c)}. Easier for the Candles: ${c === 1 ? "a single Cloak is on their own all game, with nobody to plot with, and one good guess ends it early." : "fewer Cloaks, fewer allies, and each exile is more likely to hit."}` : `About one in ${Math.round(n / c)}. Harder for the Candles: more suspects, more votes pulling the wrong way, and a real chance the Cloaks take the table.`)).join("")}</div>
+${why("Nobody finds out how many Cloaks there are", "Not even the players: the TV never says. People only find out as the Cloaks are exiled and revealed.")}` } },
+  { id: "hours", sec: "The evening", title: () => "How long is your evening?", body: d => { const n = tableOf(d); return `
+${P_("Tell us roughly how long you want the game to last, from sitting down to the final reveal. The next pages use this to recommend how many rounds to play and when to stop for dinner.")}
+<div class="wopts">${[["2.5", "2½ hours", "Short and sharp. Fewer rounds, so more players leave each round. Best for a weeknight."], ["3", "3 hours", "A full game, quick pace."], ["3.5", "3½ hours", "Room to breathe: a dinner break and time to talk."], ["4", "4 hours", "The classic evening, with dinner in the middle."], ["4.5", "4½ hours", "A long night, with slower rounds and more missions. Good for 18 or more players."], ["5", "5 hours", "The full feast. Plenty of missions, and a long, slow build to the end."], ["6", "6 hours", "A big table’s evening: twenty or more players need more rounds to reach the final."], ["7", "7 hours", "An all-nighter for a big table, every round at an easy pace."]].map(([v, t, x]) => wopt(d, "hours", v, t, x)).join("")}</div>
+${why("This isn’t a hard stop", `Nothing cuts the game off. While you play, the phone keeps an eye on the clock. When missions are set “by the clock” (you’ll see that later), it adds a second mission to a round when you’re ahead of time and skips it when you’re behind. `)}
+${why("For " + n + " players", "With our recommended settings, a game for " + n + " takes " + aboutH(estMins(settle(Object.assign({}, d, { touched: [] })), n)) + ". Bigger tables need more rounds to reach the final, so they run longer.")}` } },
+  { id: "fast", sec: "The evening", title: () => "Choose everything, or use our recommendations?", body: d => `
+${P_("You’ve told us the essentials. From here there are about twenty more choices: rounds, dinner, missions, how the Cloaks kill, and the special powers.")}
+<div class="wopts"><button class="wopt" onclick="wFast()"><span class="wt">Use the recommended settings<em>quickest</em></span><span class="wd">We fill in every choice for ${tableOf(d)} players and ${esc(d.hours)} hours, and show them all on one page to check. You can still change any of them from there.</span></button>
+<button class="wopt" onclick="wNext()"><span class="wt">Take me through each choice</span><span class="wd">One page for each choice, with what it does. Best if you like to know exactly how your game will run, or you’ve played before and want it your way.</span></button></div>` },
+  { id: "rounds", sec: "The evening", title: () => "How many rounds?", body: d => { const n = tableOf(d), [lo, hi] = roundsRange(n), vals = []; for (let r = lo; r <= hi; r++) vals.push(r); return `
+${P_("A <b>round</b> is one mission (or two), then the <b>Reckoning</b>, where everyone votes someone out. That player is <b>exiled</b> and their role is revealed. Then comes the <b>night</b>, when the Cloaks kill. The last round is <b>the final</b>.")}
+${P_(`Whatever you choose, the final starts with <b>five players left</b>. The game works out how many leave each round to get there. With fewer rounds, more players leave each round. With more rounds, it’s gentler and longer. For ${n} players you can play ${lo === hi ? "exactly " + lo : lo + " to " + hi} rounds.`)}
+<div class="wopts">${vals.map(R => { const pl = simPlan(n, R), path = [n, ...pl.map(r => r.start - r.exiles - r.kills)].join(" → "); return wopt(d, "rounds", R, R + " rounds · " + aboutH(estMins(d, n, { rounds: R })), `Players left after each round: ${path}. ${lo === hi ? "The only length that works for " + n + " players, so there’s nothing to choose here: this page shows you how the evening will unfold." : R === lo ? "Every round at full stretch: the most drama per round, the shortest game." : R === hi ? "One exile and one victim a round: the slowest, most thoughtful game." : "In between."}`) }).join("")}</div>
+${why("Your rounds, one by one", timeline(d, n))}
+${why("What’s a victim?", "Each night the Cloaks choose who dies. At a bigger table they choose two or three, so the game still reaches five in time. A player holding a shield can’t be killed.")}` } },
+  { id: "perRound", sec: "The evening", title: () => "Missions each round", body: d => { const n = tableOf(d); return `
+${P_("Missions are the party games: quizzes, guessing games, charades and more. Every mission fills the pot, and most hand out a <b>shield</b>. Each mission takes about ten to fifteen minutes. Winning isn’t the only point: people watch who seems to be playing badly on purpose.")}
+<div class="wopts">${wopt(d, "perRound", 0, "By the clock · " + aboutH(estMins(d, n, { perRound: 0 })), "One mission a round, and a second when the evening is running ahead of time. The phone tells you which. It’s the easiest way to finish on time.")}${wopt(d, "perRound", 1, "One a round · " + aboutH(estMins(d, n, { perRound: 1 })), "A faster game. More time talking and voting, less time playing.")}${wopt(d, "perRound", 2, "Two a round · " + aboutH(estMins(d, n, { perRound: 2 })), "A longer game with a bigger pot and more shields. More chances to spot who’s sabotaging.")}</div>
+${why("Times are estimates", `They cover the whole evening for ${n} players and ${+d.rounds} rounds, including dinner if you have it. Groups that talk a lot at the Reckoning run longer.`)}` } },
+  { id: "dinner", sec: "The evening", title: () => "When do you eat?", body: d => { const n = tableOf(d), R = +d.rounds, opts = [[0, "No dinner break", "Choose this if you’re eating before or after the game, or eating while you play. The game won’t stop for food."]]; for (let r = 1; r < R; r++) opts.push([r, "After round " + r, r === 1 ? "Early: the first victim is still fresh news, and everyone eats with their first suspicions." : r === R - 1 ? "Late: just before the final. People who’ve been exiled get to eat with the survivors, but a hungry table can drag." : "Mid-game: " + (R - 1 - r) + " round" + (R - 1 - r === 1 ? "" : "s") + " left before the final. Enough has happened to argue about over food."]); return `
+${P_("A dinner break is a <b>25-minute pause</b> after a round’s night, so the table can eat. The TV shows a dinner screen with a timer, and you can make it longer or shorter on the night. Nobody is exiled or killed during it.")}
+${P_("It isn’t dead time. Dinner is where suspicions grow, alliances form and the Cloaks work hardest to seem friendly. It works best once there’s something to talk about: after the first victim or two.")}
+<div class="wopts">${opts.map(([v, t, x]) => wopt(d, "dinnerAfter", v, t, x)).join("")}</div>
+${+d.dinnerAfter ? why("Where dinner falls", timeline(d, n, "dinner")) : ""}
+${why("On the night", "When dinner is due, the phone offers two buttons: <b>Dinner now</b>, or <b>Not yet</b> if the food isn’t ready. With Not yet, you can start dinner at any later morning instead.")}` } },
+  { id: "mingle", sec: "The evening", title: () => "A mingle before each vote?", body: d => `
+${P_("After a round’s missions and before the Reckoning, everyone can get up from the table for <b>ten minutes</b>. They talk in corners, compare notes, make deals and point fingers. The TV shows a countdown.")}
+<div class="wopts">${wopt(d, "mingle", true, "Yes, mingle before each Reckoning", "Adds about ten minutes to every round. It’s where most of the game happens: private chats, accusations, and Cloaks steering the vote. The Cloaks’ side-quests (later) happen here too.")}${wopt(d, "mingle", false, "No, go straight to the vote", "A quicker game that stays at the table. Good for a short evening, a small room, or a group that talks plenty while seated. You can still start a mingle on the night if the table needs one.")}</div>` },
+  { id: "kill", sec: "The night", title: () => "How do the Cloaks kill?", body: d => `
+${P_("Every night, everyone puts their blindfolds on. The Cloaks take theirs off, and silently point to who dies. This choice is about what happens to the victim next.")}
+<div class="wopts">${wopt(d, "kill", "poison", "Poison", "While everyone is still blindfolded, you quietly tell the victim. At dawn, the blindfolds come off and the victim stands up and announces they’ve been poisoned. They get thirty seconds of last words, then leave the table. Easy to run, and the last words are often the highlight of the round.")}${wopt(d, "kill", "murder", "Murder", "You tap the victim on the shoulder and lead them away from the table while everyone is still blindfolded. At dawn the blindfolds come off and the table finds an empty chair. More theatrical, but you have to move quietly, and the victim gets no last words.")}</div>
+${why("Either way", "The phone gives you every line and step, and the TV uses your choice’s words all night: poisoned or murdered.")}` },
+  { id: "ghosts", sec: "The night", title: () => "Do the dead stay in the game?", body: d => `
+${P_("Players leave the game when they’re exiled or killed. This choice decides whether they’re still part of it.")}
+<div class="wopts">${wopt(d, "ghosts", true, "Yes: they become Ghosts", "The dead stay at the party. They watch, they can’t vote or talk at the table, and they wear blindfolds with everyone else. Each Ghost who died a Candle names who they think is a Cloak, once and in secret. At the end, the Ghosts who guessed right can steal the prize if the living get greedy. Some missions use the Ghosts too. Nobody spends the evening bored.")}${wopt(d, "ghosts", false, "No: once you’re out, you’re out", "Simpler. Choose this if people will leave early or go home, or if you don’t want to manage a second group. The Statue mission is switched off, because it needs Ghosts.")}</div>` },
+  { id: "pool", sec: "Missions", title: () => "Which missions can your room play?", check: d => !draftPool(d).filter(k => k !== "statue" || d.ghosts).length ? "Switch at least one mission on." : "", body: d => { const pool = draftPool(d); return `
+${P_("Switch off anything that won’t work in your space or with your guests. The game plays the rest in a random order, and never repeats one until it has used them all. Most Likely To always comes first as an icebreaker. The blindfold games come later, when the Ghosts can join in. On the night, you can swap any mission for another.")}
+<div class="row wrap"><button class="slim" onclick="poolPreset('all')">Switch all on</button><button class="slim" onclick="poolPreset('screen')">Only games played at the table</button></div>
+<div class="mpool">${MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => { const on = pool.includes(m.key), off = m.key === "statue" && !d.ghosts; return `<button class="wopt ${on && !off ? "sel" : ""}" aria-pressed="${on && !off}" onclick="poolD('${m.key}')" ${off ? "disabled" : ""}><span class="wt"><span class="tk" aria-hidden="true">${on && !off ? "✓" : ""}</span>${esc(m.title)}</span><span class="wd">${esc(defRules(m))}</span><span class="wn">Needs: ${esc(NEEDS[m.key] || "nothing")}${off ? " · off because Ghosts are off" : ""}</span></button>` }).join("")}</div>
+<p class="note">${pool.filter(k => k !== "statue" || d.ghosts).length} of ${poolAll().length} switched on.</p>` } },
+  { id: "shield", sec: "Powers", title: () => "Shields", body: d => { const n = tableOf(d); return `
+${P_("A <b>shield</b> protects the player holding it from being killed that night. Shields are the prize in most missions, and the only prize that comes round every round. They last one night. At most a quarter of the table (" + Math.max(1, Math.floor(n / 4)) + " of " + n + ") can hold one at the same time.")}
+<div class="wopts">${wopt(d, "shield", "mix", "Mixed: some public, some hidden", "In games played in rounds (the quiz, Closest Guess, Longest Word and others), one secret round hides a shield. Whoever wins that round gets it without anyone knowing, and you tap them on the shoulder later under blindfold. In other games, the overall winner gets it in front of everyone. The best of both.")}${wopt(d, "shield", "public", "Always public", "The mission winner gets the shield and the TV names them. Simple to follow. The Cloaks know who is safe and choose someone else.")}${wopt(d, "shield", "secret", "Hidden wherever possible", "More paranoia: nobody knows who is safe. If a Cloak kills and the shield holds, the table only learns that nobody died.")}${wopt(d, "shield", "off", "No shields", "Every night someone dies, no matter what. The missions only fill the pot, and the Champion and the Dilemma are switched off because they need shields.")}</div>
+${why("Why hide a shield?", "A hidden shield lets a player bluff: nobody knows they’re safe. And when a Cloak’s kill fails, nobody knows why. If a Cloak wins a hidden shield it does nothing, because Cloaks can’t be killed. Nobody is told.")}` } },
+  { id: "blade", sec: "Powers", title: () => "The blade", body: d => { const b = blades(d); return `
+${P_("The <b>blade</b> makes one player’s vote count twice at one Reckoning. It’s on offer <b>once in the whole game</b>, in a mission in round " + b.blade + " of " + d.rounds + ". If nobody wins it, the next mission offers it again.")}
+<div class="wopts">${wopt(d, "blade", true, "Yes, one blade in the game", "One vote that counts twice can swing an exile. If it’s won in secret, the TV shows where the extra vote landed once every board is turned, but never whose it was. That gives the table something new to argue about.")}${wopt(d, "blade", false, "No blade", "Every vote counts once, all game. Simpler to explain.")}</div>` } },
+  { id: "champion", sec: "Powers", show: d => d.shield !== "off", title: () => "The Champion", body: d => { const b = blades(d); return `
+${P_("The <b>Champion</b> holds a shield and a blade together, for one round. They can’t be killed that night, and their vote counts twice. They also have a way out: before the first board is turned at the Reckoning, the Champion can <b>lay both down</b>. Then nobody can vote them out that round, but they lose the shield for the night and their vote counts once.")}
+${P_("There is <b>one Champion in the whole game</b>, won in a mission in round " + b.champion + " of " + d.rounds + ", late enough to matter. It can be won openly or in a secret round.")}
+<div class="wopts">${wopt(d, "champion", true, "Yes, one Champion", "One big moment in the second half. The table has to decide whether to target the Champion, and the Champion has to decide whether to save themselves or keep the power.")}${wopt(d, "champion", false, "No Champion", "Shields and the blade stay separate. One less thing to explain.")}</div>` } },
+  { id: "dilemma", sec: "Powers", show: d => d.shield !== "off", title: () => "The Dilemma", body: d => `
+${P_("The <b>Dilemma</b> is a quick bonus game, offered <b>once in the whole game</b>, after a mission, at a moment when nobody at the table holds a shield. Each player secretly writes <b>POT</b> or <b>SHIELD</b> on their chalkboard, face down.")}
+${P_("If exactly one person writes SHIELD, they get the shield (in public) and the pot grows. If nobody does, the pot grows by double. If two or more reach for it, nobody gets the shield and the pot <b>loses</b> points. It tests greed and trust: who takes the shield for themselves?")}
+<div class="wopts">${wopt(d, "dilemma", true, "Yes, offer it once", "The phone suggests it at the right moment. You can still skip it on the night.")}${wopt(d, "dilemma", false, "No Dilemma", "The game never offers it.")}</div>` },
+  { id: "witness", sec: "Powers", title: () => "The Witness", body: d => `
+${P_("The <b>Witness</b> can only appear in the final, and only if the final starts with <b>exactly one Cloak among the five</b>. One mission then offers “a special prize”, and the TV doesn’t say what it is. While everyone else is blindfolded, the winner and the last Cloak take their blindfolds off and look at each other for thirty seconds. A Candle Witness now <b>knows who the Cloak is</b>, and the Cloak can’t kill them. Then the Witness has to convince the others at the last votes.")}
+<div class="wopts">${wopt(d, "witness", true, "Yes, if the final allows it", "A dramatic twist when the end is close. If the conditions never happen (two or more Cloaks in the final), nothing changes.")}${wopt(d, "witness", false, "No Witness", "The final plays with no special prize.")}</div>
+${why("If a Cloak wins it", "The ceremony still happens for show, so nobody can tell. The Cloak just meets nobody.")}` },
+  { id: "convert", sec: "Twists", title: () => "Conversion", body: d => `
+${P_("When the Cloaks are down to <b>one</b> and there are still four or more Candles, a lone Cloak can’t win by killing alone. On that night the Cloak can recruit instead of kill: they choose a Candle and <b>invite them to become a Cloak</b>.")}
+${P_("The invited player decides in secret. If they accept, they become a Cloak and now work with the other. If they refuse, they stay a Candle, and the Cloak knows who turned them down. Either way, the table only hears that nobody died that night. It happens <b>at most once a game</b>.")}
+<div class="wopts">${wopt(d, "convert", true, "Yes, allow one Conversion", "Stops the game fizzling out once most of the Cloaks have been exiled. The phone sets it up for you when the time comes.")}${wopt(d, "convert", false, "No Conversions", "Roles never change. A lone Cloak has to survive on their own.")}</div>` },
+  { id: "bargain", sec: "Twists", title: () => "The Bargain", body: d => `
+${P_(d.convert ? "The <b>Bargain</b> is the harsher version. It comes on a later night if a Cloak is on their own again, usually because the Conversion was refused. The Cloak chooses a Candle and gives them a choice: <b>join or die</b>." : "The <b>Bargain</b> is a harsher recruitment. When the Cloaks are down to one and four or more Candles are left, the Cloak chooses a Candle and gives them a choice: <b>join or die</b>.")}
+${P_("If they accept, they become a Cloak. If they refuse, they die on the spot, unless they hold a shield. It happens <b>at most once a game</b>.")}
+<div class="wopts">${wopt(d, "bargain", true, "Yes, allow one Bargain", d.convert ? "A second chance for a lone Cloak, and one of the hardest decisions of the night for the player who’s asked." : "Gives a lone Cloak a fighting chance.")}${wopt(d, "bargain", false, "No Bargain", d.convert ? "Only the gentler Conversion can happen." : "A lone Cloak is on their own until the end.")}</div>` },
+  { id: "quests", sec: "Twists", title: () => "Cloak side-quests", body: d => `
+${P_("Each night the Cloaks can get a <b>secret side-quest</b> to complete at the next break. For example: “Get Annie to say the word ‘castle’ out loud,” or “Swap seats with Ben before the Reckoning and make it look like Ben’s idea.”")}
+${P_("A completed quest counts for the Cloaks at the end. A failed one costs the pot " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". Quests give the Cloaks something to do beyond acting innocent, and the Candles something odd to spot.")}
+<div class="wopts">${wopt(d, "quests", true, "Yes, a side-quest each night", d.mingle ? "They happen during the mingle, so the Cloaks have time to pull them off." : "You chose no mingle, so the Cloaks will have to do them during missions and dinner. That’s harder, but possible.")}${wopt(d, "quests", false, "No side-quests", "The Cloaks just have to blend in. A little simpler to run.")}</div>` },
+  { id: "pot", sec: "The pot and prize", check: d => !(+d.potCap > 0) ? "Set a pot target." : "", title: () => "The pot", body: d => `
+${P_("Missions fill a shared <b>pot</b>. At the end, the winners split it. It’s a score for the evening, and you can make it real money if your group wants to. The pot stops growing once it reaches its target, so it fills steadily across the game.")}
+<div class="row"><div><label for="unit">Written as</label><input id="unit" value="${esc(d.unit)}" oninput="draft()" placeholder="pts, £, coins…"></div><div><label for="potCap">Target</label><input id="potCap" type="number" inputmode="numeric" value="${esc(d.potCap || "2000")}" oninput="draft()"></div></div>
+${why("Points or money?", "Leave it as <b>pts</b> for a score, or type <b>£</b> if everyone has chipped in and the pot is real, for example £20 each. The target is then the total you’ve collected.")}
+${why("Wrong answers cost the pot", "In the shouting games, a wrong answer costs the pot. That’s the next page.")}` },
+  { id: "wrong", sec: "The pot and prize", title: () => "Who pays for wrong answers?", body: d => `
+${P_("In the Rapid Quiz, Snap and What Changed?, players shout out answers. Each wrong shout costs the pot " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". The room hears the total at the end of the mission, never who got it wrong.")}
+<div class="wopts">${wopt(d, "wrong", "cloaks", "Only the Cloaks’ wrong answers", "A Candle can guess freely. When the pot loses points, the table knows a Cloak shouted wrong, maybe on purpose, and starts wondering who.")}${wopt(d, "wrong", "all", "Everyone’s, and the Cloaks’ cost double", "Everyone has to be careful. The pot is harder to fill, and a big loss is harder to pin on anyone.")}</div>` },
+  { id: "prize", sec: "The pot and prize", title: () => "What’s the prize?", body: d => `
+${P_("The prize goes to the winners at the end: the Candles if they exiled every Cloak, or the Cloaks if they survived. Choose something people will scheme for.")}
+<label for="prize">The prize</label><input id="prize" value="${esc(d.prize)}" placeholder="${esc(PRIZE0)}" oninput="draft()">
+${why("It stays secret", "Nothing names the prize, not the TV and not your script, until the game is won. Tell your guests yourself if you want them to know. If two or more people win, the game has them play rock, paper, scissors for it.")}
+${why("If you leave it blank", "The game uses “" + PRIZE0 + "”.")}` },
+  { id: "title", sec: "The pot and prize", title: () => "A name for your night", body: d => `
+${P_("This title appears at the top of the TV all evening. Keep “Cloak &amp; Candle”, or make it yours: “Murder at Number 42”, “Sophie’s 40th”, “The Christmas Cloak”.")}
+<label for="title">Title on the TV</label><input id="title" value="${esc(d.title)}" oninput="draft()">
+${why("Question bank", "The quiz, charades, songs and other games draw from a bank of " + BANKDEFS.reduce((a, b) => a + b.items().length, 0) + " questions and prompts. If some won’t suit your group (too hard, too British, a song nobody knows), you can switch them off here. This is optional. " + bankSummary() + ".<div class=\"row\"><button class=\"slim\" onclick=\"openBank()\">Open the question bank</button></div>")}` },
+  { id: "review", sec: "Ready", title: () => "Check your game, then start", body: d => { const n = tableOf(d), names = namesOf(d), sh = { mix: "Shields: mixed, some public and some hidden", public: "Shields: always public", secret: "Shields: hidden wherever possible", off: "No shields" }[d.shield], pool = draftPool(d).filter(k => k !== "statue" || d.ghosts);
+    const line = (id, head, text) => `<button class="rv" onclick="wGo('${id}',true)"><span><b>${head}</b>${text}</span><span class="ch">Change</span></button>`;
+    return `${P_("Here’s your whole game. Tap any line to change it. When it’s right, press <b>Start game</b>: the roles are dealt at random, and the TV is ready for your guests.")}
+<h3>the table</h3>${line("names", names.length + " players", esc(names.join(", ")))}${line("host", "Host", esc(d.host.trim() || "“the host”"))}${line("pin", "Host PIN", "set (" + d.pin.trim().length + " characters)")}${line("cloaks", plural(+d.cloaks, "Cloak"), +d.cloaks === defaults(n).t ? "recommended for " + n : "we suggest " + defaults(n).t + " for " + n)}
+<h3>the evening</h3>${line("hours", d.hours + " hours", "the target length")}${line("rounds", d.rounds + " rounds", "the last is the final · " + aboutH(estMins(d, n)))}${line("perRound", ["Missions by the clock", "One mission a round", "Two missions a round"][+d.perRound], "")}${line("dinner", +d.dinnerAfter ? "Dinner after round " + d.dinnerAfter : "No dinner break", "")}${line("mingle", d.mingle ? "A mingle before each vote" : "No mingle", d.mingle ? "10 minutes" : "")}
+<h3>the night and the missions</h3>${line("kill", d.kill === "murder" ? "Murder" : "Poison", d.kill === "murder" ? "the victim leaves in the night" : "the victim announces it at dawn")}${line("ghosts", d.ghosts ? "Ghosts on" : "No Ghosts", d.ghosts ? "the dead stay in the game" : "the dead are out")}${line("pool", pool.length + " of " + poolAll().length + " missions", pool.length === poolAll().length ? "all of them" : esc(andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title))))}
+<h3>powers and twists</h3>${line("shield", sh, "the only power every round")}${line("blade", d.blade ? "The blade: once, round " + blades(d).blade : "No blade", "")}${d.shield !== "off" ? line("champion", d.champion ? "The Champion: once, round " + blades(d).champion : "No Champion", "") + line("dilemma", d.dilemma ? "The Dilemma: once, if nobody holds a shield" : "No Dilemma", "") : ""}${line("witness", d.witness ? "The Witness: in the final, if one Cloak is left" : "No Witness", "")}${line("convert", d.convert ? "One Conversion" : "No Conversion", "")}${line("bargain", d.bargain ? "One Bargain" : "No Bargain", "")}${line("quests", d.quests ? "Side-quests for the Cloaks" : "No side-quests", "")}
+<h3>the pot and prize</h3>${line("pot", "Pot target " + moneyOf({ potUnit: d.unit || "pts" }, d.potCap || 2000), "")}${line("wrong", d.wrong === "all" ? "Everyone’s wrong answers cost the pot" : "Only the Cloaks’ wrong answers cost the pot", "")}${line("prize", "Prize", esc(d.prize.trim() || PRIZE0))}${line("title", "TV title", esc(d.title.trim() || "Cloak & Candle"))}
+${why("How the evening runs", timeline(d, n))}` } }
+];
+const wizSteps = d => WIZ.filter(w => !w.show || w.show(d));
+function wNext() {
+  draft(); const d = settle(setupDraft), steps = wizSteps(d), i = steps.findIndex(w => w.id === d.step), w = steps[i];
+  const err = w && w.check ? w.check(d) : ""; setupMsg = err;
+  if (err) { toast(err, 5000); renderHost(); return }
+  d.step = d.back === "review" ? "review" : (steps[i + 1] || steps[steps.length - 1]).id; d.back = null; saveDraft(); renderHost(); window.scrollTo(0, 0);
+}
+function wBack() { draft(); const d = setupDraft, steps = wizSteps(d), i = steps.findIndex(w => w.id === d.step); setupMsg = ""; d.back = null; d.step = (steps[Math.max(0, i - 1)] || steps[0]).id; saveDraft(); renderHost(); window.scrollTo(0, 0) }
+function wGo(id, fromReview) { draft(); setupMsg = ""; setupDraft.step = id; setupDraft.back = fromReview ? "review" : null; saveDraft(); renderHost(); window.scrollTo(0, 0) }
+function wFast() { draft(); settle(setupDraft); wGo("review") }
+function setupForm() {
+  if (!setupDraft) try { setupDraft = JSON.parse(sessionStorage.getItem("candle-draft") || "null") } catch (e) {}
+  const d = setupDraft = settle(Object.assign(SETUP0(), setupDraft || {})), n = tableOf(d), steps = wizSteps(d);
+  let i = steps.findIndex(w => w.id === d.step); if (i < 0) { i = 0; d.step = steps[0].id }
+  const w = steps[i], last = w.id === "review", fastPage = w.id === "fast";
+  return `<div class="wiz"><div class="wbar"><span>${esc(w.sec)}</span><span class="num">${i + 1} of ${steps.length}</span></div><div class="wprog"><i style="width:${Math.round((i + 1) / steps.length * 100)}%"></i></div>
+${syncErr ? `<div class="secret">Still clearing the last game from the server. This retries by itself once the phone is back online.</div>` : ""}
+<h2>${w.title(d, n)}</h2>${w.body(d, n)}
+${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}</div>
+<div class="foot">${i ? `<button class="ghost" onclick="wBack()">Back</button>` : ""}${last ? `<button class="primary" onclick="submitSetup()">Start game</button>` : fastPage ? "" : `<button class="primary" onclick="wNext()">${d.back === "review" ? "Done" : i ? "Next" : "Let’s start"}</button>`}</div>`;
 }
 function submitSetup() {
-  draft(); const d = setupDraft, names = namesOf(d), long = names.find(x => x.length > NAMEMAX);
+  draft(); const d = settle(setupDraft), names = namesOf(d);
+  for (const w of wizSteps(d)) { const err = w.check && w.check(d); if (err) { setupMsg = err; d.step = w.id; d.back = "review"; toast(err, 5000); saveDraft(); renderHost(); return } }
   const tn = Math.round(+d.cloaks), pc = Math.round(+d.potCap), pool = draftPool(d).filter(k => k !== "statue" || d.ghosts);
-  const bad = names.length < MINP ? "Need at least " + MINP + " players." : names.length > MAXP ? MAXP + " players at most." : long ? "“" + long + "” is too long for the TV — " + NAMEMAX + " characters at most." : new Set(names.map(x => x.toLowerCase())).size !== names.length ? "Two players share a name — make them unique." : String(d.cloaks).trim() && tn > maxCloaks(names.length) ? "At most " + maxCloaks(names.length) + " Cloaks with " + names.length + " players — fewer than the Candles." : !d.pin.trim() ? "Set a host PIN." : !/^[\x21-\x7E]+$/.test(d.pin.trim()) ? "Use letters, numbers and plain keyboard symbols for the PIN (no spaces, accents or emoji)." : !pool.length ? "Switch at least one mission on." : "";
-  setupMsg = bad; if (bad) { toast(bad, 5000); if (/players|name|Cloaks|PIN/.test(bad) && !(d.open || []).includes("who")) d.open = [...(d.open || []), "who"]; renderHost(); const el = $("#host [role=alert]"); if (el) el.scrollIntoView({ block: "center" }); return }
   const tr = Math.max(1, Math.min(tn || defaults(names.length).t, maxCloaks(names.length)));
   const rules = { rounds: +d.rounds || 0, perRound: +d.perRound || 0, dinnerAfter: +d.dinnerAfter || 0, mingle: !!d.mingle, pool: Array.isArray(d.pool) ? pool : null, kill: d.kill, ghosts: !!d.ghosts, convert: !!d.convert, bargain: !!d.bargain, quests: !!d.quests, shield: d.shield, blade: !!d.blade, champion: !!d.champion, witness: !!d.witness, dilemma: !!d.dilemma };
+  setupMsg = "";
   startGame({ names, cloaks: tr, title: d.title.trim(), host: d.host.trim(), potUnit: d.unit.replace(/[<>&"'`]/g, "").trim() || "pts", potCap: pc > 0 ? Math.max(100, Math.round(pc / 50) * 50) : 2000, wrongRule: d.wrong === "all" ? "all" : "cloaks", prize: d.prize.trim() || PRIZE0, hours: +d.hours || 4, pin: d.pin.trim(), rules });
+}
+// what the plan comes to, in plain words: the Menu's "Your game plan" during the game
+function planLines(d, n) {
+  const r = d.rounds || autoRounds(n || 8), per = +d.perRound === 1 ? "one mission a round" : +d.perRound === 2 ? "two missions a round" : "one or two missions a round, by the clock";
+  const pool = draftPool(d), sh = { mix: "hidden in round-by-round missions, public in the rest", public: "won openly by the winner", secret: "hidden wherever a mission allows", off: "no shields" }[d.shield];
+  const b = blades(Object.assign({}, d, { rounds: r }));
+  const roles = [d.blade ? "the blade once (from round " + b.blade + ")" : null, d.champion ? "the Champion once (from round " + b.champion + ")" : null, d.witness ? "the Witness in the final (if one Cloak is left)" : null, d.dilemma ? "the Dilemma once, when nobody holds a shield" : null].filter(Boolean);
+  return [
+    r + " rounds — the last is the final; " + per + ".",
+    (+d.dinnerAfter ? "Dinner after round " + d.dinnerAfter : "No dinner break") + (d.mingle ? "; a 10-minute mingle before each Reckoning." : "; straight from missions to the Reckoning."),
+    (pool.length === poolAll().length ? "Every mission in the pool" : pool.length + " of " + poolAll().length + " missions in the pool (" + andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title)) + ")") + ", dealt in a fresh order.",
+    (d.kill === "murder" ? "Murder: the victim is tapped in the night and leaves the table under blindfold" : "Poison: the victim is told in the night, announces it at dawn, then leaves the table") + ". " + (d.ghosts ? "The dead become Ghosts and judge from beyond the table." : "No Ghosts: the dead are out.") + " " + ([d.convert ? "Conversion" : null, d.bargain ? "Bargain" : null].filter(Boolean).length ? cap1(andList([d.convert ? "a Conversion" : null, d.bargain ? "a Bargain" : null].filter(Boolean))) + " (once each) when one Cloak is left against four or more." : "Never a Conversion or a Bargain.") + (d.quests ? " A side-quest for the Cloaks each night." : ""),
+    "Shields: " + sh + ". " + (roles.length ? cap1(andList(roles)) + "." : "No other powers.")
+  ];
 }
 
 /* ---- missions ---- */
@@ -313,16 +495,17 @@ function missionHost(s) {
     let war = "";
     if (bladeOk(state, m)) {
       const d = [["none", "No blade"]];
-      const wOn = rulesIn(state).champion;
-      if (m.win === "public") { if (wOn) d.push(["with", "Champion — the winner takes both"]) } else d.push(["public", "Overall winner · public"]);
+      const wOn = champFree(state), bOn = bladeFree(state);
+      if (m.win === "public") { if (wOn) d.push(["with", "Champion — the winner takes both"]) } else if (bOn) d.push(["public", "Overall winner · public"]);
       if (m.win === "secret" && wOn) d.push(["with", "Champion — a hidden " + mystOf(m).unit + " takes both"]);
-      if (rounded) d.push(["secret", "Hidden · its own " + mystOf(m).unit]);
+      if (rounded && bOn) d.push(["secret", "Hidden · its own " + mystOf(m).unit]);
       war = `<p class="ask">⚔ Blade <small>— vote counts twice at tonight’s table</small></p><div class="row wrap">${d.map(([k, l]) => opt(m.dag === k, l, "mDag('" + k + "')")).join("")}</div><p class="note">Shield and blade in one pair of hands make the <b>Champion</b>: only a Champion may lay both down at the Reckoning to be safe from that exile. The blade counts automatically — hidden or not — and the TV shows where it fell once every board is in, never whose it was.</p>`;
-    } else if (wo && !["dilemma", "likely"].includes(m.key)) war = `<p class="note">⚔ ${esc(P(wo).name)} already holds tonight’s blade — one a round.</p>`;
+    } else if (wo && !["dilemma", "likely"].includes(m.key)) war = `<p class="note">⚔ ${esc(P(wo).name)} already holds the blade this round.</p>`;
     const summary = m.key === "dilemma" || m.key === "likely" ? "" : `<div class="secret"><b>This mission:</b> ${esc(prizeSummary(m))} ${esc(m.stake ? "Up to " + money(m.stake) + " for the pot." : "The pot is full.")}</div>`;
     const read = m.key === "dilemma" ? SAY.dilemma(money(m.stake), money(m.stake * 2)) : m.key === "countdown" ? SAY.countdown(m.total) : m.key === "quiz" ? SAY.quiz(m.per) : m.rules;
     const two = hasPrizeStep(m);
-    ctl = `${sets ? `<h3>settings</h3>${sets}` : ""}${m.hasShield ? `<h3>the prize</h3>${sh}${witness}` : ""}${war}${summary}<h3>read out</h3>${say(read)}<p class="note">${two ? "The TV shows the brief" + (m.key === "custom" ? " once you confirm" : "") + ". The prize goes on the TV when you confirm it." : "The TV shows the rules."}</p><div class="foot"><button class="ghost" onclick="act(s=>{s.done[s.mission.key]=Math.max(0,(s.done[s.mission.key]||1)-1);if(s.mission.key==='dilemma')delete s.done.dilemma_r;else s.roundMissions=Math.max(0,(s.roundMissions||1)-1);s.phase='day';s.mission=null},'Mission cancelled')">Pick another</button><button class="primary" onclick="startMission()">${two ? "Confirm — prize on TV" : "Start mission"}</button></div>`;
+    const change = m.key === "dilemma" ? sh : (m.hasShield && (sh || witness)) || war ? `<details class="adv" data-k="adv-prize-${m.mid}"><summary>Change the prizes</summary>${m.hasShield ? sh + witness : ""}${war}</details>` : "";
+    ctl = `${summary}${change}${sets ? `<details class="adv" data-k="adv-set-${m.mid}" ${m.key === "custom" ? "open" : ""}><summary>Adjust this mission</summary>${sets}</details>` : ""}<h3>read out</h3>${say(read)}<p class="note">${two ? "The TV shows the brief" + (m.key === "custom" ? " once you confirm" : "") + ". The prize goes on the TV when you confirm it." : "The TV shows the rules."}</p><div class="foot"><button class="ghost" onclick="act(s=>{s.done[s.mission.key]=Math.max(0,(s.done[s.mission.key]||1)-1);if(s.mission.key==='dilemma')delete s.done.dilemma_r;else s.roundMissions=Math.max(0,(s.roundMissions||1)-1);s.phase='day';s.mission=null},'Mission cancelled')">Pick another</button><button class="primary" onclick="startMission()">${two ? "Confirm — prize on TV" : "Start mission"}</button></div>`;
   }
   else if (m.stage === "prize") {
     const pl = prizeOf_(m, isFinal(state));

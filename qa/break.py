@@ -98,7 +98,7 @@ class Phone:
     def st(self): return self.ev("()=>state && {ver:state.ver,vid:state.vid,gid:state.gid,phase:state.phase,pot:state.pot,title:state.brand&&state.brand.title,host:state.brand&&state.brand.host}")
     def toasts_(self): return self.ev("()=>window.__toasts||[]")
     def start(self, names=NAMES, pin=PIN):
-        self.pg.fill("#names", "\n".join(names)); self.pg.fill("#pinset", pin); self.pg.click("text=Start game"); self.pg.wait_for_timeout(900)
+        self.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(names), pin]); self.pg.wait_for_timeout(900)
     def unlock(self, pin=PIN):
         self.pg.fill("#pin", pin); self.pg.click("text=Unlock"); self.pg.wait_for_timeout(900)
     def close(self): self.ctx.close()
@@ -231,7 +231,7 @@ def part2(b):
         if sv.get("state"): f.append("the wiped game came back")
         if B.st(): f.append("the offline phone still shows the old game")
         if not [t for t in B.toasts_() if "wiped" in t]: f.append("the offline phone wasn't told: " + str(B.toasts_()))
-        if not B.ev("()=>!!document.querySelector('#names')"): f.append("the offline phone isn't back at setup")
+        if not B.ev("()=>!!document.querySelector('.wiz')"): f.append("the offline phone isn't back at setup")
         f += A.errs + B.errs; A.close(); B.close(); return f
 
     @sc("a wipe on one phone clears the other phone and the TV")
@@ -272,7 +272,7 @@ def part2(b):
         C.pg.route("**/api/state", lambda r: r.fulfill(status=429, body="Too many wrong PINs") if r.request.method == "GET" and r.request.headers.get("x-pin") else r.continue_())
         C.pg.reload(); C.pg.wait_for_timeout(3000)
         f = []
-        if C.ev("()=>!!document.querySelector('#names')"): f.append("setup form shown while a game exists")
+        if C.ev("()=>!!document.querySelector('.wiz')"): f.append("setup form shown while a game exists")
         f += A.errs + C.errs; A.close(); C.close(); return f
 
     @sc("a new version goes live mid-setup: the page reloads and the typed names survive")
@@ -282,9 +282,9 @@ def part2(b):
             if route.request.method == "PUT" and hit["n"] == 0: hit["n"] += 1; route.fulfill(status=426, body="A new version is live")
             else: route.continue_()
         A.pg.route("**/api/state", h)
-        A.pg.fill("#names", "\n".join(NAMES)); A.pg.fill("#pinset", PIN); A.pg.click("text=Start game"); A.pg.wait_for_timeout(2500)
+        A.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), PIN]); A.pg.wait_for_timeout(2500)
         f = []
-        v = A.ev("()=>{const n=document.querySelector('#names');return n?n.value:null}")
+        v = A.ev("()=>document.querySelector('.wiz')&&setupDraft?setupDraft.names:null")
         if v is not None and "Annie" not in v: f.append("names lost after the reload: " + repr(v))
         if v is None and not A.st(): f.append("neither the form nor a game after the reload")
         f += A.errs; A.close(); return f
@@ -367,7 +367,7 @@ def part2(b):
         for i in range(9): B.unlock(str(1000 + i))
         t = B.ev("()=>document.body.innerText")
         if "Too many" not in t and "wait" not in t.lower(): f.append("no rate-limit message: " + t[:200])
-        if B.ev("()=>!!document.querySelector('#names')"): f.append("setup form shown")
+        if B.ev("()=>!!document.querySelector('.wiz')"): f.append("setup form shown")
         f += A.errs + B.errs; A.close(); B.close(); return f
 
     @sc("a browser that refuses storage (private mode): host still runs the game")
@@ -383,11 +383,11 @@ def part2(b):
 
     @sc("a PIN with a euro sign or emoji is refused at setup, inline")
     def _():
-        A = Phone(b); A.pg.fill("#names", "\n".join(NAMES)); A.pg.fill("#pinset", "12€4"); A.pg.click("text=Start game"); A.pg.wait_for_timeout(800)
+        A = Phone(b); A.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "12€4"]); A.pg.wait_for_timeout(800)
         f = []
         if A.st(): f.append("game started with an unsendable PIN")
         if not A.ev("()=>/plain keyboard symbols/.test(document.body.innerText)"): f.append("no inline message")
-        A.pg.fill("#pinset", "🔑42"); A.pg.click("text=Start game"); A.pg.wait_for_timeout(600)
+        A.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "🔑42"]); A.pg.wait_for_timeout(600)
         if A.st(): f.append("game started with an emoji PIN")
         f += A.errs; A.close(); return f
 

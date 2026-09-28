@@ -21,6 +21,8 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 
 **1.2 (28 Sep 2026):** the end game always starts with four, with the host choosing the rounds within what the table allows (§5.6); Stripe Checkout wired end to end, tested against a stub only (§6.2).
 
+**1.3 (28 Sep 2026), for sale:** setup is a step-by-step wizard, one decision a page with a full explanation and a recommendation that follows the earlier choices (§5.0); only the shield comes every round, and the blade, Champion, Witness and Dilemma come once a game (§5.3); mission prize and setting overrides fold away on the brief; the site has `/rules` and `/tour` (real screenshots); the question banks are roughly three times bigger (§7).
+
 ---
 
 ## 2. Quick start
@@ -53,7 +55,8 @@ deploy.sh          build + wrangler deploy (staging | production)
 src/               the game page (§4)
 site/index.html    the home page: SHOP settings (price, contact) at the bottom
 site/page.html     the shell for the legal and checkout pages; site/pages/NAME.html → worker/public/NAME.html, served at /NAME
-                   (terms, privacy, cookies, refunds, contact, buy — BUY price display at the bottom of buy.html)
+                   (terms, privacy, cookies, refunds, contact, buy, admin, rules, tour — BUY price display at the bottom of buy.html)
+tools/webshots.py      web-sized copies of media/screenshots for the /tour page (run after qa/media.py)
 tools/stripe-setup.sh  creates the Stripe product, price and webhook endpoint for one environment (§6.2)
 worker/src/        index.js (router, GameState, Registry), codes.js, rules.js, public-view.js
 worker/public/     build output + fonts, icons, words.txt (Longest Word dictionary), _headers, media/
@@ -95,7 +98,7 @@ Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:t
 ## 5. The game
 
 ### 5.0 The game plan (setup)
-Six collapsible sections on the phone, then a plain-English summary and **Start game**. Saved in `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
+A wizard on the phone (`WIZ` in `host.js`): one decision a page, each with a long explanation of what it does and what the alternatives mean, then a summary page (every line has **Change**, which returns there with **Done**) and **Start game**. After the host, PIN, Cloaks and evening length, the host can take the recommended settings for the rest and go straight to the summary. `RECS` gives every choice a recommendation worked out from the ones before it (e.g. rounds from table size and hours via `estMins`, dinner mid-game, side-quests only with a mingle). Until the host picks something themselves (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped (no shields → no Champion or Dilemma page). The draft lives in `sessionStorage` (`candle-draft`); tests drive it by setting `setupDraft` and calling `submitSetup()`. Saved in `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
 
 | rule | values | effect |
 |---|---|---|
@@ -109,7 +112,7 @@ Six collapsible sections on the phone, then a plain-English summary and **Start 
 | `convert`, `bargain` | on/off | `autoMode` picks the night: one Conversion, then one Bargain, only for a lone Cloak v 4+ Candle |
 | `quests` | on/off | one side-quest pre-chosen each night |
 | `shield` | mix / public / secret / off | `autoPrize`; mix = hidden in round-by-round missions, public elsewhere |
-| `blade`, `champion`, `witness`, `dilemma` | on/off | Champion every other round; Witness only at five with one Cloak; the Dilemma offered when nobody holds a shield |
+| `blade`, `champion`, `witness`, `dilemma` | on/off | blade and Champion once a game each (`onceRound`: the blade about halfway to the final, the Champion later; `state.gave` records them); Witness only at five with one Cloak; the Dilemma once, offered when nobody holds a shield |
 
 The Menu has **Your game plan** (the summary and the next six missions).
 
@@ -147,7 +150,7 @@ Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memor
 - **Shield** (safe from poison tonight): none / the overall winner (public) / 1–2 **hidden** questions or rounds (missions played in rounds only: quiz, Longest Word, Closest Guess, Higher or Lower, What Changed?).
   - A hidden shield is won by whoever wins *that* question or round (answers it correctly, is closest, has the longest word…), **not** by winning the mission. The rounds are drawn at random, never the first when there's a choice, and only the host sees them.
   - At most a quarter of the table (minimum one) holds shields at once. There are no shields in the final.
-- **Blade:** the holder's vote counts twice. Options: none / overall winner / a hidden round of its own / **with the shield** — which makes the **Champion** (public or hidden, as the shield is). One blade per round.
+- **Blade:** the holder's vote counts twice. Options: none / overall winner / a hidden round of its own / **with the shield** — which makes the **Champion** (public or hidden, as the shield is). **Once a game:** the blade (on its own) and the Champion are each given once, from the round `onceRound` picks; an unclaimed one comes round again on the next mission. On the blade's round a mission without rounds offers the blade *instead of* the shield. The host can still put either on a mission sooner from "Change the prizes" on the brief, until it has been given. The Dilemma is offered once a game (`dilemmaFree`).
 - **At the Reckoning** the blade is automatic. Every board counts one as it turns. When the host taps "All boards in", the TV's main line becomes **"the blade fell on Y"** and one vote is added. The holder is never named.
   - If that extra vote decided the exile, the reveal plays a **blade stab with a drop of blood**.
   - **Only a Champion** may lay down shield and blade before the first board, to be immune from that exile (and unprotected that night).
@@ -287,7 +290,7 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 
 ## 7. Content banks
 
-`content.js`: QUIZ_E/M/H 150 each; ESTIMATE 80; LIKELY 80; CHARADES 118; SONGS 122; PICTIONARY 205; MEMSETS 12; CODEWORDS 60 (unused, kept for positions); QUESTS 60. **Append-only** (the question-bank switches identify items by position). The Longest Word dictionary is `worker/public/words.txt`. Song titles in SONGS are titles only (no lyrics).
+`content.js` (1.3): QUIZ_E 420, QUIZ_M 520, QUIZ_H 595; ESTIMATE 264; LIKELY 264; CHARADES 342; SONGS 497; PICTIONARY 520; MEMSETS 30; CODEWORDS 60 (unused, kept for positions); QUESTS 165. The 1.3 additions avoid time-sensitive facts (office-holders, records, moving capitals) and tie populations to a census year. **Append-only** (the question-bank switches identify items by position). The Longest Word dictionary is `worker/public/words.txt`. Song titles in SONGS are titles only (no lyrics).
 
 ## 8. Testing
 
@@ -298,6 +301,7 @@ Never run `build.sh` while chaos or break is running (a new `build.txt` reloads 
 | harness | what it does | status at 1.0 |
 |---|---|---|
 | `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, missions a round, murder/poison wording, Ghosts off, prizes, Witness, convert/bargain, side-quests, dinner, TV rules card | **new**, clean |
+| `qa/wizard.py` (:8724) | **new in 1.3**: every setup page on a phone (no overflow, screenshots in `qa/shots/wizard/`), the checks that stop Next, recommendations following earlier choices, pages skipped, the quick path, Change/Done, the game it starts | clean |
 | `qa/smoke166.py` (:8719) | 74 rules checks | clean |
 | `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Witness, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
 | `qa/admin.mjs` | the `/admin` sign-in and API, Durable Objects stubbed: credentials, cookie flags, tampered/expired cookies, password change, the attempt limit, the Bearer token, cross-site requests, creating/listing/cancelling passes and free unlimited codes, the test room | clean (19 checks) |

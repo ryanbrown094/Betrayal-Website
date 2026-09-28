@@ -14,7 +14,7 @@ with sync_playwright() as p:
     api = b.new_context().request
     api.delete(URL + "api/state", headers={"X-Pin": PIN})
     host = page(390, 844, "#host")
-    host.fill("#names", "\n".join(NAMES)); host.fill("#pinset", PIN); host.click("text=Start game"); host.wait_for_timeout(1500)
+    host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), PIN]); host.wait_for_timeout(1500)
     host.evaluate("()=>act(s=>{s.players.forEach((p,i)=>p.role=[1,4].includes(i)?'cloak':'candle');s.phase='day';s.startedAt=now()})"); host.wait_for_timeout(1500)
     # 1 · PIN survives a reload (localStorage)
     host.reload(); host.wait_for_timeout(2500)
