@@ -138,7 +138,7 @@ async function manage() {
     const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass: v }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    say(m, j.error || "That didn’t work — try again.", true);
+    say(m, (j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = e => { e.preventDefault(); manage() };

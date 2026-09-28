@@ -51,7 +51,7 @@ check("the session: the pass on the invoice, the payment and the consent timesta
 check("the pass exists, pending, linked to its session", (await passOf(pass1)).pending === true && (await passOf(pass1)).session === "cs_test_000000000000");
 check("a pending pass can't open a room", (await redeem(pass1))[0] === 402);
 failCreate = true; const bad = await checkout({ terms: true, supply: true }, base, "203.0.113.9"); failCreate = false;
-check("Stripe refuses: 502, and that pending pass is cancelled", bad[0] === 502 && [...(await reg.storage.list({ prefix: "pass:" })).values()].filter(v => v.note === "checkout could not start" && v.revoked).length === 1);
+check("Stripe refuses: 502 with Stripe's reason, and that pending pass is cancelled", bad[0] === 502 && bad[1].detail === "Stripe said: nope" && [...(await reg.storage.list({ prefix: "pass:" })).values()].filter(v => v.note === "checkout could not start" && v.revoked).length === 1);
 const flood = []; for (let i = 0; i < 12; i++) flood.push((await checkout({ terms: true, supply: true }, base, "198.51.100.7"))[0]);
 check("ten checkouts an hour per address", flood.slice(0, 10).every(x => x === 200) && flood.slice(10).every(x => x === 429), flood);
 

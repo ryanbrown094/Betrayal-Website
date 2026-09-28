@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928194709">
+<meta name="build" content="20260928195821">
 <title>Buy a party pass — Cloak &amp; Candle</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -108,7 +108,7 @@ $("#pay").onclick = async () => {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    busy = false; update(j.error || "That didn’t work — try again.");
+    busy = false; update((j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""));
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.") }
 };
 choose();
