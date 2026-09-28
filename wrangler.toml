@@ -19,6 +19,23 @@ STRIPE_PRICE_ID = ""     # the party pass's Stripe Price (price_…), printed by
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
 
+# Previews: Cloudflare builds every non-main branch with `wrangler preview`. Nothing is inherited from above, so it is all
+# spelled out here. Each preview gets its own, empty Durable Objects (no production passes or rooms), no secrets (no
+# admin, no master passcode) and a closed checkout.
+[previews.vars]
+PASS_HOURS = "48"
+KEEP_DAYS = "1"
+SITE_PASSWORD = "candlelight"
+STRIPE_PRICE_ID = ""
+
+[[previews.durable_objects.bindings]]
+name = "GAME"
+class_name = "GameState"
+
+[[previews.durable_objects.bindings]]
+name = "REGISTRY"
+class_name = "Registry"
+
 [assets]
 directory = "./worker/public"
 binding = "ASSETS"

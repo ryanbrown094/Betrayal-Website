@@ -274,6 +274,7 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 - `SITE_PASSWORD` is now `candlelight` (was changed from a show-derived word in 1.1).
 - The master passcode: `npx wrangler secret put MASTER_PASS -c wrangler.toml` (and `-c wrangler.staging.toml`), or Workers & Pages → the Worker → Settings → Variables and Secrets. Unset, no master passcode works.
 - `deploy.sh staging|production` → `build.sh` → `wrangler deploy --var BUILD:<build>`. Cloudflare account `52f36be1337501d7eb4752e3ca42fac7`. Workers: `cloak-and-candle` (cloakandcandle.co.uk), `cloak-and-candle-staging` (staging.cloakandcandle.co.uk). Both are **new** Workers with their own Durable Objects (migration tag `v1`: GameState, Registry); the Workers from the party build are untouched.
+- **Previews:** Cloudflare builds every non-`main` branch (so every PR) with `npx wrangler preview`, which reads only the `[previews]` block of `wrangler.toml`: its own vars, and Durable Object bindings that give each preview fresh, empty namespaces, never production's passes or rooms. Previews have no secrets (no admin, no master passcode, checkout closed). Only `main` deploys production.
 - Rollback: `npx wrangler rollback <version-id> -c <config>`.
 - Passes: `tools/passes.sh mint|list|revoke` (needs `ADMIN_TOKEN`; `BASE=` for staging or local).
 - A customer who lost their link: they re-enter their pass on the home page and get the same room back.
