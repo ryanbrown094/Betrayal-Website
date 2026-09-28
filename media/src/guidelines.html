@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Cloak &amp; Candle — Brand Guidelines</title>
+<style>
+/*__FONTS__*/
+@page { size: 297mm 210mm; margin: 0 }
+:root { --ink: #09070a; --plum: #130d14; --velvet: #251428; --aub: #341b37; --ivory: #e8d0c8; --parch: #afa198; --mist: #877e78; --rose: #e6a58c; --copper: #ae6249; --deep: #763c29; --wine: #c22961; --ox: #7a1439; --verd: #5fa88f; --steel: #8fa3b8;
+  --disp: "Grenze Gotisch", serif; --book: "IM Fell DW Pica", serif; --ui: "Alegreya Sans", sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", sans-serif }
+* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact }
+body { margin: 0; background: var(--ink); color: var(--ivory); font: 11.5pt/1.45 var(--ui) }
+.page { width: 297mm; height: 210mm; padding: 16mm 18mm 14mm; position: relative; overflow: hidden; page-break-after: always; background: radial-gradient(160mm 110mm at 85% -10%, #2a1630, transparent 70%), var(--ink) }
+.page.light { background: #f6ede8; color: #1b0d1d }
+.folio { position: absolute; left: 18mm; right: 18mm; bottom: 8mm; display: flex; justify-content: space-between; font: 700 7.5pt/1 var(--sc); letter-spacing: .28em; text-transform: uppercase; color: var(--mist) }
+.eyebrow { font: 700 8.5pt/1 var(--sc); letter-spacing: .3em; text-transform: uppercase; color: var(--rose) }
+h1 { font: 600 44pt/1 var(--disp); margin: 4mm 0 5mm; color: var(--ivory) } .light h1 { color: #1b0d1d }
+h2 { font: 600 20pt/1.05 var(--disp); margin: 0 0 3mm; color: var(--ivory) } .light h2 { color: #1b0d1d }
+h3 { font: 700 8.5pt/1 var(--sc); letter-spacing: .22em; text-transform: uppercase; color: var(--rose); margin: 0 0 2.5mm }
+p { margin: 0 0 3mm; color: var(--parch) } .light p { color: #4a3b44 }
+.lede { font: italic 400 15pt/1.35 var(--book); color: var(--ivory); max-width: 190mm }
+.cols { display: grid; gap: 8mm } .c2 { grid-template-columns: 1fr 1fr } .c3 { grid-template-columns: repeat(3, 1fr) } .c4 { grid-template-columns: repeat(4, 1fr) }
+.box { border: 0.3mm solid rgba(230,165,140,.3); border-radius: 3mm; padding: 6mm; background: rgba(230,165,140,.04) }
+.light .box { border-color: rgba(118,60,41,.25); background: #fff }
+img { display: block; max-width: 100% }
+.cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center }
+.cover img { width: 150mm } .cover .lede { margin: 8mm auto 0; text-align: center; color: var(--parch) }
+.sw { border-radius: 2.5mm; overflow: hidden; border: .3mm solid rgba(255,255,255,.08) }
+.sw .chip { height: 24mm } .sw .meta { padding: 3mm 3.5mm; background: #0f0b10; font-size: 8.5pt; color: var(--parch); line-height: 1.35 } .sw .meta b { display: block; color: var(--ivory); font-size: 10pt; margin-bottom: .5mm }
+.ratio { display: flex; height: 9mm; border-radius: 2mm; overflow: hidden; margin: 3mm 0 } .ratio span { display: grid; place-items: center; font: 700 7pt var(--sc); letter-spacing: .15em; color: rgba(0,0,0,.6) }
+.type { padding: 5mm 0; border-top: .3mm solid rgba(230,165,140,.2) } .type:first-child { border-top: 0 }
+.type .spec { font: 700 7.5pt/1.3 var(--sc); letter-spacing: .18em; text-transform: uppercase; color: var(--mist); margin-top: 2mm }
+.dont { position: relative; height: 38mm; display: grid; place-items: center; border-radius: 2.5mm; background: #140e15; border: .3mm solid rgba(194,41,97,.4); overflow: hidden }
+.dont::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top right, transparent calc(50% - .4mm), rgba(234,90,143,.8) 50%, transparent calc(50% + .4mm)) }
+.cap { font-size: 8.5pt; color: var(--parch); margin-top: 2mm }
+.shot { border-radius: 2mm; overflow: hidden; border: .3mm solid rgba(230,165,140,.25) }
+ul { margin: 0; padding-left: 4.5mm; color: var(--parch) } li { margin: 0 0 1.6mm } li b { color: var(--ivory) }
+.say { font: italic 400 12.5pt/1.4 var(--book); color: var(--ivory); border-left: .8mm solid var(--rose); padding: 1mm 0 1mm 4mm; margin: 0 0 3mm }
+.bad { color: #ff9dbf } .good { color: #9fe0c6 }
+.icons { display: flex; gap: 6mm; flex-wrap: wrap; color: var(--rose) } .icons svg { width: 12mm; height: 12mm; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round } .icons .f { fill: currentColor; stroke: none }
+</style></head><body>
+
+<section class="page cover">
+  <img src="../logos/cloak-and-candle-lockup-stacked-rosegold.svg" alt="Cloak &amp; Candle">
+  <p class="lede">Brand guidelines — the name, the mark, the colours, the type and the voice of a dinner-party game of loyalty and lies.</p>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>version 1.0 · September 2026</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">01 · the brand</div><h1>Candlelit. Theatrical. Mischievous.</h1>
+  <p class="lede">Cloak &amp; Candle is a hosted party game for one room and one evening. Its world is a long table, a candle burning for every guest, and a cloak that somebody at the table is wearing. Each night a candle goes out; each day the Faithful try to pull the cloak away. Everything we make should feel like that room: warm, dim, a little dangerous, and very well dressed.</p>
+  <div class="cols c4" style="margin-top:8mm">
+    <div class="box"><h3>Candlelit</h3><p>Dark grounds, warm light. We glow; we never glare. Rose-gold is the candle flame of the brand. The cloak is the dark around it.</p></div>
+    <div class="box"><h3>Theatrical</h3><p>Every screen is a scene. Big type, slow reveals, a pause before the name. The host is a narrator, not a quizmaster.</p></div>
+    <div class="box"><h3>Mischievous</h3><p>We enjoy the lie. We wink at the guilty and tease the innocent — never mean, never crude.</p></div>
+    <div class="box"><h3>Premium</h3><p>One idea per screen, generous space, careful words. It should feel like the good napkins came out.</p></div>
+  </div>
+  <div class="cols c2" style="margin-top:8mm">
+    <div><h3>What we are</h3><ul><li><b>Our own world.</b> An original game with its own look, sound and words.</li><li><b>For hosts.</b> The host is the hero: we make them look effortless.</li><li><b>For one room.</b> Faces, blindfolds, chalk — the TV is the stage, not the game.</li></ul></div>
+    <div><h3>What we are not</h3><ul><li><b>Not a TV tie-in.</b> We never name, quote, imitate or allude to a television programme, its presenters, its castle, its music or its logo.</li><li><b>Not horror.</b> No gore, no jump-scares. A drop of wine-red, not blood spatter.</li><li><b>Not a gadget.</b> No apps to install, no accounts, no guests on their phones.</li></ul></div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>2</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">02 · the mark</div><h1>The one in the cloak</h1>
+  <div class="cols c2" style="grid-template-columns: 90mm 1fr; align-items:center">
+    <img src="../logos/cloak-and-candle-mark-rosegold.svg" style="width:78mm;margin:0 auto" alt="">
+    <div>
+      <p class="lede" style="font-size:13.5pt">A cloaked figure stands inside a lozenge, and where its face should be there is only a candle flame. It is the whole game in one picture: someone at the table is hiding under the cloak, and the candle is what gives them away.</p>
+      <h3 style="margin-top:6mm">Anatomy</h3>
+      <ul><li><b>The lozenge</b> — a double diamond frame, the outer line at full weight, the inner at half. It sets the mark apart from shields and crests.</li><li><b>The cloak</b> — a pointed hood falling to a straight hem, with two folds and a clasp at the throat. Never add hands, feet or a face.</li><li><b>The flame</b> — a filled teardrop inside the hood’s opening. It is the only solid shape in the mark.</li><li><b>The pins</b> — two short rails and studs at the side points, like a brooch or a seal.</li></ul>
+      <h3 style="margin-top:6mm">The wordmark</h3>
+      <p>“Cloak &amp; Candle” set in Grenze Gotisch SemiBold (600) and converted to outlines. The ampersand is part of the name. Always use the supplied artwork; never retype it.</p>
+    </div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>3</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">03 · lockups</div><h1>Three ways to sign</h1>
+  <div class="cols c3" style="grid-template-columns: 1.5fr 1fr .7fr; align-items:end">
+    <div class="box" style="height:62mm;display:grid;place-items:center"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:118mm" alt=""></div>
+    <div class="box" style="height:62mm;display:grid;place-items:center"><img src="../logos/cloak-and-candle-lockup-stacked-rosegold.svg" style="width:58mm" alt=""></div>
+    <div class="box" style="height:62mm;display:grid;place-items:center"><img src="../logos/cloak-and-candle-mark-rosegold.svg" style="width:22mm" alt=""></div>
+  </div>
+  <div class="cols c3" style="grid-template-columns: 1.5fr 1fr .7fr; margin-top:3mm">
+    <div class="cap"><b>Horizontal</b> — the default: web headers, the TV top bar, email, merchandise.</div>
+    <div class="cap"><b>Stacked</b> — covers, posters, packaging, social squares, the TV title card.</div>
+    <div class="cap"><b>Mark alone</b> — app icons, favicons, stickers, wax seals; only where “Cloak &amp; Candle” is already said.</div>
+  </div>
+  <h3 style="margin-top:9mm">Colourways</h3>
+  <div class="cols c4" style="gap:4mm">
+    <div class="box" style="background:#09070a;display:grid;place-items:center;height:30mm"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:52mm"></div>
+    <div class="box" style="background:#251428;display:grid;place-items:center;height:30mm"><img src="../logos/cloak-and-candle-lockup-horizontal-ivory.svg" style="width:52mm"></div>
+    <div class="box" style="background:#f6ede8;display:grid;place-items:center;height:30mm"><img src="../logos/cloak-and-candle-lockup-horizontal-ink.svg" style="width:52mm"></div>
+    <div class="box" style="background:#ae6249;display:grid;place-items:center;height:30mm"><img src="../logos/cloak-and-candle-lockup-horizontal-ink.svg" style="width:52mm"></div>
+  </div>
+  <div class="cols c4" style="gap:4mm;margin-top:2mm"><div class="cap"><b>Rose-gold</b> on Ink or Plum. The hero.</div><div class="cap"><b>Ivory</b> on Velvet, photography or busy dark grounds.</div><div class="cap"><b>Ink</b> on Parchment and any light ground.</div><div class="cap"><b>Ink</b> on Copper. Single-colour print uses Black or White.</div></div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>4</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">04 · space, size, misuse</div><h1>Give it room to breathe</h1>
+  <div class="cols c2">
+    <div>
+      <h3>Clear space</h3><p>Keep a margin of at least <b style="color:var(--ivory)">X</b> on every side, where X is the height of the flame — about one sixth of the mark’s height. Nothing — type, edges, other logos — enters it.</p>
+      <h3 style="margin-top:6mm">Minimum sizes</h3>
+      <ul><li><b>Mark:</b> 8 mm / 24 px tall. Smaller than that, the fine inner line fills in.</li><li><b>Horizontal lockup:</b> 30 mm / 120 px wide.</li><li><b>Stacked lockup:</b> 22 mm / 90 px wide.</li></ul>
+      <h3 style="margin-top:6mm">Files</h3><p>Every lockup and colourway is supplied as SVG (outlined, no fonts needed) and as transparent PNG at 2400 px in <b style="color:var(--ivory)">media-pack/logos</b>.</p>
+    </div>
+    <div>
+      <h3>Never</h3>
+      <div class="cols c3" style="gap:3mm">
+        <div><div class="dont"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:30mm;transform:scaleX(1.35)"></div><div class="cap">Stretch or squash.</div></div>
+        <div><div class="dont"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:40mm;filter:hue-rotate(28deg) saturate(2.2) brightness(1.1)"></div><div class="cap">Turn it gold, or any other colour.</div></div>
+        <div><div class="dont"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:40mm;filter:drop-shadow(1.5mm 1.5mm 0 #c22961)"></div><div class="cap">Add shadows, bevels or outlines.</div></div>
+        <div><div class="dont" style="background:linear-gradient(135deg,#e6a58c,#5fa88f,#8fa3b8)"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:40mm"></div><div class="cap">Set it on a clashing or busy ground.</div></div>
+        <div><div class="dont"><img src="../logos/cloak-and-candle-lockup-horizontal-rosegold.svg" style="width:40mm;transform:rotate(-12deg)"></div><div class="cap">Rotate it.</div></div>
+        <div><div class="dont"><span style="font:600 16pt var(--disp);color:var(--rose)">Cloak and Candle</span></div><div class="cap">Retype it, swap the ampersand for “and”, or pair it with a show’s name or logo.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>5</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">05 · colour</div><h1>Plum ink and rose-gold</h1>
+  <p style="max-width:200mm">Dark, warm plum grounds carry almost everything. Rose-gold is our light: titles, key lines, the one button that matters. Wine-red is kept for the moment someone dies or a Traitor is revealed. Verdigris and Night Steel are working colours for the host’s phone (safe, private) and never lead.</p>
+  <div class="ratio"><span style="flex:62;background:#130d14;color:#877e78">INK · PLUM 62%</span><span style="flex:20;background:#e8d0c8">IVORY 20%</span><span style="flex:12;background:linear-gradient(90deg,#e6a58c,#ae6249)">ROSE-GOLD 12%</span><span style="flex:4;background:#c22961"></span><span style="flex:2;background:#5fa88f"></span></div>
+  <div class="cols" style="grid-template-columns:repeat(7,1fr);gap:3mm;margin-top:4mm">
+    <div class="sw"><div class="chip" style="background:#09070a"></div><div class="meta"><b>Ink</b>#09070A<br>RGB 9 7 10<br>CMYK 75 75 65 90</div></div>
+    <div class="sw"><div class="chip" style="background:#130d14"></div><div class="meta"><b>Plum</b>#130D14<br>RGB 19 13 20<br>CMYK 70 75 60 85</div></div>
+    <div class="sw"><div class="chip" style="background:#251428"></div><div class="meta"><b>Velvet</b>#251428<br>RGB 37 20 40<br>CMYK 70 85 50 70</div></div>
+    <div class="sw"><div class="chip" style="background:#341b37"></div><div class="meta"><b>Aubergine</b>#341B37<br>RGB 52 27 55<br>CMYK 65 90 45 55</div></div>
+    <div class="sw"><div class="chip" style="background:#e8d0c8"></div><div class="meta"><b>Ivory</b>#E8D0C8<br>RGB 232 208 200<br>CMYK 7 18 17 0</div></div>
+    <div class="sw"><div class="chip" style="background:#afa198"></div><div class="meta"><b>Parchment</b>#AFA198<br>RGB 175 161 152<br>CMYK 32 34 38 3</div></div>
+    <div class="sw"><div class="chip" style="background:#877e78"></div><div class="meta"><b>Smoke</b>#877E78<br>RGB 135 126 120<br>CMYK 48 45 48 15</div></div>
+    <div class="sw"><div class="chip" style="background:#e6a58c"></div><div class="meta"><b>Rose-gold</b>#E6A58C<br>RGB 230 165 140<br>CMYK 5 40 42 0</div></div>
+    <div class="sw"><div class="chip" style="background:#ae6249"></div><div class="meta"><b>Copper</b>#AE6249<br>RGB 174 98 73<br>CMYK 22 68 72 10</div></div>
+    <div class="sw"><div class="chip" style="background:#763c29"></div><div class="meta"><b>Deep copper</b>#763C29<br>RGB 118 60 41<br>CMYK 30 75 85 35</div></div>
+    <div class="sw"><div class="chip" style="background:#c22961"></div><div class="meta"><b>Wine</b>#C22961<br>RGB 194 41 97<br>CMYK 15 95 40 5</div></div>
+    <div class="sw"><div class="chip" style="background:#7a1439"></div><div class="meta"><b>Oxblood</b>#7A1439<br>RGB 122 20 57<br>CMYK 25 100 55 35</div></div>
+    <div class="sw"><div class="chip" style="background:#5fa88f"></div><div class="meta"><b>Verdigris</b>#5FA88F<br>RGB 95 168 143<br>CMYK 62 10 50 5</div></div>
+    <div class="sw"><div class="chip" style="background:#8fa3b8"></div><div class="meta"><b>Night steel</b>#8FA3B8<br>RGB 143 163 184<br>CMYK 45 25 15 5</div></div>
+  </div>
+  <p class="cap" style="margin-top:4mm">The rose-gold gradient runs Blush #F4C9B7 → Rose-gold #E6A58C → Copper #AE6249 → Deep copper #763C29, top to bottom, at a slight angle. Use it for display type and the hero logo only. CMYK values are starting points: proof on the stock before a print run.</p>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>6</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">06 · typography</div><h1>Four voices, one table</h1>
+  <div class="cols c2" style="grid-template-columns:1.25fr 1fr">
+    <div>
+      <div class="type"><div style="font:600 40pt/1 var(--disp);background:linear-gradient(176deg,#f4c9b7 8%,#e6a58c 40%,#ae6249 70%,#763c29);-webkit-background-clip:text;background-clip:text;color:transparent">The Reckoning</div><div class="spec">Grenze Gotisch · SemiBold 600 · display: titles, names, the big reveal</div></div>
+      <div class="type"><div style="font:italic 400 18pt/1.3 var(--book);color:var(--ivory)">Accuse. Defend. Deflect. When the talking stops, the chalk comes out.</div><div class="spec">IM Fell DW Pica · Regular &amp; Italic · narrative: the lines the room reads</div></div>
+      <div class="type"><div style="font:700 11pt/1 var(--sc);letter-spacing:.32em;text-transform:uppercase;color:var(--rose)">Round two · mission one · the prize</div><div class="spec">Alegreya Sans SC · Bold 700, tracked +300 · labels, eyebrows, name plaques</div></div>
+      <div class="type"><div style="font:400 12pt/1.45 var(--ui);color:var(--parch)">Everything a host needs to read at a glance: settings, notes, the private context, buttons. Clear before clever.</div><div class="spec">Alegreya Sans · 400 / 500 / 700 · interface and body copy</div></div>
+    </div>
+    <div>
+      <h3>Rules</h3>
+      <ul><li><b>One display line per screen.</b> Grenze Gotisch is for headlines and names — never a paragraph, never all caps.</li><li><b>Blackletter needs space.</b> At least 1.5× its cap height above and below; minimum 18 pt in print, 32 px on screen.</li><li><b>Italic tells the story.</b> IM Fell Italic is the narrator: short, spoken lines.</li><li><b>Caps are always tracked.</b> Alegreya Sans SC, +200 to +400.</li><li><b>On the host phone</b> use the device’s system font for speed and legibility; the brand lives on the TV.</li></ul>
+      <h3 style="margin-top:6mm">Licences</h3><p>All four families are released under the SIL Open Font License 1.1 — free for commercial use, embedding and print. Keep a copy of the licence with any font files you distribute.</p>
+    </div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>7</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">07 · the world</div><h1>Candles, cloaks and seals</h1>
+  <div class="cols c2">
+    <div>
+      <h3>Iconography</h3>
+      <div class="icons">
+        <svg viewBox="0 0 64 64"><path d="M32 5l22 8v17c0 14-10 24-22 30C20 54 10 44 10 30V13z"/><path d="M32 14v36M19 27h26"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M32 60L27 24h10z"/><path d="M32 24v26"/><path d="M19 24c4-3 22-3 26 0"/><path d="M32 24V12"/><circle cx="32" cy="8" r="4"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M17 7h30c0 15-6 24-15 24S17 22 17 7z"/><path d="M32 31v17M21 57c0-6 5-9 11-9s11 3 11 9z"/><path d="M19 15h26"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M43 7a25 25 0 1 0 14 39A21 21 0 0 1 43 7z"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M4 32c8-13 18-19 28-19s20 6 28 19c-8 13-18 19-28 19S12 45 4 32z"/><circle cx="32" cy="32" r="9"/><circle class="f" cx="32" cy="32" r="3.6"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M13 57V27a19 19 0 0 1 38 0v30l-6.3-5-6.4 5-6.3-5-6.3 5-6.4-5z"/><circle class="f" cx="25" cy="27" r="3.2"/><circle class="f" cx="39" cy="27" r="3.2"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M24 28h16v30H24z"/><path d="M18 58h28"/><path d="M32 28v-5"/><path class="f" d="M32 4c5 6 7 10 7 13a7 7 0 0 1-14 0c0-3 2-7 7-13z"/></svg>
+        <svg viewBox="0 0 64 64"><path d="M16 6h32M16 58h32"/><path d="M19 6c0 15 11 18 13 26-2 8-13 11-13 26M45 6c0 15-11 18-13 26 2 8 13 11 13 26"/></svg>
+      </div>
+      <p style="margin-top:4mm">Line icons on a 64-unit grid, 2.4 stroke, round caps and joins, one solid detail at most. Shield, dagger, chalice, moon, eye, ghost, candle, hourglass: the objects of the evening.</p>
+      <h3 style="margin-top:6mm">Motifs</h3>
+      <ul><li><b>Wax seals</b> stand for people: one colour each, initial pressed in blackletter. A Traitor’s seal cracks.</li><li><b>Candles</b> are the guests: one each, lit as they sit down. A snuffed candle is a death — the only place we show one.</li><li><b>The cloak</b> is the Traitors’: never drawn as a person with a face — a hood, a fold, a shadow at the edge of the light.</li><li><b>Lancet windows</b> frame the TV; their glass changes with the hour (dawn rose, day amber, night steel).</li><li><b>Mist and dust</b> — slow and low. Nothing flashes except a reveal.</li></ul>
+    </div>
+    <div>
+      <div class="shot"><img src="../screenshots/tv-07-table.jpg"></div>
+      <div class="cols c2" style="gap:3mm;margin-top:3mm"><div class="shot"><img src="../screenshots/tv-12-murdered.jpg"></div><div class="shot"><img src="../screenshots/tv-09-banished.jpg"></div></div>
+      <p class="cap">All artwork is original, drawn in code. Use real game screens rather than mock-ups wherever the product is shown.</p>
+    </div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>8</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">08 · voice</div><h1>The narrator at the head of the table</h1>
+  <div class="cols c2">
+    <div>
+      <p class="lede" style="font-size:13pt">We speak like a host who has been waiting all evening to say this: second person, present tense, a little wicked, never wordy. Short sentences. A pause before the name.</p>
+      <h3 style="margin-top:5mm">Sounds like us</h3>
+      <div class="say">“Blindfolds on. Hands flat on the table. If I hear a single word, you will answer for it at breakfast.”</div>
+      <div class="say">“If you feel my hand on your shoulder, you take the cloak.”</div>
+      <div class="say">“Look at the screen: there is a candle burning for every one of you.”</div><div class="say">“Every cloak has been pulled away. The Faithful have won.”</div>
+    </div>
+    <div>
+      <h3>Do</h3>
+      <ul><li class="good">Address the room directly: <i>you</i>, <i>your table</i>, <i>tonight</i>.</li><li class="good">Use British English and plain words: <i>chalk a name</i>, not <i>submit a vote</i>.</li><li class="good">Keep secrets in the copy too — never hint who holds a role.</li><li class="good">Call the prize <i>the prize</i> until it is won.</li></ul>
+      <h3 style="margin-top:5mm">Don’t</h3>
+      <ul><li class="bad">Name, quote or allude to any TV programme, presenter, catchphrase, castle or theme tune.</li><li class="bad">Write gore or cruelty. Murder is a tap on the shoulder, not a crime scene.</li><li class="bad">Use tech words in front of guests: <i>app</i>, <i>sync</i>, <i>user</i>, <i>click</i>.</li><li class="bad">Pile on adjectives. One good word, then stop.</li></ul>
+      <h3 style="margin-top:5mm">Naming</h3>
+      <p>Game words are capitalised: Traitor, Faithful, Ghost, the Reckoning, the Warrior, the Seer, the Dilemma. Everything else is lower case: shield, dagger, pot, mission, night, breakfast.</p>
+    </div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>9</span></div>
+</section>
+
+<section class="page">
+  <div class="eyebrow">09 · in use</div><h1>How it comes together</h1>
+  <div class="cols c3" style="grid-template-columns:1.6fr .55fr .55fr;align-items:start">
+    <div><div class="shot"><img src="../screenshots/tv-01-intro.jpg"></div><p class="cap">The TV title card: stacked lockup, rose-gold on the candlelit set.</p><div class="shot" style="margin-top:3mm"><img src="../social/og-card.png"></div><p class="cap">Link preview (1200 × 630).</p></div>
+    <div><div class="shot"><img src="../screenshots/phone-00-setup.png"></div><p class="cap">The host plans the whole game on one screen.</p></div>
+    <div><div class="shot"><img src="../social/square.png"></div><p class="cap">Social square (1080 × 1080).</p><div class="shot" style="margin-top:3mm;width:70%"><img src="../social/story.png"></div><p class="cap">Story (1080 × 1920).</p></div>
+  </div>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>10</span></div>
+</section>
+
+<section class="page cover">
+  <img src="../logos/cloak-and-candle-mark-rosegold.svg" style="width:34mm" alt="">
+  <p class="lede" style="font-size:14pt">Questions about the brand, or artwork we haven’t supplied?<br>[name] · [email]</p>
+  <p class="cap" style="max-width:190mm;margin:8mm auto 0">Cloak &amp; Candle is an independent party game. It is not affiliated with, endorsed by or connected to any television programme, broadcaster or other game. Fonts: Grenze Gotisch, IM Fell DW Pica, Alegreya Sans and Alegreya Sans SC, SIL Open Font License 1.1.</p>
+  <div class="folio"><span>Cloak &amp; Candle · brand guidelines</span><span>version 1.0</span></div>
+</section>
+</body></html>

@@ -1,0 +1,63 @@
+// The real Worker class (worker/src/index.js), driven directly with an in-memory storage: PIN limits, wipe on deploy,
+// stale-build writes, the settings rule. Usage: node qa/worker.mjs
+import { GameState } from "../worker/src/index.js";
+let ok = true;
+const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra))); ok = ok && !!cond };
+const mk = (build) => { const mem = new Map(); return { mem, DO: new GameState({ storage: { async get(k) { return mem.get(k) }, async put(k, v) { mem.set(k, v) }, async delete(k) { mem.delete(k) } } }, { BUILD: build }) } };
+const req = (DO, method, path, headers, body) => DO.fetch(new Request("http://x" + path, { method, headers: { "Content-Type": "application/json", ...(headers || {}) }, body: body ? JSON.stringify(body) : undefined }));
+const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby", players: [] };
+
+// PIN guessing
+{
+  const { DO } = mk("1"); await req(DO, "PUT", "/api/state", { "X-Build": "1" }, { state: game });
+  const guess = async (pin, ip) => (await req(DO, "GET", "/api/state", { "X-Pin": pin, "CF-Connecting-IP": ip })).status;
+  const one = []; for (let i = 0; i < 10; i++) one.push(await guess(String(i).padStart(4, "0"), "203.0.113.5"));
+  check("one address is stopped after 8 wrong PINs", one.slice(0, 8).every(s => s === 200) && one.slice(8).every(s => s === 429), one);
+  let found = null, n = 0;
+  for (let i = 0; i < 400 && !found; i++) { const r = await req(DO, "GET", "/api/state", { "X-Pin": String(i).padStart(4, "0"), "CF-Connecting-IP": "2001:db8:1:2::" + Math.floor(i / 8).toString(16) }); if (r.status === 429) n++; else if ((await r.json()).auth) found = i }
+  check("hopping addresses inside one IPv6 /64 doesn't reset the limit", n > 380, { n429: n });
+  const { DO: D2 } = mk("1"); await req(D2, "PUT", "/api/state", { "X-Build": "1" }, { state: game });
+  const many = []; for (let i = 0; i < 40; i++) many.push((await req(D2, "GET", "/api/state", { "X-Pin": "0000", "CF-Connecting-IP": "198.51.100." + i })).status);
+  check("wrong PINs from many addresses hit the overall limit", many.slice(0, 30).every(s => s === 200) && many.slice(30).every(s => s === 429), many);
+  const host = await req(D2, "GET", "/api/state", { "X-Pin": PIN, "CF-Connecting-IP": "198.51.100.77" });
+  check("the host's correct PIN still works while guessers are blocked", host.status === 200 && (await host.json()).auth === true);
+}
+// wipe on deploy, stale builds
+{
+  const { mem, DO } = mk("A");
+  await req(DO, "PUT", "/api/state", { "X-Build": "A" }, { state: game });
+  await req(DO, "PUT", "/api/settings", { "X-Build": "A", "X-Pin": PIN }, { settings: { off: { LIKELY: [1] } } });
+  const { DO: B } = (() => { const d = new GameState({ storage: { async get(k) { return mem.get(k) }, async put(k, v) { mem.set(k, v) }, async delete(k) { mem.delete(k) } } }, { BUILD: "B" }); return { DO: d } })();
+  const after = await (await req(B, "GET", "/api/state")).json(), set = await (await req(B, "GET", "/api/settings")).json();
+  check("a new build clears the saved game", after.state === null, after);
+  check("…and keeps the question-bank switches", JSON.stringify(set.settings.off) === '{"LIKELY":[1]}', set);
+  check("a page on the old build can't write its game back", (await req(B, "PUT", "/api/state", { "X-Build": "A" }, { state: game })).status === 426);
+  check("a page on the new build can start a game", (await req(B, "PUT", "/api/state", { "X-Build": "B" }, { state: { ...game, gid: "g2" } })).status === 200);
+  check("settings need the PIN during a game", (await req(B, "PUT", "/api/settings", { "X-Build": "B", "X-Pin": "0000" }, { settings: { off: {} } })).status === 403);
+}
+// two phones, stale phones, wiped games, the poll tag
+{
+  const { DO } = mk("1"); const H = { "X-Build": "1", "X-Pin": PIN };
+  const put = async st => { const r = await req(DO, "PUT", "/api/state", H, { state: st }); return { status: r.status, body: r.status === 200 || r.status === 409 || r.status === 410 ? await r.json() : null } };
+  const v1 = { ...game, gid: "G", ver: 1, vid: "a" };
+  check("a new game is saved", (await put(v1)).status === 200);
+  check("the next save, made from the saved one, is taken", (await put({ ...v1, ver: 2, vid: "b", pvid: "a" })).status === 200);
+  const lost = await put({ ...v1, ver: 3, vid: "c", pvid: "a" });
+  check("a save made from an older copy is refused (409) and sent the newer game", lost.status === 409 && lost.body.state.vid === "b", lost);
+  check("a stale phone's higher version number doesn't beat a save it never saw", (await put({ ...v1, ver: 99, vid: "d", pvid: "a" })).status === 409);
+  check("a save from another game is refused, whatever its version", (await put({ ...v1, gid: "OTHER", ver: 50, vid: "e", pvid: "b" })).status === 409);
+  check("an old-style save with no parent id still needs a higher version", (await put({ ...v1, ver: 2, vid: "f" })).status === 409 && (await put({ ...v1, ver: 3, vid: "f" })).status === 200);
+  const t1 = await (await req(DO, "GET", "/api/state", { "X-Pin": PIN })).json();
+  const same = await (await req(DO, "GET", "/api/state", { "X-Pin": PIN, "X-Have": t1.tag })).json();
+  check("the poll answers 'same' when nothing changed", same.same === true && !same.state, same);
+  const pub = await (await req(DO, "GET", "/api/state", { "X-Have": t1.tag })).json();
+  check("the TV's tag is not the host's tag (no full state leaks through 'same')", !pub.same && pub.auth === false && pub.state && !pub.state.hostPin, pub);
+  await req(DO, "DELETE", "/api/state", H);
+  const back = await put({ ...v1, ver: 10, vid: "g", pvid: "f" });
+  check("a phone that missed the wipe can't bring the wiped game back (410)", back.status === 410 && back.body.gone === true, back);
+  check("…but a brand-new game can start", (await put({ ...game, gid: "NEW", ver: 1, vid: "h" })).status === 200);
+  const { mem, DO: A } = mk("A"); await req(A, "PUT", "/api/state", { "X-Build": "A" }, { state: { ...game, gid: "OLD", vid: "x" } });
+  const B = new GameState({ storage: { async get(k) { return mem.get(k) }, async put(k, v) { mem.set(k, v) }, async delete(k) { mem.delete(k) } } }, { BUILD: "B" });
+  check("a deploy's wipe is remembered too", (await req(B, "PUT", "/api/state", { "X-Build": "B" }, { state: { ...game, gid: "OLD", ver: 5, vid: "y", pvid: "x" } })).status === 410);
+}
+console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);

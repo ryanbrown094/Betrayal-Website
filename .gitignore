@@ -1,0 +1,8 @@
+node_modules/
+.wrangler/
+worker/.wrangler/
+qa/shots/
+__pycache__/
+qa/server.log
+dist/
+media/src/_*.html

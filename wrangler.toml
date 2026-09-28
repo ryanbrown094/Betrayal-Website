@@ -1,0 +1,34 @@
+# Production: cloakandcandle.co.uk. Cloudflare's Git integration deploys this file with `npx wrangler deploy` from the
+# repo root; ./deploy.sh does the same by hand. Staging: wrangler.staging.toml.
+name = "cloak-and-candle"
+main = "worker/src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+account_id = "52f36be1337501d7eb4752e3ca42fac7"
+
+routes = [
+  { pattern = "cloakandcandle.co.uk", custom_domain = true },
+  { pattern = "www.cloakandcandle.co.uk", custom_domain = true }
+]
+
+[vars]
+PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
+KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
+SITE_PASSWORD = "traitor" # pre-launch gate for the whole site; delete this line to open it to the public
+# Secrets (never in this file): npx wrangler secret put ADMIN_TOKEN ; npx wrangler secret put STRIPE_SECRET_KEY
+
+[assets]
+directory = "./worker/public"
+binding = "ASSETS"
+html_handling = "none"
+run_worker_first = true   # every request passes the Worker first, so the password gate covers static files too
+
+[durable_objects]
+bindings = [
+  { name = "GAME", class_name = "GameState" },
+  { name = "REGISTRY", class_name = "Registry" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameState", "Registry"]

@@ -1,0 +1,15 @@
+# Static assets are served by Cloudflare before the Worker runs, so cache policy lives here, not in index.js.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/words.txt
+  Cache-Control: public, max-age=31536000, immutable
+/index.html
+  Cache-Control: no-cache, must-revalidate
+/
+  Cache-Control: no-cache, must-revalidate
+/build.txt
+  Cache-Control: no-cache, must-revalidate
+/play.html
+  Cache-Control: no-cache, must-revalidate
+/g/*
+  Cache-Control: no-cache, must-revalidate
