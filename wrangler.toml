@@ -1,4 +1,5 @@
-# Production: cloakandcandle.co.uk. Cloudflare's Git integration deploys this file with `npx wrangler deploy` from the
+# Production: thebetrayal.co.uk (formerly cloakandcandle.co.uk; the Worker keeps its old name so its Durable Objects,
+# with every pass and room, carry on). Cloudflare's Git integration deploys this file with `npx wrangler deploy` from the
 # repo root; ./deploy.sh does the same by hand. Staging: wrangler.staging.toml.
 name = "cloak-and-candle"
 main = "worker/src/index.js"
@@ -6,12 +7,17 @@ compatibility_date = "2026-09-01"
 workers_dev = false
 account_id = "52f36be1337501d7eb4752e3ca42fac7"
 
+# The Betrayal lives at thebetrayal.co.uk. The old name's domain stays attached and redirects every page there.
 routes = [
+  { pattern = "thebetrayal.co.uk", custom_domain = true },
+  { pattern = "www.thebetrayal.co.uk", custom_domain = true },
   { pattern = "cloakandcandle.co.uk", custom_domain = true },
   { pattern = "www.cloakandcandle.co.uk", custom_domain = true }
 ]
 
 [vars]
+SITE_HOST = "thebetrayal.co.uk"    # the one address: www. and the old domains redirect here (pages only; the API answers everywhere)
+OLD_HOSTS = "cloakandcandle.co.uk,www.cloakandcandle.co.uk"
 PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public

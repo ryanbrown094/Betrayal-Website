@@ -16,7 +16,7 @@ const calm = () => !state || ["lobby", "day", "mingle", "morning", "final"].incl
 // The phone waits too while a guest holds it for a secret vote, a sheet is open, or someone is typing (a reload would lose the setup draft).
 const hostIdle = () => !handoff && !ask && !menuOpen && !(setupDraft && setupDraft.names.trim() && !(state && authed)) && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.nodeName));
 if (BUILD && !REPLAY) setInterval(async () => { try { const r = await fetch("/build.txt", { cache: "no-store" }); if (r.ok) { const b = (await r.text()).trim(); if (/^\d{14}$/.test(b) && b !== BUILD) newBuild = true } } catch (e) {} if (newBuild && (isHost ? hostIdle() : calm())) location.reload() }, 60000);
-document.title = isHost ? "Host · Cloak & Candle" : "Cloak & Candle";
+document.title = isHost ? "Keeper · The Betrayal" : "The Betrayal";
 // keep the elapsed clock and pace advice fresh without disturbing typing or a guest holding the phone
 if (isHost) setInterval(() => { const a = document.activeElement; if (state && authed && !handoff && !(a && /INPUT|TEXTAREA/.test(a.nodeName))) renderHost() }, 30000);
 // What Changed?: when the study clock runs out, the grid hides by itself — the TV counts ten seconds, then shows the new one

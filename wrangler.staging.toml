@@ -1,4 +1,4 @@
-# Staging: staging.cloakandcandle.co.uk — its own Worker, rooms and passes. Deploy by hand: ./deploy.sh staging
+# Staging: staging.thebetrayal.co.uk — its own Worker, rooms and passes. Deploy by hand: ./deploy.sh staging
 name = "cloak-and-candle-staging"
 main = "worker/src/index.js"
 compatibility_date = "2026-09-01"
@@ -6,7 +6,7 @@ workers_dev = false
 account_id = "52f36be1337501d7eb4752e3ca42fac7"
 
 routes = [
-  { pattern = "staging.cloakandcandle.co.uk", custom_domain = true }
+  { pattern = "staging.thebetrayal.co.uk", custom_domain = true }
 ]
 
 [vars]

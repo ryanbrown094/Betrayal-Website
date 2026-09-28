@@ -1,6 +1,6 @@
 #!/bin/sh
-# ./deploy.sh staging     → staging.cloakandcandle.co.uk (test here first)
-# ./deploy.sh production  → cloakandcandle.co.uk (customers). Pushing to GitHub also deploys production, if the
+# ./deploy.sh staging     → staging.thebetrayal.co.uk (test here first)
+# ./deploy.sh production  → thebetrayal.co.uk (customers). Pushing to GitHub also deploys production, if the
 #                           Cloudflare Git integration is connected (it runs `npx wrangler deploy` at the repo root).
 # Needs CLOUDFLARE_API_TOKEN in the environment (never in a file). Deploys do NOT wipe games: every party has its own
 # room, and a phone on the old build just reloads onto the new one. So never change the saved-game shape (SCHEMA in

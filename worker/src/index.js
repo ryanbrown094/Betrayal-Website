@@ -2,7 +2,7 @@ import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey } from "./codes.js";
 
-// Cloak & Candle's server. Every party is its own room: a Durable Object (GameState) keyed by a six-character room code,
+// The Betrayal's server (formerly Cloak & Candle). Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a party pass, which lives in the Registry (one Durable
 // Object for the whole service). A pass makes one room, good for PASS_HOURS (default 48) from redemption; the room is
 // deleted KEEP_DAYS (default 7) after that. Settings are Worker vars and secrets — see wrangler.toml and README.
@@ -135,7 +135,7 @@ export class GameState {
     // a page still running the previous build must reload before it writes (reads are fine)
     const clientBuild = req.headers.get("X-Build");
     const oldBuild = this.env.BUILD && clientBuild && clientBuild !== this.env.BUILD;
-    const readOnly = () => json({ error: "This party pass has expired — the game is now read-only.", expired: true, room }, 423);
+    const readOnly = () => json({ error: "This Invitation has expired — the game is now read-only.", expired: true, room }, 423);
 
     // The question bank's on/off switches outlive any one game in this room (a wipe keeps them).
     if (path === "/api/settings") {
@@ -143,7 +143,7 @@ export class GameState {
       if (req.method !== "PUT") return text("Method not allowed", 405);
       if (oldBuild) return text("A new version is live — reload", 426);
       if (expired) return readOnly();
-      if (current && !authed) return text("Wrong host PIN", 403);
+      if (current && !authed) return text("Wrong Keeper PIN", 403);
       let body;
       try { body = await req.json(); } catch { return text("Bad JSON", 400); }
       const off = {}, src = body && body.settings && body.settings.off;
@@ -162,7 +162,7 @@ export class GameState {
     }
     if (oldBuild) return text("A new version is live — reload", 426);
     if (expired) return readOnly();
-    if (current && !authed) return text("Wrong host PIN", 403);
+    if (current && !authed) return text("Wrong Keeper PIN", 403);
 
     if (req.method === "DELETE") {
       if (current && current.gid) await this.storage.put("wiped", addWiped(await this.storage.get("wiped"), current.gid));
@@ -346,7 +346,7 @@ export class Registry {
     }
     if (url.pathname === "/redeem") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
-      if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a party pass code. It looks like CNDL-XXXX-XXXX." }, 400); }
+      if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t an Invitation code. It looks like CNDL-XXXX-XXXX." }, 400); }
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
       if (!v) { this.failed(ip); return json({ error: "We don’t recognise that pass. Check it against your receipt." }, 404); }
       if (v.revoked) return json({ error: "That pass has been cancelled." }, 410);
@@ -452,13 +452,13 @@ async function gateToken(pw) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 const cookieOf = (req, name) => { const m = (req.headers.get("Cookie") || "").match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)")); return m ? m[1] : ""; };
-const gatePage = (next, wrong) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Cloak &amp; Candle</title>
+const gatePage = (next, wrong) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>The Betrayal</title>
 <style>html{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(90vw 60vh at 50% 0,#2a1630,transparent 70%),#09070a;color:#e8d0c8;font:18px/1.4 system-ui,sans-serif}
 form{width:min(340px,86vw);text-align:center}svg{width:84px;height:98px;color:#e6a58c;margin:0 auto 14px;display:block}h1{font:600 30px/1.1 Georgia,serif;margin:0 0 6px}p{color:#afa198;font-size:15px;margin:0 0 18px}
 input{width:100%;box-sizing:border-box;min-height:52px;padding:12px 14px;border-radius:10px;border:1px solid rgba(230,165,140,.45);background:#100b11;color:#e8d0c8;font-size:18px}
 button{margin-top:10px;width:100%;min-height:52px;border-radius:10px;border:1px solid #e6a58c;background:linear-gradient(180deg,#eaac93,#b5664b 55%,#8a4731);color:#150b17;font-weight:700;font-size:17px}.err{color:#ff9dbf;margin-top:10px;font-size:15px}</style></head>
 <body><form method="post" action="/__gate"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 16l44 54-44 54-44-54z" stroke-width="1"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg>
-<h1>Cloak &amp; Candle</h1><p>Coming soon. Enter the password to continue.</p><input type="password" name="password" autocomplete="current-password" aria-label="Password" autofocus required>
+<h1>The Betrayal</h1><p>Coming soon. Enter the password to continue.</p><input type="password" name="password" autocomplete="current-password" aria-label="Password" autofocus required>
 <input type="hidden" name="next" value="${String(next).replace(/[&<>"']/g, "")}"><button>Enter</button>${wrong ? '<div class="err" role="alert">That’s not it.</div>' : ""}</form></body></html>`,
   { status: 401, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 async function gate(req, env) {
@@ -484,6 +484,14 @@ export default {
   },
 };
 async function route(req, env) {
+    // The domain: SITE_HOST is the one address. The old name's domain (OLD_HOSTS) and www. send every page there;
+    // the API stays answering on the old domain too, so Stripe's webhook and any Table already open keep working.
+    const u0 = new URL(req.url), home = env.SITE_HOST;
+    if (home && u0.hostname !== home) {
+      const old = String(env.OLD_HOSTS || "").split(",").map((h) => h.trim()).filter(Boolean);
+      if (u0.hostname === "www." + home || (old.includes(u0.hostname) && !u0.pathname.startsWith("/api/")))
+        return Response.redirect("https://" + home + u0.pathname.replace(/^\/g\//, "/t/") + u0.search, 301);
+    }
     const locked = await gate(req, env); if (locked) return locked;
     const url = new URL(req.url), p = url.pathname;
     const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events)$/);
@@ -613,10 +621,10 @@ async function route(req, env) {
       return json({ error: "Not found" }, 404);
     }
     if (p.startsWith("/api/")) return json({ error: "Not found" }, 404);
-    // a room: the game page (TV at /g/CODE, host at /g/CODE#host)
-    if (/^\/g\/[A-Za-z0-9]{6}\/?$/.test(p)) {
+    // a Table: the game page (TV at /t/CODE, Keeper at /t/CODE#keeper; the old /g/ addresses still work)
+    if (/^\/[gt]\/[A-Za-z0-9]{6}\/?$/.test(p)) {
       const code = p.slice(3, 9).toUpperCase();
-      if (p.slice(3, 9) !== code) return Response.redirect(url.origin + "/g/" + code + url.search + url.hash, 301);
+      if (p.slice(3, 9) !== code) return Response.redirect(url.origin + p.slice(0, 3) + code + url.search + url.hash, 301);
       return env.ASSETS.fetch(new Request(url.origin + "/play.html", req));
     }
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));

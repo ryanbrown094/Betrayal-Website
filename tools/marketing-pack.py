@@ -1,11 +1,11 @@
-# Builds dist/Cloak-and-Candle-Marketing-Pack.zip: everything a marketing pack needs, in one folder. The game's rules
+# Builds dist/The-Betrayal-Marketing-Pack.zip: everything a marketing pack needs, in one folder. The game's rules
 # and numbers are taken from the built game itself (worker/public/play.html), so they always match what customers play.
 # Run ./build.sh first. python3 tools/marketing-pack.py
 import os, sys, csv, json, shutil, subprocess, time, zipfile, html, re
 from html.parser import HTMLParser
 from playwright.sync_api import sync_playwright
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); os.chdir(ROOT)
-NAME = "Cloak-and-Candle-Marketing-Pack"; OUT = os.path.join("dist", NAME)
+NAME = "The-Betrayal-Marketing-Pack"; OUT = os.path.join("dist", NAME)
 shutil.rmtree(OUT, ignore_errors=True); os.makedirs(OUT)
 P = lambda *a: os.path.join(OUT, *a)
 def cp(src, dst):
@@ -29,9 +29,9 @@ try:
             const names = Array.from({length: n}, (_, i) => 'P' + i).join('\\n'), d = settle(Object.assign(SETUP0(), { names })), [lo, hi] = roundsRange(n);
             const shape = R => [n, ...simPlan(n, R).map(r => r.start - r.exiles - r.kills)].join(' > ');
             const b = blades(d);
-            table.push({ players: n, cloaks: defaults(n).t, most_cloaks: maxCloaks(n), fewest_rounds: lo, most_rounds: hi, recommended_rounds: d.rounds,
+            table.push({ players: n, forsworn: defaults(n).t, most_forsworn: maxCloaks(n), fewest_rounds: lo, most_rounds: hi, recommended_rounds: d.rounds,
               players_left_each_round_fewest: shape(lo), players_left_each_round_most: shape(hi), recommended_hours: d.hours, estimated_length: aboutH(estMins(d, n)),
-              blade_round: d.blade ? b.blade : '', champion_round: d.champion ? b.champion : '', max_shields_at_once: Math.max(1, Math.floor(n / 4)) });
+              casting_vote_round: d.blade ? b.blade : '', crown_round: d.champion ? b.champion : '', max_sanctuaries_at_once: Math.max(1, Math.floor(n / 4)) });
           }
           const missions = MISSIONS.filter(m => m.key !== 'custom').map(m => ({ key: m.key, title: m.title, kind: m.addon ? 'add-on' : m.kind === 'screen' ? 'at the table' : 'up on your feet', needs: NEEDS[m.key] || 'nothing', when: m.when, carries_a_prize: m.hasShield ? 'yes' : 'no', hidden_rounds: ROUNDED.includes(m.key) ? 'yes' : 'no', rules: m.addon ? m.rules : defRules(m) }));
           const banks = BANKDEFS.map(d => ({ bank: d.label, key: d.key, items: d.items().length }));
@@ -81,14 +81,14 @@ def text_of(path, start=None):
     h.feed(src); t = "".join(h.out); t = re.sub(r"\n[ \t]+", "\n", t); t = re.sub(r"\n{3,}", "\n\n", t)
     return t.strip()
 with open(P("03-copy", "website-copy.md"), "w", encoding="utf-8") as f:
-    f.write("# The website's words\n\nTaken from the live pages (cloakandcandle.co.uk). Reuse freely; keep facts in step with `01-game/`.\n\n---\n\n# Home page\n\n")
-    home = text_of("site/index.html", "<body>"); cut = home.index("## Open your room")
+    f.write("# The website's words\n\nTaken from the live pages (thebetrayal.co.uk). Reuse freely; keep facts in step with `01-game/`.\n\n---\n\n# Home page\n\n")
+    home = text_of("site/index.html", "<body>"); cut = home.index("## Open your Table")
     f.write(home[:cut].rsplit("\n", 2)[0] + "\n\n" + text_of("site/index.html", '<div class="eyebrow">what you need</div>'))
-    for name, title in [("rules", "How to play (/rules): player-safe, no spoilers"), ("tour", "A night at Cloak & Candle (/tour): screenshot captions")]:
+    for name, title in [("rules", "How to play (/rules): player-safe, no spoilers"), ("tour", "A night of The Betrayal (/tour): screenshot captions")]:
         f.write(f"\n\n---\n\n# {title}\n\n" + text_of(f"site/pages/{name}.html"))
 
 # 4. brand, screens, social
-cp("media/Cloak-and-Candle-Brand-Guidelines.pdf", P("02-brand", "Cloak-and-Candle-Brand-Guidelines.pdf"))
+cp("media/The-Betrayal-Brand-Guidelines.pdf", P("02-brand", "The-Betrayal-Brand-Guidelines.pdf"))
 cp("media/logos", P("02-brand", "logos")); cp("media/palette", P("02-brand", "palette"))
 for f in os.listdir("worker/public/fonts"): cp(os.path.join("worker/public/fonts", f), P("02-brand", "fonts", "web", f))
 cp("media/copy/fonts.md", P("02-brand", "fonts", "README.md")); cp("media/copy/OFL.txt", P("02-brand", "fonts", "OFL.txt"))
@@ -99,6 +99,7 @@ for f in sorted(os.listdir("media/web")):
     if f.startswith("tour-"): cp(os.path.join("media/web", f), P("04-screenshots", "web-sized", f[5:]))
 cp("media/social", P("05-social"))
 cp("media/web/tv-table.jpg", P("05-social", "hero-tv-table.jpg"))
+cp("media/launch", P("06-launch")); cp("media/copy/NEXT-STEPS.md", P("NEXT-STEPS.md"))
 
 with open(P("VERSION.txt"), "w") as f: f.write(f"Cloak & Candle {data['version']} · build {data['build']} · made {time.strftime('%d %B %Y')}\n")
 zp = os.path.join("dist", NAME + ".zip")

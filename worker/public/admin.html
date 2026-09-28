@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928213650">
-<title>Admin — Cloak &amp; Candle</title>
+<meta name="build" content="20260928223907">
+<title>Admin — The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <style>
@@ -55,7 +55,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 </head>
 <body>
 <div class="wrap">
-<nav class="top"><a href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg>Cloak &amp; Candle</a></nav>
+<nav class="top"><a href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg>The Betrayal</a></nav>
 <main>
 <style>
 .wrap { max-width: 1100px }
@@ -236,7 +236,7 @@ $("#mf").onsubmit = async e => {
 $("#room").onclick = async () => {
   try {
     const j = await api("room", {}), m = $("#rmsg"); m.className = "msg"; m.textContent = "Room " + j.room + ": ";
-    const a = document.createElement("a"); a.href = "/g/" + j.room + "#host"; a.textContent = "host phone"; a.target = "_blank";
+    const a = document.createElement("a"); a.href = "/g/" + j.room + "#host"; a.textContent = "Keeper phone"; a.target = "_blank";
     const b = document.createElement("a"); b.href = "/g/" + j.room; b.textContent = "TV"; b.target = "_blank";
     m.append(a, " · ", b);
   } catch (err) { say($("#rmsg"), err.message, true) }
@@ -274,7 +274,7 @@ function renderRooms() {
   say($("#rlmsg"), list.length + " of " + rooms.length + " rooms");
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
-const RULE_WORDS = { rounds: "Rounds", perRound: "Missions a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Mingle", pool: "Mission pool", kill: "Kill", ghosts: "Ghosts", convert: "Conversion", bargain: "Bargain", quests: "Side-quests", shield: "Shields", blade: "Blade", champion: "Champion", witness: "Witness", dilemma: "Dilemma" };
+const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 let replay = null;
 // the whole game log, from each recorded save's newest line (a save that added no line repeats the one before)
@@ -288,23 +288,23 @@ async function openRoom(code, at) {
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; if (replay) replay.stop() } }, "← All rooms"),
     h("h2", {}, "Room " + code),
     kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Pass", m.pass || "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
-      ["Links", h("span", {}, h("a", { href: "/g/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/g/" + code + "#host", target: "_blank" }, "host phone"))]]));
+      ["Links", h("span", {}, h("a", { href: "/g/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/g/" + code + "#host", target: "_blank" }, "Keeper phone"))]]));
   if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
   else {
     const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
     ap(v, h("h2", {}, "The game"),
-      kv([["Title", s.brand && s.brand.title], ["Host", s.brand && s.brand.host], ["Players", s.players.length + " (" + cl.length + " Cloaks: " + cl.join(", ") + ")"], ["Now", s.phase + " · round " + s.round + (s.finalRound ? " (final is round " + s.finalRound + ")" : "") + " · version " + (s.ver || 0)],
-        ["Pot", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Cloaks only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner || "—"], ["App", "schema " + s.v]]),
+      kv([["Title", s.brand && s.brand.title], ["Keeper", s.brand && s.brand.host], ["Players", s.players.length + " (" + cl.length + " Forsworn: " + cl.join(", ") + ")"], ["Now", s.phase + " · round " + s.round + (s.finalRound ? " (final is round " + s.finalRound + ")" : "") + " · version " + (s.ver || 0)],
+        ["Purse", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Forsworn only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner || "—"], ["App", "schema " + s.v]]),
       h("h3", {}, "Game plan (setup)"), kv(Object.entries(s.rules || {}).map(([k, x]) => [RULE_WORDS[k] || k, yes(x)])),
       h("h3", {}, "Players, in seat order"),
-      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Shield"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
       h("h3", {}, "Game log"), h("p.note", {}, "Every line from the start, taken from the recording (the game itself only keeps its latest 80)."), h("div.mono", {}, fullLog(recs) || (s.log || []).slice().reverse().join("\n") || "(empty)"));
   }
   // the replay: every saved version, on a TV and a phone
-  ap(v, h("h2", {}, "Replay"), h("p.note", {}, "Every change the host’s phone saved, in order. Drag the slider or tap a line; Play steps through them. The TV shows what the guests saw, the phone what the host saw."));
+  ap(v, h("h2", {}, "Replay"), h("p.note", {}, "Every change the Keeper’s phone saved, in order. Drag the slider or tap a line; Play steps through them. The TV shows what the guests saw, the phone what the Keeper saw."));
   if (!recs.length) ap(v, h("p.note", {}, "Nothing recorded yet."));
   else {
-    const tv = h("iframe", { src: "/play.html#replay-tv", title: "TV replay" }), ph = h("iframe", { src: "/play.html#replay-host", title: "Host phone replay" });
+    const tv = h("iframe", { src: "/play.html#replay-tv", title: "TV replay" }), ph = h("iframe", { src: "/play.html#replay-host", title: "Keeper phone replay" });
     const tvbox = h("div.tvbox", {}, tv), rng = h("input", { type: "range", min: 1, max: recs.length, value: 1, "aria-label": "Point in the game" }), now = h("div.now", {}), tl = h("div.tl", {});
     const play = h("button.btn.ghost.small", {}, "Play"), speed = h("select", { "aria-label": "Speed" }, [["1500", "slow"], ["700", "normal"], ["250", "fast"]].map(([v, l]) => h("option", { value: v, selected: v === "700" }, l)));
     recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "— game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));
@@ -337,7 +337,7 @@ let reports = [];
 async function loadReports() { try { reports = (await api("reports")).reports || []; renderReports() } catch (e) { say($("#repmsg"), e.message, true) } }
 function renderReports() {
   const f = $("#rf").value, list = reports.filter(r => f === "all" || r.status === f), tb = $("#reprows"); tb.textContent = "";
-  for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.host ? "host phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
+  for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.host ? "Keeper phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
   $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "";
   say($("#repmsg"), list.length ? list.length + " reports" : "No reports here.");
 }
@@ -354,7 +354,7 @@ async function openReport(id) {
   const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { alert(e.message) } };
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
     h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
-    kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.host ? "the host’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
+    kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
     h("h3", {}, "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
     r.room && r.rec ? h("p", {}, h("button.btn.small", { onclick: () => openRoom(r.room, r.rec) }, "Replay the game at this moment")) : null);
   if (r.snap) {
@@ -401,7 +401,7 @@ const firstTab = (location.hash || "").slice(1);
 fetch("/api/admin/me", { cache: "no-store" }).then(r => r.ok ? r.json().then(j => show(true, j.user)) : show(false)).catch(() => show(false));
 </script>
 </main>
-<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>Cloak &amp; Candle is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
+<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>
 </body>
 </html>

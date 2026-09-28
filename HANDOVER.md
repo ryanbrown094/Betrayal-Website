@@ -1,4 +1,4 @@
-# Cloak & Candle — handover (1.1, 28 September 2026)
+# The Betrayal — handover (1.1, 28 September 2026)
 
 Written for whoever picks the project up next — most likely an LLM coding assistant working with Ryan. Read this, then `README.md`, then the code. Where something is untested or assumed, it says so.
 
@@ -6,24 +6,26 @@ Written for whoever picks the project up next — most likely an LLM coding assi
 
 ## 1. What it is
 
-**Cloak & Candle** is a commercial, hosted dinner-party game for 8–24 guests in one room. Guests have no phones in play; the props are blindfolds, chalkboards and chalk. Two screens run it:
+**The Betrayal** is a commercial, hosted dinner-party game for 8–24 guests in one room. Guests have no phones in play; the props are blindfolds, chalkboards and chalk. Two screens run it:
 
 - **The TV** — `/g/ROOMCD` on a laptop cast to the TV. It never receives secrets (§4.5).
-- **The host phone** — `/g/ROOMCD#host`. The host plans the game up front (§5.0), then taps through it reading the lines it gives them.
+- **The Keeper phone** — `/g/ROOMCD#host`. The Keeper plans the game up front (§5.0), then taps through it reading the lines it gives them.
 
-It is sold as a **party pass** (`CNDL-XXXX-XXXX`): redeeming one opens a room for 48 hours. Every room is its own Cloudflare Durable Object, so any number of parties play at once.
+It is sold as a **Invitation** (`CNDL-XXXX-XXXX`): redeeming one opens a room for 48 hours. Every room is its own Cloudflare Durable Object, so any number of parties play at once.
 
-It grew out of a private party build ("v17", played 26 September 2026). For the product it was re-dressed so it stands on its own: new name and mark (a cloaked figure with a candle flame for a face), a plum / rose-gold palette, the setting is "the house", no default host name, the letters game is **Longest Word**, and every party-only file (guest guide, invite, the old prize) was removed. On 28 Sep 2026 every term borrowed from TV formats was replaced with original ones (§5.9).
+It grew out of a private party build ("v17", played 26 September 2026). For the product it was re-dressed so it stands on its own: new name and mark (a cloaked figure with a candle flame for a face), a plum / rose-gold palette, the setting is "the house", no default Keeper name, the letters game is **Longest Word**, and every party-only file (guest guide, invite, the old prize) was removed. On 28 Sep 2026 every term borrowed from TV formats was replaced with original ones (§5.9).
 
 **Status (28 Sep 2026):** built and tested locally, including the real Worker under `wrangler dev`. Domain `cloakandcandle.co.uk` bought through Cloudflare; the repo is meant to deploy through Cloudflare's GitHub integration from the repo root (`wrangler.toml`). The whole site sits behind a pre-launch password (`SITE_PASSWORD` in `wrangler.toml`). Payments: code path written and unit-tested with Stripe stubbed; not tried against real Stripe.
 
 **1.1 (28 Sep 2026):** every term borrowed from TV formats replaced (§5.9); 8–24 players, with bigger tables losing more a round (§5.10); legal pages and a placeholder checkout (§6.1); a master passcode for testing (§4.1); the TV final roll and Ghost rules fit 4:3 screens.
 
-**1.2 (28 Sep 2026):** the end game always starts with four, with the host choosing the rounds within what the table allows (§5.6); Stripe Checkout wired end to end, tested against a stub only (§6.2).
+**1.2 (28 Sep 2026):** the end game always starts with four, with the Keeper choosing the rounds within what the table allows (§5.6); Stripe Checkout wired end to end, tested against a stub only (§6.2).
 
-**1.3 (28 Sep 2026), for sale:** setup is a step-by-step wizard, one decision a page with a full explanation and a recommendation that follows the earlier choices (§5.0); only the shield comes every round, and the blade, Champion, Witness and Dilemma come once a game (§5.3); mission prize and setting overrides fold away on the brief; the site has `/rules` and `/tour` (real screenshots); the question banks are roughly three times bigger (§7).
+**1.3 (28 Sep 2026), for sale:** setup is a step-by-step wizard, one decision a page with a full explanation and a recommendation that follows the earlier choices (§5.0); only Sanctuary comes every round, and the Casting Vote, Crown, Confessor and Temptation come once a game (§5.3); Trial prize and setting overrides fold away on the brief; the site has `/rules` and `/tour` (real screenshots); the question banks are roughly three times bigger (§7).
 
-**1.3.1 (28 Sep 2026), diagnostics:** Stripe's webhook is exempt from the site password (it was being refused with 401 while `SITE_PASSWORD` was set, so refunds and subscription changes never arrived; checkout only worked through the thank-you page). Refunds are matched however Stripe reports them (§6.2). Every game is recorded save by save; each TV and phone sends a trail of taps, screens, sync trouble and errors; "Report a problem" (host: footer and Menu; TV: bottom-left) files a report with a snapshot of the screen; /admin has Rooms (config, full log, a replay of TV and phone, device trails), Reports, Errors (the master log) and Stripe events (§4.7).
+**1.3.1 (28 Sep 2026), diagnostics:** Stripe's webhook is exempt from the site password (it was being refused with 401 while `SITE_PASSWORD` was set, so refunds and subscription changes never arrived; checkout only worked through the thank-you page). Refunds are matched however Stripe reports them (§6.2). Every game is recorded save by save; each TV and phone sends a trail of taps, screens, sync trouble and errors; "Report a problem" (Keeper: footer and Menu; TV: bottom-left) files a report with a snapshot of the screen; /admin has Rooms (config, full log, a replay of TV and phone, device trails), Reports, Errors (the master log) and Stripe events (§4.7).
+
+**1.4 (28 September 2026), rebrand: Cloak & Candle → The Betrayal** (thebetrayal.co.uk). Every word players, hosts and buyers see moved to the vocabulary in `media/copy/glossary.md` (the Forsworn and the Loyal, the Keeper, Trials, the Interval, Sanctuary, the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer, Errands, the Purse, Trust or Doubt, Honour or Betray, the Sacrament, the Unmasking, Invitations, the Table). **Code, keys and saved games did not change:** roles are still `"cloak"`/`"candle"`, prizes `shield`/`dag`, phases `mission`/`mingle`, votes `end`/`exile`/`share`/`take`, so games in progress load. The rename was done with `tools/rebrand.py` (visible text only), `tools/rebrand_fixes.py` and `tools/rebrand_site.py` (the lines that needed writing: the Sacrament oath, the endings, the Crown being worn). The quiz, memory walls, songs and pictures banks were left alone (they are facts and objects). Tables are at `/t/CODE` and `/t/CODE#keeper`; `/g/CODE` and `#host` still work. `SITE_HOST` makes thebetrayal.co.uk the one address: `www.` and `OLD_HOSTS` (cloakandcandle.co.uk) redirect every page there with a 301, but the API answers on every domain so Stripe's webhook and open Tables keep working. **The Worker keeps its name `cloak-and-candle`:** renaming a Worker creates a new one with empty Durable Objects, which would lose every pass and room. Pass codes keep their `CNDL-` prefix for the same reason. Brand assets are from The Betrayal Brand Pack 2.0 (`media/`, `tools/brand/`).
 
 ---
 
@@ -58,12 +60,12 @@ src/               the game page (§4)
 site/index.html    the home page: SHOP settings (price, contact) at the bottom
 site/page.html     the shell for the legal and checkout pages; site/pages/NAME.html → worker/public/NAME.html, served at /NAME
                    (terms, privacy, cookies, refunds, contact, buy, admin, rules, tour — BUY price display at the bottom of buy.html)
-tools/marketing-pack.py  builds dist/Cloak-and-Candle-Marketing-Pack.zip: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social (sources in media/copy/)
+tools/marketing-pack.py  builds dist/The-Betrayal-Marketing-Pack.zip: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social (sources in media/copy/)
 tools/webshots.py      web-sized copies of media/screenshots for the /tour page (run after qa/media.py)
 tools/stripe-setup.sh  creates the Stripe product, price and webhook endpoint for one environment (§6.2)
 worker/src/        index.js (router, GameState, Registry), codes.js, rules.js, public-view.js
 worker/public/     build output + fonts, icons, words.txt (Longest Word dictionary), _headers, media/
-media/             logos/, screenshots/, social/, palette/, copy/press-kit.md, src/guidelines.html, Cloak-and-Candle-Brand-Guidelines.pdf
+media/             logos/, screenshots/, social/, palette/, copy/press-kit.md, src/guidelines.html, The-Betrayal-Brand-Guidelines.pdf
 tools/             brand.py, mediapack.py, icons.py, passes.sh, recolour.py (the one-off palette move, kept for reference)
 qa/                harnesses (§8)
 ```
@@ -74,7 +76,7 @@ qa/                harnesses (§8)
 
 ### 4.1 Rooms and passes (Worker)
 - **Routes:** `/` home page · `/g/ROOMCD` game page (`play.html`) · `/api/g/ROOMCD/state|settings` a room's API · `POST /api/games {pass}` redeem · `POST /api/checkout {terms, supply}` → Stripe Checkout URL · `GET /api/claim?session_id=` · `POST /api/stripe/webhook` (signed) · `/api/admin/*` (Bearer `ADMIN_TOKEN`): `POST passes {count,note}`, `GET passes`, `POST revoke {pass}`.
-- **Registry** (one Durable Object, `idFromName("registry")`): passes `pass:CNDL-…` → `{created, note, source, room?, expires?, redeemed?, revoked?}`, rooms `room:CODE`, Stripe claims `claim:<session>` and `pi:<payment_intent>` → pass, checkout rate `co:<ip>`. A pass bought through Checkout is `pending` until paid; a pending pass is refused with 402. Redeeming again returns the same room until it expires (a host who lost the link). 20 failed redemptions an hour per address, then 429.
+- **Registry** (one Durable Object, `idFromName("registry")`): passes `pass:CNDL-…` → `{created, note, source, room?, expires?, redeemed?, revoked?}`, rooms `room:CODE`, Stripe claims `claim:<session>` and `pi:<payment_intent>` → pass, checkout rate `co:<ip>`. A pass bought through Checkout is `pending` until paid; a pending pass is refused with 402. Redeeming again returns the same room until it expires (a Keeper who lost the link). 20 failed redemptions an hour per address, then 429.
 - **GameState** (one per room, `idFromName("room:CODE")`): `meta {room, expires, pass}` set by the Registry on creation; unknown rooms are 404. After `expires` the room is read-only (writes get **423**); an alarm deletes it `KEEP_DAYS` later. Otherwise unchanged from the party build: PIN, wrong-PIN limiting, 409/410 save rules, poll tags, question-bank switches (now per room).
 - **Vars:** `PASS_HOURS` (48), `KEEP_DAYS` (7), `BUILD` (set by deploy.sh), `SITE_PASSWORD` (the pre-launch gate). **Secrets:** `ADMIN_TOKEN`, `STRIPE_SECRET_KEY`, `MASTER_PASS`.
 - **Master passcode** (`MASTER_PASS`, a secret): entered in the home page's pass box (any case, spaces trimmed) it opens a **fresh room every time**, recorded with `pass: "MASTER"`. For testing; unset it to switch it off. Wrong guesses count against the same 20-an-hour limit as passes.
@@ -91,7 +93,7 @@ One JSON `state`; `SCHEMA = 12`, `APPV = "1.2"` (12: role keys became `cloak`/`c
 Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:true}`). The phone queues saves and rebases after lost replies. GET bodies carry `room {code, expires, expired}`. Status handling in `flushSaves`: 426 reload, 403 wrong PIN, 410 wiped elsewhere, 409 another phone moved, **423 pass expired** (read-only toast).
 
 ### 4.5 Secrets and the public view
-`worker/src/public-view.js` is the single source of truth for what the TV may know (roles, PIN, log, undo chain, Witness, secret blade holders, mission secrets, quiz answers, the night's victim until its line, side-quests, unrevealed votes, the prize and stats until the final phase). **When you add a secret field, add it there.** `rules`, `plan` and `planAt` are not secret.
+`worker/src/public-view.js` is the single source of truth for what the TV may know (roles, PIN, log, undo chain, Confessor, secret Casting Vote holders, Trial secrets, quiz answers, the night's victim until its line, Errands, unrevealed votes, the prize and stats until the final phase). **When you add a secret field, add it there.** `rules`, `plan` and `planAt` are not secret.
 
 ### 4.7 Diagnostics
 - **Recording** (`GameState.record`): every accepted PUT stores `recl:<n>` (time, kind start/save/wipe, the newest log line, phase, round, version) and `recs:<n>` (the whole state, gzipped). Up to `RECMAX` (20,000) a room; deleted with the room.
@@ -103,144 +105,144 @@ Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:t
 - Workers Logs (`[observability]` in wrangler.toml) also keep console output in the Cloudflare dashboard.
 
 ### 4.6 TV
-`tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; large text by default; tuned for 16:9/16:10. Everything passes through `kw()` for the kill style. Before a game, the TV shows the room code and the host link.
+`tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; large text by default; tuned for 16:9/16:10. Everything passes through `kw()` for the kill style. Before a game, the TV shows the room code and the Keeper link.
 
 ---
 
 ## 5. The game
 
 ### 5.0 The game plan (setup)
-A wizard on the phone (`WIZ` in `host.js`): one decision a page, each with a long explanation of what it does and what the alternatives mean, then a summary page (every line has **Change**, which returns there with **Done**) and **Start game**. After the host, PIN, Cloaks and evening length, the host can take the recommended settings for the rest and go straight to the summary. `RECS` gives every choice a recommendation worked out from the ones before it (e.g. rounds from table size and hours via `estMins`, dinner mid-game, side-quests only with a mingle). Until the host picks something themselves (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped (no shields → no Champion or Dilemma page). The draft lives in `sessionStorage` (`candle-draft`); tests drive it by setting `setupDraft` and calling `submitSetup()`. Saved in `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
+A wizard on the phone (`WIZ` in `host.js`): one decision a page, each with a long explanation of what it does and what the alternatives mean, then a summary page (every line has **Change**, which returns there with **Done**) and **Start game**. After the Keeper, PIN, Forsworn and evening length, the Keeper can take the recommended settings for the rest and go straight to the summary. `RECS` gives every choice a recommendation worked out from the ones before it (e.g. rounds from table size and hours via `estMins`, dinner mid-game, Errands only with an Interval). Until the Keeper picks something themselves (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped (no Sanctuaries → no Crown or Temptation page). The draft lives in `sessionStorage` (`candle-draft`); tests drive it by setting `setupDraft` and calling `submitSetup()`. Saved in `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
 
 | rule | values | effect |
 |---|---|---|
 | `rounds` | 0 = by table size, or 1–10 | fixed: round N becomes the final (`nextRound`). The five-left rule still applies |
-| `perRound` | 0 = by the clock, 1, 2 | missions a round (`perRoundOf`) |
+| `perRound` | 0 = by the clock, 1, 2 | Trials a round (`perRoundOf`) |
 | `dinnerAfter` | 0–10 | the morning after that round offers dinner as the main button |
-| `mingle` | on/off | a 10-minute mingle before each Reckoning |
-| `pool` | mission keys or null (all) | `planMissions` deals them: the icebreaker first, Ghost games after mission two, no repeats until used up. `state.plan`/`planAt` hold the order; `nextPlanned` skips the Statue until there are Ghosts |
-| `kill` | `murder` / `poison` | murder: the victim is tapped and leaves the table under blindfold; poison: told at night, announces at dawn, last words, leaves. Wording swapped by `kw()` everywhere (host, TV, scripts) |
+| `mingle` | on/off | a 10-minute Interval before each Reckoning |
+| `pool` | Trial keys or null (all) | `planMissions` deals them: the icebreaker first, Ghost games after Trial two, no repeats until used up. `state.plan`/`planAt` hold the order; `nextPlanned` skips the Statue until there are Ghosts |
+| `kill` | `murder` / `poison` | murder: the victim is tapped and leaves the table under blindfold; poison: told at night, announces at dawn, last words, leaves. Wording swapped by `kw()` everywhere (Keeper, TV, scripts) |
 | `ghosts` | on/off | off: `ghostsOf` returns nobody — no lore, verdicts, Ghost round, Statue |
-| `convert`, `bargain` | on/off | `autoMode` picks the night: one Conversion, then one Bargain, only for a lone Cloak v 4+ Candle |
-| `quests` | on/off | one side-quest pre-chosen each night |
-| `shield` | mix / public / secret / off | `autoPrize`; mix = hidden in round-by-round missions, public elsewhere |
-| `blade`, `champion`, `witness`, `dilemma` | on/off | blade and Champion once a game each (`onceRound`: the blade about halfway to the final, the Champion later; `state.gave` records them); Witness only at five with one Cloak; the Dilemma once, offered when nobody holds a shield |
+| `convert`, `bargain` | on/off | `autoMode` picks the night: one Whisper, then one Last Offer, only for a lone Forsworn v 4+ Loyal |
+| `quests` | on/off | one Errand pre-chosen each night |
+| `shield` | mix / public / secret / off | `autoPrize`; mix = hidden in round-by-round Trials, public elsewhere |
+| `blade`, `champion`, `witness`, `dilemma` | on/off | Casting Vote and Crown once a game each (`onceRound`: the Casting Vote about halfway to the final, the Crown later; `state.gave` records them); Confessor only at five with one Forsworn; the Temptation once, offered when nobody holds Sanctuary |
 
-The Menu has **Your game plan** (the summary and the next six missions).
+The Menu has **Your game plan** (the summary and the next six Trials).
 
 ### 5.1 Flow
-1. **The game plan** (phone, §5.0): players and PIN, the evening, the mission pool, nights and Ghosts, secret roles, pot and prize.
-2. **Lobby** → **intro** (the rules card on the TV) → **night 0** (the Cloaks are chosen and see each other).
+1. **The game plan** (phone, §5.0): players and PIN, the evening, the Trial pool, nights and Ghosts, secret roles, Purse and prize.
+2. **Lobby** → **intro** (the rules card on the TV) → **night 0** (the Forsworn are chosen and see each other).
 3. **Each round:**
-   - Day: the plan's next mission, one tap (the host may swap it). One or two a round, by the plan.
-   - Mission: brief → prize step → play → done.
-   - Shield step: ceremony or card.
-   - Mingle before the table if the plan has it (always when a side-quest is in play); dinner at the morning the plan names.
+   - Day: the plan's next Trial, one tap (the Keeper may swap it). One or two a round, by the plan.
+   - Trial: brief → prize step → play → done.
+   - Sanctuary step: ceremony or card.
+   - Interval before the table if the plan has it (always when an Errand is in play); dinner at the morning the plan names.
    - Reckoning: talk → boards → exile.
    - Reveal: the role is shown unless it's the final; the new Ghost gives their verdict.
-   - Night: a kill (murder or poison, by the plan), or a Conversion / Bargain when one Cloak faces four or more (if switched on), plus a side-quest.
+   - Night: a kill (murder or poison, by the plan), or a Whisper / Last Offer when one Forsworn faces four or more (if switched on), plus an Errand.
    - Morning: dawn reveal (murder: an empty chair; poison: the victim stands, last words).
 4. **The end game** (automatic, see §5.6).
-5. **The final ceremony:** seals turned one by one (hold for a drumroll). With two or more Cloaks left, share or take; then possibly the Ghosts' round.
-6. **Final screen:** winner, prize, pot split and the full roll (converted or bargain Cloaks marked). Then the **awards**, revealed one at a time.
+5. **The final ceremony:** seals turned one by one (hold for a drumroll). With two or more Forsworn left, honour or betray; then possibly the Ghosts' round.
+6. **Final screen:** winner, prize, Purse split and the full roll (converted or bargain Forsworn marked). Then the **awards**, revealed one at a time.
 
-### 5.2 Missions (`content.js` → `MISSIONS`)
-Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memory Wall; Snap; Rock Paper Scissors Royale; One Leg; Screen Charades; Hum It; The Statue; Two Truths and a Lie; Chalkboard Pictionary; Higher or Lower; What Changed?; The Dilemma (add-on); Custom.
+### 5.2 Trials (`content.js` → `MISSIONS`)
+Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memory Wall; Snap; Rock Paper Scissors Royale; One Leg; Screen Charades; Hum It; The Statue; Two Truths and a Lie; Chalkboard Pictionary; Higher or Lower; What Changed?; The Temptation (add-on); Custom.
 
-- **Settings:** per-mission options (`MSET`) have defaults; the host can change them on the brief, and they're remembered in `prefs`.
-- **Prizes** are set by the plan (`autoPrize`); the brief shows them pre-selected and the host can still change them.
-- **Labels:** the TV shows "round N · mission M".
-- **Brief, then prize:** the TV shows the brief first. The host picks the prizes and taps **Confirm — prize on TV**; the TV then shows a prize card with one labelled line per prize, plus the points on offer. **Start mission** begins play. Most Likely To and the Dilemma skip the prize step.
-- **Quiz:** tapping who shouted shows "X — locked in"; the answer appears only after the host taps Correct or Wrong.
-- **What Changed?:** runs itself. When the study clock ends the grid hides, a 10-second countdown runs, then the new grid appears. The host phone must be awake for the hide.
-- **Charades, Hum It, Pictionary:** "Blindfolds on — everyone but X" (nothing else shows) → "Blindfolds are on — show X" (the word appears, with "Don't know it? Ask ‹host› to skip").
+- **Settings:** per-mission options (`MSET`) have defaults; the Keeper can change them on the brief, and they're remembered in `prefs`.
+- **Prizes** are set by the plan (`autoPrize`); the brief shows them pre-selected and the Keeper can still change them.
+- **Labels:** the TV shows "round N · Trial M".
+- **Brief, then prize:** the TV shows the brief first. The Keeper picks the prizes and taps **Confirm — prize on TV**; the TV then shows a prize card with one labelled line per prize, plus the points on offer. **Start Trial** begins play. Most Likely To and the Temptation skip the prize step.
+- **Quiz:** tapping who shouted shows "X — locked in"; the answer appears only after the Keeper taps Correct or Wrong.
+- **What Changed?:** runs itself. When the study clock ends the grid hides, a 10-second countdown runs, then the new grid appears. The Keeper phone must be awake for the hide.
+- **Charades, Hum It, Pictionary:** "Blindfolds on — everyone but X" (nothing else shows) → "Blindfolds are on — show X" (the word appears, with "Don't know it? Ask ‹Keeper› to skip").
   - **Hum It** then splits "Blindfolds off" and "Start 30 s". While the clock runs the music is silent and the clock shows only for its last 5 seconds.
 - **Higher or Lower:** shows the round winner before everyone stands again.
-- **Ties:** broken only when something rides on the winner (a public shield or blade).
+- **Ties:** broken only when something rides on the winner (a public Sanctuary or Casting Vote).
 
-### 5.3 Prizes: shield, blade, Champion, Witness
-- **Shield** (safe from poison tonight): none / the overall winner (public) / 1–2 **hidden** questions or rounds (missions played in rounds only: quiz, Longest Word, Closest Guess, Higher or Lower, What Changed?).
-  - A hidden shield is won by whoever wins *that* question or round (answers it correctly, is closest, has the longest word…), **not** by winning the mission. The rounds are drawn at random, never the first when there's a choice, and only the host sees them.
-  - At most a quarter of the table (minimum one) holds shields at once. There are no shields in the final.
-- **Blade:** the holder's vote counts twice. Options: none / overall winner / a hidden round of its own / **with the shield** — which makes the **Champion** (public or hidden, as the shield is). **Once a game:** the blade (on its own) and the Champion are each given once, from the round `onceRound` picks; an unclaimed one comes round again on the next mission. On the blade's round a mission without rounds offers the blade *instead of* the shield. The host can still put either on a mission sooner from "Change the prizes" on the brief, until it has been given. The Dilemma is offered once a game (`dilemmaFree`).
-- **At the Reckoning** the blade is automatic. Every board counts one as it turns. When the host taps "All boards in", the TV's main line becomes **"the blade fell on Y"** and one vote is added. The holder is never named.
-  - If that extra vote decided the exile, the reveal plays a **blade stab with a drop of blood**.
-  - **Only a Champion** may lay down shield and blade before the first board, to be immune from that exile (and unprotected that night).
+### 5.3 Prizes: Sanctuary, Casting Vote, Crown, Confessor
+- **Sanctuary** (safe from poison tonight): none / the overall winner (public) / 1–2 **hidden** questions or rounds (Trials played in rounds only: quiz, Longest Word, Closest Guess, Higher or Lower, What Changed?).
+  - A hidden Sanctuary is won by whoever wins *that* question or round (answers it correctly, is closest, has the longest word…), **not** by winning the Trial. The rounds are drawn at random, never the first when there's a choice, and only the Keeper sees them.
+  - At most a quarter of the table (minimum one) holds Sanctuaries at once. There are no Sanctuaries in the final.
+- **Casting Vote:** the holder's vote counts twice. Options: none / overall winner / a hidden round of its own / **with Sanctuary** — which makes the **Crown** (public or hidden, as Sanctuary is). **Once a game:** the Casting Vote (on its own) and the Crown are each given once, from the round `onceRound` picks; an unclaimed one comes round again on the next Trial. On the Casting Vote's round a Trial without rounds offers the Casting Vote *instead of* Sanctuary. The Keeper can still put either on a Trial sooner from "Change the prizes" on the brief, until it has been given. The Temptation is offered once a game (`dilemmaFree`).
+- **At the Reckoning** the Casting Vote is automatic. Every board counts one as it turns. When the Keeper taps "All boards in", the TV's main line becomes **"the Casting Vote fell on Y"** and one vote is added. The holder is never named.
+  - If that extra vote decided the exile, the reveal plays a **Casting Vote stab with a drop of blood**.
+  - **Only the Crown** may lay down Sanctuary and Casting Vote before the first board, to be immune from that exile (and unprotected that night).
 - **Secret winners** are tapped in a ceremony. Each prize has its own tap line and the phone says who to tap on which line.
-  - A Cloak who wins a hidden shield on its own gets nothing and no ceremony.
-  - A Cloak who wins a hidden blade or the hidden Champion keeps it.
-- **The Witness** is only offered with exactly **5 alive and 1 Cloak**, which means the final round, before its Reckoning. The TV calls it "a special prize".
-  - Whoever wins it meets the Cloak in a ceremony straight after the mission. Nothing said aloud names it; the tapped person reads the screen.
-  - The Witness can't be poisoned.
-  - If the Cloak wins, the host taps them and then walks the table tapping nobody. The room hears identical lines, and nothing happens.
+  - A Forsworn who wins a hidden Sanctuary on its own gets nothing and no ceremony.
+  - A Forsworn who wins a hidden Casting Vote or the hidden Crown keeps it.
+- **The Confessor** is only offered with exactly **5 alive and 1 Forsworn**, which means the final round, before its Reckoning. The TV calls it "a special prize".
+  - Whoever wins it meets the Forsworn in a ceremony straight after the Trial. Nothing said aloud names it; the tapped person reads the screen.
+  - The Confessor can't be poisoned.
+  - If the Forsworn wins, the Keeper taps them and then walks the table tapping nobody. The room hears identical lines, and nothing happens.
 
-### 5.4 The pot
-- The target is 2000 (set at setup). The pot is capped there, and **the TV does not show the target**.
-- Each mission offers what's left, shared over the missions likely still to come (`offerOf`/`missionsLeft`). The final round offers the rest.
+### 5.4 The Purse
+- The target is 2000 (set at setup). The Purse is capped there, and **the TV does not show the target**.
+- Each Trial offers what's left, shared over the Trials likely still to come (`offerOf`/`missionsLeft`). The final round offers the rest.
 - **Everything moves in multiples of 50.**
-- **Wrong shouts** (quiz Wrong, Snap −, What Changed? "wrong shout") cost 50 for a Cloak's; a Candle's costs nothing. With the setup/Menu option "everyone's", a Candle's costs 50 and a Cloak's 100.
-  - The room sees only the total ("Wrong shouts cost it 50"); the host sees whose.
-  - A failed side-quest costs 50.
-- **The Dilemma's** stake is the current offer (at least 100) and says its points.
-- **At the end** the winners split the pot. All share → split, and rock, paper, scissors for the prize. One takes → the pot and the prize.
+- **Wrong shouts** (quiz Wrong, Snap −, What Changed? "wrong shout") cost 50 for a Forsworn's; a Loyal player's costs nothing. With the setup/Menu option "everyone's", a Loyal player's costs 50 and a Forsworn's 100.
+  - The room sees only the total ("Wrong shouts cost it 50"); the Keeper sees whose.
+  - A failed Errand costs 50.
+- **The Temptation's** stake is the current offer (at least 100) and says its points.
+- **At the end** the winners split the Purse. All share → split, and rock, paper, scissors for the prize. One takes → the Purse and the prize.
 
 ### 5.5 Reckoning details
-- **Talk timer.** Before the first board, the host is reminded of the Champion's option. A secret Champion is reminded without being named.
-- **The tally is hidden on the TV by default** (the host can show it). Count nudges appear on the phone when it's close (level, one in it, or decided) — in words, never digits.
-- **Ties:** revote between the tied players, or the host picks.
+- **Talk timer.** Before the first board, the Keeper is reminded of the Crown's option. A secret Crown is reminded without being named.
+- **The tally is hidden on the TV by default** (the Keeper can show it). Count nudges appear on the phone when it's close (level, one in it, or decided) — in words, never digits.
+- **Ties:** revote between the tied players, or the Keeper picks.
 - **Exile reveal:** a single tap after the exiled player has said their role themselves. There is no drumroll. The final ceremony keeps a hold-for-drumroll on each seal.
-- **Ghosts:** the exiled and the poisoned become Ghosts. They give one secret verdict (name a Cloak) **straight after their exile**; the first time, it comes after the ghost lore. It counts at the end.
+- **Ghosts:** the exiled and the poisoned become Ghosts. They give one secret verdict (name a Forsworn) **straight after their exile**; the first time, it comes after the ghost lore. It counts at the end.
 
 ### 5.6 The end game — always starts at four
-- **Five-left mission (1.3.2):** if the final opens with more than five (a shield held on the last night), its unrevealed votes go down to five, then `fiveMission()` plays one more mission before the last vote, so the Witness can be won. The final never deals Most Likely To (it carries no prize).
-- **Whatever the plan, End or Exile starts with four at the table.** The final round opens with five; its Reckoning takes one more with no role reveal (the unannounced exit), then End or Exile.
-- **The rounds are the host's choice, within what the table allows** (`roundsRange`): from the fewest (every round at full stretch: `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it. Auto = the fewest.
+- **Five-left Trial (1.3.2):** if the final opens with more than five (Sanctuary held on the last night), its unrevealed votes go down to five, then `fiveMission()` plays one more Trial before the last vote, so the Confessor can be won. The final never deals Most Likely To (it carries no prize).
+- **Whatever the plan, Trust or Doubt starts with four at the table.** The final round opens with five; its Reckoning takes one more with no role reveal (the unannounced exit), then Trust or Doubt.
+- **The rounds are the Keeper's choice, within what the table allows** (`roundsRange`): from the fewest (every round at full stretch: `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it. Auto = the fewest.
 - **Each round is sized as it starts** (`roundTarget`, kept in `state.rt`): what's left to lose before five, spread over the rounds left, raised until the later rounds can still finish at full stretch. It sets the Reckoning's exiles (1, or 2 above sixteen) and the night's victims (up to 2 from 12 alive, 3 from 20). A simulation of every table size (8–24) against every allowed plan reaches the final with exactly five on the planned round.
-- **When the final opens with more than five** (a shield held, someone left), its Reckoning keeps voting — no reveals — until four remain ("Another vote — N more to go"). Fewer than five (people left) goes straight to End or Exile.
-- **No early endings mid-game.** Cloaks at parity keep playing into the night; with no Cloaks left the host is sent straight to the final round. The Menu's "End game now" is the only override.
+- **When the final opens with more than five** (Sanctuary held, someone left), its Reckoning keeps voting — no reveals — until four remain ("Another vote — N more to go"). Fewer than five (people left) goes straight to Trust or Doubt.
+- **No early endings mid-game.** Forsworn at parity keep playing into the night; with no Forsworn left the Keeper is sent straight to the final round. The Menu's "End game now" is the only override.
 - In a game that started with more than 5 players, the round that starts with **5 or fewer alive is the final**.
 - **Five never becomes four by poison.** An exile that leaves 5 goes straight into the final round with no night; `startNight` refuses at 5 too. From 6, the night's poison makes 5.
-- The **final Reckoning takes 5 to 4 with no role reveal**. Then it's **End or Exile** with every remaining player voting in secret on the phone.
-  - Only a unanimous END ends the game.
+- The **final Reckoning takes 5 to 4 with no role reveal**. Then it's **Trust or Doubt** with every remaining player voting in secret on the phone.
+  - Only a unanimous TRUST ends the game.
   - Otherwise another table (no reveal): 4→3 and vote again; 3→2 goes to the final-two ceremony.
   - A final-round table with 4 or fewer goes straight to the vote.
-- **The ceremony:** the host turns each survivor's seal.
-  - With two or more Cloaks left: **share or take** (phone handed round). All share → split the pot, RPS for the prize. One takes → takes both. Two or more take → it goes to Ghosts who named a Cloak (their own share-or-take round if there are several), otherwise the host keeps it.
+- **The ceremony:** the Keeper turns each survivor's seal.
+  - With two or more Forsworn left: **honour or betray** (phone handed round). All share → split the Purse, RPS for the prize. One takes → takes both. Two or more take → it goes to Ghosts who named a Forsworn (their own share-or-take round if there are several), otherwise the Keeper keeps it.
 
 ### 5.7 Awards
 `awardsOf` in `core.js`. There are 21 candidates, in order of weight:
 
 1. The Sharpest Eye
 2. The Grand Deceiver
-3. The Deciding Blade
+3. The Deciding Vote
 4. The Turncoat
 5. Couldn't Be Bought
 6. The Ghost Who Saw
-7. The Prophet
+7. The Confessor
 8. The Backstabber
 9. The Narrow Escape
 10. First Blood
 11. The Martyr
-12. Mission Machine
+12. Trial Machine
 13. The Kingmaker
 14. The Lightning Rod
 15. The Wild Card
 16. Barking Up the Wrong Tree
-17. The Shield Bearer
-18. The Point Hoarder
+17. Sanctuary Seeker
+18. The Hoarder
 19. The Lone Wolf
 20. The Untouchable
-21. Last Candle Burning
+21. Last Oath Standing
 
 - **One per person.** Each award goes to the best-placed player who hasn't had one yet.
 - **The total is trimmed to 2, 4, 6, 8 or 12** so the cards fill a grid (2×1, 2×2, 3×2, 4×2, 4×3).
-- **Reveal order:** lightest first. The TV starts with sealed cards, and the host taps "The first award", "Next award"…
+- **Reveal order:** lightest first. The TV starts with sealed cards, and the Keeper taps "The first award", "Next award"…
 
 ### 5.8 Scripts and wording
-- All host lines live in `scripts.js` (`SAY`, `nightScript`, `CEREMONY_`, `WITNESSNOW_`). `vr(list, round)` rotates phrasings by round so no two rounds sound the same.
+- All Keeper lines live in `scripts.js` (`SAY`, `nightScript`, `CEREMONY_`, `WITNESSNOW_`). `vr(list, round)` rotates phrasings by round so no two rounds sound the same.
 - **Spoiler rules the scripts follow:**
   - nothing aloud names who holds a secret prize;
-  - the Witness is "a special prize";
+  - the Confessor is "a special prize";
   - title cards are generic;
   - a shielded victim is never tapped.
 - **Blindfold lines include Ghosts** when there are any.
@@ -250,20 +252,20 @@ Everything that echoed a TV format was renamed, in copy and in code:
 
 | was | now | code |
 |---|---|---|
-| Faithful / Traitor | **Candle / Cloak** | `role: "candle" / "cloak"`, `candles()`, `cloaks()`, `winner: "candles" / "cloaks"` |
-| banish, banishment, "End or Banish" | **exile**, "End or Exile" | `exile()`, vote value `"exile"` |
-| Seer | **the Witness** | `witness`, `witnessOffer`, `WITNESSNOW_` |
-| Dagger / Warrior | **the Blade / the Champion** | `blade`, `champion`, `championOf` |
-| Recruit / Ultimatum | **Conversion / Bargain** | modes `convert` / `bargain` |
+| Faithful / Traitor | **Loyal / Forsworn** | `role: "candle" / "cloak"`, `candles()`, `cloaks()`, `winner: "candles" / "cloaks"` |
+| banish, banishment, "End or Banish" | **exile**, "Trust or Doubt" | `exile()`, vote value `"exile"` |
+| Seer | **the Confessor** | `witness`, `witnessOffer`, `WITNESSNOW_` |
+| Dagger / Warrior | **the Casting Vote / the Crown** | `blade`, `champion`, `championOf` |
+| Recruit / Ultimatum | **Whisper / Last Offer** | modes `convert` / `bargain` |
 | breakfast | **dawn** | |
-| share or steal | **share or take** | `castTake`, vote `"take"` |
+| share or steal | **honour or betray** | `castTake`, vote `"take"` |
 
-Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckoning (original). CODEWORDS (unused) had its show words swapped in place, so positions are unchanged. The host's spoiler strip reads "6 Cloaks v 33 Candles".
+Kept as ordinary game words: Sanctuary, murder, poison, Trial, Ghosts, the Reckoning (original). CODEWORDS (unused) had its show words swapped in place, so positions are unchanged. The Keeper's spoiler strip reads "6 Forsworn v 33 Loyal".
 
 ### 5.10 Big tables (8–24 players)
-- Setup takes **8 to 24** names (`MINP`, `MAXP` in `core.js`). Default Cloaks: 2 (8–10), 3 (11–15), 4 (16–22), 5 (23–24).
-- **Two exiles** while more than 16 sit at the Reckoning (`exilesAt`): after the first reveal (and Ghost lore) the host's button is **The second vote**, which opens a fresh table (`table.second`). The blade has already fallen, so in the second vote nobody holds it and nobody can buy immunity (`championOf` is null there); the talk timer is 3 minutes.
-- **Several night victims** (`killsAt`): 2 from 12 alive, 3 from 20, never below five. Each victim is a **pass** of the night script (`night.pass`, `night.kills`, earlier picks in `night.victims`, redacted to "·" on the TV). Pass 1 is the usual night; each later pass wakes the Cloaks again ("The night isn't over"); the host taps **Next victim** between passes. A shield saves its holder as before. Dawn names every victim (`morning.victimIds`, `many`, `saved` when a shield held too); poison gives 30 s of last words each.
+- Setup takes **8 to 24** names (`MINP`, `MAXP` in `core.js`). Default Forsworn: 2 (8–10), 3 (11–15), 4 (16–22), 5 (23–24).
+- **Two exiles** while more than 16 sit at the Reckoning (`exilesAt`): after the first reveal (and Ghost lore) the Keeper's button is **The second vote**, which opens a fresh table (`table.second`). The Casting Vote has already fallen, so in the second vote nobody holds it and nobody can buy immunity (`championOf` is null there); the talk timer is 3 minutes.
+- **Several night victims** (`killsAt`): 2 from 12 alive, 3 from 20, never below five. Each victim is a **pass** of the night script (`night.pass`, `night.kills`, earlier picks in `night.victims`, redacted to "·" on the TV). Pass 1 is the usual night; each later pass wakes the Forsworn again ("The night isn't over"); the Keeper taps **Next victim** between passes. Sanctuary saves its holder as before. Dawn names every victim (`morning.victimIds`, `many`, `saved` when Sanctuary held too); poison gives 30 s of last words each.
 - `roundsFrom(a)` simulates this to plan rounds and pace: 8 → 3 rounds, 14 → 5, 16 → 6, 20 → 7, 24 → 8 (final included).
 - TV: the final roll goes six across without seals above 16 players; the Ghost-rules screen hides the candle rail above 16; the rules card mentions two exiles and several victims when they apply.
 
@@ -294,7 +296,7 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 
 - `SITE_PASSWORD` is now `candlelight` (was changed from a show-derived word in 1.1).
 - The master passcode: `npx wrangler secret put MASTER_PASS -c wrangler.toml` (and `-c wrangler.staging.toml`), or Workers & Pages → the Worker → Settings → Variables and Secrets. Unset, no master passcode works.
-- `deploy.sh staging|production` → `build.sh` → `wrangler deploy --var BUILD:<build>`. Cloudflare account `52f36be1337501d7eb4752e3ca42fac7`. Workers: `cloak-and-candle` (cloakandcandle.co.uk), `cloak-and-candle-staging` (staging.cloakandcandle.co.uk). Both are **new** Workers with their own Durable Objects (migration tag `v1`: GameState, Registry); the Workers from the party build are untouched.
+- `deploy.sh staging|production` → `build.sh` → `wrangler deploy --var BUILD:<build>`. Cloudflare account `52f36be1337501d7eb4752e3ca42fac7`. Workers: `cloak-and-candle` (thebetrayal.co.uk), `cloak-and-candle-staging` (staging.thebetrayal.co.uk). Both are **new** Workers with their own Durable Objects (migration tag `v1`: GameState, Registry); the Workers from the party build are untouched.
 - **Previews:** Cloudflare builds every non-`main` branch (so every PR) with `npx wrangler preview`, which reads only the `[previews]` block of `wrangler.toml`: its own vars, and Durable Object bindings that give each preview fresh, empty namespaces, never production's passes or rooms. Previews have no secrets (no admin, no master passcode, checkout closed). Only `main` deploys production.
 - Rollback: `npx wrangler rollback <version-id> -c <config>`.
 - **Admin page: `/admin`.** Sign in as `ADMIN_USER` (`ryanab94.admin`, in `wrangler.toml`) with the `ADMIN_PASSWORD` secret; a signed, HttpOnly, SameSite=Strict session cookie lasts 12 hours, and changing the password signs every session out. Wrong passwords count with wrong pass codes (20 an hour per address). The page shows totals, every pass (search, filter, copy, cancel), creates one-party passes or free unlimited codes, and opens a test room. It's `noindex`. Previews have no password, so no admin there.
@@ -314,15 +316,15 @@ Never run `build.sh` while chaos or break is running (a new `build.txt` reloads 
 
 | harness | what it does | status at 1.0 |
 |---|---|---|
-| `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, missions a round, murder/poison wording, Ghosts off, prizes, Witness, convert/bargain, side-quests, dinner, TV rules card | **new**, clean |
+| `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, Trials a round, murder/poison wording, Ghosts off, prizes, Confessor, convert/bargain, Errands, dinner, TV rules card | **new**, clean |
 | `qa/diag.py` (URL, under `wrangler dev` with `--var ADMIN_PASSWORD:testpw`) | **new in 1.3.1**: recording, device trails, errors from both screens, reports from the phone and the TV (snapshot, trail, email), the room kept, and every /admin tab including the replay | clean (25 checks) |
 | `qa/wizard.py` (:8724) | **new in 1.3**: every setup page on a phone (no overflow, screenshots in `qa/shots/wizard/`), the checks that stop Next, recommendations following earlier choices, pages skipped, the quick path, Change/Done, the game it starts | clean |
 | `qa/smoke166.py` (:8719) | 74 rules checks | clean |
-| `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Witness, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
+| `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Confessor, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
 | `qa/admin.mjs` | the `/admin` sign-in and API, Durable Objects stubbed: credentials, cookie flags, tampered/expired cookies, password change, the attempt limit, the Bearer token, cross-site requests, creating/listing/cancelling passes and free unlimited codes, the test room | clean (19 checks) |
 | `qa/claim.mjs` | Stripe with its API stubbed: checkout (consent, pending pass, session parameters, rate limit), claim, signed webhook (paid, async, expired, refunded before and after use), Payment Link fallback, the subscription (mode, activation, carry on / new game closing the old room, past_due / active / cancelled, the billing portal) | clean (41 checks, incl. subscriptions) |
-| `qa/chaos.py` (:8715) | **only on request.** Random whole games through the host UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
-| `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the rounds control (range, Auto, clamps), round plan, the second vote, a three-victim night (redaction per pass, the picker, a shield), dawn, the five floor, the final voting silently down to four, parity playing on, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
+| `qa/chaos.py` (:8715) | **only on request.** Random whole games through the Keeper UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
+| `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the rounds control (range, Auto, clamps), round plan, the second vote, a three-victim night (redaction per pass, the picker, Sanctuary), dawn, the five floor, the final voting silently down to four, parity playing on, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
 | `qa/break.py part1` (:8718) | adversarial in-page scenarios + every TV screen at three sizes | clean, 130/130 (found a duplicate-name rename bug, fixed) |
 | `qa/media.py`, `qa/shots.py` | screenshots for the media pack / quick looks | used for 1.0 |
 | `qa/review.py`, `resilience.py`, `audit.py`, `banks.py`, `audio.py`, `gallery.py`, `live.py` | older harnesses | not re-run for 1.0; `review.py` has been stale since v16.6 |
@@ -331,7 +333,7 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 
 ## 9. Known issues and ideas
 
-- **Name clearance.** The working name was "Betrayal" until 28 Sep 2026; it was dropped because Hasbro/Avalon Hill sell a family of "Betrayal" board games. "Cloak & Candle" had no matching US marks (Trademarkia, 28 Sep 2026) and cloakandcandle.com / .co.uk were unregistered. The one nearby mark: Mattel owns "CLOAK AND DAGGER" for toys and games (US class 28) — different second word, but get a UK IPO / EUIPO search (classes 9, 28, 41) done before launch.
+- **Name clearance.** The working name was "Betrayal" until 28 Sep 2026; it was dropped because Hasbro/Avalon Hill sell a family of "Betrayal" board games. "The Betrayal" had no matching US marks (Trademarkia, 28 Sep 2026) and cloakandcandle.com / .co.uk were unregistered. The one nearby mark: Mattel owns "CLOAK AND DAGGER" for toys and games (US class 28) — different second word, but get a UK IPO / EUIPO search (classes 9, 28, 41) done before launch.
 - Not deployed. **Stripe has never been called for real**: this build environment's network policy blocked api.stripe.com. Everything is tested against a stub (`qa/claim.mjs`). First real test: staging with test keys (§6.2).
 - **Legal pages are drafts.** Terms, privacy, cookies, refunds and contact (§6.1) were written to UK consumer and data-protection law as templates, not by a lawyer. Fill every highlighted `[placeholder]` (business name, address, company/VAT/ICO numbers, email, price, dates) and have a solicitor review them before taking payment.
 - **The renamed terms (§5.9) are not a legal clearance.** They remove the obvious borrowings; the underlying hidden-role mechanics are common to many games. A UK IPO / EUIPO search and, ideally, advice on format rights before launch.
@@ -341,4 +343,4 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 
 ## 10. A prompt to start the next session
 
-> You're picking up "Cloak & Candle", a commercial two-screen dinner-party game (TV at /g/ROOM, host phone at /g/ROOM#host) on a Cloudflare Worker with a Durable Object per room and party passes. Read HANDOVER.md, then README.md. The code is plain JS in src/ built by build.sh; secrets for the TV are stripped in worker/src/public-view.js. Build and run `python3 qa/smoke166.py` and `python3 qa/plan.py` for a clean baseline. Make surgical changes, keep content banks append-only, keep saved games loadable across deploys, and add any new secret field to public-view.js. Test locally (and under `wrangler dev` for Worker changes), deploy to staging and run qa/e2e.py against it, then production only when I say. Never write tokens into files. Here's what I'd like changed: …
+> You're picking up "The Betrayal", a commercial two-screen dinner-party game (TV at /g/ROOM, Keeper phone at /g/ROOM#host) on a Cloudflare Worker with a Durable Object per room and Invitations. Read HANDOVER.md, then README.md. The code is plain JS in src/ built by build.sh; secrets for the TV are stripped in worker/src/public-view.js. Build and run `python3 qa/smoke166.py` and `python3 qa/plan.py` for a clean baseline. Make surgical changes, keep content banks append-only, keep saved games loadable across deploys, and add any new secret field to public-view.js. Test locally (and under `wrangler dev` for Worker changes), deploy to staging and run qa/e2e.py against it, then production only when I say. Never write tokens into files. Here's what I'd like changed: …
