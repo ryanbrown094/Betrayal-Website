@@ -281,8 +281,11 @@ async function stripeSession(env, id) {
 }
 // Stripe's API takes form encoding, nested keys in brackets: {a: {b: [1]}} → a[b][0]=1
 const form = (o, pre, out = []) => { for (const [k, v] of Object.entries(o)) { const key = pre ? pre + "[" + k + "]" : k; if (v && typeof v === "object") form(v, key, out); else if (v !== undefined && v !== null) out.push(encodeURIComponent(key) + "=" + encodeURIComponent(v)); } return out.join("&"); };
-async function stripePost(env, path, params) {
-  const r = await fetch("https://api.stripe.com/v1/" + path, { method: "POST", headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded" }, body: form(params) });
+// Managed Payments (Stripe is the seller of record and handles tax) needs this API version on the Checkout Session call
+const MANAGED_PAYMENTS_VERSION = "2026-02-25.preview";
+async function stripePost(env, path, params, version) {
+  const headers = { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded", ...(version ? { "Stripe-Version": version } : {}) };
+  const r = await fetch("https://api.stripe.com/v1/" + path, { method: "POST", headers, body: form(params) });
   const j = await r.json().catch(() => ({})); return r.ok ? j : Promise.reject(new Error((j.error && j.error.message) || "Stripe error " + r.status));
 }
 // A webhook is genuine when Stripe-Signature carries an HMAC-SHA256 of "timestamp.body" under the endpoint's signing
@@ -361,12 +364,12 @@ export default {
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, allow_promotion_codes: "true", metadata: { pass, plan: sub ? "sub" : "one", consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", consent_terms: at, consent_supply: at },
         };
-        // The account uses Stripe Managed Payments (Stripe is the seller of record and handles tax), which refuses invoice
-        // details and other extras, so the session carries only what the game needs: the pass in its metadata (and, for a
-        // subscription, in the subscription's metadata, which its webhooks bring back).
-        const cs = await stripePost(env, "checkout/sessions", sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" });
+        // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
+        // API version, and nothing it refuses (invoice details, extra descriptions, promotion codes) — just what the game
+        // needs: the pass in the metadata (and, for a subscription, the subscription's metadata, which its webhooks bring back).
+        const cs = await stripePost(env, "checkout/sessions", sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" }, MANAGED_PAYMENTS_VERSION);
         await call(env, "/pending-session", { pass, session: cs.id });
         return json({ url: cs.url });
       } catch (e) {

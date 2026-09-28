@@ -16,7 +16,7 @@ globalThis.fetch = async (u, init) => {
   if (u === "https://api.stripe.com/v1/checkout/sessions" && init && init.method === "POST") {
     if (failCreate) return new Response(JSON.stringify({ error: { message: "nope" } }), { status: 400 });
     const q = new URLSearchParams(init.body), id = "cs_test_" + String(made.length).padStart(12, "0");
-    made.push({ q, auth: init.headers.Authorization });
+    made.push({ q, auth: init.headers.Authorization, version: init.headers["Stripe-Version"] });
     const sub = q.get("mode") === "subscription";
     sessions[id] = { id, mode: q.get("mode"), payment_status: "unpaid", metadata: { pass: q.get("metadata[pass]") }, customer_details: { email: "buyer@example.com" }, payment_intent: sub ? null : "pi_" + made.length, subscription: sub ? "sub_" + made.length : null, customer: "cus_" + made.length };
     return new Response(JSON.stringify({ id, url: "https://checkout.stripe.com/c/pay/" + id }));
@@ -46,6 +46,7 @@ const [s1, c1] = await checkout({ terms: true, supply: true });
 const q = made[0] && made[0].q, pass1 = q && q.get("metadata[pass]");
 check("checkout: sends the buyer to Stripe", s1 === 200 && /^https:\/\/checkout\.stripe\.com\//.test(c1.url), [s1, c1]);
 check("the session: one party pass at the configured price, payment mode, secret key", q.get("mode") === "payment" && q.get("line_items[0][price]") === "price_123" && q.get("line_items[0][quantity]") === "1" && made[0].auth === "Bearer sk_test_x");
+check("the session: Managed Payments on, with its API version, and no promotion codes", q.get("managed_payments[enabled]") === "true" && made[0].version === "2026-02-25.preview" && !q.has("allow_promotion_codes"), [made[0].version, q.get("managed_payments[enabled]")]);
 check("the session: success and cancel URLs", q.get("success_url") === "https://cloakandcandle.co.uk/claim?session_id={CHECKOUT_SESSION_ID}" && q.get("cancel_url") === "https://cloakandcandle.co.uk/buy", [q.get("success_url"), q.get("cancel_url")]);
 check("the session: the pass and the consent timestamps in its metadata, and nothing Managed Payments refuses", /^CNDL-/.test(pass1) && q.get("metadata[pass]") === pass1 && !!q.get("metadata[consent_supply]") && ![...q.keys()].some(k => /^(invoice_creation|payment_intent_data|subscription_data\[description)/.test(k)), [...q.keys()]);
 check("the pass exists, pending, linked to its session", (await passOf(pass1)).pending === true && (await passOf(pass1)).session === "cs_test_000000000000");
