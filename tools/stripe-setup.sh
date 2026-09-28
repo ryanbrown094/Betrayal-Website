@@ -1,6 +1,6 @@
 #!/bin/sh
 # One-time Stripe setup for an environment: creates the party pass product and its price, and the webhook endpoint the
-# Worker listens on. Prints the Price ID (for STRIPE_PRICE_ID in wrangler*.toml) and the webhook signing secret (for
+# Worker listens on. (The monthly subscription's price is made by hand in the Dashboard: recurring, monthly.) Prints the Price ID (for STRIPE_PRICE_ID in wrangler*.toml) and the webhook signing secret (for
 # `npx wrangler secret put STRIPE_WEBHOOK_SECRET`). The key comes from the environment and is never written anywhere.
 #
 #   STRIPE_SECRET_KEY=sk_test_… tools/stripe-setup.sh https://staging.cloakandcandle.co.uk 1500
@@ -19,7 +19,9 @@ price=$(api prices -d product="$product" -d currency=gbp -d unit_amount="$PENCE"
 hook=$(api webhook_endpoints -d url="$BASE/api/stripe/webhook" \
   -d "enabled_events[]=checkout.session.completed" -d "enabled_events[]=checkout.session.async_payment_succeeded" \
   -d "enabled_events[]=checkout.session.async_payment_failed" -d "enabled_events[]=checkout.session.expired" \
-  -d "enabled_events[]=charge.refunded" -d description="Cloak & Candle passes")
+  -d "enabled_events[]=charge.refunded" -d "enabled_events[]=customer.subscription.created" \
+  -d "enabled_events[]=customer.subscription.updated" -d "enabled_events[]=customer.subscription.deleted" \
+  -d description="Cloak & Candle passes")
 echo "product:          $product"
 echo "STRIPE_PRICE_ID:  $price        (put it in the wrangler .toml for this environment)"
 echo "webhook endpoint: $(echo "$hook" | jq -r .id) → $BASE/api/stripe/webhook"

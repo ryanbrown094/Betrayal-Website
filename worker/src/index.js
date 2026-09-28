@@ -49,6 +49,11 @@ export class GameState {
     }
     const meta = await this.storage.get("meta");
     if (!meta) return json({ error: "No game with that code" }, 404);
+    // made by the Registry when a subscriber starts a new game: this room goes read-only now
+    if (path === "/_close" && req.method === "POST") {
+      if (Date.now() < meta.expires) { meta.expires = Date.now(); await this.storage.put("meta", meta); await this.storage.setAlarm(meta.expires + keepMs(this.env)); }
+      return json({ ok: true });
+    }
     const expired = Date.now() > meta.expires;
     const room = { code: meta.room, expires: meta.expires, expired };
 
@@ -161,7 +166,7 @@ export class Registry {
       if (rec.length >= 10) return json({ error: "Too many checkouts from here — try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true });
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one" });
       return json({ pass: p });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
@@ -172,12 +177,13 @@ export class Registry {
     // of its own, gets one minted). One pass per checkout session, however often it's claimed.
     if (url.pathname === "/claim") {
       const k = "claim:" + b.session, have = await this.storage.get(k);
-      if (have) return json({ pass: have });
+      if (have) return json({ pass: have, sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub" });
       let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
-      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null });
+      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null,
+        ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
-      return json({ pass: p });
+      return json({ pass: p, sub: !!(v && v.kind === "sub") });
     }
     // a checkout that expired or failed: its pending pass is cancelled
     if (url.pathname === "/cancel") {
@@ -197,6 +203,21 @@ export class Registry {
       const expires = Date.now() + hours(env) * 3600000;
       return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires });
     }
+    // a subscription changed (renewed, failed, cancelled): its code opens games only while it's active or trialing
+    if (url.pathname === "/substatus") {
+      const k = "pass:" + passKey(b.pass || ""), v = b.pass && (await this.storage.get(k));
+      if (!v || v.kind !== "sub") return json({ ok: true, pass: null });
+      const on = ["active", "trialing"].includes(b.status);
+      await this.storage.put(k, { ...v, subId: b.sub || v.subId, customer: b.customer || v.customer, subActive: on && !v.pending, subStatus: b.status });
+      return json({ ok: true, pass: v && passKey(b.pass), active: on });
+    }
+    // the Stripe customer behind a subscription code, for the billing portal (wrong codes count as failed guesses)
+    if (url.pathname === "/customer") {
+      if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
+      const v = isPass(b.pass) && (await this.storage.get("pass:" + passKey(b.pass)));
+      if (!v || v.kind !== "sub" || !v.customer) { this.failed(ip); return json({ error: "That isn’t a subscription code we recognise." }, 404); }
+      return json({ customer: v.customer });
+    }
     if (url.pathname === "/redeem") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
       if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a party pass code. It looks like CNDL-XXXX-XXXX." }, 400); }
@@ -204,6 +225,17 @@ export class Registry {
       if (!v) { this.failed(ip); return json({ error: "We don’t recognise that pass. Check it against your receipt." }, 404); }
       if (v.revoked) return json({ error: "That pass has been cancelled." }, 410);
       if (v.pending) return json({ error: "That pass is waiting for its payment to clear. Try again in a minute." }, 402);
+      // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
+      // back; asking for a fresh one closes that room and opens another.
+      if (v.kind === "sub") {
+        if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? " — the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
+        const live = v.room && Date.now() < v.expires;
+        if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
+        if (live) await env.GAME.get(env.GAME.idFromName("room:" + v.room)).fetch("https://game/_close", { method: "POST", body: "{}" });
+        const expires = Date.now() + hours(env) * 3600000, room = await this.room(env, expires, passKey(b.pass));
+        await this.storage.put(k, { ...v, room, expires, redeemed: Date.now(), games: (v.games || 0) + 1 });
+        return json({ room, expires, sub: true });
+      }
       // redeemed already: the same room comes back (a host who lost the link), until it runs out
       if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That pass has been used, and its game has ended." }, 410);
       const expires = Date.now() + hours(env) * 3600000;
@@ -296,24 +328,29 @@ export default {
       const up = (v) => String(v || "").trim().toUpperCase();
       if (env.MASTER_PASS && same(up(b.pass), up(env.MASTER_PASS))) return call(env, "/open", { master: true });
       const ip = req.headers.get("CF-Connecting-IP") || "?";
-      return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass }) });
+      return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass, fresh: b.fresh === true }) });
     }
     // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
     // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
     if (p === "/api/checkout" && req.method === "POST") {
-      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) return json({ error: "Party passes go on sale soon. Payments aren’t open yet." }, 503);
-      const b = await req.json().catch(() => ({}));
+      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", price = sub ? env.STRIPE_SUB_PRICE_ID : env.STRIPE_PRICE_ID;
+      if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Party passes go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
       const ip = req.headers.get("CF-Connecting-IP") || "?";
-      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: "{}" }), pj = await pr.json();
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one" }) }), pj = await pr.json();
       if (!pr.ok) return json(pj, pr.status);
       const pass = pj.pass, at = new Date().toISOString();
       try {
-        const cs = await stripePost(env, "checkout/sessions", {
-          mode: "payment", line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
-          success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, allow_promotion_codes: "true",
-          metadata: { pass, consent_terms: at, consent_supply: at },
+        const common = {
+          line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
+          client_reference_id: pass, allow_promotion_codes: "true", metadata: { pass, plan: sub ? "sub" : "one", consent_terms: at, consent_supply: at },
+        };
+        const cs = await stripePost(env, "checkout/sessions", sub ? {
+          ...common, mode: "subscription",
+          // the code rides on the subscription (its description is shown to the customer) and its metadata
+          subscription_data: { description: "Cloak & Candle unlimited — your code: " + pass + ". Enter it at " + url.host + " to start a game.", metadata: { pass } },
+        } : {
+          ...common, mode: "payment",
           payment_intent_data: { description: "Cloak & Candle party pass " + pass, metadata: { pass } },
           // a paid invoice, emailed by Stripe, carries the pass code: the buyer has it even if they close the tab
           invoice_creation: { enabled: "true", invoice_data: { description: "Your party pass: " + pass + ". Enter it at " + url.host + " to open your room — it stays open for 48 hours from then.", custom_fields: [{ name: "Party pass", value: pass }], metadata: { pass } } },
@@ -333,10 +370,21 @@ export default {
       let ev; try { ev = JSON.parse(body); } catch { return json({ error: "Bad JSON" }, 400); }
       const o = (ev.data && ev.data.object) || {}, pass = o.metadata && o.metadata.pass;
       if ((ev.type === "checkout.session.completed" && o.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded")
-        await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent) });
+        await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer) });
+      else if ((ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.created" || ev.type === "customer.subscription.deleted") && pass)
+        await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status });
       else if ((ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") && pass) await call(env, "/cancel", { pass, why: ev.type.split(".").pop() });
       else if (ev.type === "charge.refunded" && o.refunded) await call(env, "/refund", { pi: piOf(o.payment_intent) });
       return json({ received: true });
+    }
+    // Subscribers manage their card or cancel in Stripe's billing portal, reached with their code.
+    if (p === "/api/portal" && req.method === "POST") {
+      if (!env.STRIPE_SECRET_KEY) return json({ error: "Payments aren’t set up yet." }, 503);
+      const b = await req.json().catch(() => ({})), ip = req.headers.get("CF-Connecting-IP") || "?";
+      const r = await registry(env).fetch("https://registry/customer", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass }) }), j = await r.json();
+      if (!r.ok) return json(j, r.status);
+      try { const ps = await stripePost(env, "billing_portal/sessions", { customer: j.customer, return_url: url.origin + "/" }); return json({ url: ps.url }); }
+      catch (e) { return json({ error: "We couldn’t open the subscription page. Try again in a moment." }, 502); }
     }
     if (p === "/api/claim" && req.method === "GET") {
       const id = url.searchParams.get("session_id") || "";
@@ -344,7 +392,7 @@ export default {
       if (!/^cs_[A-Za-z0-9_]{10,200}$/.test(id)) return json({ error: "That isn’t a checkout session." }, 400);
       const s = await stripeSession(env, id);
       if (!s || s.payment_status !== "paid") return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
-      return call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent) });
+      return call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer) });
     }
     if (p.startsWith("/api/admin/")) {
       if (!env.ADMIN_TOKEN || !admin(req, env)) return json({ error: "Not allowed" }, 401);

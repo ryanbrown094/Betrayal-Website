@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928184234">
+<meta name="build" content="20260928191008">
 <title>Buy a party pass — Cloak &amp; Candle</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -45,7 +45,10 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed }
 .panel { padding: 22px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.35); margin: 20px 0 }
 label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) }
-.price { font: 600 44px/1 var(--disp); color: var(--ivory) }
+.price { display: block; font: 600 44px/1.1 var(--disp); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 12px; padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); cursor: pointer } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose) }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
 footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2) }
 </style>
@@ -56,18 +59,22 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 <main>
 <div class="eyebrow">checkout</div>
 <h1>Buy a party pass</h1>
+<p>Play once, or play as often as you like.</p>
+
+<div class="plans" role="radiogroup" aria-label="Choose how to play">
+<label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price">£15</span><small>One game room for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
+<label class="plan"><input type="radio" name="plan" value="sub"><span><b>Unlimited</b><span class="price">£20<em> a month</em></span><small>One code that starts a new game whenever you like, one at a time, for as long as you’re subscribed. Cancel any time.</small></span></label>
+</div>
 
 <div class="panel">
-<div class="price" id="price"><span class="ph">[£00]</span></div>
-<p style="margin:6px 0 0">One party pass: one game room for one party of 8 to 24 players, open for 48 hours from when you first use it. Price includes VAT where it applies.</p>
 <ul>
-<li>Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
-<li>Use it whenever you like: the 48 hours start only when you open your room.</li>
-<li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host.</li>
+<li id="li1">Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
+<li id="li2">Use it whenever you like: the 48 hours start only when you open your room.</li>
+<li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host. Prices include VAT where it applies.</li>
 </ul>
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
-<label class="check"><input type="checkbox" id="c2"> <span>I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href="/refunds">refunds</a>).</span></label>
+<label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
 
 <button class="btn" id="pay" disabled>Pay securely with Stripe</button>
 <p id="paymsg" style="font-size:15.5px;margin:12px 0 0"></p>
@@ -77,28 +84,34 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 
 <script>
 "use strict";
-// Checkout settings: the price shown here (Stripe holds the real one — STRIPE_PRICE_ID on the Worker).
-const BUY = { price: "" };
 const $ = s => document.querySelector(s);
-if (BUY.price) $("#price").textContent = BUY.price;
+const plan = () => (document.querySelector("input[name=plan]:checked") || {}).value || "one";
+const TEXT = {
+  one: { c2: "I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href=\"/refunds\">refunds</a>).",
+    li1: "Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.", li2: "Use it whenever you like: the 48 hours start only when you open your room." },
+  sub: { c2: "I understand my subscription renews every month at £20 until I cancel, which I can do at any time from “Manage subscription”. I want it to start straight away, and I lose my 14-day right to cancel the first month once I use my code to open a room (<a href=\"/refunds\">refunds</a>).",
+    li1: "Your code is shown as soon as you’ve paid, and it’s in your subscription details from Stripe.", li2: "Each game room stays open for 48 hours; start a new one whenever you like." }
+};
 const ready = () => $("#c1").checked && $("#c2").checked;
 let busy = false;
 function update(msg) {
   $("#pay").disabled = busy || !ready();
   $("#paymsg").textContent = msg !== undefined ? msg : ready() ? "" : "Tick both boxes to continue.";
 }
+function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; $("#pay").textContent = plan() === "sub" ? "Subscribe securely with Stripe" : "Pay securely with Stripe"; update() }
+document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#pay").onclick = async () => {
   if (!ready() || busy) return;
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ terms: true, supply: true }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update(j.error || "That didn’t work — try again.");
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.") }
 };
-update();
+choose();
 </script>
 </main>
 <footer><nav aria-label="Legal"><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>Cloak &amp; Candle is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>

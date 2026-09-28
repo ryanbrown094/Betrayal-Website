@@ -16,6 +16,7 @@ PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this lo
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 STRIPE_PRICE_ID = "price_1UKjgzQCQQfMnNY8zm96HH5c"  # the party pass's Stripe Price — TEST MODE; swap for the live price at launch. Empty = checkout closed
+STRIPE_SUB_PRICE_ID = "price_1UKjhIQCQQfMnNY8mGiE7TFz"  # the monthly unlimited subscription's Price — TEST MODE; empty = subscription not on sale
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
 
@@ -27,6 +28,7 @@ PASS_HOURS = "48"
 KEEP_DAYS = "1"
 SITE_PASSWORD = "candlelight"
 STRIPE_PRICE_ID = ""
+STRIPE_SUB_PRICE_ID = ""
 
 [[previews.durable_objects.bindings]]
 name = "GAME"

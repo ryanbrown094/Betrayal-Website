@@ -1,18 +1,22 @@
 <!-- title: Buy a party pass -->
 <div class="eyebrow">checkout</div>
 <h1>Buy a party pass</h1>
+<p>Play once, or play as often as you like.</p>
+
+<div class="plans" role="radiogroup" aria-label="Choose how to play">
+<label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price">£15</span><small>One game room for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
+<label class="plan"><input type="radio" name="plan" value="sub"><span><b>Unlimited</b><span class="price">£20<em> a month</em></span><small>One code that starts a new game whenever you like, one at a time, for as long as you’re subscribed. Cancel any time.</small></span></label>
+</div>
 
 <div class="panel">
-<div class="price" id="price"><span class="ph">[£00]</span></div>
-<p style="margin:6px 0 0">One party pass: one game room for one party of 8 to 24 players, open for 48 hours from when you first use it. Price includes VAT where it applies.</p>
 <ul>
-<li>Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
-<li>Use it whenever you like: the 48 hours start only when you open your room.</li>
-<li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host.</li>
+<li id="li1">Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
+<li id="li2">Use it whenever you like: the 48 hours start only when you open your room.</li>
+<li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host. Prices include VAT where it applies.</li>
 </ul>
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
-<label class="check"><input type="checkbox" id="c2"> <span>I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href="/refunds">refunds</a>).</span></label>
+<label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
 
 <button class="btn" id="pay" disabled>Pay securely with Stripe</button>
 <p id="paymsg" style="font-size:15.5px;margin:12px 0 0"></p>
@@ -22,26 +26,32 @@
 
 <script>
 "use strict";
-// Checkout settings: the price shown here (Stripe holds the real one — STRIPE_PRICE_ID on the Worker).
-const BUY = { price: "" };
 const $ = s => document.querySelector(s);
-if (BUY.price) $("#price").textContent = BUY.price;
+const plan = () => (document.querySelector("input[name=plan]:checked") || {}).value || "one";
+const TEXT = {
+  one: { c2: "I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href=\"/refunds\">refunds</a>).",
+    li1: "Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.", li2: "Use it whenever you like: the 48 hours start only when you open your room." },
+  sub: { c2: "I understand my subscription renews every month at £20 until I cancel, which I can do at any time from “Manage subscription”. I want it to start straight away, and I lose my 14-day right to cancel the first month once I use my code to open a room (<a href=\"/refunds\">refunds</a>).",
+    li1: "Your code is shown as soon as you’ve paid, and it’s in your subscription details from Stripe.", li2: "Each game room stays open for 48 hours; start a new one whenever you like." }
+};
 const ready = () => $("#c1").checked && $("#c2").checked;
 let busy = false;
 function update(msg) {
   $("#pay").disabled = busy || !ready();
   $("#paymsg").textContent = msg !== undefined ? msg : ready() ? "" : "Tick both boxes to continue.";
 }
+function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; $("#pay").textContent = plan() === "sub" ? "Subscribe securely with Stripe" : "Pay securely with Stripe"; update() }
+document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#pay").onclick = async () => {
   if (!ready() || busy) return;
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ terms: true, supply: true }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update(j.error || "That didn’t work — try again.");
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.") }
 };
-update();
+choose();
 </script>
