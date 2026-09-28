@@ -363,16 +363,10 @@ export default {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
           client_reference_id: pass, allow_promotion_codes: "true", metadata: { pass, plan: sub ? "sub" : "one", consent_terms: at, consent_supply: at },
         };
-        const cs = await stripePost(env, "checkout/sessions", sub ? {
-          ...common, mode: "subscription",
-          // the code rides on the subscription (its description is shown to the customer) and its metadata
-          subscription_data: { description: "Cloak & Candle unlimited — your code: " + pass + ". Enter it at " + url.host + " to start a game.", metadata: { pass } },
-        } : {
-          ...common, mode: "payment",
-          payment_intent_data: { description: "Cloak & Candle party pass " + pass, metadata: { pass } },
-          // a paid invoice, emailed by Stripe, carries the pass code: the buyer has it even if they close the tab
-          invoice_creation: { enabled: "true", invoice_data: { description: "Your party pass: " + pass + ". Enter it at " + url.host + " to open your room — it stays open for 48 hours from then.", custom_fields: [{ name: "Party pass", value: pass }], metadata: { pass } } },
-        });
+        // The account uses Stripe Managed Payments (Stripe is the seller of record and handles tax), which refuses invoice
+        // details and other extras, so the session carries only what the game needs: the pass in its metadata (and, for a
+        // subscription, in the subscription's metadata, which its webhooks bring back).
+        const cs = await stripePost(env, "checkout/sessions", sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" });
         await call(env, "/pending-session", { pass, session: cs.id });
         return json({ url: cs.url });
       } catch (e) {

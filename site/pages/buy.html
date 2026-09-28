@@ -10,7 +10,7 @@
 
 <div class="panel">
 <ul>
-<li id="li1">Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
+<li id="li1">Your pass is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Email us and we’ll find it.</li>
 <li id="li2">Use it whenever you like: the 48 hours start only when you open your room.</li>
 <li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host. Prices include VAT where it applies.</li>
 </ul>
@@ -22,7 +22,7 @@
 <p id="paymsg" style="font-size:15.5px;margin:12px 0 0"></p>
 </div>
 
-<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your pass on screen, and Stripe emails you a receipt with the pass on it.</p>
+<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your pass on screen, and Stripe emails you a receipt.</p>
 
 <script>
 "use strict";
@@ -30,9 +30,9 @@ const $ = s => document.querySelector(s);
 const plan = () => (document.querySelector("input[name=plan]:checked") || {}).value || "one";
 const TEXT = {
   one: { c2: "I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href=\"/refunds\">refunds</a>).",
-    li1: "Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.", li2: "Use it whenever you like: the 48 hours start only when you open your room." },
+    li1: "Your pass is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Email us and we’ll find it.", li2: "Use it whenever you like: the 48 hours start only when you open your room." },
   sub: { c2: "I understand my subscription renews every month at £20 until I cancel, which I can do at any time from “Manage subscription”. I want it to start straight away, and I lose my 14-day right to cancel the first month once I use my code to open a room (<a href=\"/refunds\">refunds</a>).",
-    li1: "Your code is shown as soon as you’ve paid, and it’s in your subscription details from Stripe.", li2: "Each game room stays open for 48 hours; start a new one whenever you like." }
+    li1: "Your code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Email us and we’ll find it.", li2: "Each game room stays open for 48 hours; start a new one whenever you like." }
 };
 const ready = () => $("#c1").checked && $("#c2").checked;
 let busy = false;

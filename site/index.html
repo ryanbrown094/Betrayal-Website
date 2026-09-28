@@ -76,7 +76,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section id="start">
     <div class="eyebrow">start</div><h2>Open your room</h2>
-    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your party pass</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Keep it safe: it opens your room, and entering it again brings the same room back.</p><button class="btn" id="claimgo">Start my game</button></div>
+    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your party pass</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Write it down or take a screenshot: it opens your room, and entering it again brings the same room back.</p><button class="btn" id="claimgo">Start my game</button></div>
     <div class="forms">
       <div class="panel"><label for="pass">Party pass or subscription code</label><div class="row"><input id="pass" placeholder="CNDL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="go">Open room</button></div><p class="msg" id="passmsg">One pass, one party: your room stays open for 48 hours from the moment you open it. Do this on the phone you’ll host with.</p><p class="msg">Subscribers: enter your code to start a game, or <a href="#" id="manage">manage your subscription</a>.</p></div>
       <div class="panel"><label for="room">Setting up the TV? Room code</label><div class="row"><input id="room" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg">Open this on the laptop you’ll cast to the TV.</p></div>
@@ -142,7 +142,7 @@ async function manage() {
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = e => { e.preventDefault(); manage() };
-$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter the code from your receipt.", true); open(v) };
+$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter your pass or subscription code.", true); open(v) };
 $("#pass").onkeydown = e => { if (e.key === "Enter") $("#go").click() };
 $("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.length !== 6) return say($("#roommsg"), "Room codes are six letters and numbers.", true); location.href = "/g/" + v };
 $("#room").onkeydown = e => { if (e.key === "Enter") $("#join").click() };
