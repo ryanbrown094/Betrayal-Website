@@ -23,6 +23,8 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 
 **1.3 (28 Sep 2026), for sale:** setup is a step-by-step wizard, one decision a page with a full explanation and a recommendation that follows the earlier choices (§5.0); only the shield comes every round, and the blade, Champion, Witness and Dilemma come once a game (§5.3); mission prize and setting overrides fold away on the brief; the site has `/rules` and `/tour` (real screenshots); the question banks are roughly three times bigger (§7).
 
+**1.3.1 (28 Sep 2026), diagnostics:** Stripe's webhook is exempt from the site password (it was being refused with 401 while `SITE_PASSWORD` was set, so refunds and subscription changes never arrived; checkout only worked through the thank-you page). Refunds are matched however Stripe reports them (§6.2). Every game is recorded save by save; each TV and phone sends a trail of taps, screens, sync trouble and errors; "Report a problem" (host: footer and Menu; TV: bottom-left) files a report with a snapshot of the screen; /admin has Rooms (config, full log, a replay of TV and phone, device trails), Reports, Errors (the master log) and Stripe events (§4.7).
+
 ---
 
 ## 2. Quick start
@@ -89,6 +91,15 @@ Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:t
 
 ### 4.5 Secrets and the public view
 `worker/src/public-view.js` is the single source of truth for what the TV may know (roles, PIN, log, undo chain, Witness, secret blade holders, mission secrets, quiz answers, the night's victim until its line, side-quests, unrevealed votes, the prize and stats until the final phase). **When you add a secret field, add it there.** `rules`, `plan` and `planAt` are not secret.
+
+### 4.7 Diagnostics
+- **Recording** (`GameState.record`): every accepted PUT stores `recl:<n>` (time, kind start/save/wipe, the newest log line, phase, round, version) and `recs:<n>` (the whole state, gzipped). Up to `RECMAX` (20,000) a room; deleted with the room.
+- **Device trail** (`src/diag.js`): taps (button labels only), screen changes, visibility, network, sync failures (`crumb()` calls in `core.js`), errors and unhandled rejections. Sent every 15 s (errors at once, and on pagehide) to `POST /api/g/CODE/events`, stored as `ev:<n>` batches (up to `EVMAX` = 2,000 of at most 32 KB). Errors are copied to the master log.
+- **Reports** (10 an hour per address): `POST /api/report` {room, what, expected, email, snap (gzipped base64 HTML of the page without scripts), crumbs…}. The Registry keeps `rep:<R-XXXXXX>` and the snapshot in 100 KB chunks (`repx:`); the room gets `keepUntil` = +90 days (its alarm waits for it) and notes the report. A report also goes in the master log.
+- **Master log** (Registry `err:<time>`, newest 3,000): `src` browser / server (every Worker and GameState exception is caught and logged, then 500) / stripe (bad signatures, refunds that match no pass) / report. **Webhook log** `hook:<time>` (newest 1,000): every verified Stripe event and what it did.
+- **Replay:** `/play.html#replay-tv` and `#replay-host` start nothing (no polling, no saves) and expose `replayShow(state)`; the TV side gets `publicView(state)`, as the real TV would. `/admin` loads both in iframes and feeds them recorded states.
+- **Admin API** (session or Bearer): `GET rooms`, `room/CODE/room|recs|rec?n=|events`, `errors`, `hooks`, `reports`, `report?id=`, `POST report {id, status, note}`.
+- Workers Logs (`[observability]` in wrangler.toml) also keep console output in the Cloudflare dashboard.
 
 ### 4.6 TV
 `tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; large text by default; tuned for 16:9/16:10. Everything passes through `kw()` for the kill style. Before a game, the TV shows the room code and the host link.
@@ -268,6 +279,7 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 ### 6.2 Stripe
 - **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true}` → the Registry mints a **pending** pass → the Worker creates a Checkout Session (`mode=payment`, one `STRIPE_PRICE_ID`, promotion codes allowed, the pass in `metadata`, `client_reference_id`, the PaymentIntent's description and metadata, consent timestamps in metadata; see Managed Payments below) → the buyer pays on Stripe → back to `/claim?session_id=…`, where the home page asks `/api/claim`, which checks the session is paid and activates the pass.
 - **Managed Payments.** The Stripe account has Managed Payments on (Stripe is the seller of record and handles tax). Checkout Sessions are created with `managed_payments[enabled]=true` and the API version header `2026-02-25.preview` (Stripe's Managed Payments blueprint); both products need an eligible **tax code** set in the Dashboard. It refuses invoice details and other extras, so sessions carry only the line item, URLs and metadata (no promotion codes) (the pass; for a subscription also `subscription_data.metadata.pass`). The pass is therefore **not** on Stripe's receipt: buyers see it on screen, and a lost pass is found on `/admin` by the buyer's email. If a checkout fails, `/buy` shows Stripe's reason in brackets and Workers Logs has it.
+- **Refunds** arrive as `charge.refunded` (full or partial), `refund.created`/`refund.updated` or `charge.refund.updated`. `refundFor` finds the pass by the payment noted at checkout (`pi:`); failing that it asks Stripe for the charge, then the checkout session with that payment (its `metadata.pass`), then the invoice's subscription. An unused one-off pass is cancelled; a used one, or a subscription, is marked refunded. The webhook is exempt from the site password (it is signed). Subscribe the endpoint to `refund.created` and `refund.updated` as well as the events below.
 - **Webhook** `/api/stripe/webhook` (signature checked with `STRIPE_WEBHOOK_SECRET`, 5-minute tolerance): `checkout.session.completed` (paid) and `async_payment_succeeded` activate the pass even if the buyer never returns; `expired` / `async_payment_failed` cancel the pending pass; `charge.refunded` (full refunds) cancels the pass if it hasn't opened a room, and only notes the refund if it has.
 - **Settings:** `STRIPE_PRICE_ID` (var; empty = checkout closed, 503), secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. The publishable key isn't used: Checkout is Stripe-hosted.
 - **Going live, per environment:** `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> <pence>` → put the price ID in the `.toml`, put both secrets → in the Stripe Dashboard, turn on emailed receipts and fill the public business details → staging first with a test card (4242 4242 4242 4242): check the pass appears, the receipt carries it, and a refund cancels it → then live keys on production.
@@ -301,6 +313,7 @@ Never run `build.sh` while chaos or break is running (a new `build.txt` reloads 
 | harness | what it does | status at 1.0 |
 |---|---|---|
 | `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, missions a round, murder/poison wording, Ghosts off, prizes, Witness, convert/bargain, side-quests, dinner, TV rules card | **new**, clean |
+| `qa/diag.py` (URL, under `wrangler dev` with `--var ADMIN_PASSWORD:testpw`) | **new in 1.3.1**: recording, device trails, errors from both screens, reports from the phone and the TV (snapshot, trail, email), the room kept, and every /admin tab including the replay | clean (25 checks) |
 | `qa/wizard.py` (:8724) | **new in 1.3**: every setup page on a phone (no overflow, screenshots in `qa/shots/wizard/`), the checks that stop Next, recommendations following earlier choices, pages skipped, the quick path, Change/Done, the game it starts | clean |
 | `qa/smoke166.py` (:8719) | 74 rules checks | clean |
 | `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Witness, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |

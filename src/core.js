@@ -1,7 +1,7 @@
 /* ===================== CORE: store, helpers, actions, rules ===================== */
 const APPV = "1.3", SCHEMA = 12;
 const KEY = "candle-v1";
-const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
+const isHost = location.hash === "#host" || location.hash === "#replay-host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
 // Each party plays in its own room: the TV at /g/CODE, the host at /g/CODE#host. Without a room (the standalone file,
 // the local test server) the page talks to /api or runs on this browser alone.
@@ -44,7 +44,7 @@ async function poll() {
     const j = await r.text(); let body; try { body = JSON.parse(j) } catch (e) { if (offline()) emit(); return }
     syncClock(r); limitedNow = false;
     if (body.room) { const was = roomExpired; roomInfo = body.room; roomExpired = !!body.room.expired; if (was !== roomExpired) emit() }
-    const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) emit();
+    const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) { crumb("net", "back in touch with the server"); emit() }
     if (body.same) return;
     if (pending > 0 || saveQ.length || pinUsed !== getPin()) return; // unsent saves first: the flush settles any clash
     if (j === lastJson) return;
@@ -134,6 +134,7 @@ function flushSaves() {
         body = s ? JSON.stringify({ state: s }) : undefined;
         try {
           const r = await fetch(API + "/state", { method: s ? "PUT" : "DELETE", headers: pin, body });
+          if (r.status !== 200) crumb("sync", (s ? "save v" + (s.ver || 0) : "wipe") + " → " + r.status);
           if (r.status === 426) { location.reload(); return } // a new version went live: load it (the deploy started a fresh game)
           if (r.status === 423) { syncErr = false; saveQ.length = 0; roomExpired = true; toast("This party pass has expired — the game can be viewed but not changed.", 6000); done = true; break }
           if (r.status === 403) { syncErr = false; toast("Wrong host PIN — that change was not saved."); done = true; break }
@@ -159,7 +160,7 @@ function flushSaves() {
       if (!done) {
         // still offline: keep it (a wipe always; a save unless a newer one is already waiting) and let resync retry
         if (!s || !saveQ.some(q => q.s)) saveQ.unshift(item);
-        syncErr = true; break;
+        syncErr = true; crumb("sync", "save not reached the server after 3 tries — will keep retrying"); break;
       }
     }
   })().finally(() => { pending--; flushing = null; emit() });

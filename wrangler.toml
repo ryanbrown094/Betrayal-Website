@@ -39,6 +39,11 @@ class_name = "GameState"
 name = "REGISTRY"
 class_name = "Registry"
 
+# Workers Logs: console output and uncaught exceptions, searchable in the Cloudflare dashboard (Workers → cloak-and-candle
+# → Logs). The game's own error log is on /admin → Errors.
+[observability]
+enabled = true
+
 [assets]
 directory = "./worker/public"
 binding = "ASSETS"
