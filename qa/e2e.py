@@ -45,7 +45,7 @@ with sync_playwright() as p:
     api.delete(APIU + "state", headers={"X-Pin": PIN})
     check("empty server returns null state", api.get(APIU + "state").json()["state"] is None)
     host = page(390, 844, "#host")
-    host.fill("#names", "\n".join(NAMES)); host.fill("#pinset", PIN); host.fill("#cloaks", "2"); host.click("text=Start game"); host.wait_for_timeout(600); sync()
+    host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), PIN, {"cloaks": "2"}]); host.wait_for_timeout(600); sync()
     pub = api.get(APIU + "state").json()
     check("public GET is unauthenticated view", pub["auth"] is False and pub["state"] is not None)
     check("public view hides the PIN, the log and undo history", all(k not in pub["state"] for k in ("hostPin", "log", "prev")))

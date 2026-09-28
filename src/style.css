@@ -556,23 +556,31 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .row.wrap { flex-wrap: wrap } #host .row.wrap button { flex: 1 1 40% }
 
 /* ===================== HOST: game plan setup ===================== */
-#host .setsec { margin: 10px 0; border: 1px solid rgba(174,98,73,.32); border-radius: 12px; background: #100b11 }
-#host .setsec[open] { border-color: rgba(230,165,140,.55); background: #130d14 }
-#host .setsec summary { list-style: none; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent }
-#host .setsec summary::-webkit-details-marker { display: none }
-#host .setsec summary::after { content: "+"; margin-left: auto; font-size: 22px; color: var(--brass2); flex: none } #host .setsec[open] summary::after { content: "–" }
-#host .setsec .sn { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #150b17; background: linear-gradient(180deg, #eaac93, #b5664b) }
-#host .setsec .st { min-width: 0; font-weight: 700; font-size: 17px; color: var(--tallow) } #host .setsec .st small { display: block; font-weight: 500; font-size: 13.5px; color: var(--tallow2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-#host .setsec .sb { padding: 0 14px 14px } #host .setsec .sb > label:first-child, #host .setsec .sb > .ask:first-child, #host .setsec .sb > .note:first-child { margin-top: 0 }
+#host .wiz { padding-bottom: 110px }
+#host details.adv { margin: 10px 0; border: 1px solid rgba(174,98,73,.32); border-radius: 10px; padding: 0 12px } #host details.adv[open] { padding-bottom: 10px }
+#host details.adv > summary { list-style: none; min-height: 48px; display: flex; align-items: center; font-weight: 600; font-size: 15.5px; color: var(--brass2); cursor: pointer } #host details.adv > summary::-webkit-details-marker { display: none }
+#host details.adv > summary::after { content: "+"; margin-left: auto; font-size: 20px } #host details.adv[open] > summary::after { content: "–" }
+#host .wbar { display: flex; justify-content: space-between; gap: 10px; margin-top: calc(18px + env(safe-area-inset-top)); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brass2) }
+#host .wprog { height: 4px; margin: 8px 0 4px; border-radius: 2px; background: rgba(174,98,73,.25); overflow: hidden } #host .wprog i { display: block; height: 100%; background: var(--brass2); transition: width .3s }
+#host .wp { margin: 10px 0; font-size: 17px; line-height: 1.5; color: var(--tallow) } #host .wp b { color: #fff3ee }
+#host .wopts, #host .mpool { display: grid; gap: 10px; margin: 16px 0 }
+#host button.wopt { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; text-align: left; padding: 14px 16px; border-radius: 12px; line-height: 1.35 }
+#host button.wopt .wt { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 700; font-size: 18px; color: var(--tallow) }
+#host button.wopt .wt em { font-style: normal; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; color: #150b17; background: var(--brass2) }
+#host button.wopt .wd { font-size: 15.5px; font-weight: 400; color: var(--tallow2); line-height: 1.45 }
+#host button.wopt .wn { font-size: 13.5px; font-weight: 600; color: var(--brass2) }
+#host button.wopt.sel { border-width: 2px; border-color: var(--brass2); background: rgba(174,98,73,.2); box-shadow: none } #host button.wopt.sel .wd { color: var(--tallow) }
+#host .mpool button.wopt { opacity: .62 } #host .mpool button.wopt.sel { opacity: 1 }
+#host button.wopt .tk { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid rgba(230,165,140,.6); display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #150b17 }
+#host button.wopt.sel .tk { background: var(--brass2); border-color: var(--brass2) }
+#host .why { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 3px solid var(--brass); background: rgba(174,98,73,.08); font-size: 15.5px; line-height: 1.5; color: var(--tallow2) }
+#host .why > b:first-child { display: block; margin-bottom: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--brass2) }
+#host .why ul { margin: 6px 0 0; padding-left: 20px } #host .why li { margin: 4px 0 }
+#host .tline { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px } #host .tline li { padding: 6px 10px; border-radius: 8px; background: #100b11; color: var(--tallow2); font-size: 14.5px; line-height: 1.4 }
+#host .tline b { color: var(--tallow) } #host .tline i { font-style: normal; color: var(--brass2) } #host .tline .din { background: rgba(174,98,73,.18) } #host .tline .fin { border: 1px solid rgba(230,165,140,.45) }
+#host button.rv { display: flex; align-items: center; gap: 10px; width: 100%; margin: 6px 0; text-align: left; padding: 10px 14px; min-height: 52px } #host button.rv > span:first-child { flex: 1; min-width: 0; font-size: 14.5px; color: var(--tallow2); line-height: 1.35; overflow-wrap: anywhere }
+#host button.rv b { display: block; font-size: 16px; color: var(--tallow) } #host button.rv .ch { flex: none; font-size: 13px; font-weight: 700; color: var(--brass2) }
 #host .row.wrap > button { flex: 1 1 calc(50% - 8px) } #host .row button small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 400; color: var(--tallow2); line-height: 1.25 }
-#host .row.big2 > button { min-height: 96px; font-size: 19px; font-weight: 700 }
-#host button.tog { display: flex; align-items: flex-start; gap: 10px; text-align: left; flex: 1 1 100% !important }
-#host button.tog .tk { flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 6px; border: 1.5px solid rgba(230,165,140,.6); display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #150b17 }
-#host button.tog.sel .tk { background: var(--brass2); border-color: var(--brass2) }
-#host button.tog > span:last-child { font-weight: 600 }
-#host .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0 }
-#host .chips .chip { text-align: left; font-weight: 600; font-size: 15.5px; padding: 8px 12px; min-height: 56px; opacity: .6 } #host .chips .chip.sel { opacity: 1 }
-#host .chips .chip small { display: block; font-weight: 400; font-size: 12.5px; color: var(--tallow2); margin-top: 2px }
 #host .vote b.n.wide { width: auto; min-width: 38px; padding: 0 6px; font-size: 16px; white-space: nowrap }
 #host .planbox { margin: 16px 0 90px; padding: 14px; border-radius: 12px; border: 1px solid rgba(230,165,140,.4); background: linear-gradient(180deg, rgba(230,165,140,.1), rgba(230,165,140,.03)) }
 #host .sheet .planbox { margin-bottom: 16px }

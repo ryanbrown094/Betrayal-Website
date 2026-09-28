@@ -1,5 +1,5 @@
 /* ===================== CORE: store, helpers, actions, rules ===================== */
-const APPV = "1.2", SCHEMA = 12;
+const APPV = "1.3", SCHEMA = 12;
 const KEY = "candle-v1";
 const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
@@ -275,14 +275,13 @@ function autoPrize(s, m) {
   if (r.witness && witnessOk(s)) { m.witnessOffer = true; m.win = "none"; m.dag = "none"; return }
   m.win = r.shield === "off" ? "none" : r.shield === "public" ? "public" : r.shield === "secret" ? (rounded ? "secret" : "public") : rounded ? "secret" : "public";
   m.secN = 1;
-  // one blade a round, on the first mission that can carry it; with the Champion on, every other round it rides with the shield
+  // the blade and the Champion come once a game each, from the round the plan picked for them, on the first mission that
+  // can carry them. On a mission without rounds the blade takes the shield's place, so one person never quietly holds both.
   let dag = "none";
-  if (r.blade && !championOf(s)) {
-    if (r.champion && m.win !== "none" && s.round % 2 === 0) dag = "with";
-    else if (m.win === "none") dag = rounded ? "secret" : "public";
-    else if (rounded) dag = "secret";
+  if (!championOf(s)) {
+    if (champDue(s) && m.win !== "none") dag = "with";
+    else if (bladeDue(s)) { dag = rounded ? "secret" : "public"; if (!rounded) m.win = "none" }
   }
-  if (!r.champion && dag === "with") dag = "none";
   m.dag = dag;
 }
 const clock = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -372,7 +371,7 @@ function startGame(cfg) {
     log: [clock() + " Game created: " + players.length + " players, " + cfg.cloaks + " cloaks"],
     tvRules: false, tvBlack: false, tvPause: false, replaySfx: 0, tvText: "large",
     night: null, mission: null, table: null, morning: null, shieldCard: null, mingle: null, endvote: null, final2: null,
-    witness: null, champion: null, voteLog: [], quest: null, questTally: { done: 0, failed: 0 }, ghostIntroDone: false, prefs: {}, cloakMisses: 0, winner: null, prizeTo: null
+    witness: null, champion: null, gave: {}, voteLog: [], quest: null, questTally: { done: 0, failed: 0 }, ghostIntroDone: false, prefs: {}, cloakMisses: 0, winner: null, prizeTo: null
   });
 }
 function cleanRules(r) {
@@ -381,7 +380,7 @@ function cleanRules(r) {
   o.rounds = int(r.rounds, 0, 12, 0); o.perRound = int(r.perRound, 0, 2, 0); o.dinnerAfter = int(r.dinnerAfter, 0, 12, 1); o.mingle = r.mingle !== false;
   const keys = MISSIONS.filter(m => !m.addon).map(m => m.key); o.pool = Array.isArray(r.pool) ? r.pool.filter(k => keys.includes(k)) : null; if (o.pool && !o.pool.length) o.pool = null;
   o.kill = r.kill === "murder" ? "murder" : "poison"; o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
-  o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.blade = r.blade !== false; o.champion = r.champion !== false && o.blade && o.shield !== "off"; o.witness = r.witness !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
+  o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.blade = r.blade !== false; o.champion = r.champion !== false && o.shield !== "off"; o.witness = r.witness !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
   return o;
 }
 function newGame() { store.save(null) }
@@ -534,7 +533,20 @@ const MYST = {
   change: { unit: "round", units: "rounds", how: "spots the change first", howN: "be first to spot the change in that round" }
 };
 const mystOf = m => MYST[m && m.key] || { unit: "round", units: "rounds", how: "wins it", howN: "win that one" };
-const bladeOk = (s, m) => !!m && rulesIn(s).blade && !["dilemma", "likely"].includes(m.key) && !championOf(s) && !m.witnessOffer;
+// Only the shield comes round every round. The blade, the Champion, the Witness and the Dilemma come once a game each. The
+// blade and the Champion each have a round the plan picks (the blade about halfway to the final, the Champion later); if
+// nobody wins one, it comes round again on the next mission. The host can still put either on a mission sooner.
+const gaveOf = s => (s && s.gave) || {};
+function onceRound(s, k) {
+  const n = Math.max(1, plannedRounds(s) - 1), b = Math.ceil(n / 2);
+  return k === "blade" ? b : Math.max(Math.min(n, b + 1), Math.ceil(n * 3 / 4));
+}
+const bladeFree = s => rulesIn(s).blade && !gaveOf(s).blade;
+const champFree = s => rulesIn(s).champion && !gaveOf(s).champion;
+const bladeDue = s => bladeFree(s) && s.round >= onceRound(s, "blade");
+const champDue = s => champFree(s) && s.round >= onceRound(s, "champion");
+const dilemmaFree = s => rulesIn(s).dilemma && !(s.done || {}).dilemma;
+const bladeOk = (s, m) => !!m && (bladeFree(s) || champFree(s)) && !["dilemma", "likely"].includes(m.key) && !championOf(s) && !m.witnessOffer;
 const championPrize = m => !!m && m.dag === "with" && m.win !== "none";
 // the overall winner takes something named on the TV, so a tie at the top is worth settling
 const prizeRides = m => !!m && m.key !== "dilemma" && !m.witnessOffer && (m.win === "public" || m.dag === "public" || (m.dag === "with" && m.win === "public"));
@@ -594,9 +606,10 @@ function mShields(s, m) {
   if (!m.hasShield || !m.room || m.witnessOffer || rulesIn(s).shield === "off") m.win = "none";
   if (m.win === "secret" && !rounded) m.win = "public";
   if (m.dag === "secret" && !rounded) m.dag = "public";
-  if (m.dag === "public" && m.win === "public") m.dag = rulesIn(s).champion ? "with" : "none";
-  if (m.dag === "with" && !rulesIn(s).champion) m.dag = "none";
+  if (m.dag === "public" && m.win === "public") m.dag = champFree(s) ? "with" : "none";
+  if (m.dag === "with" && !champFree(s)) m.dag = "none";
   if (m.dag === "with" && m.win === "none") m.dag = "public";
+  if ((m.dag === "public" || m.dag === "secret") && !bladeFree(s)) m.dag = "none";
   if (!m.dag || !bladeOk(s, m)) m.dag = "none";
   m.secN = m.win === "secret" ? Math.max(1, Math.min(m.secN || 1, 2, m.room)) : 0; m.secMax = m.secN;
 }
@@ -1003,7 +1016,7 @@ function changeNext() { act(s => { const m = s.mission; m.showA = false; m.spott
 // The winner's public shield goes first, then the mystery rounds' secret ones, never past tonight's allowance (the
 // Champion always gets theirs). Someone who already holds a shield keeps it: a public win makes it public. A mystery-round
 // winner who already holds a secret one is still tapped in the ceremony, so nobody can work anything out from who wasn't.
-// The blade goes to the overall winner, a mystery round's winner, or the Champion; one a round.
+// The blade goes to the overall winner, a mystery round's winner, or the Champion; one a game (and the Champion once, too).
 function endMission() {
   const pts = ptsInput();
   act(s => {
@@ -1039,7 +1052,7 @@ function endMission() {
     pub.forEach(id => P2(s, id).shield = "public"); sec.forEach(id => P2(s, id).shield = "secret");
     // a Candle Witness meets the Cloak now, before the final table; a Cloak who won it gets the same ceremony, and nothing
     let met = null; if (witness) { const tsA = aliveOf(s).filter(p => p.role === "cloak" && p.id !== witness), fake = P2(s, witness).role === "cloak"; met = fake || !tsA.length ? null : tsA[Math.floor(Math.random() * tsA.length)].id; s.witness = { id: witness, used: true, metId: met, fake: fake || !met, round: s.round } }
-    if (blade) s.champion = { id: blade, round: s.round, secret: dagSecret, used: false };
+    if (blade) { s.champion = { id: blade, round: s.round, secret: dagSecret, used: false }; s.gave = { ...gaveOf(s), [m.dag === "with" ? "champion" : "blade"]: s.round } }
     const nm = id => P2(s, id).name;
     // who is tapped in the ceremony, and for what: the secret Champion, plain secret shields, a secret blade
     const tapWar = warId && blade === warId ? warId : null, tapDag = dagSecret && blade !== warId ? blade : null;

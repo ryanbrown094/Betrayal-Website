@@ -445,7 +445,7 @@ export default {
     }
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
-    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin)\/?$/);
+    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour)\/?$/);
     if (page) {
       const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
       if (page[1] !== "admin") return r;

@@ -3,7 +3,7 @@
 // only nodes that are genuinely new play their entrance. data-k forces a swap when identity changes.
 function morph(from, to) {
   if (from.nodeType === 1) {
-    for (const a of [...from.attributes]) if (!to.hasAttribute(a.name)) from.removeAttribute(a.name);
+    for (const a of [...from.attributes]) if (!to.hasAttribute(a.name) && !(a.name === "open" && from.nodeName === "DETAILS")) from.removeAttribute(a.name); // a fold the host opened stays open
     for (const a of [...to.attributes]) if (from.getAttribute(a.name) !== a.value) from.setAttribute(a.name, a.value);
   }
   const tc = [...to.childNodes];

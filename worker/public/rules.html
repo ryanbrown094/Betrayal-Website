@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="build" content="20260928204758">
+<title>How to play — Cloak &amp; Candle</title>
+<meta name="theme-color" content="#09070a">
+<link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<style>
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/AlegreyaSans-n500-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/AlegreyaSans-n500-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/AlegreyaSans-n700-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/AlegreyaSans-n700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Alegreya Sans SC';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/AlegreyaSansSC-n500-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Alegreya Sans SC';font-style:normal;font-weight:500;font-display:swap;src:url(/fonts/AlegreyaSansSC-n500-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Alegreya Sans SC';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/AlegreyaSansSC-n700-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Alegreya Sans SC';font-style:normal;font-weight:700;font-display:swap;src:url(/fonts/AlegreyaSansSC-n700-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'IM Fell DW Pica';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-i400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'IM Fell DW Pica';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
+* { box-sizing: border-box }
+html { color-scheme: dark; -webkit-text-size-adjust: 100% }
+body { margin: 0; background: radial-gradient(120vw 60vh at 50% -10%, #2a1630, transparent 60%), var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui) }
+a { color: var(--rose) }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 20px }
+nav.top { display: flex; align-items: center; gap: 12px; padding: 22px 0 8px }
+nav.top a { display: flex; align-items: center; gap: 10px; color: var(--ivory); text-decoration: none; font: 600 26px/1 var(--disp) }
+nav.top svg { width: 30px; height: 35px; color: var(--rose) }
+.eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .32em; text-transform: uppercase; color: var(--rose); margin-top: 34px }
+h1 { font: 600 clamp(40px, 8vw, 64px)/1 var(--disp); margin: 10px 0 6px }
+h2 { font: 600 30px/1.1 var(--disp); margin: 34px 0 8px; color: var(--ivory) }
+h3 { font: 700 17px/1.3 var(--ui); margin: 20px 0 4px; color: var(--rose) }
+p, li { color: var(--ivory2) } strong, b { color: var(--ivory) }
+.updated { color: #877e78; font-size: 15px; margin: 0 }
+.ph { background: rgba(230,165,140,.16); color: var(--rose); border-radius: 4px; padding: 0 4px; font-weight: 600 }
+.note { padding: 14px 16px; border-radius: 10px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); margin: 18px 0 }
+table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(230,165,140,.18) } th { color: var(--ivory); font-weight: 700 } td { color: var(--ivory2) }
+.table-scroll { overflow-x: auto }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17; font: 700 17px/1 var(--ui); text-decoration: none; cursor: pointer }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed }
+.panel { padding: 22px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.35); margin: 20px 0 }
+label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) }
+.price { display: block; font: 600 44px/1.1 var(--disp); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 12px; padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); cursor: pointer } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose) }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
+footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
+footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2) }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="top"><a href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg>Cloak &amp; Candle</a></nav>
+<main>
+<style>
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; padding: 0; list-style: none } .toc a { display: inline-block; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(230,165,140,.35); color: var(--ivory); text-decoration: none; font-size: 15px }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0 }
+.card { padding: 16px 18px; border-radius: 12px; background: var(--plum); border: 1px solid rgba(230,165,140,.25) } .card b { display: block; font: 600 24px/1.1 var(--disp); color: var(--ivory); margin-bottom: 6px } .card p { margin: 0; font-size: 16.5px; line-height: 1.5 }
+ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:first-child { color: var(--ivory) }
+.once { display: inline-block; font: 700 11px/1 var(--sc); letter-spacing: .14em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; background: rgba(230,165,140,.16); color: var(--rose); vertical-align: middle; margin-left: 6px }
+dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.missions dd { margin: 2px 0 0; color: var(--ivory2) }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 }
+.btn.ghost { background: transparent; color: var(--ivory) }
+</style>
+<div class="eyebrow">the rules</div>
+<h1>How to play</h1>
+<p>Everything that happens at a Cloak &amp; Candle party, from the first candle to the last. You don’t need to learn any of it before the night: the host’s phone walks them through every step, and the TV shows the players what they need to know. But if you like to know what you’re buying, here is the whole game.</p>
+<ul class="toc"><li><a href="#idea">The idea</a></li><li><a href="#roles">Who’s who</a></li><li><a href="#round">A round</a></li><li><a href="#dead">The dead</a></li><li><a href="#powers">Powers</a></li><li><a href="#twists">Twists</a></li><li><a href="#pot">The pot</a></li><li><a href="#end">The end game</a></li><li><a href="#missions">Missions</a></li><li><a href="#need">What you need</a></li></ul>
+
+<h2 id="idea">The idea</h2>
+<p>A few of your guests are secretly <strong>Cloaks</strong>. Everyone else is a <strong>Candle</strong>. Every night the Cloaks kill someone, and every day the table votes to throw someone out. The Candles win if they find every Cloak before the end. The Cloaks win if even one of them is still at the table when the game finishes.</p>
+<p>In between, you play party games for a shared pot and for protection, you argue, you make alliances, and you lie to people you’ve known for years. A typical game lasts an evening, with dinner in the middle.</p>
+
+<h2 id="roles">Who’s who</h2>
+<div class="cards">
+<div class="card"><b>The Candles</b><p>Most of the table. They don’t know who anyone else is. Their job is to work out who the Cloaks are and vote them out, using nothing but conversation, voting patterns and gut feeling.</p></div>
+<div class="card"><b>The Cloaks</b><p>About one guest in four or five, chosen at random. At the start they take off their blindfolds and see each other. Each night they choose who dies. By day they act like Candles and steer the vote.</p></div>
+<div class="card"><b>The host</b><p>Runs the game like a presenter and doesn’t play. The host’s phone shows who the Cloaks are and gives every line to read. The TV shows everyone else what they need to see.</p></div>
+</div>
+<p>Nobody is told how many Cloaks there are. Players only find out as Cloaks are exiled and revealed.</p>
+
+<h2 id="round">A round</h2>
+<p>The game is played in rounds. The host chooses how many at setup; the game then decides how many players leave in each round so that the final always starts with five. Each round goes like this:</p>
+<ol class="flow">
+<li><b>A mission.</b> A party game on the TV: a quiz, a guessing game, charades, and so on (all of them are listed <a href="#missions">below</a>). Missions add to the pot, and most award a <strong>shield</strong>. Some rounds have two missions.</li>
+<li><b>The shield.</b> If the mission awarded a shield, it goes to the winner. Some shields are won in public and named on the TV. Others are hidden in one secret round of a mission, and the winner is tapped on the shoulder while everyone is blindfolded, so only they know.</li>
+<li><b>The mingle.</b> If the host has switched it on, everyone gets up from the table for ten minutes: private chats, accusations, deals. The Cloaks might have a secret side-quest to complete.</li>
+<li><b>The Reckoning.</b> Everyone sits down. After a few minutes of open debate, each player writes one name on their chalkboard. The boards are turned one at a time, in seat order, while the TV keeps count. The player with the most votes is <strong>exiled</strong>. A tie goes to a revote between the tied players. At a table bigger than sixteen, there are two exiles.</li>
+<li><b>The reveal.</b> The exiled player’s role is shown on the TV: Cloak or Candle.</li>
+<li><b>The night.</b> Everyone puts on their blindfold. The host wakes the Cloaks, who silently choose a victim (or two or three, at a big table). A player holding a shield can’t be killed. Depending on the host’s choice, the victim is either <strong>poisoned</strong> (told in the night, and stands to announce it at dawn with thirty seconds of last words) or <strong>murdered</strong> (led away under blindfold, leaving an empty chair).</li>
+<li><b>Dawn.</b> Blindfolds off. The table finds out who died, and whether a shield held. Shields last for one night only.</li>
+</ol>
+<p>Once in the evening, at a round the host picks, the game pauses for a <strong>25-minute dinner break</strong>.</p>
+
+<h2 id="dead">The dead</h2>
+<p>If the host plays with <strong>Ghosts</strong>, nobody goes home when they’re out. Exiled and killed players stay at the party and watch. They can’t vote, can’t speak at the table, and put their blindfolds on with everyone else. Each Ghost who died a Candle gets to name, in secret, the player they’re sure is a Cloak. Some missions call on the Ghosts to perform or to cause trouble. And at the very end, if the living get greedy, the prize can pass to the Ghosts who guessed right.</p>
+<p>Without Ghosts, players who are out are simply out.</p>
+
+<h2 id="powers">Powers</h2>
+<p>Only the shield comes round every round. Everything else happens once in the whole game, at a moment the game picks. The host can switch any of these off at setup.</p>
+<h3>Shield</h3>
+<p>Protects its holder from that night’s kill. Won in missions. At most a quarter of the table can hold one at the same time. If a Cloak wins a hidden shield, it does nothing, and nobody is told.</p>
+<h3>The blade <span class="once">once a game</span></h3>
+<p>Makes one player’s vote count twice at one Reckoning. It’s offered in a single mission about halfway through the game. If it was won in secret, the TV shows where the extra vote landed once every board is turned, but never whose it was.</p>
+<h3>The Champion <span class="once">once a game</span></h3>
+<p>A shield and the blade together, won in a mission later in the game. The Champion can’t be killed that night and votes twice. Before the first board is turned, they can also choose to lay both down: then nobody may vote for them at that Reckoning, but they lose the shield and vote once.</p>
+<h3>The Dilemma <span class="once">once a game</span></h3>
+<p>Offered after a mission when nobody holds a shield. Everyone writes POT or SHIELD, face down. If exactly one person writes SHIELD, they take it and the pot grows. If nobody does, the pot grows by double. If two or more reach for it, nobody gets the shield and the pot shrinks.</p>
+<h3>The Witness <span class="once">once a game</span></h3>
+<p>Only possible in the final, and only if exactly one Cloak is among the last five. A mission offers “a special prize”. While everyone else is blindfolded, the winner and the last Cloak take off their blindfolds and look at each other. A Candle Witness now knows who the Cloak is, and the Cloak can’t harm them. Then they have to convince the others.</p>
+
+<h2 id="twists">Twists</h2>
+<h3>Conversion <span class="once">once a game</span></h3>
+<p>When a single Cloak is left against four or more Candles, the Cloak can recruit that night instead of killing. They invite one Candle to join them. If the Candle accepts, they become a Cloak. If they refuse, they stay a Candle, and the Cloak knows who turned them down. Either way, the table only learns that nobody died.</p>
+<h3>The Bargain <span class="once">once a game</span></h3>
+<p>The harsh version: join or die. If a lone Cloak is still on their own on a later night, they choose a Candle, who must become a Cloak or die on the spot (unless they hold a shield).</p>
+<h3>Side-quests</h3>
+<p>Each night the Cloaks can be given a small secret task for the next break. For example: get a particular Candle to say the word “castle”. A completed quest counts for the Cloaks at the end. A failed one costs the pot.</p>
+
+<h2 id="pot">The pot</h2>
+<p>Every mission adds to a shared pot, up to a target the host sets. It can be points, or real money if your group wants it to be. The winners split it at the end. In the shouting games, a wrong answer costs the pot, and the room hears the total but never who got it wrong. By default only a Cloak’s wrong answer costs anything, so a shrinking pot is a clue.</p>
+<p>There is also a <strong>prize</strong>, chosen by the host and kept secret until the end: something worth lying to your friends for.</p>
+
+<h2 id="end">The end game</h2>
+<p>The last round is <strong>the final</strong>. It always starts with five players, however many started the evening.</p>
+<ol class="flow">
+<li><b>A last mission</b>, for the pot. There are no shields in the final, because there is no night left to survive.</li>
+<li><b>The last Reckoning.</b> The table votes one more player out, but this time their role is <em>not</em> revealed. That leaves four.</li>
+<li><b>End or Exile.</b> The host’s phone goes round the table, and each player votes in secret: END if they believe every Cloak is gone, EXILE if they think one is still among them. The game only ends if the vote is unanimous. Otherwise, it’s back to the Reckoning for another exile, and another vote.</li>
+<li><b>The ceremony.</b> One by one, the last players’ seals are turned on the TV. If only Candles are left, the Candles win and share the pot. If a Cloak is still at the table, the Cloaks win.</li>
+<li><b>Share or take.</b> If two or more Cloaks survive, they get one final test: each one secretly chooses SHARE or TAKE. If they all share, they split the pot and play rock, paper, scissors for the prize. If one takes, they take everything. If two or more take, it passes to the Ghosts who named a Cloak, or to nobody.</li>
+<li><b>The awards.</b> The TV shows the full roll of who was who, then hands out awards for the night: The Grand Deceiver, The Sharpest Eye, Barking Up the Wrong Tree, The Narrow Escape and more.</li>
+</ol>
+
+<h2 id="missions">Missions</h2>
+<p>The host chooses which missions are available (for example, only games played at the table, or nothing that needs blindfolds). The game deals them in a random order, and the host can swap any mission on the night.</p>
+<dl class="missions">
+<dt>Most Likely To</dt><dd>A prompt appears. Everyone chalks the name of the person it fits best, and boards go up together. Always played first, as the icebreaker.</dd>
+<dt>Rapid Quiz</dt><dd>Questions on screen. The first to shout is locked in, right or wrong. Three parts: easy, then medium, then brutal.</dd>
+<dt>Longest Word</dt><dd>Twelve letters, and the clock starts. The longest real word on your chalkboard wins the round.</dd>
+<dt>Closest Guess</dt><dd>Write a number on your chalkboard. Closest to the real answer wins the round.</dd>
+<dt>Memory Wall</dt><dd>Twenty-five things appear, but not for long. Then chalk every one you remember.</dd>
+<dt>Snap</dt><dd>A symbol changes every five seconds. When it matches the one before, shout SNAP.</dd>
+<dt>Rock Paper Scissors Royale</dt><dd>Everyone stands and pairs up. Losers sit down and cheer. Repeat until one is left standing.</dd>
+<dt>One Leg</dt><dd>Stand on one leg, eyes closed, hands on head. Wobble and you’re out.</dd>
+<dt>Screen Charades</dt><dd>Everyone else is blindfolded while the actor reads the screen. Then blindfolds off, and the actor mimes against the clock.</dd>
+<dt>Hum It</dt><dd>Like charades, but the actor hums a song.</dd>
+<dt>Chalkboard Pictionary</dt><dd>Like charades, but the artist draws on their chalkboard. No letters, no numbers.</dd>
+<dt>The Statue</dt><dd>Everyone freezes. The Ghosts may do anything to make you laugh or move, except touch you. Needs Ghosts.</dd>
+<dt>Two Truths and a Lie</dt><dd>One player tells three things about themselves. The table chalks which one is the lie.</dd>
+<dt>Higher or Lower</dt><dd>A question and a number: is the real answer higher or lower? Thumbs up or down. Get it wrong and you sit.</dd>
+<dt>What Changed?</dt><dd>Twelve symbols appear. The screen goes dark and something changes. First to shout what changed takes the point.</dd>
+</dl>
+<p>The quiz, charades, songs, pictures and guessing games draw on a bank of thousands of questions and prompts, and nothing repeats within a game. The host can switch off any that won’t suit their group.</p>
+
+<h2 id="need">What you need</h2>
+<ul>
+<li>8 to 24 players. 10 to 16 is the sweet spot.</li>
+<li>An evening: about 3½ to 4½ hours for 8 to 12 players, and longer for bigger tables. The host’s setup gives an estimate for your group.</li>
+<li>A TV, with a laptop connected or casting to it.</li>
+<li>A phone for the host. Guests don’t need phones.</li>
+<li>A blindfold for every guest (sleep masks work well).</li>
+<li>A small chalkboard and chalk, or a whiteboard and pen, for every guest.</li>
+<li>A prize.</li>
+</ul>
+<div class="cta"><a class="btn" href="/buy">Get a party pass</a><a class="btn ghost" href="/tour">See what a game looks like</a></div>
+</main>
+<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>Cloak &amp; Candle is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
+</div>
+</body>
+</html>
