@@ -191,6 +191,7 @@ Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memor
 - **Ghosts:** the exiled and the poisoned become Ghosts. They give one secret verdict (name a Cloak) **straight after their exile**; the first time, it comes after the ghost lore. It counts at the end.
 
 ### 5.6 The end game — always starts at four
+- **Five-left mission (1.3.2):** if the final opens with more than five (a shield held on the last night), its unrevealed votes go down to five, then `fiveMission()` plays one more mission before the last vote, so the Witness can be won. The final never deals Most Likely To (it carries no prize).
 - **Whatever the plan, End or Exile starts with four at the table.** The final round opens with five; its Reckoning takes one more with no role reveal (the unannounced exit), then End or Exile.
 - **The rounds are the host's choice, within what the table allows** (`roundsRange`): from the fewest (every round at full stretch: `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it. Auto = the fewest.
 - **Each round is sized as it starts** (`roundTarget`, kept in `state.rt`): what's left to lose before five, spread over the rounds left, raised until the later rounds can still finish at full stretch. It sets the Reckoning's exiles (1, or 2 above sixteen) and the night's victims (up to 2 from 12 alive, 3 from 20). A simulation of every table size (8–24) against every allowed plan reaches the final with exactly five on the planned round.

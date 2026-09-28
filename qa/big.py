@@ -88,13 +88,13 @@ try:
         E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<6;p.role=i<2?'cloak':'candle'});s.phase='day';s.round=5})")
         check("six alive: one victim", E("()=>nightKills(state)") == 1)
         check("thresholds: 12→2, 20→3, 24→3, 11→1, 16 one vote, 17 two", E("()=>[killsAt(12),killsAt(20),killsAt(24),killsAt(11),exilesAt(16),exilesAt(17)]") == [2, 3, 3, 1, 1, 2])
-        # the final opens with too many (a shield held, say): silent votes until four, then End or Exile
+        # the final opens with too many (a shield held, say): silent votes until five, one more mission, the last vote, then End or Exile
         E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<6;p.role=i<2?'cloak':'candle';p.shield=null});s.round=7;s.finalRound=7;s.phase='day'})")
         E("()=>{openTable();const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[5].id?A[4].id:A[5].id);toExile();exile(A[5].id);askGo();revealRole()}")
         foot = h.inner_text("#host")
-        check("final with six: after the first silent exile, another vote, not End or Exile", "Another vote" in foot and "End or Exile —" not in foot, foot[-300:])
+        check("final with six: after the first silent exile, one more mission at five (where the Witness is won), not End or Exile", "Five left — one more mission" in foot and "End or Exile —" not in foot, foot[-300:])
         check("…and the exiled role stays hidden", not E("()=>state.players[5].revealed"))
-        E("()=>{openTable('Final: another vote');const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[4].id?A[3].id:A[4].id);toExile();exile(A[4].id);askGo();revealRole()}")
+        E("()=>{fiveMission();openTable('Final: the last vote');const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[4].id?A[3].id:A[4].id);toExile();exile(A[4].id);askGo();revealRole()}")
         check("at four: End or Exile", "End or Exile — four left" in h.inner_text("#host"))
         # parity mid-game no longer ends it: the game plays on to the final
         E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<8;p.role=i<4?'cloak':'candle'});s.round=2;s.finalRound=null;s.phase='day'})")

@@ -263,7 +263,8 @@ function perRoundOf(s) {
 // the next planned mission not yet played (skipped ones stay skipped); a swap on the day screen replaces it
 function nextPlanned(s) {
   const p = s.plan || [], i = s.planAt || 0;
-  const ok = k => k && (k !== "statue" || ghostsOf(s).length > 0);
+  // the final's mission must be able to carry a prize (the Witness is won there), so never the icebreaker
+  const ok = k => k && (k !== "statue" || ghostsOf(s).length > 0) && !(isFinal(s) && k === "likely");
   for (let j = i; j < p.length; j++) if (ok(p[j])) return p[j];
   const pool = poolOf(rulesIn(s)).filter(ok), done = s.done || {};
   return pool.sort((a, b) => (done[a] || 0) - (done[b] || 0))[0] || "quiz";
@@ -1269,6 +1270,9 @@ function nextRound(final) {
 }
 // Dinner is one sitting: once served, the option goes away. Served from dawn, it leads straight into the next round.
 function startBreak(kind, then) { act(s => { const din = kind === "dinner"; s.phase = "mingle"; s.mingle = { end: null, dur: din ? 1500000 : 600000, kind, then: then || null }; if (din) s.dinnerDone = true }, kind === "dinner" ? "Dinner break" : "Mingle") }
+// A final that opened with more than five (a shield held on the last night) votes down to five, then plays one more
+// mission before the last vote: that is where the Witness can be won.
+function fiveMission() { act(s => { s.phase = "day"; s.table = null; s.fiveMission = true; return { log: "Five left in the final: one more mission before the last vote" } }) }
 function declareFinal() { act(s => { s.finalRound = (s.phase === "day" && !(s.roundMissions || 0)) ? s.round : s.round + 1; return { log: "Final round: round " + s.finalRound } }) }
 function pace() {
   const s = state; if (!s.startedAt || s.round < 2) return null;
