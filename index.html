@@ -1029,7 +1029,7 @@ function publicView(s) {
   return o;
 }
 /* ===================== CORE: store, helpers, actions, rules ===================== */
-const APPV = "1.1", SCHEMA = 12;
+const APPV = "1.2", SCHEMA = 12;
 const KEY = "candle-v1";
 const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
@@ -1243,15 +1243,29 @@ function kw(t, s) {
   return String(t).replace(/\bpoisonings\b/g, "murders").replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
 }
 const kwLines = (a, s) => a.map(l => { const x = norm(l); return { ...x, tv: kw(x.tv, s), say: kw(x.say, s) } });
-// How a table shrinks: the Reckoning exiles two while more than sixteen sit at it, the night takes two victims from 12
-// alive, three from 20 — never below five. Rounds a table of n needs, the final included:
+// The end game always starts with four: the final round opens with five, its Reckoning takes one more without a reveal,
+// then End or Exile. To get there, every round before the final is sized to what's left: its exiles (one, or two while
+// more than sixteen sit at the table) and its night's victims (up to two from 12 alive, three from 20), never below five.
 const exilesAt = a => a > 16 ? 2 : 1;
 const killsAt = a => Math.max(1, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
-function roundsFrom(a) { let r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++ } return r }
+// the most one round can take from a table of a
+const capacityAt = a => { const ex = Math.min(exilesAt(a), a - 5); return a - ex > 5 ? ex + killsAt(a - ex) : ex };
+// rounds (the final included): fewest = every round at capacity, most = one exile and one victim a round
+function roundsFrom(a) { let r = 1; while (a > 5) { a -= capacityAt(a); r++ } return r }
+const roundsMax = n => 1 + Math.ceil(Math.max(0, n - 5) / 2);
+const roundsRange = n => [roundsFrom(n), Math.max(roundsFrom(n), roundsMax(n))];
 const autoRounds = n => roundsFrom(n);
-// about how many are left when a fixed plan's final round starts
-function aliveAtRound(a, round) { for (let r = 1; r < round && a > 5; r++) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a) } return a }
 const plannedRounds = s => rulesIn(s).rounds || autoRounds(seated(s).length);
+// This round's share of what's left, spread over the rounds left before the final: how many exiles, then how many victims.
+function roundTarget(s) {
+  const a = aliveOf(s).length, need = Math.max(0, a - 5), k = Math.max(1, plannedRounds(s) - s.round);
+  // an even share, raised until the rounds after this one can still finish the job at full stretch
+  let e = Math.max(Math.min(2, need), Math.ceil(need / k));
+  while (e < capacityAt(a) && roundsFrom(a - e) - 1 > k - 1) e++;
+  e = Math.min(e, capacityAt(a));
+  const exiles = e - 1 > killsAt(a - 1) && exilesAt(a) === 2 ? 2 : 1;
+  return { round: s.round, start: a, exiles, kills: Math.max(0, e - exiles) };
+}
 // missions the pool allows for this table: the Statue needs Ghosts; the Dilemma is only ever an add-on
 const poolOf = r => (Array.isArray(r.pool) && r.pool.length ? r.pool : MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key))
   .filter(k => MISSIONS.some(m => m.key === k && !m.addon) && (k !== "statue" || r.ghosts !== false));
@@ -1376,7 +1390,8 @@ function startGame(cfg) {
   }));
   shuffle(players.slice()).slice(0, cfg.cloaks).forEach(p => p.role = "cloak");
   setPin(cfg.pin);
-  const rules = cleanRules(cfg.rules), rounds = rules.rounds || autoRounds(players.length);
+  const rules = cleanRules(cfg.rules); if (rules.rounds) { const [lo, hi] = roundsRange(players.length); rules.rounds = Math.max(lo, Math.min(hi, rules.rounds)) }
+  const rounds = rules.rounds || autoRounds(players.length);
   store.save({
     v: SCHEMA, gid: Math.random().toString(36).slice(2, 10), prize: cfg.prize, hours: cfg.hours || 4, startedAt: null, stamps: [], questsOn: rules.quests,
     rules, plan: planMissions(rules, rounds * 2 + 6), planAt: 0,
@@ -1403,7 +1418,10 @@ function newGame() { store.save(null) }
 const newTable = () => ({ stage: "talk", votes: {}, ballots: {}, last: null, immune: [], revote: null, showDots: false, exiled: null, step: 0, talkEnd: null, talkDur: null, roll: null, margin: null });
 function openTable(log) {
   if (state && isFinal(state) && state.phase !== "endvote" && aliveOf(state).length <= 4) return openEndvote();
-  act(s => { s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable(); if (!isFinal(s) && exilesAt(aliveOf(s).length) === 2) s.table.exiles = 2 }, log || "Reckoning opened");
+  act(s => {
+    s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable();
+    if (!isFinal(s)) { if (!s.rt || s.rt.round !== s.round) s.rt = roundTarget(s); if (s.rt.exiles === 2) s.table.exiles = 2 }
+  }, log || "Reckoning opened");
 }
 // A big table (more than sixteen at the Reckoning) exiles twice: after the first reveal the boards go up again. The blade
 // has already fallen, so the second vote counts every board once and nobody may buy immunity.
@@ -2168,7 +2186,7 @@ function questResolve(ok) {
 }
 // A big table loses more than one a night, so an evening still reaches the final (see roundsFrom). Only a kill night has
 // more than one; each victim is its own pass of the script.
-const nightKills = s => killsAt(aliveOf(s).length);
+const nightKills = s => { const a = aliveOf(s).length, rt = s.rt && s.rt.round === s.round ? s.rt : null; return Math.max(1, Math.min(rt ? rt.kills || 1 : killsAt(a), killsAt(a), a - 5)) };
 const killsOf = n => n && n.mode === "murder" ? n.kills || 1 : 1;
 function nextVictim() {
   act(s => {
@@ -2276,12 +2294,12 @@ function pace() {
 }
 function advice() {
   const t = cloaks().length, f = candles().length, a = t + f;
-  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, one exile, then End or Exile.";
+  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, then the Reckoning votes until four are left, then End or Exile.";
   if (t === 0) return isFinal(state) ? { lvl: "end", text: "No Cloaks left, but the table doesn’t know it. Run End or Exile: a unanimous END and the Candles win; every EXILE costs them another Candle." } : { lvl: "final", text: "No Cloaks left, but the table doesn’t know it." + callIt };
   if (t >= f) return isFinal(state) ? { lvl: "end", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it. Run End or Exile: a unanimous END and the Cloaks win." } : { lvl: "final", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it." + callIt };
-  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, the Reckoning, then End or Exile — the vote decides when it ends." };
+  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, then the Reckoning votes — no reveals — until four are left. Then End or Exile: the vote decides when it ends." };
   if (state.finalRound && state.finalRound > state.round) return { lvl: "final", text: "Next round is the final. Finish this round normally." };
-  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Cloak") + "). Make " + which + " round the final: one mission, one exile, then End or Exile." };
+  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Cloak") + "). Make " + which + " round the final: one mission, then the Reckoning votes until four are left, then End or Exile." };
   const rk = ["convert", "bargain"].filter(k => modeOn(state, k)).map(k => MODES[k].label);
   if (t === 1 && f >= 4 && rk.length) return { lvl: "convert", text: "One Cloak left against " + f + ". Your plan allows " + (rk.length > 1 ? "a Conversion, then a Bargain" : rk[0] === "Conversion" ? "a Conversion" : "a Bargain") + " — the phone sets the night for it, or the endgame dies early." };
   if (a <= 6) return { lvl: "soon", text: a + " left, " + t + " Cloaks. One more normal round, then call the final. Two missions this round if the night is young." };
@@ -3475,7 +3493,7 @@ function renderHost() {
       else if (lore) foot = nextBtn("Next: " + esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
       // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
       // the end game always starts with four left: they vote End or Exile, whoever is left
-      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("End or Exile — " + numWord(alive().length) + " left", "openEndvote()", "danger") : !cloaks().length ? nextBtn("End-game vote", "openEndvote()") + nextBtn("Skip the vote — final ceremony", "startCeremony()", "ghost") : endCheck() ? nextBtn("The final ceremony", "startCeremony()", "danger") : fin ? nextBtn("End-game vote", "openEndvote()") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five — the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote — boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
+      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("End or Exile — " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin ? nextBtn("Another vote — " + numWord(alive().length - 4) + " more to go before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Cloaks left — straight to the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five — the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote — boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
     }
     case "endvote": {
@@ -3492,7 +3510,7 @@ function renderHost() {
       if (!m.revealed) { body = `<h2>Dawn</h2>${say(SAY.dawnAsk(s.round))}<div class="secret">${m.kind === "murder" ? (mu ? "<b>" + esc(m.name) + "</b> left the table in the night. Let the room find the empty chair, then reveal." : "<b>" + esc(m.name) + "</b> " + (m.many ? "were" : "was") + " poisoned. Wait for " + (m.many ? "each of them" : "them") + " to stand and announce it, then reveal.") : mu ? "Nobody was murdered — every chair is full. Let it sink in, then reveal." : "Nobody was poisoned. Let the silence sit, then reveal."}</div>`; foot = nextBtn(m.kind === "murder" ? (mu ? "Reveal on TV" : "They’ve announced — reveal on TV") : "Reveal: nobody died", "act(s=>{s.morning.revealed=true})"); break }
       const adv = advice().lvl === "final" && !s.finalRound, dinnerNow = !s.dinnerDone && !endCheck() && rulesIn(s).dinnerAfter && rulesIn(s).dinnerAfter <= s.round;
       body = `<h2>Morning</h2>${say(m.kind === "murder" ? (m.many ? SAY.morningMany(m.name, s.round, m.saved) : SAY.morningMurder(m.name, s.round)) : m.kind === "shield" ? SAY.morningShield(s.round) : SAY.morningQuiet(s.round))}${m.convert ? `<p class="note">Last night’s ${m.refused ? "refusal" : "conversion"} stays secret — this line is the same as any quiet night.</p>` : ""}${m.kind === "murder" && !m.lastDone && !mu ? `<div class="row"><button onclick="act(s=>{s.morning.lastEnd=now()+30000*((s.morning.victimIds||[1]).length);s.morning.lastDone=true})">Last words — ${m.many ? (m.victimIds.length * 30) + " s (30 s each)" : "30 s"} on TV</button></div>` : ""}${ghosts.length && !s.ghostIntroDone ? `<h3>the ghost lore</h3>` + say(SAY.ghostIntro(((s.voteLog || []).map(x => P(x.exiled)).find(p => p && !p.alive && !p.left) || (m.kind === "murder" && P(m.victimId)) || ghosts[0]).name)) + `<div class="row"><button onclick="act(s=>{s.ghostIntroDone=true})">Ghost lore said</button></div>` : ""}${ghostPanel(s)}${advicePanel()}${dinnerNow ? `<div class="advice offer"><b>Dinner, by your plan.</b> Serve it now, between rounds ${s.round} and ${s.round + 1}. The TV runs a dinner timer; the next round starts when you’re done.</div>` : ""}`;
-      foot = (endCheck() && alive().length > 4 ? nextBtn("End game now", "startCeremony()", "danger") : "") + (dinnerNow ? nextBtn("Not yet — next round", adv ? "nextRound(true)" : "nextRound()", "ghost") + nextBtn("Dinner now · 25 min", "startBreak('dinner','round')") : nextBtn(adv ? "Next round — make it the final" : "Next round", adv ? "nextRound(true)" : "nextRound()")); break;
+      foot = (dinnerNow ? nextBtn("Not yet — next round", adv ? "nextRound(true)" : "nextRound()", "ghost") + nextBtn("Dinner now · 25 min", "startBreak('dinner','round')") : nextBtn(adv ? "Next round — make it the final" : "Next round", adv ? "nextRound(true)" : "nextRound()")); break;
     }
     case "final":
       body = `<h2>${s.winner === "cloaks" ? "Cloaks win" : "Candles win"}</h2>${say(s.winner === "cloaks" ? SAY.endCloaks(s.players.filter(p => p.alive && p.role === "cloak").length) : SAY.endCandle)}${prizeHost(s)}`;
@@ -3594,6 +3612,17 @@ const namesOf = d => d.names.split(/\n|,/).map(x => x.trim()).filter(Boolean);
 const poolAll = () => MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key);
 const draftPool = d => Array.isArray(d.pool) ? d.pool : poolAll();
 function setD(k, v) { draft(); setupDraft[k] = v; if (k === "blade" && !v || k === "shield" && v === "off") setupDraft.champion = false; if (k === "shield" && v === "off") setupDraft.dilemma = false; saveDraft(); renderHost() }
+// Rounds: Auto, or any number from the fewest this table can play (every round at full stretch) to the most (one exile
+// and one victim a round). Whatever is chosen, the game sizes each round so the final opens with five.
+function stepRounds(d) {
+  draft(); const n = namesOf(setupDraft).length || MINP, [lo, hi] = roundsRange(n), vals = [0]; for (let r = lo; r <= hi; r++) vals.push(r);
+  const cur = +setupDraft.rounds ? Math.max(lo, Math.min(hi, +setupDraft.rounds)) : 0, i = vals.indexOf(cur);
+  setupDraft.rounds = vals[Math.max(0, Math.min(vals.length - 1, i + d))]; saveDraft(); renderHost();
+}
+function roundsRow(d, n) {
+  const [lo, hi] = roundsRange(n || MINP), cur = +d.rounds || 0, v = cur ? Math.max(lo, Math.min(hi, cur)) : 0;
+  return `<div class="vote setrow"><span>Rounds</span><button onclick="stepRounds(-1)" ${!cur ? "disabled" : ""} aria-label="Rounds: fewer">−</button><b class="n num wide">${v ? v + " (last is the final)" : "Auto (" + lo + ")"}</b><button onclick="stepRounds(1)" ${v >= hi ? "disabled" : ""} aria-label="Rounds: more">+</button></div><p class="note">${n ? n + " players" : "Your table"} can play ${lo === hi ? lo + " rounds" : lo + " to " + hi + " rounds"}. More rounds, fewer exiles and victims each round — whichever you pick, the final opens with five at the table and the end game starts with four.</p>`;
+}
 function stepD(k, d, lo, hi) { draft(); setupDraft[k] = Math.max(lo, Math.min(hi, (+setupDraft[k] || 0) + d)); saveDraft(); renderHost() }
 function poolD(k) { draft(); const p = draftPool(setupDraft).slice(), i = p.indexOf(k); if (i >= 0) p.splice(i, 1); else p.push(k); setupDraft.pool = p.length === poolAll().length ? null : p; saveDraft(); renderHost() }
 function poolPreset(which) { draft(); setupDraft.pool = which === "all" ? null : MISSIONS.filter(m => !m.addon && m.key !== "custom" && m.kind === "screen").map(m => m.key); saveDraft(); renderHost() }
@@ -3628,7 +3657,7 @@ ${sec("who", 1, "Players", n ? n + " players · " + (d.cloaks ? plural(+d.cloaks
 <div class="note" id="count">${n} players${n ? " · " + plural(defaults(n).t, "Cloak") + " suggested" : ""}</div>
 <div class="row"><div><label for="cloaks">Cloaks (blank = auto)</label><input id="cloaks" type="number" min="1" inputmode="numeric" value="${esc(d.cloaks)}" oninput="draft()"></div><div><label for="pinset">Host PIN</label><input id="pinset" inputmode="numeric" autocomplete="off" value="${esc(d.pin)}" oninput="draft()"></div></div>
 <div class="row"><div><label for="hostn">Your name (the host)</label><input id="hostn" value="${esc(d.host)}" placeholder="e.g. Sam" oninput="draft()"></div><div><label for="hours">Target length (hours)</label><input id="hours" type="number" step="0.5" value="${esc(d.hours)}" oninput="draft()"></div></div>`)}
-${sec("eve", 2, "The evening", (d.rounds ? d.rounds + " rounds" : "rounds by table size (~" + ar + ")") + " · " + (+d.perRound ? plural(+d.perRound, "mission") + "/round" : "missions by the clock") + " · " + (+d.dinnerAfter ? "dinner after R" + d.dinnerAfter : "no dinner"), `${stepper("rounds", "Rounds", 0, 10, v => v ? v + (v === 1 ? " (just the final)" : " (last is the final)") : "Auto (~" + ar + ")")}${+d.rounds && n && aliveAtRound(n, +d.rounds) > 6 ? `<p class="note">With ${n} players, round ${+d.rounds} starts with about ${aliveAtRound(n, +d.rounds)} still at the table. The final’s End or Exile needs every one of them to agree, so it can run long. Auto plans about ${ar} rounds.</p>` : ""}
+${sec("eve", 2, "The evening", (d.rounds ? d.rounds + " rounds" : "rounds by table size (~" + ar + ")") + " · " + (+d.perRound ? plural(+d.perRound, "mission") + "/round" : "missions by the clock") + " · " + (+d.dinnerAfter ? "dinner after R" + d.dinnerAfter : "no dinner"), `${roundsRow(d, n)}
 <p class="note">Auto: two leave each round (an exile and a night) until five or fewer are left — then the final. A fixed number makes its last round the final, whoever is left.</p>
 <p class="ask">Missions each round</p><div class="row wrap">${opt("perRound", 0, "By the clock", "one, or two when time allows")}${opt("perRound", 1, "One")}${opt("perRound", 2, "Two")}</div>
 ${stepper("dinnerAfter", "Dinner break after round", 0, 10, v => v ? "round " + v : "no dinner break")}

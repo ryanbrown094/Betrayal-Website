@@ -21,11 +21,11 @@ try:
             E("()=>act(s=>{s.players.forEach((p,i)=>p.role=[0,1].includes(i)?'cloak':'candle');s.phase='day'})"); h.wait_for_timeout(150)
         # setup screen: the accordion writes the plan into the game
         h.fill("#names", "\n".join(NAMES)); h.fill("#pinset", "1")
-        E("()=>{setD('kill','murder');setD('ghosts',false);setD('blade',false);stepD('rounds',3,0,10);setD('perRound',2);poolD('quiz');poolD('statue')}")
+        E("()=>{setD('kill','murder');setD('ghosts',false);setD('blade',false);stepRounds(1);setD('perRound',2);poolD('quiz');poolD('statue')}")
         check("turning the blade off turns the Champion off too", E("()=>setupDraft.champion===false"))
         h.click("text=Start game"); h.wait_for_timeout(300)
         r = E("()=>state.rules")
-        check("setup choices land in the game's rules", r["kill"] == "murder" and r["ghosts"] is False and r["blade"] is False and r["champion"] is False and r["rounds"] == 3 and r["perRound"] == 2 and "quiz" not in r["pool"], r)
+        check("setup choices land in the game's rules", r["kill"] == "murder" and r["ghosts"] is False and r["blade"] is False and r["champion"] is False and r["rounds"] == 4 and r["perRound"] == 2 and "quiz" not in r["pool"], r)
         check("the plan only deals missions from the pool, and never the Statue without Ghosts", E("()=>state.plan.length>0 && state.plan.every(k=>state.rules.pool.includes(k)) && !state.plan.includes('statue')"), E("()=>state.plan"))
         # murder, no Ghosts
         game({"kill": "murder", "ghosts": False})
@@ -44,11 +44,12 @@ try:
         E("()=>{startNight();act(s=>{s.night.mode='murder';s.night.victimId=s.players[5].id});beginNight();act(s=>{s.night.step=nightScript(s.night,s).length-1});finishNight();act(s=>{s.morning.revealed=true})}")
         check("poison: announced at dawn, with last words", "Last words" in body() and "poison" in body().lower())
         # rounds and missions per round
-        game({"rounds": 3, "perRound": 2})
+        game({"rounds": 2, "perRound": 2})
+        check("rounds a table this size can't play are clamped: 2 for ten players becomes 4", E("()=>state.rules.rounds") == 4, E("()=>state.rules.rounds"))
         E("()=>{pickMission(nextPlanned(state));startMission();startMission();act(s=>finishPlay(s));endMission();act(s=>{if(s.shieldCard)s.shieldCard.step=9})}")
         check("two missions a round: after the first, the plan says another", "Next mission" in h.inner_text(".foot"), h.inner_text(".foot"))
-        E("()=>{nextRound();nextRound()}")
-        check("a fixed three rounds makes round 3 the final", E("()=>state.round===3 && state.finalRound===3"))
+        E("()=>{nextRound();nextRound();nextRound()}")
+        check("a fixed four rounds makes round 4 the final", E("()=>state.round===4 && state.finalRound===4"))
         # prizes by the plan
         game({"shield": "off", "blade": False})
         E("()=>pickMission('quiz')")

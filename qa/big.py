@@ -35,16 +35,20 @@ try:
         check("8 players start", setup(8) == 8)
         check("24 players start, with 5 Cloaks by default", setup(24) == 24 and E("()=>defaults(24).t") == 5)
         E("()=>{try{localStorage.clear();sessionStorage.clear()}catch(e){};state=null;hist=[];setupDraft=null;renderHost()}"); h.wait_for_timeout(100)
-        h.fill("#names", "\n".join(FIRST[:24])); E("()=>{draft();setupDraft.open=['eve'];stepD('rounds',3,0,10)}"); h.wait_for_timeout(150)
-        check("a 3-round plan for 24 warns of a crowded final", "still at the table" in h.inner_text("#host"))
+        h.fill("#names", "\n".join(FIRST[:24])); E("()=>{draft();setupDraft.open=['eve'];renderHost()}"); h.wait_for_timeout(150)
+        lo, hi = E("()=>roundsRange(24)")
+        check("24 players: the rounds control offers the fewest to the most", f"can play {lo} to {hi} rounds" in h.inner_text("#host") and (lo, hi) == (8, 11), (lo, hi))
+        E("()=>{stepRounds(1)}"); check("one step up from Auto is the fewest", E("()=>setupDraft.rounds") == lo)
+        E("()=>{for(let i=0;i<20;i++)stepRounds(1)}"); check("…and it stops at the most", E("()=>setupDraft.rounds") == hi)
+        E("()=>{for(let i=0;i<20;i++)stepRounds(-1)}"); check("…and back down to Auto", E("()=>+setupDraft.rounds||0") == 0)
         setup(24)
         check("round plan: 8 rounds at 24, 7 at 20, 5 at 14, 3 at 8", E("()=>[autoRounds(24),autoRounds(20),autoRounds(14),autoRounds(8)]") == [8, 7, 5, 3], E("()=>[autoRounds(24),autoRounds(20),autoRounds(14),autoRounds(8)]"))
         samples = {}
         def snap(tag): samples[tag] = E("()=>JSON.parse(JSON.stringify(state))")
         E("()=>act(s=>{s.players.forEach((p,i)=>p.role=i<5?'cloak':'candle');s.phase='day';s.startedAt=Date.now()})"); snap("day40")
         # the Reckoning at 24: two votes
-        E("()=>openTable()"); snap("table-talk40")
-        check("24 at the Reckoning: two votes", E("()=>state.table.exiles") == 2)
+        E("()=>act(s=>{s.round=3})"); E("()=>openTable()"); snap("table-talk40")  # a round that has to run at full stretch
+        check("24 at the Reckoning, behind schedule: two votes, three victims planned", E("()=>state.table.exiles") == 2 and E("()=>state.rt.kills") == 3, E("()=>state.rt"))
         E("()=>{const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[10].id?A[11].id:A[10].id)}"); snap("table-votes40")
         E("()=>{toExile()}"); snap("table-exile40")
         E("()=>{exile(aliveOf(state)[10].id);askGo()}"); snap("reveal0-40")
@@ -85,6 +89,19 @@ try:
         E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<6;p.role=i<2?'cloak':'candle'});s.phase='day';s.round=5})")
         check("six alive: one victim", E("()=>nightKills(state)") == 1)
         check("thresholds: 12→2, 20→3, 24→3, 11→1, 16 one vote, 17 two", E("()=>[killsAt(12),killsAt(20),killsAt(24),killsAt(11),exilesAt(16),exilesAt(17)]") == [2, 3, 3, 1, 1, 2])
+        # the final opens with too many (a shield held, say): silent votes until four, then End or Exile
+        E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<6;p.role=i<2?'cloak':'candle';p.shield=null});s.round=7;s.finalRound=7;s.phase='day'})")
+        E("()=>{openTable();const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[5].id?A[4].id:A[5].id);toExile();exile(A[5].id);askGo();revealRole()}")
+        foot = h.inner_text("#host")
+        check("final with six: after the first silent exile, another vote, not End or Exile", "Another vote" in foot and "End or Exile —" not in foot, foot[-300:])
+        check("…and the exiled role stays hidden", not E("()=>state.players[5].revealed"))
+        E("()=>{openTable('Final: another vote');const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[4].id?A[3].id:A[4].id);toExile();exile(A[4].id);askGo();revealRole()}")
+        check("at four: End or Exile", "End or Exile — four left" in h.inner_text("#host"))
+        # parity mid-game no longer ends it: the game plays on to the final
+        E("()=>act(s=>{s.players.forEach((p,i)=>{p.alive=i<8;p.role=i<4?'cloak':'candle'});s.round=2;s.finalRound=null;s.phase='day'})")
+        E("()=>{openTable();const A=aliveOf(state);act(s=>{s.table.stage='votes'});for(const p of A)castBallot(p.id,p.id===A[7].id?A[6].id:A[7].id);toExile();exile(A[7].id);askGo();revealRole();act(s=>{s.table.step=2;s.ghostIntroDone=true})}")
+        foot = h.inner_text("#host")
+        check("Cloaks at parity mid-game: into the night, no early ceremony", "Into the night" in foot and "final ceremony" not in foot, foot[-300:])
         # every screen of a 24-player game on the TV
         for tag, extra in [("final40", "act(s=>{s.players.forEach(p=>{p.alive=true;p.revealed=true});s.phase='final';s.winner='cloaks';s.prizeTo='x'})"), ("lobby40", "act(s=>{s.players.forEach(p=>{p.alive=true;p.revealed=false});s.phase='lobby'})"),
                            ("intro40", "act(s=>{s.phase='intro'})"), ("mission40", "act(s=>{s.phase='day'});pickMission('likely')"), ("rps40", "act(s=>{s.phase='day'});pickMission('rps');startMission();startMission()"),

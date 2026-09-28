@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928181516">
+<meta name="build" content="20260928183201">
 <title>Buy a party pass — Cloak &amp; Candle</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
@@ -61,7 +61,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 <div class="price" id="price"><span class="ph">[£00]</span></div>
 <p style="margin:6px 0 0">One party pass: one game room for one party of 8 to 24 players, open for 48 hours from when you first use it. Price includes VAT where it applies.</p>
 <ul>
-<li>Your pass is shown as soon as you’ve paid, and emailed to you.</li>
+<li>Your pass is shown as soon as you’ve paid, and it’s on the receipt Stripe emails you.</li>
 <li>Use it whenever you like: the 48 hours start only when you open your room.</li>
 <li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host.</li>
 </ul>
@@ -73,21 +73,31 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 <p id="paymsg" style="font-size:15.5px;margin:12px 0 0"></p>
 </div>
 
-<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you’ll come back here and your pass will be waiting on the home page.</p>
+<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your pass on screen, and Stripe emails you a receipt with the pass on it.
 
 <script>
 "use strict";
-// Checkout settings. stripeUrl: a Stripe Payment Link whose success URL is https://<this domain>/claim?session_id={CHECKOUT_SESSION_ID}.
-const BUY = { stripeUrl: "", price: "" };
+// Checkout settings: the price shown here (Stripe holds the real one — STRIPE_PRICE_ID on the Worker).
+const BUY = { price: "" };
 const $ = s => document.querySelector(s);
 if (BUY.price) $("#price").textContent = BUY.price;
 const ready = () => $("#c1").checked && $("#c2").checked;
-function update() {
-  $("#pay").disabled = !BUY.stripeUrl || !ready();
-  $("#paymsg").textContent = !BUY.stripeUrl ? "Party passes go on sale soon. Payments aren’t open yet." : ready() ? "" : "Tick both boxes to continue.";
+let busy = false;
+function update(msg) {
+  $("#pay").disabled = busy || !ready();
+  $("#paymsg").textContent = msg !== undefined ? msg : ready() ? "" : "Tick both boxes to continue.";
 }
-$("#c1").onchange = $("#c2").onchange = update;
-$("#pay").onclick = () => { if (BUY.stripeUrl && ready()) location.href = BUY.stripeUrl };
+$("#c1").onchange = $("#c2").onchange = () => update();
+$("#pay").onclick = async () => {
+  if (!ready() || busy) return;
+  busy = true; update("Opening the secure checkout…");
+  try {
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ terms: true, supply: true }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && j.url) { location.href = j.url; return }
+    busy = false; update(j.error || "That didn’t work — try again.");
+  } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.") }
+};
 update();
 </script>
 </main>

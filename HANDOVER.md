@@ -19,6 +19,8 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 
 **1.1 (28 Sep 2026):** every term borrowed from TV formats replaced (§5.9); 8–24 players, with bigger tables losing more a round (§5.10); legal pages and a placeholder checkout (§6.1); a master passcode for testing (§4.1); the TV final roll and Ghost rules fit 4:3 screens.
 
+**1.2 (28 Sep 2026):** the end game always starts with four, with the host choosing the rounds within what the table allows (§5.6); Stripe Checkout wired end to end, tested against a stub only (§6.2).
+
 ---
 
 ## 2. Quick start
@@ -51,7 +53,8 @@ deploy.sh          build + wrangler deploy (staging | production)
 src/               the game page (§4)
 site/index.html    the home page: SHOP settings (price, contact) at the bottom
 site/page.html     the shell for the legal and checkout pages; site/pages/NAME.html → worker/public/NAME.html, served at /NAME
-                   (terms, privacy, cookies, refunds, contact, buy — BUY settings with the Stripe link at the bottom of buy.html)
+                   (terms, privacy, cookies, refunds, contact, buy — BUY price display at the bottom of buy.html)
+tools/stripe-setup.sh  creates the Stripe product, price and webhook endpoint for one environment (§6.2)
 worker/src/        index.js (router, GameState, Registry), codes.js, rules.js, public-view.js
 worker/public/     build output + fonts, icons, words.txt (Longest Word dictionary), _headers, media/
 media/             logos/, screenshots/, social/, palette/, copy/press-kit.md, src/guidelines.html, Cloak-and-Candle-Brand-Guidelines.pdf
@@ -64,8 +67,8 @@ qa/                harnesses (§8)
 ## 4. Architecture
 
 ### 4.1 Rooms and passes (Worker)
-- **Routes:** `/` home page · `/g/ROOMCD` game page (`play.html`) · `/api/g/ROOMCD/state|settings` a room's API · `POST /api/games {pass}` redeem · `GET /api/claim?session_id=` Stripe · `/api/admin/*` (Bearer `ADMIN_TOKEN`): `POST passes {count,note}`, `GET passes`, `POST revoke {pass}`.
-- **Registry** (one Durable Object, `idFromName("registry")`): passes `pass:CNDL-…` → `{created, note, source, room?, expires?, redeemed?, revoked?}`, rooms `room:CODE`, Stripe claims `claim:<session>`. Redeeming again returns the same room until it expires (a host who lost the link). 20 failed redemptions an hour per address, then 429.
+- **Routes:** `/` home page · `/g/ROOMCD` game page (`play.html`) · `/api/g/ROOMCD/state|settings` a room's API · `POST /api/games {pass}` redeem · `POST /api/checkout {terms, supply}` → Stripe Checkout URL · `GET /api/claim?session_id=` · `POST /api/stripe/webhook` (signed) · `/api/admin/*` (Bearer `ADMIN_TOKEN`): `POST passes {count,note}`, `GET passes`, `POST revoke {pass}`.
+- **Registry** (one Durable Object, `idFromName("registry")`): passes `pass:CNDL-…` → `{created, note, source, room?, expires?, redeemed?, revoked?}`, rooms `room:CODE`, Stripe claims `claim:<session>` and `pi:<payment_intent>` → pass, checkout rate `co:<ip>`. A pass bought through Checkout is `pending` until paid; a pending pass is refused with 402. Redeeming again returns the same room until it expires (a host who lost the link). 20 failed redemptions an hour per address, then 429.
 - **GameState** (one per room, `idFromName("room:CODE")`): `meta {room, expires, pass}` set by the Registry on creation; unknown rooms are 404. After `expires` the room is read-only (writes get **423**); an alarm deletes it `KEEP_DAYS` later. Otherwise unchanged from the party build: PIN, wrong-PIN limiting, 409/410 save rules, poll tags, question-bank switches (now per room).
 - **Vars:** `PASS_HOURS` (48), `KEEP_DAYS` (7), `BUILD` (set by deploy.sh), `SITE_PASSWORD` (the pre-launch gate). **Secrets:** `ADMIN_TOKEN`, `STRIPE_SECRET_KEY`, `MASTER_PASS`.
 - **Master passcode** (`MASTER_PASS`, a secret): entered in the home page's pass box (any case, spaces trimmed) it opens a **fresh room every time**, recorded with `pass: "MASTER"`. For testing; unset it to switch it off. Wrong guesses count against the same 20-an-hour limit as passes.
@@ -76,7 +79,7 @@ qa/                harnesses (§8)
 `build.sh` concatenates `fonts.css`, `style.css`, `content.js`, `scripts.js`, `public-view.js`, `core.js`, `audio.js`, `art.js`, `tv.js`, `host.js`, `boot.js`. `isHost` = `#host`. `ROOM` comes from the path; `API` is `/api/g/ROOM` (or `/api` with no room — the local test server's default room). The standalone `index.html` still runs on localStorage with no server.
 
 ### 4.3 State and actions
-One JSON `state`; `SCHEMA = 12`, `APPV = "1.1"` (12: role keys became `cloak`/`candle`; a game saved by 1.0 is refused with "a game from an older version" — nothing was live). Every change goes through `act(fn, logline)` (clone, run, stamp, log, save; stale taps dropped). Undo: 30 local snapshots plus a short `prev` chain; `rewindRound` restores `roundSnap`. New in 1.0: `rules` (§5.0), `plan`, `planAt`.
+One JSON `state`; `SCHEMA = 12`, `APPV = "1.2"` (12: role keys became `cloak`/`candle`; a game saved by 1.0 is refused with "a game from an older version" — nothing was live). Every change goes through `act(fn, logline)` (clone, run, stamp, log, save; stale taps dropped). Undo: 30 local snapshots plus a short `prev` chain; `rewindRound` restores `roundSnap`. New in 1.0: `rules` (§5.0), `plan`, `planAt`.
 
 ### 4.4 Sync
 Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:true}`). The phone queues saves and rebases after lost replies. GET bodies carry `room {code, expires, expired}`. Status handling in `flushSaves`: 426 reload, 403 wrong PIN, 410 wiped elsewhere, 409 another phone moved, **423 pass expired** (read-only toast).
@@ -173,7 +176,12 @@ Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memor
 - **Exile reveal:** a single tap after the exiled player has said their role themselves. There is no drumroll. The final ceremony keeps a hold-for-drumroll on each seal.
 - **Ghosts:** the exiled and the poisoned become Ghosts. They give one secret verdict (name a Cloak) **straight after their exile**; the first time, it comes after the ghost lore. It counts at the end.
 
-### 5.6 The end game (reactive to player count)
+### 5.6 The end game — always starts at four
+- **Whatever the plan, End or Exile starts with four at the table.** The final round opens with five; its Reckoning takes one more with no role reveal (the unannounced exit), then End or Exile.
+- **The rounds are the host's choice, within what the table allows** (`roundsRange`): from the fewest (every round at full stretch: `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it. Auto = the fewest.
+- **Each round is sized as it starts** (`roundTarget`, kept in `state.rt`): what's left to lose before five, spread over the rounds left, raised until the later rounds can still finish at full stretch. It sets the Reckoning's exiles (1, or 2 above sixteen) and the night's victims (up to 2 from 12 alive, 3 from 20). A simulation of every table size (8–24) against every allowed plan reaches the final with exactly five on the planned round.
+- **When the final opens with more than five** (a shield held, someone left), its Reckoning keeps voting — no reveals — until four remain ("Another vote — N more to go"). Fewer than five (people left) goes straight to End or Exile.
+- **No early endings mid-game.** Cloaks at parity keep playing into the night; with no Cloaks left the host is sent straight to the final round. The Menu's "End game now" is the only override.
 - In a game that started with more than 5 players, the round that starts with **5 or fewer alive is the final**.
 - **Five never becomes four by poison.** An exile that leaves 5 goes straight into the final round with no night; `startNight` refuses at 5 too. From 6, the night's poison makes 5.
 - The **final Reckoning takes 5 to 4 with no role reveal**. Then it's **End or Exile** with every remaining player voting in secret on the phone.
@@ -251,8 +259,17 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 
 ### 6.1 Legal pages and checkout (placeholders)
 - `site/pages/`: `terms.html` (sale and use), `privacy.html` (UK GDPR notice), `cookies.html` (only strictly necessary storage, so no banner), `refunds.html` (14-day cancellation until the pass is first used; Consumer Rights Act remedies), `contact.html` (trader details the E-Commerce Regulations require). Placeholders are `<span class="ph">[…]</span>` — they show highlighted on the page until filled.
-- `buy.html`: price, what you get, two required ticks (terms; immediate supply and losing the right to cancel once used — the Consumer Contracts Regulations need that consent) and a Pay button that stays disabled while `BUY.stripeUrl` is empty. To go live: create the Stripe Payment Link (success URL `https://cloakandcandle.co.uk/claim?session_id={CHECKOUT_SESSION_ID}`), put it and the price in `BUY`, the price in `SHOP` on the home page, and set `STRIPE_SECRET_KEY`.
+- `buy.html`: price, what you get, two required ticks (terms; immediate supply and losing the right to cancel once used — the Consumer Contracts Regulations need that consent) and a Pay button that posts them to `/api/checkout` (§6.2).
 - Every page's footer links all five legal pages.
+
+### 6.2 Stripe
+- **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true}` → the Registry mints a **pending** pass → the Worker creates a Checkout Session (`mode=payment`, one `STRIPE_PRICE_ID`, promotion codes allowed, the pass in `metadata`, `client_reference_id`, the PaymentIntent's description and metadata, and on a **post-payment invoice** as a custom field and in its description; consent timestamps in metadata) → the buyer pays on Stripe → back to `/claim?session_id=…`, where the home page asks `/api/claim`, which checks the session is paid and activates the pass.
+- **Webhook** `/api/stripe/webhook` (signature checked with `STRIPE_WEBHOOK_SECRET`, 5-minute tolerance): `checkout.session.completed` (paid) and `async_payment_succeeded` activate the pass even if the buyer never returns; `expired` / `async_payment_failed` cancel the pending pass; `charge.refunded` (full refunds) cancels the pass if it hasn't opened a room, and only notes the refund if it has.
+- **Settings:** `STRIPE_PRICE_ID` (var; empty = checkout closed, 503), secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. The publishable key isn't used: Checkout is Stripe-hosted.
+- **Going live, per environment:** `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> <pence>` → put the price ID in the `.toml`, put both secrets → in the Stripe Dashboard, turn on emailed receipts and fill the public business details → staging first with a test card (4242 4242 4242 4242): check the pass appears, the receipt carries it, and a refund cancels it → then live keys on production.
+- **Billing:** a party pass is a one-off payment, so there are no subscriptions. The only Billing feature used is Checkout's post-payment invoice (it puts the pass on the emailed paperwork). Stripe charges a fee per invoice: check its pricing page, and drop `invoice_creation` in `/api/checkout` to go without.
+- Checkouts are limited to ten an hour per address (each makes a pending pass). Admin `GET /api/admin/passes` shows `pending`, `paid`, `session`, `refunded`.
+- VAT: the price is created tax-inclusive (`tax_behavior=inclusive`); Stripe Tax isn't switched on.
 
 - `SITE_PASSWORD` is now `candlelight` (was changed from a show-derived word in 1.1).
 - The master passcode: `npx wrangler secret put MASTER_PASS -c wrangler.toml` (and `-c wrangler.staging.toml`), or Workers & Pages → the Worker → Settings → Variables and Secrets. Unset, no master passcode works.
@@ -277,9 +294,9 @@ Never run `build.sh` while chaos or break is running (a new `build.txt` reloads 
 | `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, missions a round, murder/poison wording, Ghosts off, prizes, Witness, convert/bargain, side-quests, dinner, TV rules card | **new**, clean |
 | `qa/smoke166.py` (:8719) | 74 rules checks | clean |
 | `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Witness, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
-| `qa/claim.mjs` | Stripe claim: paid → one pass per session; unpaid → 402 | clean (Stripe stubbed) |
+| `qa/claim.mjs` | Stripe with its API stubbed: checkout (consent, pending pass, session parameters, rate limit), claim, signed webhook (paid, async, expired, refunded before and after use), Payment Link fallback | clean (27 checks) |
 | `qa/chaos.py` (:8715) | random whole games through the host UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
-| `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the crowded-final warning, round plan, the second vote, a three-victim night (redaction per pass, the picker, a shield), dawn, the five floor, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
+| `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the rounds control (range, Auto, clamps), round plan, the second vote, a three-victim night (redaction per pass, the picker, a shield), dawn, the five floor, the final voting silently down to four, parity playing on, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
 | `qa/break.py part1` (:8718) | adversarial in-page scenarios + every TV screen at three sizes | clean, 130/130 (found a duplicate-name rename bug, fixed) |
 | `qa/media.py`, `qa/shots.py` | screenshots for the media pack / quick looks | used for 1.0 |
 | `qa/review.py`, `resilience.py`, `audit.py`, `banks.py`, `audio.py`, `gallery.py`, `live.py` | older harnesses | not re-run for 1.0; `review.py` has been stale since v16.6 |
@@ -289,11 +306,11 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 ## 9. Known issues and ideas
 
 - **Name clearance.** The working name was "Betrayal" until 28 Sep 2026; it was dropped because Hasbro/Avalon Hill sell a family of "Betrayal" board games. "Cloak & Candle" had no matching US marks (Trademarkia, 28 Sep 2026) and cloakandcandle.com / .co.uk were unregistered. The one nearby mark: Mattel owns "CLOAK AND DAGGER" for toys and games (US class 28) — different second word, but get a UK IPO / EUIPO search (classes 9, 28, 41) done before launch.
-- Not deployed; Stripe not tried live; no emails are sent (the pass appears on the thank-you page — a receipt email from Stripe should repeat it: add the pass to the Payment Link's custom fields/metadata or send one from the Worker).
+- Not deployed. **Stripe has never been called for real**: this build environment's network policy blocked api.stripe.com. Everything is tested against a stub (`qa/claim.mjs`). First real test: staging with test keys (§6.2).
 - **Legal pages are drafts.** Terms, privacy, cookies, refunds and contact (§6.1) were written to UK consumer and data-protection law as templates, not by a lawyer. Fill every highlighted `[placeholder]` (business name, address, company/VAT/ICO numbers, email, price, dates) and have a solicitor review them before taking payment.
 - **The renamed terms (§5.9) are not a legal clearance.** They remove the obvious borrowings; the underlying hidden-role mechanics are common to many games. A UK IPO / EUIPO search and, ideally, advice on format rights before launch.
 - **Big tables are longer.** Even with two exiles and up to three victims a round, 24 players need about 8 rounds (§5.10). Only simulated and scripted (qa/big.py, chaos), never played.
-- **A fixed plan can leave a crowded final.** Rounds 1–10 are the host's choice; a short plan for a big table starts the final with many still seated, and End or Exile needs all of them to agree. Setup now warns (`aliveAtRound`); nothing stops it. A chaos game with 18 players and a 3-round plan looped in End or Exile for 4,000 taps.
+- A chaos run (before the §5.6 rework) had a 16-player game stuck at the Reckoning for 400 random taps — probably random ballots tying and revoting; not investigated.
 - Ideas: a printable guest guide in the new brand; per-mission lengths in the plan; an admin page instead of `tools/passes.sh`; bundle passes (3 parties).
 
 ## 10. A prompt to start the next session

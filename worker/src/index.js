@@ -154,12 +154,44 @@ export class Registry {
       if (!v) return json({ error: "No such pass" }, 404);
       await this.storage.put(k, { ...v, revoked: Date.now() }); return json({ ok: true });
     }
-    // a paid checkout, claimed from the thank-you page: one pass per checkout session, however often it's reloaded
+    // a checkout about to start: its pass exists from now, pending until the payment clears, so the pass can ride on
+    // Stripe's invoice. Ten checkouts an hour per address, so nobody can fill the registry with pending passes.
+    if (url.pathname === "/pending") {
+      const t = Date.now(), k = "co:" + ip, rec = ((await this.storage.get(k)) || []).filter((x) => t - x < 3600000);
+      if (rec.length >= 10) return json({ error: "Too many checkouts from here — try again in an hour." }, 429);
+      await this.storage.put(k, rec.concat([t]));
+      let p; do p = newPass(); while (await this.storage.get("pass:" + p));
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true });
+      return json({ pass: p });
+    }
+    if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
+      const k = "pass:" + passKey(b.pass), v = await this.storage.get(k); if (!v) return json({ error: "No such pass" }, 404);
+      await this.storage.put(k, { ...v, session: b.session }); return json({ ok: true });
+    }
+    // a paid checkout, from the thank-you page or the webhook: activates its pass (a Payment Link checkout, with no pass
+    // of its own, gets one minted). One pass per checkout session, however often it's claimed.
     if (url.pathname === "/claim") {
       const k = "claim:" + b.session, have = await this.storage.get(k);
       if (have) return json({ pass: have });
-      const [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
-      await this.storage.put(k, p); return json({ pass: p });
+      let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
+      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null });
+      else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
+      await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
+      return json({ pass: p });
+    }
+    // a checkout that expired or failed: its pending pass is cancelled
+    if (url.pathname === "/cancel") {
+      const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
+      if (v && v.pending && !v.revoked) await this.storage.put(k, { ...v, revoked: Date.now(), note: "checkout " + (b.why || "ended") });
+      return json({ ok: true });
+    }
+    // a refund: the pass is cancelled if it hasn't opened a room yet (a party already played keeps its room)
+    if (url.pathname === "/refund") {
+      const p = await this.storage.get("pi:" + b.pi); if (!p) return json({ ok: true, pass: null });
+      const k = "pass:" + p, v = await this.storage.get(k);
+      if (v && !v.room && !v.revoked) await this.storage.put(k, { ...v, revoked: Date.now(), refunded: Date.now() });
+      else if (v) await this.storage.put(k, { ...v, refunded: Date.now() });
+      return json({ ok: true, pass: p, cancelled: !!(v && !v.room) });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
@@ -171,6 +203,7 @@ export class Registry {
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
       if (!v) { this.failed(ip); return json({ error: "We don’t recognise that pass. Check it against your receipt." }, 404); }
       if (v.revoked) return json({ error: "That pass has been cancelled." }, 410);
+      if (v.pending) return json({ error: "That pass is waiting for its payment to clear. Try again in a minute." }, 402);
       // redeemed already: the same room comes back (a host who lost the link), until it runs out
       if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That pass has been used, and its game has ended." }, 410);
       const expires = Date.now() + hours(env) * 3600000;
@@ -196,6 +229,22 @@ async function stripeSession(env, id) {
   if (!r.ok) return null;
   return r.json();
 }
+// Stripe's API takes form encoding, nested keys in brackets: {a: {b: [1]}} → a[b][0]=1
+const form = (o, pre, out = []) => { for (const [k, v] of Object.entries(o)) { const key = pre ? pre + "[" + k + "]" : k; if (v && typeof v === "object") form(v, key, out); else if (v !== undefined && v !== null) out.push(encodeURIComponent(key) + "=" + encodeURIComponent(v)); } return out.join("&"); };
+async function stripePost(env, path, params) {
+  const r = await fetch("https://api.stripe.com/v1/" + path, { method: "POST", headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded" }, body: form(params) });
+  const j = await r.json().catch(() => ({})); return r.ok ? j : Promise.reject(new Error((j.error && j.error.message) || "Stripe error " + r.status));
+}
+// A webhook is genuine when Stripe-Signature carries an HMAC-SHA256 of "timestamp.body" under the endpoint's signing
+// secret (STRIPE_WEBHOOK_SECRET), and the timestamp is within five minutes.
+async function stripeVerified(req, env, body) {
+  const h = req.headers.get("Stripe-Signature") || "", t = (h.match(/(?:^|,)t=(\d+)/) || [])[1], sigs = [...h.matchAll(/(?:^|,)v1=([0-9a-f]+)/g)].map((m) => m[1]);
+  if (!env.STRIPE_WEBHOOK_SECRET || !t || !sigs.length || Math.abs(Date.now() / 1000 - +t) > 300) return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.STRIPE_WEBHOOK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = [...new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(t + "." + body)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return sigs.some((s) => same(s, mac));
+}
+const piOf = (x) => (x && typeof x === "object" ? x.id : x) || null;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Pre-launch password gate. With SITE_PASSWORD set, every request — pages, assets, API — needs the gate cookie; without
@@ -249,13 +298,53 @@ export default {
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass }) });
     }
+    // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
+    // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
+    if (p === "/api/checkout" && req.method === "POST") {
+      if (!env.STRIPE_SECRET_KEY || !env.STRIPE_PRICE_ID) return json({ error: "Party passes go on sale soon. Payments aren’t open yet." }, 503);
+      const b = await req.json().catch(() => ({}));
+      if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
+      const ip = req.headers.get("CF-Connecting-IP") || "?";
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: "{}" }), pj = await pr.json();
+      if (!pr.ok) return json(pj, pr.status);
+      const pass = pj.pass, at = new Date().toISOString();
+      try {
+        const cs = await stripePost(env, "checkout/sessions", {
+          mode: "payment", line_items: [{ price: env.STRIPE_PRICE_ID, quantity: 1 }],
+          success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
+          client_reference_id: pass, allow_promotion_codes: "true",
+          metadata: { pass, consent_terms: at, consent_supply: at },
+          payment_intent_data: { description: "Cloak & Candle party pass " + pass, metadata: { pass } },
+          // a paid invoice, emailed by Stripe, carries the pass code: the buyer has it even if they close the tab
+          invoice_creation: { enabled: "true", invoice_data: { description: "Your party pass: " + pass + ". Enter it at " + url.host + " to open your room — it stays open for 48 hours from then.", custom_fields: [{ name: "Party pass", value: pass }], metadata: { pass } } },
+        });
+        await call(env, "/pending-session", { pass, session: cs.id });
+        return json({ url: cs.url });
+      } catch (e) {
+        await call(env, "/cancel", { pass, why: "could not start" });
+        return json({ error: "We couldn’t start the checkout. Try again in a moment." }, 502);
+      }
+    }
+    // Stripe's webhook (endpoint https://<domain>/api/stripe/webhook): activates passes when payment clears, cancels
+    // them when a checkout expires or is refunded before use. Secret: STRIPE_WEBHOOK_SECRET.
+    if (p === "/api/stripe/webhook" && req.method === "POST") {
+      const body = await req.text();
+      if (!(await stripeVerified(req, env, body))) return json({ error: "Bad signature" }, 400);
+      let ev; try { ev = JSON.parse(body); } catch { return json({ error: "Bad JSON" }, 400); }
+      const o = (ev.data && ev.data.object) || {}, pass = o.metadata && o.metadata.pass;
+      if ((ev.type === "checkout.session.completed" && o.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded")
+        await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent) });
+      else if ((ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") && pass) await call(env, "/cancel", { pass, why: ev.type.split(".").pop() });
+      else if (ev.type === "charge.refunded" && o.refunded) await call(env, "/refund", { pi: piOf(o.payment_intent) });
+      return json({ received: true });
+    }
     if (p === "/api/claim" && req.method === "GET") {
       const id = url.searchParams.get("session_id") || "";
       if (!env.STRIPE_SECRET_KEY) return json({ error: "Payments aren’t set up yet." }, 503);
       if (!/^cs_[A-Za-z0-9_]{10,200}$/.test(id)) return json({ error: "That isn’t a checkout session." }, 400);
       const s = await stripeSession(env, id);
       if (!s || s.payment_status !== "paid") return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
-      return call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "" });
+      return call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent) });
     }
     if (p.startsWith("/api/admin/")) {
       if (!env.ADMIN_TOKEN || !admin(req, env)) return json({ error: "Not allowed" }, 401);

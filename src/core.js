@@ -1,5 +1,5 @@
 /* ===================== CORE: store, helpers, actions, rules ===================== */
-const APPV = "1.1", SCHEMA = 12;
+const APPV = "1.2", SCHEMA = 12;
 const KEY = "candle-v1";
 const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
@@ -213,15 +213,29 @@ function kw(t, s) {
   return String(t).replace(/\bpoisonings\b/g, "murders").replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
 }
 const kwLines = (a, s) => a.map(l => { const x = norm(l); return { ...x, tv: kw(x.tv, s), say: kw(x.say, s) } });
-// How a table shrinks: the Reckoning exiles two while more than sixteen sit at it, the night takes two victims from 12
-// alive, three from 20 — never below five. Rounds a table of n needs, the final included:
+// The end game always starts with four: the final round opens with five, its Reckoning takes one more without a reveal,
+// then End or Exile. To get there, every round before the final is sized to what's left: its exiles (one, or two while
+// more than sixteen sit at the table) and its night's victims (up to two from 12 alive, three from 20), never below five.
 const exilesAt = a => a > 16 ? 2 : 1;
 const killsAt = a => Math.max(1, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
-function roundsFrom(a) { let r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++ } return r }
+// the most one round can take from a table of a
+const capacityAt = a => { const ex = Math.min(exilesAt(a), a - 5); return a - ex > 5 ? ex + killsAt(a - ex) : ex };
+// rounds (the final included): fewest = every round at capacity, most = one exile and one victim a round
+function roundsFrom(a) { let r = 1; while (a > 5) { a -= capacityAt(a); r++ } return r }
+const roundsMax = n => 1 + Math.ceil(Math.max(0, n - 5) / 2);
+const roundsRange = n => [roundsFrom(n), Math.max(roundsFrom(n), roundsMax(n))];
 const autoRounds = n => roundsFrom(n);
-// about how many are left when a fixed plan's final round starts
-function aliveAtRound(a, round) { for (let r = 1; r < round && a > 5; r++) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a) } return a }
 const plannedRounds = s => rulesIn(s).rounds || autoRounds(seated(s).length);
+// This round's share of what's left, spread over the rounds left before the final: how many exiles, then how many victims.
+function roundTarget(s) {
+  const a = aliveOf(s).length, need = Math.max(0, a - 5), k = Math.max(1, plannedRounds(s) - s.round);
+  // an even share, raised until the rounds after this one can still finish the job at full stretch
+  let e = Math.max(Math.min(2, need), Math.ceil(need / k));
+  while (e < capacityAt(a) && roundsFrom(a - e) - 1 > k - 1) e++;
+  e = Math.min(e, capacityAt(a));
+  const exiles = e - 1 > killsAt(a - 1) && exilesAt(a) === 2 ? 2 : 1;
+  return { round: s.round, start: a, exiles, kills: Math.max(0, e - exiles) };
+}
 // missions the pool allows for this table: the Statue needs Ghosts; the Dilemma is only ever an add-on
 const poolOf = r => (Array.isArray(r.pool) && r.pool.length ? r.pool : MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key))
   .filter(k => MISSIONS.some(m => m.key === k && !m.addon) && (k !== "statue" || r.ghosts !== false));
@@ -346,7 +360,8 @@ function startGame(cfg) {
   }));
   shuffle(players.slice()).slice(0, cfg.cloaks).forEach(p => p.role = "cloak");
   setPin(cfg.pin);
-  const rules = cleanRules(cfg.rules), rounds = rules.rounds || autoRounds(players.length);
+  const rules = cleanRules(cfg.rules); if (rules.rounds) { const [lo, hi] = roundsRange(players.length); rules.rounds = Math.max(lo, Math.min(hi, rules.rounds)) }
+  const rounds = rules.rounds || autoRounds(players.length);
   store.save({
     v: SCHEMA, gid: Math.random().toString(36).slice(2, 10), prize: cfg.prize, hours: cfg.hours || 4, startedAt: null, stamps: [], questsOn: rules.quests,
     rules, plan: planMissions(rules, rounds * 2 + 6), planAt: 0,
@@ -373,7 +388,10 @@ function newGame() { store.save(null) }
 const newTable = () => ({ stage: "talk", votes: {}, ballots: {}, last: null, immune: [], revote: null, showDots: false, exiled: null, step: 0, talkEnd: null, talkDur: null, roll: null, margin: null });
 function openTable(log) {
   if (state && isFinal(state) && state.phase !== "endvote" && aliveOf(state).length <= 4) return openEndvote();
-  act(s => { s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable(); if (!isFinal(s) && exilesAt(aliveOf(s).length) === 2) s.table.exiles = 2 }, log || "Reckoning opened");
+  act(s => {
+    s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable();
+    if (!isFinal(s)) { if (!s.rt || s.rt.round !== s.round) s.rt = roundTarget(s); if (s.rt.exiles === 2) s.table.exiles = 2 }
+  }, log || "Reckoning opened");
 }
 // A big table (more than sixteen at the Reckoning) exiles twice: after the first reveal the boards go up again. The blade
 // has already fallen, so the second vote counts every board once and nobody may buy immunity.
@@ -1138,7 +1156,7 @@ function questResolve(ok) {
 }
 // A big table loses more than one a night, so an evening still reaches the final (see roundsFrom). Only a kill night has
 // more than one; each victim is its own pass of the script.
-const nightKills = s => killsAt(aliveOf(s).length);
+const nightKills = s => { const a = aliveOf(s).length, rt = s.rt && s.rt.round === s.round ? s.rt : null; return Math.max(1, Math.min(rt ? rt.kills || 1 : killsAt(a), killsAt(a), a - 5)) };
 const killsOf = n => n && n.mode === "murder" ? n.kills || 1 : 1;
 function nextVictim() {
   act(s => {
@@ -1246,12 +1264,12 @@ function pace() {
 }
 function advice() {
   const t = cloaks().length, f = candles().length, a = t + f;
-  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, one exile, then End or Exile.";
+  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, then the Reckoning votes until four are left, then End or Exile.";
   if (t === 0) return isFinal(state) ? { lvl: "end", text: "No Cloaks left, but the table doesn’t know it. Run End or Exile: a unanimous END and the Candles win; every EXILE costs them another Candle." } : { lvl: "final", text: "No Cloaks left, but the table doesn’t know it." + callIt };
   if (t >= f) return isFinal(state) ? { lvl: "end", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it. Run End or Exile: a unanimous END and the Cloaks win." } : { lvl: "final", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it." + callIt };
-  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, the Reckoning, then End or Exile — the vote decides when it ends." };
+  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, then the Reckoning votes — no reveals — until four are left. Then End or Exile: the vote decides when it ends." };
   if (state.finalRound && state.finalRound > state.round) return { lvl: "final", text: "Next round is the final. Finish this round normally." };
-  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Cloak") + "). Make " + which + " round the final: one mission, one exile, then End or Exile." };
+  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Cloak") + "). Make " + which + " round the final: one mission, then the Reckoning votes until four are left, then End or Exile." };
   const rk = ["convert", "bargain"].filter(k => modeOn(state, k)).map(k => MODES[k].label);
   if (t === 1 && f >= 4 && rk.length) return { lvl: "convert", text: "One Cloak left against " + f + ". Your plan allows " + (rk.length > 1 ? "a Conversion, then a Bargain" : rk[0] === "Conversion" ? "a Conversion" : "a Bargain") + " — the phone sets the night for it, or the endgame dies early." };
   if (a <= 6) return { lvl: "soon", text: a + " left, " + t + " Cloaks. One more normal round, then call the final. Two missions this round if the night is young." };
