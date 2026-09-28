@@ -58,6 +58,7 @@ src/               the game page (§4)
 site/index.html    the home page: SHOP settings (price, contact) at the bottom
 site/page.html     the shell for the legal and checkout pages; site/pages/NAME.html → worker/public/NAME.html, served at /NAME
                    (terms, privacy, cookies, refunds, contact, buy, admin, rules, tour — BUY price display at the bottom of buy.html)
+tools/marketing-pack.py  builds dist/Cloak-and-Candle-Marketing-Pack.zip: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social (sources in media/copy/)
 tools/webshots.py      web-sized copies of media/screenshots for the /tour page (run after qa/media.py)
 tools/stripe-setup.sh  creates the Stripe product, price and webhook endpoint for one environment (§6.2)
 worker/src/        index.js (router, GameState, Registry), codes.js, rules.js, public-view.js
