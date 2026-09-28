@@ -597,3 +597,16 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #tv .rolls.huge { gap: .5vh .7vh; max-width: none } #tv .rolls.huge > div { gap: 0; padding: .45vh .8vh } #tv .rolls.huge .seal { display: none }
 #tv .rolls.huge b, #tv.big .rolls.huge b { font-size: 1.8vh; letter-spacing: .02em; overflow-wrap: anywhere } #tv .rolls.huge small, #tv.big .rolls.huge small { font-size: 1.5vh }
 #stage:has(.rolls.huge) { gap: .7vh } #tv #stage:has(.rolls.huge) h1, #tv.big #stage:has(.rolls.huge) h1 { font-size: 6vh } #tv #stage:has(.rolls.huge) .prizeline b, #tv.big #stage:has(.rolls.huge) .prizeline b { font-size: 4vh } #tv #stage:has(.rolls.huge) .prizeline em, #tv.big #stage:has(.rolls.huge) .prizeline em { font-size: 2.3vh }
+
+/* ===================== Report a problem (TV and phone) ===================== */
+#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px; background: rgba(5,3,6,.82); overflow: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif }
+#report .rp { width: min(520px, 100%); padding: 22px; border-radius: 14px; background: #150e16; border: 1px solid rgba(230,165,140,.45); color: var(--tallow); box-shadow: 0 20px 60px rgba(0,0,0,.6) }
+#report h2 { margin: 0 0 8px; font-size: 24px; font-weight: 700; color: var(--tallow) } #report p { margin: 6px 0 12px; font-size: 15.5px; line-height: 1.45; color: var(--tallow2) } #report b { color: #fff }
+#report label { display: block; margin: 12px 0 5px; font-size: 14px; font-weight: 600; color: var(--brass2) } #report label small { font-weight: 400; color: var(--tallow2) }
+#report textarea, #report input[type=email] { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(174,98,73,.5); background: #0d090e; color: var(--tallow); font: inherit; font-size: 16px }
+#report .rp-chk { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; color: var(--tallow2) } #report .rp-chk input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--brass2); flex: none }
+#report .rp-msg { min-height: 1.3em; color: #ffb3cc } #report .rp-row { display: flex; gap: 10px; margin-top: 8px }
+#report button { flex: 1; min-height: 50px; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; border: 1px solid rgba(174,98,73,.5); background: transparent; color: var(--tallow2) }
+#report button.rp-send { border-color: var(--brass2); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17 } #report button:disabled { opacity: .5 }
+#host button.linkish { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; letter-spacing: inherit }
+#repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .14em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.3); border-radius: 1.8vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }

@@ -11,7 +11,7 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
   printf '</style>\n<div id="app"></div>\n<script>\n"use strict";\n'
   cat src/content.js src/scripts.js
   sed 's/^export function /function /' worker/src/public-view.js
-  cat src/core.js src/audio.js src/art.js src/tv.js src/host.js src/boot.js
+  cat src/core.js src/audio.js src/art.js src/tv.js src/host.js src/diag.js src/boot.js
   printf '</script>\n'
 } > index.html
 {

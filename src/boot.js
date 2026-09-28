@@ -9,13 +9,13 @@ listeners.push(() => {
 });
 window.addEventListener("hashchange", () => location.reload());
 if (isHost) renderHost(); else renderTV();
-store.init();
+if (!REPLAY) store.init();
 // A new build reloads the page — but the TV waits for a calm phase, so a ceremony is never interrupted.
 let newBuild = false;
 const calm = () => !state || ["lobby", "day", "mingle", "morning", "final"].includes(state.phase);
 // The phone waits too while a guest holds it for a secret vote, a sheet is open, or someone is typing (a reload would lose the setup draft).
 const hostIdle = () => !handoff && !ask && !menuOpen && !(setupDraft && setupDraft.names.trim() && !(state && authed)) && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.nodeName));
-if (BUILD) setInterval(async () => { try { const r = await fetch("/build.txt", { cache: "no-store" }); if (r.ok) { const b = (await r.text()).trim(); if (/^\d{14}$/.test(b) && b !== BUILD) newBuild = true } } catch (e) {} if (newBuild && (isHost ? hostIdle() : calm())) location.reload() }, 60000);
+if (BUILD && !REPLAY) setInterval(async () => { try { const r = await fetch("/build.txt", { cache: "no-store" }); if (r.ok) { const b = (await r.text()).trim(); if (/^\d{14}$/.test(b) && b !== BUILD) newBuild = true } } catch (e) {} if (newBuild && (isHost ? hostIdle() : calm())) location.reload() }, 60000);
 document.title = isHost ? "Host · Cloak & Candle" : "Cloak & Candle";
 // keep the elapsed clock and pace advice fresh without disturbing typing or a guest holding the phone
 if (isHost) setInterval(() => { const a = document.activeElement; if (state && authed && !handoff && !(a && /INPUT|TEXTAREA/.test(a.nodeName))) renderHost() }, 30000);

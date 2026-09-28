@@ -22,7 +22,7 @@ with sync_playwright() as p:
     H("()=>act(s=>{s.players.forEach((p,i)=>p.role=[2,6].includes(i)?'cloak':'candle');s.plan=['quiz','countdown','charades','hilo','truths','change','memory','draw','estimate'];s.planAt=0})")
     host.wait_for_timeout(800)
     tv = b.new_context(viewport={"width": 1920, "height": 1080}).new_page(); tv.on("pageerror", lambda e: errs.append(str(e)))
-    tv.goto(URL); tv.wait_for_timeout(2500); tv.add_style_tag(content="#soundbtn,#fsbtn,#net{display:none!important}")
+    tv.goto(URL); tv.wait_for_timeout(2500); tv.add_style_tag(content="#soundbtn,#fsbtn,#net,#repbtn{display:none!important}")
     def shot(name, js=None, wait=5200):
         if js: H(js)
         tv.wait_for_timeout(wait); tv.screenshot(path=f"{OUT}/tv-{name}.jpg", type="jpeg", quality=90)

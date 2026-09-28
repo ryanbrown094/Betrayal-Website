@@ -12,6 +12,17 @@ const json = (body, status, extra) =>
 const text = (t, status) => new Response(t, { status, headers: { "Cache-Control": "no-store" } });
 const hours = (env) => Math.max(0.0001, +(env.PASS_HOURS || 48));
 const keepMs = (env) => Math.max(0.00001, +(env.KEEP_DAYS || 7)) * 86400000;
+const pad = (n) => String(n).padStart(9, "0");
+const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
+// time-ordered keys: the newest sort last
+const tkey = (pre) => pre + String(Date.now()).padStart(15, "0") + Math.random().toString(36).slice(2, 6);
+async function gzip(str) { const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
+async function gunzip(bytes) { const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Response(ds.readable).text(); }
+// the master error log (in the Registry): server exceptions, errors from players' browsers, refused webhooks, issue reports
+const logErr = (env, e) => env && env.REGISTRY ? env.REGISTRY.get(env.REGISTRY.idFromName("registry")).fetch("https://registry/err", { method: "POST", body: JSON.stringify(e) }).catch(() => {}) : null;
+// Every save of a room's game is recorded (compressed) so a game can be replayed screen by screen from /admin; up to this
+// many a room. Players' browsers also send a trail of what they tapped and any errors (EVMAX batches a room).
+const RECMAX = 20000, EVMAX = 2000;
 
 // ---------------------------------------------------------------------------------------------------------------
 // One party's game. Writes need the host PIN (the first PUT sets it). Reads without the PIN get the redacted TV view.
@@ -34,10 +45,31 @@ export class GameState {
   }
 
   // a room past KEEP_DAYS after its pass ran out is deleted, game, switches and all
-  async alarm() { await this.storage.deleteAll(); }
+  // (a room with an issue report is kept until keepUntil, so its recording can still be replayed)
+  async alarm() {
+    const m = await this.storage.get("meta");
+    if (m && m.keepUntil && m.keepUntil > Date.now()) return this.storage.setAlarm(m.keepUntil);
+    await this.storage.deleteAll();
+  }
+
+  // one saved version of the game (or a wipe): a short line for the timeline, and the whole state, compressed
+  async record(st, kind) {
+    try {
+      const n = ((await this.storage.get("recN")) || 0) + 1; if (n > RECMAX) return;
+      const line = st && Array.isArray(st.log) ? st.log[0] : ""; // the game log is newest first
+      const e = { recN: n, ["recl:" + pad(n)]: { t: Date.now(), kind, line: clip(line, 240), phase: st ? st.phase : null, round: st ? st.round : null, ver: st ? st.ver || 0 : null, gid: st ? st.gid : null } };
+      if (st) e["recs:" + pad(n)] = await gzip(JSON.stringify(st));
+      await this.storage.put(e);
+    } catch (err) { logErr(this.env, { src: "server", where: "record", msg: err.message, stack: clip(err.stack, 1500) }); }
+  }
 
   async fetch(req) {
-    const path = new URL(req.url).pathname;
+    try { return await this.handle(req); }
+    catch (err) { logErr(this.env, { src: "server", where: "room " + new URL(req.url).pathname, msg: err.message, stack: clip(err.stack, 1500) }); return json({ error: "Something went wrong on our side." }, 500); }
+  }
+
+  async handle(req) {
+    const url = new URL(req.url), path = url.pathname;
     // made by the Registry when a pass is redeemed; never reachable from outside (the router only forwards /api/…)
     if (path === "/_init" && req.method === "POST") {
       const b = await req.json();
@@ -54,8 +86,45 @@ export class GameState {
       if (Date.now() < meta.expires) { meta.expires = Date.now(); await this.storage.put("meta", meta); await this.storage.setAlarm(meta.expires + keepMs(this.env)); }
       return json({ ok: true });
     }
+    // an issue report was filed: keep the room (and its recording) at least this long
+    if (path === "/_keep" && req.method === "POST") {
+      const b = await req.json().catch(() => ({})), until = Math.min(Date.now() + 120 * 86400000, +b.until || 0);
+      meta.keepUntil = Math.max(meta.keepUntil || 0, until); meta.reports = [...(meta.reports || []), clip(b.id, 20)].slice(-50);
+      await this.storage.put("meta", meta); await this.storage.setAlarm(Math.max(meta.expires + keepMs(this.env), meta.keepUntil));
+      return json({ ok: true, rec: (await this.storage.get("recN")) || 0 });
+    }
+    // the admin page's views of a room (the router only forwards these from /api/admin/…)
+    if (path === "/_admin/room") {
+      const [st, settings, recN, evN] = await Promise.all(["state", "settings", "recN", "evN"].map((k) => this.storage.get(k)));
+      return json({ meta, state: st ?? null, settings: settings ?? null, recN: recN || 0, evN: evN || 0 });
+    }
+    if (path === "/_admin/recs") {
+      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "recl:" })) rows.push({ n: +k.slice(5), ...v });
+      return json({ recs: rows });
+    }
+    if (path === "/_admin/rec") {
+      const n = Math.max(1, Math.floor(+url.searchParams.get("n") || 1)), gz = await this.storage.get("recs:" + pad(n));
+      if (!gz) return json({ error: "No recording at that point" }, 404);
+      return new Response(await gunzip(gz), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    }
+    if (path === "/_admin/events") {
+      const rows = []; for (const [, v] of await this.storage.list({ prefix: "ev:" })) for (const e of v.list || []) rows.push({ ...e, device: v.device, host: v.host, build: v.build });
+      return json({ events: rows });
+    }
     const expired = Date.now() > meta.expires;
     const room = { code: meta.room, expires: meta.expires, expired };
+    // what a player's browser saw: taps, screens, sync trouble, errors. Anyone in the room may send (the TV has no PIN);
+    // each batch is small and a room keeps EVMAX batches at most.
+    if (path === "/api/events" && req.method === "POST") {
+      const raw = await req.text(); if (raw.length > 32768) return text("Too large", 413);
+      let b; try { b = JSON.parse(raw); } catch { return text("Bad JSON", 400); }
+      const n = ((await this.storage.get("evN")) || 0) + 1; if (n > EVMAX) return json({ ok: true, full: true });
+      const list = (Array.isArray(b.events) ? b.events : []).slice(0, 300).map((e) => ({ t: +e.t || Date.now(), k: clip(e.k, 12), m: clip(e.m, 400), ...(e.stack ? { stack: clip(e.stack, 1500) } : {}), ...(e.src ? { src: clip(e.src, 200) } : {}) }));
+      const who = { device: clip(b.device, 16), host: !!b.host, build: clip(b.build, 20), ua: clip(req.headers.get("User-Agent"), 200) };
+      await this.storage.put({ evN: n, ["ev:" + pad(n)]: { at: Date.now(), ...who, list } });
+      for (const e of list.filter((x) => x.k === "error").slice(0, 10)) logErr(this.env, { src: "browser", room: meta.room, ...who, msg: e.m, stack: e.stack, where: e.src, at: e.t });
+      return json({ ok: true });
+    }
 
     const current = (await this.storage.get("state")) ?? null;
     const pin = req.headers.get("X-Pin") || "";
@@ -97,7 +166,7 @@ export class GameState {
 
     if (req.method === "DELETE") {
       if (current && current.gid) await this.storage.put("wiped", addWiped(await this.storage.get("wiped"), current.gid));
-      await this.storage.delete("state");
+      await this.storage.delete("state"); await this.record(null, "wipe");
       return json({ state: null, auth: true });
     }
     if (req.method === "PUT") {
@@ -108,7 +177,7 @@ export class GameState {
       // two host phones, a stale phone, a wiped game: see rules.js
       const no = writeVerdict(current, body.state, current ? null : await this.storage.get("wiped"));
       if (no) return no.body ? json(no.body, no.status) : text(no.text, no.status);
-      await this.storage.put("state", body.state);
+      await this.storage.put("state", body.state); await this.record(body.state, current ? "save" : "start");
       return json({ state: body.state, auth: true });
     }
     return text("Method not allowed", 405);
@@ -118,7 +187,18 @@ export class GameState {
 // ---------------------------------------------------------------------------------------------------------------
 // Party passes: minted by the admin (or by a paid Stripe checkout), redeemed once for a room.
 export class Registry {
-  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); }
+  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; }
+
+  // the logs keep their newest `max` entries: every fiftieth write trims the oldest
+  async trim(prefix, max) {
+    if (++this.writes % 50) return;
+    const keys = [...(await this.storage.list({ prefix })).keys()];
+    for (let i = 0; i < keys.length - max; i += 128) await this.storage.delete(keys.slice(i, Math.min(i + 128, keys.length - max)));
+  }
+  async newest(prefix, limit) {
+    const rows = []; for (const [k, v] of await this.storage.list({ prefix, reverse: true, limit })) rows.push({ key: k.slice(prefix.length), ...v });
+    return rows;
+  }
 
   // twenty wrong codes an hour from one address, then it waits: pass codes can't be guessed by brute force
   tooMany(ip) {
@@ -141,7 +221,7 @@ export class Registry {
 
   async room(env, expires, pass) {
     let code; do code = newRoom(); while (await this.storage.get("room:" + code));
-    await this.storage.put("room:" + code, { pass, expires });
+    await this.storage.put("room:" + code, { pass, expires, created: Date.now() });
     await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass }) });
     return code;
   }
@@ -153,6 +233,43 @@ export class Registry {
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
     if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts — try again in an hour." }, 429) : json({ ok: true });
     if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
+    // the master error log, the Stripe webhook log, issue reports
+    if (url.pathname === "/err") {
+      const e = { t: Date.now() }; for (const [k, v] of Object.entries(b || {})) if (typeof v !== "object" || v === null) e[clip(k, 20)] = typeof v === "string" ? clip(v, k === "stack" ? 1500 : 400) : v;
+      await this.storage.put(tkey("err:"), e); await this.trim("err:", 3000); return json({ ok: true });
+    }
+    if (url.pathname === "/errs") return json({ errors: await this.newest("err:", 1000) });
+    if (url.pathname === "/hook") { await this.storage.put(tkey("hook:"), { t: Date.now(), ...b }); await this.trim("hook:", 1000); return json({ ok: true }); }
+    if (url.pathname === "/hooks") return json({ hooks: await this.newest("hook:", 500) });
+    if (url.pathname === "/report") {
+      const rec = (this.reps = (this.reps || new Map())).get(ip) || [], t = Date.now(), fresh = rec.filter((x) => t - x < 3600000);
+      if (fresh.length >= 10) return json({ error: "Too many reports from here — try again in an hour, or email us." }, 429);
+      fresh.push(t); this.reps.set(ip, fresh); if (this.reps.size > 2000) this.reps.clear();
+      let id; do id = "R-" + Math.random().toString(36).slice(2, 8).toUpperCase(); while (await this.storage.get("rep:" + id));
+      const snap = typeof b.snap === "string" && b.snap.length <= 4000000 ? b.snap : "", parts = Math.ceil(snap.length / 100000);
+      for (let i = 0; i < parts; i++) await this.storage.put("repx:" + id + ":" + i, snap.slice(i * 100000, (i + 1) * 100000));
+      const f = (k, n) => clip(b[k], n);
+      await this.storage.put("rep:" + id, { id, t: Date.now(), status: "open", room: f("room", 6) || null, rec: +b.rec || 0, device: f("device", 16), host: !!b.host, build: f("build", 20), ua: f("ua", 300), url: f("url", 200),
+        what: f("what", 4000), expected: f("expected", 2000), email: f("email", 200), phase: f("phase", 80), ver: +b.ver || 0, screen: b.screen && typeof b.screen === "object" ? { w: +b.screen.w || 0, h: +b.screen.h || 0, dpr: +b.screen.dpr || 1 } : null,
+        crumbs: Array.isArray(b.crumbs) ? b.crumbs.slice(-200).map((c) => ({ t: +c.t || 0, k: clip(c.k, 12), m: clip(c.m, 400) })) : [], snapParts: parts });
+      return json({ id });
+    }
+    if (url.pathname === "/reports") return json({ reports: (await this.newest("rep:", 500)).map(({ crumbs, ...r }) => r).sort((a, c) => c.t - a.t) });
+    if (url.pathname === "/report-get") {
+      const id = clip(b.id, 12), r = await this.storage.get("rep:" + id); if (!r) return json({ error: "No such report" }, 404);
+      let snap = ""; for (let i = 0; i < (r.snapParts || 0); i++) snap += (await this.storage.get("repx:" + id + ":" + i)) || "";
+      return json({ ...r, snap });
+    }
+    if (url.pathname === "/report-status") {
+      const r = await this.storage.get("rep:" + clip(b.id, 12)); if (!r) return json({ error: "No such report" }, 404);
+      await this.storage.put("rep:" + r.id, { ...r, status: b.status === "resolved" ? "resolved" : "open", adminNote: clip(b.note ?? r.adminNote, 2000) }); return json({ ok: true });
+    }
+    // every room ever opened, with the pass that opened it
+    if (url.pathname === "/rooms") {
+      const passes = new Map(); for (const [k, v] of await this.storage.list({ prefix: "pass:" })) passes.set(k.slice(5), v);
+      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, note: pv ? pv.note || "" : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
+      return json({ rooms: rows.sort((a, c) => (c.expires || 0) - (a.expires || 0)) });
+    }
     if (url.pathname === "/list") {
       const rows = [];
       for (const [k, v] of await this.storage.list({ prefix: "pass:" })) rows.push({ pass: k.slice(5), ...v });
@@ -196,12 +313,17 @@ export class Registry {
       return json({ ok: true });
     }
     // a refund: the pass is cancelled if it hasn't opened a room yet (a party already played keeps its room)
+    // (found by its payment, or by the pass or subscription Stripe says it paid for). A subscription's refund is only
+    // noted: whether the code keeps working follows the subscription's own status.
     if (url.pathname === "/refund") {
-      const p = await this.storage.get("pi:" + b.pi); if (!p) return json({ ok: true, pass: null });
-      const k = "pass:" + p, v = await this.storage.get(k);
-      if (v && !v.room && !v.revoked) await this.storage.put(k, { ...v, revoked: Date.now(), refunded: Date.now() });
-      else if (v) await this.storage.put(k, { ...v, refunded: Date.now() });
-      return json({ ok: true, pass: p, cancelled: !!(v && !v.room) });
+      let p = (b.pi && (await this.storage.get("pi:" + b.pi))) || (b.pass && isPass(b.pass) && passKey(b.pass)) || null;
+      if (!p && b.sub) for (const [k, v] of await this.storage.list({ prefix: "pass:" })) if (v.subId === b.sub) { p = k.slice(5); break; }
+      const k = p && "pass:" + p, v = k && (await this.storage.get(k));
+      if (!v) return json({ ok: true, pass: null });
+      if (b.pi) await this.storage.put("pi:" + b.pi, p);
+      const cancel = v.kind !== "sub" && !v.room && !v.revoked;
+      await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: Date.now(), refundedAmount: +b.amount || v.refundedAmount || null });
+      return json({ ok: true, pass: p, cancelled: cancel });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
@@ -298,6 +420,28 @@ async function stripeVerified(req, env, body) {
   return sigs.some((s) => same(s, mac));
 }
 const piOf = (x) => (x && typeof x === "object" ? x.id : x) || null;
+async function stripeGet(env, path) {
+  const r = await fetch("https://api.stripe.com/v1/" + path, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY } });
+  const j = await r.json().catch(() => ({})); return r.ok ? j : Promise.reject(new Error((j.error && j.error.message) || "Stripe error " + r.status));
+}
+// A refund, from whichever event carried it. The pass is found by the payment we noted at checkout; failing that, Stripe
+// is asked which checkout (and so which pass) the payment belonged to, or which subscription the invoice was for.
+async function refundFor(env, x) {
+  let r = await (await call(env, "/refund", x)).json();
+  if (r.pass || !env.STRIPE_SECRET_KEY) return { ...r, via: "payment" };
+  const tries = [], get = (path) => stripeGet(env, path).catch((e) => { tries.push(path.split("?")[0].split("/")[0] + ": " + e.message); return null; });
+  if (x.charge && (!x.pi || !x.invoice)) { const ch = await get("charges/" + encodeURIComponent(x.charge)); if (ch) { x.pi = x.pi || piOf(ch.payment_intent); x.invoice = x.invoice || piOf(ch.invoice); } }
+  if (x.pi) {
+    const ss = await get("checkout/sessions?limit=1&payment_intent=" + encodeURIComponent(x.pi)), cs = ss && ss.data && ss.data[0];
+    if (cs) { r = await (await call(env, "/refund", { ...x, pass: cs.metadata && cs.metadata.pass, sub: piOf(cs.subscription) })).json(); if (r.pass) return { ...r, via: "checkout session" }; }
+  }
+  if (x.invoice) {
+    const inv = await get("invoices/" + encodeURIComponent(x.invoice));
+    const sub = inv && (piOf(inv.subscription) || piOf(inv.parent && inv.parent.subscription_details && inv.parent.subscription_details.subscription));
+    if (sub) { r = await (await call(env, "/refund", { ...x, sub })).json(); if (r.pass) return { ...r, via: "invoice" }; }
+  }
+  return { pass: null, error: "No pass found for this payment" + (tries.length ? " (" + tries.join("; ") + ")" : "") };
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 // Pre-launch password gate. With SITE_PASSWORD set, every request — pages, assets, API — needs the gate cookie; without
@@ -320,6 +464,7 @@ button{margin-top:10px;width:100%;min-height:52px;border-radius:10px;border:1px 
 async function gate(req, env) {
   if (!env.SITE_PASSWORD) return null;
   if (new URL(req.url).pathname.startsWith("/api/admin/")) return null; // has its own token
+  if (new URL(req.url).pathname === "/api/stripe/webhook") return null; // Stripe has no cookie; it signs every call instead
   const want = await gateToken(env.SITE_PASSWORD), url = new URL(req.url);
   if (url.pathname === "/__gate" && req.method === "POST") {
     const form = await req.formData().catch(() => null), pw = form ? String(form.get("password") || "") : "";
@@ -334,13 +479,31 @@ async function gate(req, env) {
 
 export default {
   async fetch(req, env) {
+    try { return await route(req, env); }
+    catch (err) { logErr(env, { src: "server", where: req.method + " " + new URL(req.url).pathname, msg: err.message, stack: clip(err.stack, 1500) }); return json({ error: "Something went wrong on our side." }, 500); }
+  },
+};
+async function route(req, env) {
     const locked = await gate(req, env); if (locked) return locked;
     const url = new URL(req.url), p = url.pathname;
-    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings)$/);
+    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events)$/);
     if (g) {
       const code = g[1].toUpperCase(); if (!isRoom(code)) return json({ error: "No game with that code" }, 404);
       const inner = new URL(req.url); inner.pathname = "/api/" + g[2];
       return env.GAME.get(env.GAME.idFromName("room:" + code)).fetch(new Request(inner, req));
+    }
+    // "Report a problem": the form, a snapshot of the screen, the trail of taps. The room is kept 90 days for its replay.
+    if (p === "/api/report" && req.method === "POST") {
+      const raw = await req.text(); if (raw.length > 4500000) return json({ error: "That report is too large to send." }, 413);
+      let b; try { b = JSON.parse(raw); } catch { return json({ error: "Bad JSON" }, 400); }
+      if (!clip(b.what, 4000).trim()) return json({ error: "Tell us what went wrong." }, 400);
+      const code = isRoom(String(b.room || "").toUpperCase()) ? String(b.room).toUpperCase() : null;
+      let rec = 0; const id0 = Math.random().toString(36).slice(2, 8);
+      if (code) { const k = await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_keep", { method: "POST", body: JSON.stringify({ id: id0, until: Date.now() + 90 * 86400000 }) }); if (k.ok) rec = (await k.json()).rec || 0; }
+      const rr = await registry(env).fetch("https://registry/report", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ ...b, room: code, rec }) });
+      const r = await rr.json(); if (!rr.ok) return json(r, rr.status);
+      logErr(env, { src: "report", room: code, report: r.id, msg: clip(b.what, 300), device: clip(b.device, 16), host: !!b.host });
+      return json({ id: r.id });
     }
     if (p === "/api/games" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
@@ -382,15 +545,20 @@ export default {
     // them when a checkout expires or is refunded before use. Secret: STRIPE_WEBHOOK_SECRET.
     if (p === "/api/stripe/webhook" && req.method === "POST") {
       const body = await req.text();
-      if (!(await stripeVerified(req, env, body))) return json({ error: "Bad signature" }, 400);
+      if (!(await stripeVerified(req, env, body))) { logErr(env, { src: "stripe", where: "webhook", msg: env.STRIPE_WEBHOOK_SECRET ? "A webhook call failed its signature check" : "STRIPE_WEBHOOK_SECRET isn’t set, so webhooks are refused" }); return json({ error: "Bad signature" }, 400); }
       let ev; try { ev = JSON.parse(body); } catch { return json({ error: "Bad JSON" }, 400); }
       const o = (ev.data && ev.data.object) || {}, pass = o.metadata && o.metadata.pass;
+      let result = "ignored";
       if ((ev.type === "checkout.session.completed" && o.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded")
-        await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer) });
+        result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer) })).json();
       else if ((ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.created" || ev.type === "customer.subscription.deleted") && pass)
-        await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status });
-      else if ((ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") && pass) await call(env, "/cancel", { pass, why: ev.type.split(".").pop() });
-      else if (ev.type === "charge.refunded" && o.refunded) await call(env, "/refund", { pi: piOf(o.payment_intent) });
+        result = await (await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status })).json();
+      else if ((ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") && pass) result = await (await call(env, "/cancel", { pass, why: ev.type.split(".").pop() })).json();
+      else if (ev.type === "charge.refunded" && o.amount_refunded > 0) result = await refundFor(env, { pi: piOf(o.payment_intent), charge: o.id, invoice: piOf(o.invoice), amount: o.amount_refunded });
+      else if ((ev.type === "refund.created" || ev.type === "refund.updated" || ev.type === "charge.refund.updated") && ["succeeded", "pending"].includes(o.status))
+        result = await refundFor(env, { pi: piOf(o.payment_intent), charge: piOf(o.charge), amount: o.amount });
+      await call(env, "/hook", { type: ev.type, id: ev.id, obj: o.id || null, live: !!ev.livemode, pass: (result && result.pass) || pass || null, result: typeof result === "string" ? result : clip(JSON.stringify(result), 300) });
+      if (result && result.error) logErr(env, { src: "stripe", where: ev.type, msg: result.error, obj: o.id || "" });
       return json({ received: true });
     }
     // Subscribers manage their card or cancel in Stripe's billing portal, reached with their code.
@@ -434,6 +602,14 @@ export default {
       if (p === "/api/admin/passes" && req.method === "POST") return call(env, "/mint", await req.json().catch(() => ({})));
       if (p === "/api/admin/passes" && req.method === "GET") return registry(env).fetch("https://registry/list");
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
+      if (p === "/api/admin/rooms") return registry(env).fetch("https://registry/rooms");
+      if (p === "/api/admin/errors") return registry(env).fetch("https://registry/errs");
+      if (p === "/api/admin/hooks") return registry(env).fetch("https://registry/hooks");
+      if (p === "/api/admin/reports") return registry(env).fetch("https://registry/reports");
+      if (p === "/api/admin/report" && req.method === "GET") return call(env, "/report-get", { id: url.searchParams.get("id") });
+      if (p === "/api/admin/report" && req.method === "POST") return call(env, "/report-status", await req.json().catch(() => ({})));
+      const ar = p.match(/^\/api\/admin\/room\/([A-Za-z0-9]{6})\/(room|recs|rec|events)$/);
+      if (ar) { const inner = new URL("https://game/_admin/" + ar[2]); inner.search = url.search; return env.GAME.get(env.GAME.idFromName("room:" + ar[1].toUpperCase())).fetch(inner); }
       return json({ error: "Not found" }, 404);
     }
     if (p.startsWith("/api/")) return json({ error: "Not found" }, 404);
@@ -454,5 +630,4 @@ export default {
     }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).
     return env.ASSETS.fetch(req);
-  },
-};
+}

@@ -4,13 +4,14 @@
 import worker, { Registry } from "../worker/src/index.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond };
-const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { m.set(k, v) }, list: async ({ prefix }) => new Map([...m].filter(([k]) => k.startsWith(prefix))) } };
+const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a, b] of Object.entries(k)) m.set(a, b); else m.set(k, v) }, delete: async k => { for (const x of [].concat(k)) m.delete(x) },
+  list: async ({ prefix, reverse, limit }) => { let e = [...m].filter(([k]) => k.startsWith(prefix)).sort((a, b) => a[0] < b[0] ? -1 : 1); if (reverse) e.reverse(); if (limit) e = e.slice(0, limit); return new Map(e) } } };
 const closed = []; const GAME = { idFromName: n => n, get: id => ({ fetch: async (u) => { if (String(u).endsWith("/_close")) closed.push(id); return new Response("{}") } }) };
 const reg = new Registry({ storage: store() }, { GAME });
 const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_SUB_PRICE_ID: "price_sub", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
 
 // the stubbed Stripe: sessions made, sessions read back
-const made = [], sessions = {}; let failCreate = false;
+const made = [], sessions = {}, invoices = {}; let failCreate = false;
 globalThis.fetch = async (u, init) => {
   u = String(u);
   if (u === "https://api.stripe.com/v1/checkout/sessions" && init && init.method === "POST") {
@@ -24,6 +25,10 @@ globalThis.fetch = async (u, init) => {
   if (u === "https://api.stripe.com/v1/billing_portal/sessions") return new Response(JSON.stringify({ url: "https://billing.stripe.com/p/session/" + new URLSearchParams(init.body).get("customer") }));
   const m = u.match(/^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions\/(cs_\w+)$/);
   if (m) return sessions[m[1]] ? new Response(JSON.stringify(sessions[m[1]])) : new Response("{}", { status: 404 });
+  const bypi = u.match(/^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions\?limit=1&payment_intent=(\w+)$/);
+  if (bypi) return new Response(JSON.stringify({ data: Object.values(sessions).filter(x => x.payment_intent === bypi[1]) }));
+  const inv = u.match(/^https:\/\/api\.stripe\.com\/v1\/invoices\/(\w+)$/);
+  if (inv && invoices[inv[1]]) return new Response(JSON.stringify(invoices[inv[1]]));
   return new Response("{}", { status: 404 });
 };
 const W = (path, init, env) => worker.fetch(new Request("https://cloakandcandle.co.uk" + path, init), env || base);
@@ -76,10 +81,28 @@ sessions[id2].payment_status = "paid"; check("the thank-you page then gets the s
 const [, c3] = await checkout({ terms: true, supply: true }, base, "203.0.113.3"), id3 = c3.url.split("/").pop(), pass3 = sessions[id3].metadata.pass;
 await hook({ type: "checkout.session.expired", data: { object: sessions[id3] } });
 check("webhook: an expired checkout cancels its pending pass", !!(await passOf(pass3)).revoked && (await redeem(pass3))[0] === 410);
-await hook({ type: "charge.refunded", data: { object: { refunded: true, payment_intent: sessions[id2].payment_intent } } });
+await hook({ type: "charge.refunded", data: { object: { id: "ch_2", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions[id2].payment_intent } } });
 check("webhook: refunded before use → the pass is cancelled", !!(await passOf(pass2)).revoked && (await redeem(pass2))[0] === 410);
-await hook({ type: "charge.refunded", data: { object: { refunded: true, payment_intent: sessions.cs_test_000000000000.payment_intent } } });
+await hook({ type: "charge.refunded", data: { object: { id: "ch_1", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions.cs_test_000000000000.payment_intent } } });
 check("webhook: refunded after the party → the room stays, the refund is noted", !(await passOf(pass1)).revoked && !!(await passOf(pass1)).refunded && (await redeem(pass1))[0] === 200);
+check("webhook: a partial refund of an unknown payment is logged, and changes nothing", (await hook({ type: "charge.refunded", data: { object: { id: "ch_9", amount: 1500, amount_refunded: 500, refunded: false, payment_intent: "pi_unknown" } } }))[0] === 200);
+// a pass whose payment we never noted (the Managed Payments case): Stripe is asked which checkout the payment belonged to
+const [, c5] = await checkout({ terms: true, supply: true }, base, "203.0.113.5"), id5 = c5.url.split("/").pop(), pass5 = sessions[id5].metadata.pass;
+sessions[id5].payment_status = "paid"; const pi5 = sessions[id5].payment_intent; sessions[id5].payment_intent = null; await claim(id5); sessions[id5].payment_intent = pi5;
+check("(a claim without the payment noted)", !(await reg.storage.get("pi:" + pi5)) && !(await passOf(pass5)).pending);
+await hook({ type: "refund.created", data: { object: { id: "re_5", object: "refund", status: "succeeded", amount: 1500, payment_intent: pi5, charge: "ch_5" } } });
+check("webhook: refund.created, payment unknown → found through its checkout session, pass cancelled", !!(await passOf(pass5)).revoked && !!(await passOf(pass5)).refunded && (await redeem(pass5))[0] === 410);
+const hooks = (await W("/api/admin/hooks", { headers: { Authorization: "Bearer adm" } }).then(J))[1].hooks;
+check("every webhook is logged with what it did (the refund names its pass)", hooks.length >= 5 && hooks[0].type === "refund.created" && hooks[0].pass === pass5 && hooks.some(h => h.type === "charge.refunded" && /No pass found/.test(h.result)), hooks.slice(0, 2));
+const errs = (await W("/api/admin/errors", { headers: { Authorization: "Bearer adm" } }).then(J))[1].errors;
+check("…and a refund we can't match goes in the error log", errs.some(e => e.src === "stripe" && /No pass found/.test(e.msg)), errs.slice(0, 2));
+const gated = { ...base, SITE_PASSWORD: "candlelight" };
+const gh = await (async () => { const body = JSON.stringify({ type: "customer.created", data: { object: {} } }), t = Math.floor(Date.now() / 1000);
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("whsec_test"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = [...new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(t + "." + body)))].map(b => b.toString(16).padStart(2, "0")).join("");
+  return W("/api/stripe/webhook", { method: "POST", headers: { "Stripe-Signature": "t=" + t + ",v1=" + sig }, body }, gated) })();
+check("the site password doesn't block Stripe's webhook (it's signed instead)", gh.status === 200, gh.status);
+check("…but still guards the rest of the API", (await W("/api/games", { method: "POST", body: "{}" }, gated)).status === 401);
 check("webhook: other events are acknowledged and ignored", (await hook({ type: "customer.created", data: { object: {} } }))[0] === 200);
 check("no webhook secret configured: every webhook refused", (await W("/api/stripe/webhook", { method: "POST", headers: { "Stripe-Signature": "t=1,v1=00" }, body: "{}" }, { ...base, STRIPE_WEBHOOK_SECRET: "" })).status === 400);
 
@@ -110,6 +133,9 @@ await hook({ type: "customer.subscription.updated", data: { object: { id: sessio
 check("paid again: games again", (await redeem(spass))[0] === 200);
 await hook({ type: "customer.subscription.deleted", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "canceled", metadata: { pass: spass } } } });
 check("cancelled: no more games", (await redeem(spass))[0] === 402 && (await passOf(spass)).subStatus === "canceled");
+invoices.in_1 = { id: "in_1", parent: { subscription_details: { subscription: sessions[sid].subscription } } };
+await hook({ type: "charge.refunded", data: { object: { id: "ch_s", amount: 2000, amount_refunded: 2000, refunded: true, payment_intent: "pi_subinv", invoice: "in_1" } } });
+check("a subscription payment refunded: found through its invoice, noted on the code", !!(await passOf(spass)).refunded && (await passOf(spass)).refundedAmount === 2000);
 const portal = await W("/api/portal", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.22" }, body: JSON.stringify({ pass: spass }) }).then(J);
 check("Manage subscription: the billing portal for that code's customer", portal[0] === 200 && portal[1].url === "https://billing.stripe.com/p/session/" + sessions[sid].customer, portal);
 check("…a one-off pass has no portal", (await W("/api/portal", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.23" }, body: JSON.stringify({ pass: pass1 }) }).then(J))[0] === 404);

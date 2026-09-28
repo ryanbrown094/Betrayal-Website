@@ -19,7 +19,7 @@ price=$(api prices -d product="$product" -d currency=gbp -d unit_amount="$PENCE"
 hook=$(api webhook_endpoints -d url="$BASE/api/stripe/webhook" \
   -d "enabled_events[]=checkout.session.completed" -d "enabled_events[]=checkout.session.async_payment_succeeded" \
   -d "enabled_events[]=checkout.session.async_payment_failed" -d "enabled_events[]=checkout.session.expired" \
-  -d "enabled_events[]=charge.refunded" -d "enabled_events[]=customer.subscription.created" \
+  -d "enabled_events[]=charge.refunded" -d "enabled_events[]=refund.created" -d "enabled_events[]=refund.updated" -d "enabled_events[]=customer.subscription.created" \
   -d "enabled_events[]=customer.subscription.updated" -d "enabled_events[]=customer.subscription.deleted" \
   -d description="Cloak & Candle passes")
 echo "product:          $product"

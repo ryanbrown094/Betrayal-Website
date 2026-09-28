@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928204758">
+<meta name="build" content="20260928210837">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -631,6 +631,19 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #tv .rolls.huge { gap: .5vh .7vh; max-width: none } #tv .rolls.huge > div { gap: 0; padding: .45vh .8vh } #tv .rolls.huge .seal { display: none }
 #tv .rolls.huge b, #tv.big .rolls.huge b { font-size: 1.8vh; letter-spacing: .02em; overflow-wrap: anywhere } #tv .rolls.huge small, #tv.big .rolls.huge small { font-size: 1.5vh }
 #stage:has(.rolls.huge) { gap: .7vh } #tv #stage:has(.rolls.huge) h1, #tv.big #stage:has(.rolls.huge) h1 { font-size: 6vh } #tv #stage:has(.rolls.huge) .prizeline b, #tv.big #stage:has(.rolls.huge) .prizeline b { font-size: 4vh } #tv #stage:has(.rolls.huge) .prizeline em, #tv.big #stage:has(.rolls.huge) .prizeline em { font-size: 2.3vh }
+
+/* ===================== Report a problem (TV and phone) ===================== */
+#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px; background: rgba(5,3,6,.82); overflow: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif }
+#report .rp { width: min(520px, 100%); padding: 22px; border-radius: 14px; background: #150e16; border: 1px solid rgba(230,165,140,.45); color: var(--tallow); box-shadow: 0 20px 60px rgba(0,0,0,.6) }
+#report h2 { margin: 0 0 8px; font-size: 24px; font-weight: 700; color: var(--tallow) } #report p { margin: 6px 0 12px; font-size: 15.5px; line-height: 1.45; color: var(--tallow2) } #report b { color: #fff }
+#report label { display: block; margin: 12px 0 5px; font-size: 14px; font-weight: 600; color: var(--brass2) } #report label small { font-weight: 400; color: var(--tallow2) }
+#report textarea, #report input[type=email] { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(174,98,73,.5); background: #0d090e; color: var(--tallow); font: inherit; font-size: 16px }
+#report .rp-chk { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; color: var(--tallow2) } #report .rp-chk input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--brass2); flex: none }
+#report .rp-msg { min-height: 1.3em; color: #ffb3cc } #report .rp-row { display: flex; gap: 10px; margin-top: 8px }
+#report button { flex: 1; min-height: 50px; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; border: 1px solid rgba(174,98,73,.5); background: transparent; color: var(--tallow2) }
+#report button.rp-send { border-color: var(--brass2); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17 } #report button:disabled { opacity: .5 }
+#host button.linkish { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; letter-spacing: inherit }
+#repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .14em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.3); border-radius: 1.8vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }
 </style>
 <div id="app"></div>
 <script>
@@ -1361,7 +1374,7 @@ function publicView(s) {
 /* ===================== CORE: store, helpers, actions, rules ===================== */
 const APPV = "1.3", SCHEMA = 12;
 const KEY = "candle-v1";
-const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
+const isHost = location.hash === "#host" || location.hash === "#replay-host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
 // Each party plays in its own room: the TV at /g/CODE, the host at /g/CODE#host. Without a room (the standalone file,
 // the local test server) the page talks to /api or runs on this browser alone.
@@ -1404,7 +1417,7 @@ async function poll() {
     const j = await r.text(); let body; try { body = JSON.parse(j) } catch (e) { if (offline()) emit(); return }
     syncClock(r); limitedNow = false;
     if (body.room) { const was = roomExpired; roomInfo = body.room; roomExpired = !!body.room.expired; if (was !== roomExpired) emit() }
-    const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) emit();
+    const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) { crumb("net", "back in touch with the server"); emit() }
     if (body.same) return;
     if (pending > 0 || saveQ.length || pinUsed !== getPin()) return; // unsent saves first: the flush settles any clash
     if (j === lastJson) return;
@@ -1494,6 +1507,7 @@ function flushSaves() {
         body = s ? JSON.stringify({ state: s }) : undefined;
         try {
           const r = await fetch(API + "/state", { method: s ? "PUT" : "DELETE", headers: pin, body });
+          if (r.status !== 200) crumb("sync", (s ? "save v" + (s.ver || 0) : "wipe") + " → " + r.status);
           if (r.status === 426) { location.reload(); return } // a new version went live: load it (the deploy started a fresh game)
           if (r.status === 423) { syncErr = false; saveQ.length = 0; roomExpired = true; toast("This party pass has expired — the game can be viewed but not changed.", 6000); done = true; break }
           if (r.status === 403) { syncErr = false; toast("Wrong host PIN — that change was not saved."); done = true; break }
@@ -1519,7 +1533,7 @@ function flushSaves() {
       if (!done) {
         // still offline: keep it (a wipe always; a save unless a newer one is already waiting) and let resync retry
         if (!s || !saveQ.some(q => q.s)) saveQ.unshift(item);
-        syncErr = true; break;
+        syncErr = true; crumb("sync", "save not reached the server after 3 tries — will keep retrying"); break;
       }
     }
   })().finally(() => { pending--; flushing = null; emit() });
@@ -3590,7 +3604,7 @@ function tvView(s) {
 let tvBuilt = false, lastKey = null, lastPhase = null, lastSfxName = null, lastReplay = 0, lastPot = null, lastVotes = 0, lastBeat = null, lastSnap = null, lastDead = null;
 let cardUntil = 0, cardTimer = null, introTimers = [], sfxTimer = null, fxTimer = null, waveTimer = null, potRaf = null;
 function tvBuild() {
-  $("#app").innerHTML = `<div id="tv" class="scene-lobby"><div id="set"><div class="wall"></div><div class="stone" style="background-image:${ART.stone()}"></div><div class="win l">${ART.window("l")}</div><div class="win r">${ART.window("r")}</div><div class="shaft l"></div><div class="shaft r"></div><div id="sun"></div><div id="birds">${[0, 1, 2, 3, 4].map(i => `<i style="--i:${i}"><svg viewBox="0 0 40 16"><g><path d="M0 9 Q10 0 20 9 Q30 0 40 9 Q30 4 20 12 Q10 4 0 9Z"/></g></svg></i>`).join("")}</div><div id="dim"></div><canvas id="fx"></canvas><div id="mist"><i></i><i></i></div></div><div id="vig"></div><div id="veil"></div><div id="moon"></div><div id="top"></div><div id="stage"></div><div id="rail"></div><div id="grain" style="background-image:${ART.grain()}"></div><div id="flash"></div><div id="card"></div><div id="over"></div><button id="soundbtn"></button><button id="fsbtn" aria-label="Full screen (or press F)">Full screen<small>or press F</small></button><div id="net">reconnecting…</div><div class="stamp">${APPV} · ${BUILD ? BUILD.slice(-6) : "local"}</div></div>`;
+  $("#app").innerHTML = `<div id="tv" class="scene-lobby"><div id="set"><div class="wall"></div><div class="stone" style="background-image:${ART.stone()}"></div><div class="win l">${ART.window("l")}</div><div class="win r">${ART.window("r")}</div><div class="shaft l"></div><div class="shaft r"></div><div id="sun"></div><div id="birds">${[0, 1, 2, 3, 4].map(i => `<i style="--i:${i}"><svg viewBox="0 0 40 16"><g><path d="M0 9 Q10 0 20 9 Q30 0 40 9 Q30 4 20 12 Q10 4 0 9Z"/></g></svg></i>`).join("")}</div><div id="dim"></div><canvas id="fx"></canvas><div id="mist"><i></i><i></i></div></div><div id="vig"></div><div id="veil"></div><div id="moon"></div><div id="top"></div><div id="stage"></div><div id="rail"></div><div id="grain" style="background-image:${ART.grain()}"></div><div id="flash"></div><div id="card"></div><div id="over"></div><button id="soundbtn"></button><button id="fsbtn" aria-label="Full screen (or press F)">Full screen<small>or press F</small></button><button id="repbtn" onclick="openReport()">Report a problem</button><div id="net">reconnecting…</div><div class="stamp">${APPV} · ${BUILD ? BUILD.slice(-6) : "local"}</div></div>`;
   $("#soundbtn").onclick = () => AC ? toggleMute() : enableSound();
   // full screen: the button, the F key, or a double-click anywhere (a browser only allows it from a click or a key)
   $("#fsbtn").onclick = e => { e.stopPropagation(); toggleFull() };
@@ -3759,7 +3773,7 @@ const nextBtn = (label, fn, cls) => `<button class="${cls || "primary"}" onclick
 const holdBtn = (label, kind, id, cls) => `<button class="${cls || "primary"} hold ${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "holding" : ""}" onpointerdown="holdStart('${kind}','${id || ""}',event)" onclick="holdClick('${kind}','${id || ""}')" oncontextmenu="return false">${label}<small>${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "drumroll on the TV — let go to reveal" : "hold for the drumroll · let go to reveal"}</small></button>`;
 const backBtn = fn => `<button class="ghost back" onclick="${fn}" aria-label="Back one line">◀</button>`;
 const until = t => new Date(t).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
-const hstamp = () => `<div class="hstamp">${ROOM ? "room " + ROOM + (roomInfo ? (roomExpired ? " · pass expired" : " · pass until " + until(roomInfo.expires)) : "") + " · " : ""}${APPV} · ${BUILD ? BUILD.slice(-6) : "local"}${remote ? "" : db ? " · artifact storage" : " · this browser only"}</div>`;
+const hstamp = () => `<div class="hstamp">${ROOM ? "room " + ROOM + (roomInfo ? (roomExpired ? " · pass expired" : " · pass until " + until(roomInfo.expires)) : "") + " · " : ""}${APPV} · ${BUILD ? BUILD.slice(-6) : "local"}${remote ? "" : db ? " · artifact storage" : " · this browser only"} · <button class="linkish" onclick="openReport()">Report a problem</button></div>`;
 const elapsed = s => s.startedAt ? (x => Math.floor(x / 60) + "h" + String(Math.floor(x % 60)).padStart(2, "0"))((now() - s.startedAt) / 60000) : "";
 
 function renderHost() {
@@ -3862,7 +3876,7 @@ function renderHost() {
       foot = (s.finalStep === 1 ? backBtn(k ? "act(s=>{s.awardShown=Math.max(0,(s.awardShown||0)-1)})" : "act(s=>{s.finalStep=0})") + (k < aw.length ? nextBtn(k ? "Next award" : "The first award", "act(s=>{s.awardShown=(s.awardShown||0)+1},'Award " + (k + 1) + "')") : "") : nextBtn("The awards", "act(s=>{s.finalStep=1;s.awardShown=0},'Awards')")) + nextBtn("New game", "confirmNew()", s.finalStep === 1 && k >= aw.length ? "danger" : "ghost"); break;
   }
   const M = (label, fn, cls) => `<button class="${cls || ""}" onclick="menuOpen=false;${fn}">${label}</button>`;
-  const menu = menuOpen ? `<div class="sheet"><h2>Menu</h2>${M("Close", "renderHost()", "primary")}${M("Your game plan", "planOpen=true;renderHost()")}<h3>jump</h3>${M("Pick a mission", "act(s=>{s.phase='day';s.mission=null},'Jumped to mission pick')")}${M("Reckoning", "openTable('Jumped to Reckoning')")}${M("Night", "startNight()")}${M("Skip to next round", "nextRound()")}${s.roundSnap && s.roundSnap.round === s.round && !["final2", "final"].includes(s.phase) ? M("Rewind to the start of round " + s.round, "confirmSheet('Rewind to the start of round " + s.round + "?', 'Every mission, vote and night since this round began is undone. Undo brings it all back.', 'Rewind', rewindRound)") : ""}${M(s.finalRound ? "Cancel the final round" : (s.phase === "day" && !(s.roundMissions || 0) ? "Make this round the final" : "Make the next round the final"), s.finalRound ? "act(s=>{s.finalRound=null},'Final round cancelled')" : "declareFinal()")}<h3>players</h3>${s.phase === "final" ? "" : M("A player has left the party", "leftPicker=true;renderHost()")}${M("Rename a player", "renamePicker=true;renderHost()")}${M("Seating order", "seatOpen=true;renderHost()")}<h3>tv</h3>${M(s.tvBlack ? "Un-black the screen" : "Black screen (panic)", "act(s=>{s.tvBlack=!s.tvBlack})")}${M(s.tvPause ? "Remove pause card" : "Pause card", "act(s=>{s.tvPause=!s.tvPause})")}${M("Replay last sound", "act(s=>{s.replaySfx=now()})")}${M(s.tvText === "standard" ? "TV text: standard — make it large" : "TV text: large — back to standard", "act(s=>{s.tvText=s.tvText==='standard'?'large':'standard'},'TV text size')")}<h3>game</h3>${M(s.questsOn === false ? "Cloak side-quests: off — turn on" : "Cloak side-quests: on — turn off", "act(s=>{s.questsOn=s.questsOn===false;if(s.rules)s.rules.quests=s.questsOn})")}${M(s.wrongRule === "all" ? "Wrong shouts: everyone’s cost — make it Cloaks’ only" : "Wrong shouts: Cloaks’ only cost — make it everyone’s", "act(s=>{s.wrongRule=s.wrongRule==='all'?'cloaks':'all'},'Wrong-shout rule changed')")}${s.phase === "final2" || s.phase === "final" ? "" : M("End game now", "confirmSheet('End the game now?', 'The TV goes to the final ceremony. Nothing is revealed until you turn each seal.', 'End the game', startCeremony)")}${M("Question bank — switch items on or off", "openBank()")}${M("New game (wipe)", "confirmNew()", "danger")}</div>` : "";
+  const menu = menuOpen ? `<div class="sheet"><h2>Menu</h2>${M("Close", "renderHost()", "primary")}${M("Your game plan", "planOpen=true;renderHost()")}${M("Report a problem", "menuOpen=false;renderHost();openReport()")}<h3>jump</h3>${M("Pick a mission", "act(s=>{s.phase='day';s.mission=null},'Jumped to mission pick')")}${M("Reckoning", "openTable('Jumped to Reckoning')")}${M("Night", "startNight()")}${M("Skip to next round", "nextRound()")}${s.roundSnap && s.roundSnap.round === s.round && !["final2", "final"].includes(s.phase) ? M("Rewind to the start of round " + s.round, "confirmSheet('Rewind to the start of round " + s.round + "?', 'Every mission, vote and night since this round began is undone. Undo brings it all back.', 'Rewind', rewindRound)") : ""}${M(s.finalRound ? "Cancel the final round" : (s.phase === "day" && !(s.roundMissions || 0) ? "Make this round the final" : "Make the next round the final"), s.finalRound ? "act(s=>{s.finalRound=null},'Final round cancelled')" : "declareFinal()")}<h3>players</h3>${s.phase === "final" ? "" : M("A player has left the party", "leftPicker=true;renderHost()")}${M("Rename a player", "renamePicker=true;renderHost()")}${M("Seating order", "seatOpen=true;renderHost()")}<h3>tv</h3>${M(s.tvBlack ? "Un-black the screen" : "Black screen (panic)", "act(s=>{s.tvBlack=!s.tvBlack})")}${M(s.tvPause ? "Remove pause card" : "Pause card", "act(s=>{s.tvPause=!s.tvPause})")}${M("Replay last sound", "act(s=>{s.replaySfx=now()})")}${M(s.tvText === "standard" ? "TV text: standard — make it large" : "TV text: large — back to standard", "act(s=>{s.tvText=s.tvText==='standard'?'large':'standard'},'TV text size')")}<h3>game</h3>${M(s.questsOn === false ? "Cloak side-quests: off — turn on" : "Cloak side-quests: on — turn off", "act(s=>{s.questsOn=s.questsOn===false;if(s.rules)s.rules.quests=s.questsOn})")}${M(s.wrongRule === "all" ? "Wrong shouts: everyone’s cost — make it Cloaks’ only" : "Wrong shouts: Cloaks’ only cost — make it everyone’s", "act(s=>{s.wrongRule=s.wrongRule==='all'?'cloaks':'all'},'Wrong-shout rule changed')")}${s.phase === "final2" || s.phase === "final" ? "" : M("End game now", "confirmSheet('End the game now?', 'The TV goes to the final ceremony. Nothing is revealed until you turn each seal.', 'End the game', startCeremony)")}${M("Question bank — switch items on or off", "openBank()")}${M("New game (wipe)", "confirmNew()", "danger")}</div>` : "";
   if (renameId && !P(renameId)) renameId = null; // a sheet left open from a game that has since been wiped
   const ren = renamePicker ? (renameId ? `<div class="sheet mid"><h2>Rename ${esc(P(renameId).name)}</h2><input id="rn" value="${esc(P(renameId).name)}" maxlength="${NAMEMAX}" autocomplete="off" aria-label="New name" onkeydown="if(event.key==='Enter')renameGo()"><div class="row"><button onclick="renamePicker=false;renameId=null;renderHost()">Cancel</button><button class="primary" onclick="renameGo()">Save name</button></div></div>` : `<div class="sheet"><h2>Rename who?</h2><div class="plist">${s.players.map(p => pbtn(p, "", "renameId='" + p.id + "';renderHost()")).join("")}</div><button onclick="renamePicker=false;renderHost()">Cancel</button></div>`) : "";
   const left = leftPicker ? `<div class="sheet"><h2>Who left?</h2><p class="note">They’re removed from the game. Roles and counts update.</p><div class="plist">${alive().map(p => pbtn(p, "", "leftAsk('" + p.id + "')", p.role === "cloak" ? "C" : "")).join("")}</div><button onclick="leftPicker=false;renderHost()">Cancel</button></div>` : "";
@@ -4457,6 +4471,95 @@ function final2Host(s) {
   else { body = `<h2>${nT ? "The Cloaks win" : "The Candles win"}</h2>${say(SAY.allSealsTurned)}<p class="note">Next, the TV shows who takes the prize and every role — and you read the ending.</p>`; foot = nextBtn("Show every role", "finishGame()", "danger") }
   return { body, foot };
 }
+/* ===================== DIAGNOSTICS: the trail, errors, "Report a problem", replay ===================== */
+// Each browser keeps a short trail of what happened on it (taps, screens, sync trouble, errors) and sends it to the room
+// every few seconds, so a game can be debugged from /admin. Nothing typed is recorded, only button labels. A report adds
+// a snapshot of the screen (the page's HTML, without its scripts) and the trail, and keeps the room for its replay.
+// /play.html#replay-tv and #replay-host show a recorded state instead of a live game: /admin drives them with replayShow().
+const REPLAY = /^#replay/.test(location.hash);
+const DEVICE = (() => { try { let d = localStorage.getItem("candle-device"); if (!d) { d = Math.random().toString(36).slice(2, 10); localStorage.setItem("candle-device", d) } return d } catch (e) { return "t" + Math.random().toString(36).slice(2, 9) } })();
+const crumbs = [], evQ = []; let evT = null, lastView = null, reportBox = null;
+function crumb(k, m, extra) {
+  if (REPLAY) return;
+  const e = { t: Date.now(), k, m: String(m == null ? "" : m).slice(0, 400), ...(extra || {}) };
+  crumbs.push(e); if (crumbs.length > 300) crumbs.shift();
+  evQ.push(e); if (evQ.length > 500) evQ.shift();
+  if (k === "error") flushEv(); else if (!evT) evT = setTimeout(flushEv, 15000);
+}
+function flushEv(beacon) {
+  clearTimeout(evT); evT = null;
+  if (!ROOM || !evQ.length || !/^https?:$/.test(location.protocol)) return;
+  const body = JSON.stringify({ device: DEVICE, host: isHost, build: BUILD, events: evQ.splice(0, 80) }); // well under the server's 32 KB a batch
+  if (evQ.length) evT = setTimeout(flushEv, 1000);
+  if (beacon && navigator.sendBeacon) { navigator.sendBeacon(API + "/events", new Blob([body], { type: "application/json" })); return }
+  fetch(API + "/events", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+}
+if (!REPLAY) {
+  crumb("open", (isHost ? "host" : "TV") + " · " + innerWidth + "×" + innerHeight + " @" + (devicePixelRatio || 1) + " · " + navigator.userAgent);
+  window.addEventListener("error", e => crumb("error", e.message || "error", { stack: e.error && e.error.stack ? String(e.error.stack) : "", src: (e.filename || "") + ":" + (e.lineno || 0) + ":" + (e.colno || 0) }));
+  window.addEventListener("unhandledrejection", e => { const r = e.reason; crumb("error", "Unhandled promise: " + (r && r.message || r), { stack: r && r.stack ? String(r.stack) : "" }) });
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("button,a,summary,[role=button]"); if (b && !(reportBox && reportBox.contains(b))) crumb("tap", (b.getAttribute("aria-label") || b.textContent || "").trim().replace(/\s+/g, " ").slice(0, 90)) }, true);
+  addEventListener("pagehide", () => flushEv(true));
+  document.addEventListener("visibilitychange", () => { crumb("vis", document.visibilityState); if (document.visibilityState === "hidden") flushEv(true) });
+  addEventListener("online", () => crumb("net", "online")); addEventListener("offline", () => crumb("net", "offline"));
+  listeners.push(s => { const v = s ? s.phase + (s.mission ? " · " + s.mission.key + " " + s.mission.stage : "") + " · round " + s.round + " · v" + (s.ver || 0) : "no game"; if (v !== lastView) { lastView = v; crumb("view", v) } });
+}
+
+/* ---- Report a problem ---- */
+async function gzB64(str) {
+  if (!window.CompressionStream) return "";
+  const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close();
+  const u = new Uint8Array(await new Response(cs.readable).arrayBuffer()); let b = ""; for (let i = 0; i < u.length; i += 32768) b += String.fromCharCode.apply(null, u.subarray(i, i + 32768));
+  return btoa(b);
+}
+// the screen as it is now: the page's HTML and styles without its scripts, with where it was scrolled to
+function snapshot() {
+  const d = document.documentElement.cloneNode(true);
+  d.querySelectorAll("script,#report").forEach(x => x.remove());
+  d.querySelectorAll("input,textarea").forEach(x => { if (x.type === "password" || x.id === "pin" || x.id === "pinset") x.setAttribute("value", "••••"); else if (x.value !== undefined) x.setAttribute("value", x.value) });
+  const meta = { w: innerWidth, h: innerHeight, dpr: devicePixelRatio || 1, x: scrollX, y: scrollY, host: isHost, at: Date.now() };
+  return "<!doctype html>" + d.outerHTML.replace("<head>", '<head><base href="' + location.origin + '/"><meta name="snapshot" content=\'' + JSON.stringify(meta) + '\'>');
+}
+async function openReport() {
+  if (reportBox) return;
+  crumb("report", "opened the report form");
+  let snap = ""; try { snap = snapshot() } catch (e) { crumb("error", "snapshot failed: " + e.message) }
+  const box = reportBox = document.createElement("div"); box.id = "report"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-labelledby", "rp-h");
+  box.innerHTML = `<form class="rp"><h2 id="rp-h">Report a problem</h2><p>Tell us what went wrong. We’ll get a snapshot of this screen and a record of what happened in this game, so you don’t need to describe everything.</p>
+<label for="rp-what">What happened?</label><textarea id="rp-what" rows="4" placeholder="e.g. The TV froze on the votes after I tapped Reveal"></textarea>
+<label for="rp-exp">What did you expect to happen? <small>(optional)</small></label><textarea id="rp-exp" rows="2"></textarea>
+<label for="rp-mail">Your email, if you’d like a reply <small>(optional)</small></label><input id="rp-mail" type="email" autocomplete="email">
+<label class="rp-chk"><input id="rp-snap" type="checkbox" checked> Include a snapshot of this screen${isHost ? " (it can show who the Cloaks are, and only we will see it)" : ""}</label>
+<p class="rp-msg" id="rp-msg" role="status"></p><div class="rp-row"><button type="button" class="rp-cancel">Cancel</button><button type="submit" class="rp-send">Send report</button></div></form>`;
+  document.body.appendChild(box);
+  const close = () => { box.remove(); reportBox = null };
+  box.querySelector(".rp-cancel").onclick = close;
+  box.addEventListener("keydown", e => { if (e.key === "Escape") close(); e.stopPropagation() });
+  setTimeout(() => { const t = box.querySelector("#rp-what"); if (t) t.focus() }, 50);
+  box.querySelector("form").onsubmit = async e => {
+    e.preventDefault(); const msg = box.querySelector("#rp-msg"), what = box.querySelector("#rp-what").value.trim(), send = box.querySelector(".rp-send");
+    if (!what) { msg.textContent = "Tell us what went wrong first."; return }
+    send.disabled = true; msg.textContent = "Sending…"; flushEv();
+    try {
+      const body = { room: ROOM, device: DEVICE, host: isHost, build: BUILD + " " + APPV, ua: navigator.userAgent, url: location.pathname + (isHost ? "#host" : ""), what, expected: box.querySelector("#rp-exp").value.trim(), email: box.querySelector("#rp-mail").value.trim(),
+        phase: lastView || "", ver: state ? state.ver || 0 : 0, screen: { w: innerWidth, h: innerHeight, dpr: devicePixelRatio || 1 }, crumbs: crumbs.slice(-200), snap: box.querySelector("#rp-snap").checked && snap ? await gzB64(snap) : "" };
+      const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "It didn’t send (" + r.status + ")");
+      crumb("report", "sent " + j.id);
+      box.querySelector("form").innerHTML = `<h2>Thank you</h2><p>Your report is in. Its reference is <b>${esc(j.id)}</b>, in case you write to us about it.</p><div class="rp-row"><button type="button" class="rp-send">Back to the game</button></div>`;
+      box.querySelector(".rp-send").onclick = close;
+    } catch (err) { send.disabled = false; msg.textContent = (err.message || "It didn’t send") + ". Check the connection and try again." }
+  };
+}
+
+/* ---- replay: /admin shows a recorded state in this page ---- */
+if (REPLAY) window.replayShow = s => {
+  connecting = false; roomMissing = false; roomExpired = false; window.__noCards = true;
+  state = s ? (isHost ? s : publicView(s)) : null; authed = !!s; serverHasGame = !!s; remote = false;
+  if (!isHost && typeof lastKey !== "undefined") lastKey = null;
+  emit();
+};
 /* ===================== BOOT ===================== */
 document.body.insertAdjacentHTML("afterbegin", ART.defs());
 let lastHostPhase = null;
@@ -4468,13 +4571,13 @@ listeners.push(() => {
 });
 window.addEventListener("hashchange", () => location.reload());
 if (isHost) renderHost(); else renderTV();
-store.init();
+if (!REPLAY) store.init();
 // A new build reloads the page — but the TV waits for a calm phase, so a ceremony is never interrupted.
 let newBuild = false;
 const calm = () => !state || ["lobby", "day", "mingle", "morning", "final"].includes(state.phase);
 // The phone waits too while a guest holds it for a secret vote, a sheet is open, or someone is typing (a reload would lose the setup draft).
 const hostIdle = () => !handoff && !ask && !menuOpen && !(setupDraft && setupDraft.names.trim() && !(state && authed)) && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.nodeName));
-if (BUILD) setInterval(async () => { try { const r = await fetch("/build.txt", { cache: "no-store" }); if (r.ok) { const b = (await r.text()).trim(); if (/^\d{14}$/.test(b) && b !== BUILD) newBuild = true } } catch (e) {} if (newBuild && (isHost ? hostIdle() : calm())) location.reload() }, 60000);
+if (BUILD && !REPLAY) setInterval(async () => { try { const r = await fetch("/build.txt", { cache: "no-store" }); if (r.ok) { const b = (await r.text()).trim(); if (/^\d{14}$/.test(b) && b !== BUILD) newBuild = true } } catch (e) {} if (newBuild && (isHost ? hostIdle() : calm())) location.reload() }, 60000);
 document.title = isHost ? "Host · Cloak & Candle" : "Cloak & Candle";
 // keep the elapsed clock and pace advice fresh without disturbing typing or a guest holding the phone
 if (isHost) setInterval(() => { const a = document.activeElement; if (state && authed && !handoff && !(a && /INPUT|TEXTAREA/.test(a.nodeName))) renderHost() }, 30000);

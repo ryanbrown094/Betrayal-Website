@@ -12,6 +12,18 @@
 .codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 8px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
 table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.notecol { white-space: normal; max-width: 240px; overflow-wrap: anywhere }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1px solid currentColor }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px } .tabs button { min-height: 42px; padding: 6px 16px; border-radius: 99px; border: 1px solid rgba(230,165,140,.35); background: transparent; color: var(--ivory2); font: 700 15px/1 var(--ui); cursor: pointer } .tabs button[aria-selected="true"] { background: var(--rose); border-color: var(--rose); color: #150b17 } .tabs .cnt { margin-left: 6px; font-weight: 500; opacity: .8 }
+table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor: pointer } table.list tr.click:hover td { background: rgba(230,165,140,.07) } table.list td.msgcol { max-width: 420px; overflow-wrap: anywhere }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 15px; margin: 8px 0 } .kv b { color: var(--ivory2); font-weight: 600 } .kv span { color: var(--ivory); overflow-wrap: anywhere }
+.mono { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ivory2); background: #100b11; border: 1px solid rgba(230,165,140,.2); border-radius: 8px; padding: 10px 12px; max-height: 420px; overflow: auto; margin: 8px 0 }
+.back { margin: 8px 0 } .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12.5px; font-weight: 700; border: 1px solid currentColor }
+.stage { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start } @media (max-width: 900px) { .stage { grid-template-columns: 1fr } }
+.tvbox { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; border: 1px solid rgba(230,165,140,.25); background: #000 } .tvbox iframe { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none }
+.phbox { position: relative; width: 280px; height: 606px; overflow: hidden; border-radius: 18px; border: 1px solid rgba(230,165,140,.25); background: #000 } .phbox iframe { position: absolute; left: 0; top: 0; width: 390px; height: 844px; border: 0; transform: scale(.718); transform-origin: 0 0 }
+.scrub { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 } .scrub input[type=range] { flex: 1; min-width: 200px; accent-color: var(--rose) } .scrub .now { font-size: 14px; color: var(--ivory2); flex-basis: 100% }
+.tl { max-height: 360px; overflow: auto; border: 1px solid rgba(230,165,140,.2); border-radius: 8px } .tl div { padding: 4px 10px; font-size: 13.5px; color: var(--ivory2); cursor: pointer; border-bottom: 1px solid rgba(230,165,140,.08) } .tl div.on { background: rgba(230,165,140,.18); color: var(--ivory) }
+.snapbox { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
+.ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
 .t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
 @media (max-width: 700px) {
   table.passes thead { display: none } table.passes tr { display: block; padding: 10px 0; border-bottom: 1px solid rgba(230,165,140,.18) }
@@ -19,7 +31,7 @@ table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.
 }
 </style>
 <div class="eyebrow">admin</div>
-<h1>Passes</h1>
+<h1>Admin</h1>
 
 <div id="login" hidden>
   <div class="panel" style="max-width:420px">
@@ -34,6 +46,8 @@ table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.
 
 <div id="dash" hidden>
   <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
+  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Passes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
+  <div id="t-passes">
   <div class="stats" id="stats"></div>
 
   <h2>Create passes</h2>
@@ -59,12 +73,37 @@ table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.
     <label style="flex:1;min-width:200px">Search <input id="q" placeholder="Code, note, email, room" style="width:100%"></label>
     <label>Show <select id="f">
       <option value="all">All</option><option value="unused">Unused</option><option value="play">In play</option><option value="used">Used</option>
-      <option value="sub">Subscriptions</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
+      <option value="sub">Subscriptions</option><option value="refunded">Refunded</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
     </select></label>
     <button class="btn ghost small" id="reload">Refresh</button>
   </div>
   <div class="table-scroll"><table class="passes"><thead><tr><th>Code</th><th>Type</th><th>Status</th><th>Created</th><th>Room</th><th>Note / email</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
   <p class="msg" id="tmsg"></p>
+  </div>
+
+  <div id="t-rooms" hidden>
+    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, pass, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
+      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Pass</th><th>Note</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
+    <div id="roomview" hidden></div>
+  </div>
+
+  <div id="t-reports" hidden>
+    <div id="replist"><div class="adm-row" style="margin:14px 0 10px"><label>Show <select id="rf"><option value="open">Open</option><option value="resolved">Resolved</option><option value="all">All</option></select></label><button class="btn ghost small" id="repreload">Refresh</button></div>
+      <div class="table-scroll"><table class="list"><thead><tr><th>Ref</th><th>When</th><th>Room</th><th>From</th><th>What happened</th><th>Status</th></tr></thead><tbody id="reprows"></tbody></table></div><p class="msg" id="repmsg"></p></div>
+    <div id="repview" hidden></div>
+  </div>
+
+  <div id="t-errors" hidden>
+    <div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="eq" placeholder="Message, room, source" style="width:100%"></label><label>Source <select id="ef"><option value="all">All</option><option value="browser">Players’ browsers</option><option value="server">Server</option><option value="stripe">Stripe</option><option value="report">Issue reports</option></select></label><button class="btn ghost small" id="ereload">Refresh</button></div>
+    <p class="note">Every error from a player’s browser, every server exception, every Stripe webhook that failed or couldn’t be matched, and every issue report. Newest first; the last 3,000 are kept. Tap a row for the detail.</p>
+    <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Source</th><th>Room</th><th>Message</th></tr></thead><tbody id="erows"></tbody></table></div><p class="msg" id="emsg"></p>
+  </div>
+
+  <div id="t-stripe" hidden>
+    <div class="adm-row" style="margin:14px 0 10px"><button class="btn ghost small" id="hreload">Refresh</button></div>
+    <p class="note">Every webhook Stripe sent, and what it did. If a payment or refund doesn’t show on a pass, look for it here. Nothing here at all means Stripe isn’t reaching us: check the endpoint and its signing secret in Stripe’s dashboard.</p>
+    <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Event</th><th>Pass</th><th>Result</th></tr></thead><tbody id="hrows"></tbody></table></div><p class="msg" id="hmsg"></p>
+  </div>
 </div>
 
 <script>
@@ -83,15 +122,16 @@ function statusOf(p) {
   const now = Date.now();
   if (p.revoked) return ["cancel", p.refunded ? "Refunded" : "Cancelled"];
   if (p.pending) return ["pending", "Awaiting payment"];
-  if (p.kind === "sub") return p.subActive ? ["sub", p.subStatus === "free" ? "Free unlimited" : "Subscribed"] : ["cancel", "Subscription " + (p.subStatus || "inactive").replace("_", " ")];
-  if (p.room && now < p.expires) return ["play", "In play until " + when(p.expires)];
-  if (p.room) return ["used", "Used"];
+  if (p.kind === "sub") return p.subActive ? ["sub", (p.subStatus === "free" ? "Free unlimited" : "Subscribed") + (p.refunded ? " · a payment refunded" : "")] : ["cancel", "Subscription " + (p.subStatus || "inactive").replace("_", " ")];
+  const rf = p.refunded ? " · refunded" : "";
+  if (p.room && now < p.expires) return ["play", "In play until " + when(p.expires) + rf];
+  if (p.room) return ["used", "Used" + rf];
   return ["unused", "Unused"];
 }
 let all = [];
 function render() {
   const q = $("#q").value.trim().toLowerCase(), f = $("#f").value, rows = $("#rows"); rows.textContent = "";
-  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub")) && (!q || [p.pass, p.note, p.room, p.source].join(" ").toLowerCase().includes(q)) });
+  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.room, p.source].join(" ").toLowerCase().includes(q)) });
   for (const p of list) {
     const [k, label] = statusOf(p), tr = document.createElement("tr");
     const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
@@ -117,7 +157,7 @@ async function cancel(pass) {
   if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;
   try { await api("revoke", { pass }); await load() } catch (e) { say($("#tmsg"), e.message, true) }
 }
-function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load() } else $("#lu").focus() }
+function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load(); api("reports").then(j => { reports = j.reports || []; $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "" }).catch(() => {}); if (["rooms", "reports", "errors", "stripe"].includes(firstTab)) showTab(firstTab) } else $("#lu").focus() }
 $("#lf").onsubmit = async e => {
   e.preventDefault(); say($("#lmsg"), "Signing in…");
   try { await api("login", { user: $("#lu").value, password: $("#lp").value }); $("#lp").value = ""; say($("#lmsg"), ""); show(true, $("#lu").value.trim()) }
@@ -144,5 +184,161 @@ $("#room").onclick = async () => {
   } catch (err) { say($("#rmsg"), err.message, true) }
 };
 $("#q").oninput = render; $("#f").onchange = render; $("#reload").onclick = load;
+
+/* ---- the other tabs: rooms (config, log, replay, devices), issue reports, the error log, Stripe's webhooks ---- */
+// h("tag.class", {attrs}, ...children): builds elements, so nothing a player typed is ever read as HTML
+function h(sel, attrs, ...kids) {
+  const [tag, ...cls] = sel.split("."), el = document.createElement(tag || "div"); if (cls.length) el.className = cls.join(" ");
+  for (const [k, v] of Object.entries(attrs || {})) if (k.startsWith("on")) el[k] = v; else if (v !== undefined && v !== null && v !== false) el.setAttribute(k, v === true ? "" : v);
+  for (const c of kids.flat()) if (c !== null && c !== undefined && c !== false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const ap = (el, ...k) => el.append(...k.flat().filter(x => x !== null && x !== undefined && x !== false));
+const secs = t => t ? new Date(t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+const kv = rows => h("div.kv", {}, rows.filter(Boolean).flatMap(([k, v]) => [h("b", {}, k), h("span", {}, v === undefined || v === null || v === "" ? "—" : v)]));
+const row = (cells, onclick, cls) => h("tr" + (onclick ? ".click" : "") + (cls ? "." + cls : ""), { onclick }, cells.map(c => c instanceof Node ? h("td", {}, c) : h("td", {}, c)));
+let tab = "passes";
+function showTab(t) {
+  tab = t; for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", b.dataset.t === t);
+  for (const x of ["passes", "rooms", "reports", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
+  if (t === "rooms") { $("#roomlist").hidden = false; $("#roomview").hidden = true; if (replay) replay.stop() } if (t === "reports") { $("#replist").hidden = false; $("#repview").hidden = true }
+  if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
+  try { history.replaceState(null, "", "#" + t) } catch (e) {}
+}
+for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => showTab(b.dataset.t);
+
+/* rooms */
+let rooms = [];
+async function loadRooms() { try { rooms = (await api("rooms")).rooms || []; renderRooms() } catch (e) { say($("#rlmsg"), e.message, true) } }
+function renderRooms() {
+  const q = $("#rq").value.trim().toLowerCase(), list = rooms.filter(r => !q || [r.room, r.pass, r.note].join(" ").toLowerCase().includes(q)), tb = $("#rrows"); tb.textContent = "";
+  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.note || ""], () => openRoom(r.room)));
+  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms");
+}
+$("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
+const RULE_WORDS = { rounds: "Rounds", perRound: "Missions a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Mingle", pool: "Mission pool", kill: "Kill", ghosts: "Ghosts", convert: "Conversion", bargain: "Bargain", quests: "Side-quests", shield: "Shields", blade: "Blade", champion: "Champion", witness: "Witness", dilemma: "Dilemma" };
+const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
+let replay = null;
+// the whole game log, from each recorded save's newest line (a save that added no line repeats the one before)
+const fullLog = recs => recs.map((r, i) => r.kind === "wipe" ? secs(r.t) + " — game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : null).filter(Boolean).join("\n");
+async function openRoom(code, at) {
+  const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
+  let d, recs, evs;
+  try { [d, recs, evs] = await Promise.all([api("room/" + code + "/room"), api("room/" + code + "/recs"), api("room/" + code + "/events")]) } catch (e) { v.textContent = e.message; return }
+  const s = d.state, m = d.meta || {}; recs = recs.recs || []; evs = evs.events || [];
+  v.textContent = "";
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; if (replay) replay.stop() } }, "← All rooms"),
+    h("h2", {}, "Room " + code),
+    kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Pass", m.pass || "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
+      ["Links", h("span", {}, h("a", { href: "/g/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/g/" + code + "#host", target: "_blank" }, "host phone"))]]));
+  if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
+  else {
+    const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
+    ap(v, h("h2", {}, "The game"),
+      kv([["Title", s.brand && s.brand.title], ["Host", s.brand && s.brand.host], ["Players", s.players.length + " (" + cl.length + " Cloaks: " + cl.join(", ") + ")"], ["Now", s.phase + " · round " + s.round + (s.finalRound ? " (final is round " + s.finalRound + ")" : "") + " · version " + (s.ver || 0)],
+        ["Pot", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Cloaks only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner || "—"], ["App", "schema " + s.v]]),
+      h("h3", {}, "Game plan (setup)"), kv(Object.entries(s.rules || {}).map(([k, x]) => [RULE_WORDS[k] || k, yes(x)])),
+      h("h3", {}, "Players, in seat order"),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Shield"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
+      h("h3", {}, "Game log"), h("p.note", {}, "Every line from the start, taken from the recording (the game itself only keeps its latest 80)."), h("div.mono", {}, fullLog(recs) || (s.log || []).slice().reverse().join("\n") || "(empty)"));
+  }
+  // the replay: every saved version, on a TV and a phone
+  ap(v, h("h2", {}, "Replay"), h("p.note", {}, "Every change the host’s phone saved, in order. Drag the slider or tap a line; Play steps through them. The TV shows what the guests saw, the phone what the host saw."));
+  if (!recs.length) ap(v, h("p.note", {}, "Nothing recorded yet."));
+  else {
+    const tv = h("iframe", { src: "/play.html#replay-tv", title: "TV replay" }), ph = h("iframe", { src: "/play.html#replay-host", title: "Host phone replay" });
+    const tvbox = h("div.tvbox", {}, tv), rng = h("input", { type: "range", min: 1, max: recs.length, value: 1, "aria-label": "Point in the game" }), now = h("div.now", {}), tl = h("div.tl", {});
+    const play = h("button.btn.ghost.small", {}, "Play"), speed = h("select", { "aria-label": "Speed" }, [["1500", "slow"], ["700", "normal"], ["250", "fast"]].map(([v, l]) => h("option", { value: v, selected: v === "700" }, l)));
+    recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "— game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));
+    ap(v, h("div.scrub", {}, play, speed, h("button.btn.ghost.small", { onclick: () => go(+rng.value - 1) }, "◀"), rng, h("button.btn.ghost.small", { onclick: () => go(+rng.value + 1) }, "▶"), now), h("div.stage", {}, tvbox, h("div.phbox", {}, ph)), h("h3", {}, "Timeline"), tl);
+    const fit = () => { tv.style.transform = "scale(" + tvbox.clientWidth / 1600 + ")" }; fit(); addEventListener("resize", fit);
+    const cache = new Map(); let cur = 0, timer = null;
+    async function go(n) {
+      n = Math.max(1, Math.min(recs.length, n)); cur = n; rng.value = n; const r = recs[n - 1];
+      [...tl.children].forEach((x, i) => x.classList.toggle("on", i === n - 1)); const on = tl.children[n - 1]; if (on) on.scrollIntoView({ block: "nearest" });
+      now.textContent = n + " of " + recs.length + " · " + secs(r.t) + " · " + (r.phase || "") + (r.round ? " · round " + r.round : "") + (r.line ? " · " + r.line : "");
+      let st = null; if (r.kind !== "wipe") { if (!cache.has(n)) cache.set(n, await api("room/" + code + "/rec?n=" + r.n)); st = cache.get(n) }
+      if (cur !== n) return;
+      for (const f of [tv, ph]) try { f.contentWindow.replayShow && f.contentWindow.replayShow(st && JSON.parse(JSON.stringify(st))) } catch (e) {}
+    }
+    rng.oninput = () => go(+rng.value);
+    replay = { stop() { clearInterval(timer); timer = null; play.textContent = "Play" } };
+    play.onclick = () => { if (timer) return replay.stop(); play.textContent = "Pause"; timer = setInterval(() => { if (cur >= recs.length) return replay.stop(); go(cur + 1) }, +speed.value) };
+    let loaded = 0; for (const f of [tv, ph]) f.onload = () => { if (++loaded === 2) setTimeout(() => go(at ? Math.min(at, recs.length) : recs.length), 300) };
+  }
+  // what the devices sent
+  const ef = h("select", { "aria-label": "Which events" }, [["all", "Everything"], ["error", "Errors"], ["sync", "Sync and network"], ["tap", "Taps"], ["view", "Screens"], ["report", "Reports"]].map(([v, l]) => h("option", { value: v }, l)));
+  const tb = h("tbody", {}), draw = () => { tb.textContent = ""; const want = ef.value; for (const e of evs.slice().reverse()) if (want === "all" || e.k === want || (want === "sync" && e.k === "net")) tb.append(row([secs(e.t), (e.host ? "phone " : "TV ") + e.device, e.k, h("div", {}, e.m, e.stack ? h("div.mono", {}, e.stack) : null)], null, "ev-" + e.k)) };
+  ef.onchange = draw; draw();
+  ap(v, h("h2", {}, "What the devices saw"), h("p.note", {}, "Each TV and phone in this room sends what it showed, what was tapped (button names only, never anything typed), connection trouble and errors. Newest first."), ef,
+    h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["When", "Device", "Kind", "What"].map(x => h("th", {}, x)))), tb)));
+}
+
+/* issue reports */
+let reports = [];
+async function loadReports() { try { reports = (await api("reports")).reports || []; renderReports() } catch (e) { say($("#repmsg"), e.message, true) } }
+function renderReports() {
+  const f = $("#rf").value, list = reports.filter(r => f === "all" || r.status === f), tb = $("#reprows"); tb.textContent = "";
+  for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.host ? "host phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
+  $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "";
+  say($("#repmsg"), list.length ? list.length + " reports" : "No reports here.");
+}
+$("#rf").onchange = renderReports; $("#repreload").onclick = loadReports;
+async function unzip(b64) {
+  const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(u); w.close(); return new Response(ds.readable).text();
+}
+async function openReport(id) {
+  const v = $("#repview"); $("#replist").hidden = true; v.hidden = false; v.textContent = "Loading " + id + "…";
+  let r; try { r = await api("report?id=" + encodeURIComponent(id)) } catch (e) { v.textContent = e.message; return }
+  v.textContent = "";
+  const note = h("textarea", { rows: 3, style: "width:100%", placeholder: "Your notes (only you see these)" }); note.value = r.adminNote || "";
+  const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { alert(e.message) } };
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
+    h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
+    kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.host ? "the host’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
+    h("h3", {}, "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
+    r.room && r.rec ? h("p", {}, h("button.btn.small", { onclick: () => openRoom(r.room, r.rec) }, "Replay the game at this moment")) : null);
+  if (r.snap) {
+    const box = h("div.snapbox", {}), f = h("iframe", { sandbox: "allow-same-origin", title: "Snapshot of the screen" }); box.append(f);
+    ap(v, h("h3", {}, "Their screen"), h("p.note", {}, "Rebuilt from the page as it was when they opened the form. Animations are frozen and it may differ slightly from their device."), box);
+    try {
+      const html = await unzip(r.snap), meta = JSON.parse((html.match(/<meta name="snapshot" content='([^']*)'/) || [])[1] || "{}"), w = meta.w || 390, hh = meta.h || 844, k = Math.min(1, (v.clientWidth || 800) / w, 700 / hh);
+      f.style.width = w + "px"; f.style.height = hh + "px"; f.style.transform = "scale(" + k + ")"; box.style.width = w * k + "px"; box.style.height = hh * k + "px";
+      f.onload = () => { try { f.contentWindow.scrollTo(meta.x || 0, meta.y || 0) } catch (e) {} };
+      f.srcdoc = html;
+    } catch (e) { box.replaceWith(h("p.msg.err", {}, "The snapshot couldn’t be opened: " + e.message)) }
+  } else ap(v, h("p.note", {}, "No snapshot (they unticked it, or their browser couldn’t make one)."));
+  ap(v, h("h3", {}, "What happened on their device before they reported it"),
+    h("div.table-scroll", {}, h("table.list", {}, h("tbody", {}, (r.crumbs || []).slice().reverse().map(c => row([secs(c.t), c.k, c.m], null, "ev-" + c.k))))),
+    h("h3", {}, "Notes"), note, h("div.adm-row", { style: "margin-top:10px" }, r.status === "open" ? h("button.btn.small", { onclick: () => setStatus("resolved") }, "Mark resolved") : h("button.btn.ghost.small", { onclick: () => setStatus("open") }, "Reopen"), h("button.btn.ghost.small", { onclick: () => setStatus(r.status) }, "Save notes")));
+}
+
+/* the error log */
+let errors = [];
+async function loadErrors() { try { errors = (await api("errors")).errors || []; renderErrors() } catch (e) { say($("#emsg"), e.message, true) } }
+function renderErrors() {
+  const q = $("#eq").value.trim().toLowerCase(), f = $("#ef").value, tb = $("#erows"); tb.textContent = "";
+  const list = errors.filter(e => (f === "all" || e.src === f) && (!q || JSON.stringify(e).toLowerCase().includes(q)));
+  for (const e of list) {
+    const detail = h("tr", { hidden: true }, h("td", { colspan: 4 }, h("div.mono", {}, Object.entries(e).filter(([k]) => k !== "key").map(([k, x]) => k + ": " + x).join("\n"))));
+    const r = row([secs(e.t), e.src + (e.where ? " · " + e.where : ""), e.room ? h("a", { href: "#", onclick: ev => { ev.preventDefault(); ev.stopPropagation(); openRoom(e.room) } }, e.room) : "—", h("div.msgcol", {}, e.msg || "")], () => { detail.hidden = !detail.hidden });
+    if (e.report) r.lastChild.append(" ", h("a", { href: "#", onclick: ev => { ev.preventDefault(); ev.stopPropagation(); showTab("reports"); openReport(e.report) } }, "open " + e.report));
+    tb.append(r, detail);
+  }
+  $("#errcnt").textContent = errors.filter(e => e.t > Date.now() - 86400000).length || "";
+  say($("#emsg"), list.length + " of " + errors.length);
+}
+$("#eq").oninput = renderErrors; $("#ef").onchange = renderErrors; $("#ereload").onclick = loadErrors;
+
+/* Stripe */
+async function loadHooks() {
+  try {
+    const hooks = (await api("hooks")).hooks || [], tb = $("#hrows"); tb.textContent = "";
+    for (const x of hooks) tb.append(row([secs(x.t), x.type + (x.live ? "" : " (test)"), x.pass || "—", h("div.msgcol", {}, x.result || "")]));
+    say($("#hmsg"), hooks.length ? hooks.length + " events" : "Nothing from Stripe yet.");
+  } catch (e) { say($("#hmsg"), e.message, true) }
+}
+const firstTab = (location.hash || "").slice(1);
 fetch("/api/admin/me", { cache: "no-store" }).then(r => r.ok ? r.json().then(j => show(true, j.user)) : show(false)).catch(() => show(false));
 </script>
