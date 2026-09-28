@@ -50,7 +50,7 @@ $("#pay").onclick = async () => {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    busy = false; update(j.error || "That didn’t work — try again.");
+    busy = false; update((j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""));
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.") }
 };
 choose();

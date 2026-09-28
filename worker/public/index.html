@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928194709">
+<meta name="build" content="20260928195821">
 <title>Cloak &amp; Candle — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="Cloak &amp; Candle turns your dinner party into a game of hidden Cloaks, secret shields and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
@@ -151,7 +151,7 @@ async function manage() {
     const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass: v }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    say(m, j.error || "That didn’t work — try again.", true);
+    say(m, (j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = e => { e.preventDefault(); manage() };

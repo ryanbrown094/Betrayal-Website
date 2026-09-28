@@ -377,7 +377,8 @@ export default {
         return json({ url: cs.url });
       } catch (e) {
         await call(env, "/cancel", { pass, why: "could not start" });
-        return json({ error: "We couldn’t start the checkout. Try again in a moment." }, 502);
+        console.error("Stripe checkout refused:", e.message); // Workers → Logs; also shown under the Pay button
+        return json({ error: "We couldn’t start the checkout. Try again in a moment.", detail: "Stripe said: " + e.message }, 502);
       }
     }
     // Stripe's webhook (endpoint https://<domain>/api/stripe/webhook): activates passes when payment clears, cancels
@@ -402,7 +403,7 @@ export default {
       const r = await registry(env).fetch("https://registry/customer", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass }) }), j = await r.json();
       if (!r.ok) return json(j, r.status);
       try { const ps = await stripePost(env, "billing_portal/sessions", { customer: j.customer, return_url: url.origin + "/" }); return json({ url: ps.url }); }
-      catch (e) { return json({ error: "We couldn’t open the subscription page. Try again in a moment." }, 502); }
+      catch (e) { console.error("Stripe portal refused:", e.message); return json({ error: "We couldn’t open the subscription page. Try again in a moment.", detail: "Stripe said: " + e.message }, 502); }
     }
     if (p === "/api/claim" && req.method === "GET") {
       const id = url.searchParams.get("session_id") || "";
