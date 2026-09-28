@@ -268,7 +268,7 @@ def part2(b):
     def _():
         A = Phone(b); A.start(); NAP(0.8)
         # a phone with an out-of-date PIN on a network where guests have been guessing: its polls come back 429
-        C = Phone(b, init="try{localStorage.setItem('traitors-pin','9999')}catch(e){}")
+        C = Phone(b, init="try{localStorage.setItem('cloaks-pin','9999')}catch(e){}")
         C.pg.route("**/api/state", lambda r: r.fulfill(status=429, body="Too many wrong PINs") if r.request.method == "GET" and r.request.headers.get("x-pin") else r.continue_())
         C.pg.reload(); C.pg.wait_for_timeout(3000)
         f = []
@@ -336,7 +336,7 @@ def part2(b):
         T1.pg.on("response", lambda r: seen.append(r) if "/api/state" in r.url else None)
         A.ev("()=>{act(s=>{s.phase='day'});pickMission('quiz');startMission();startMission()}"); NAP(1.5)
         A.ev("()=>{act(s=>{s.phase='day';s.mission=null});pickMission('change');startMission();startMission()}"); NAP(1.5)
-        A.ev("()=>{act(s=>{s.phase='day';s.mission=null});startNight();act(s=>{s.night.mode='recruit'})}"); NAP(1.5)
+        A.ev("()=>{act(s=>{s.phase='day';s.mission=null});startNight();act(s=>{s.night.mode='convert'})}"); NAP(1.5)
         f = []
         for r in seen:
             try: j = r.json()
@@ -349,7 +349,7 @@ def part2(b):
             if "before" in m: f.append("What Changed original on the wire")
             for i, q in enumerate(m.get("qs") or []):
                 if q and (i != m.get("qi") or (q["q"][1] and not m.get("shouter") and not m.get("showA"))): f.append("a quiz answer on the wire")
-            if s.get("night") and s["night"].get("mode") == "recruit": f.append("the kind of night on the wire before it starts")
+            if s.get("night") and s["night"].get("mode") == "convert": f.append("the kind of night on the wire before it starts")
         f = sorted(set(f)); f += A.errs + T1.errs; A.close(); T1.close(); return f
 
     @sc("a wrong PIN, then the right one with stray spaces")
@@ -413,7 +413,7 @@ def part2(b):
         f += A.errs + T1.errs; A.close(); T1.close(); return f
 
     # ---- holds, with a real mouse (pointer events)
-    # the banishment reveal is a plain tap now; the final ceremony's seals keep the hold-for-drumroll
+    # the exile reveal is a plain tap now; the final ceremony's seals keep the hold-for-drumroll
     def to_reveal(A):
         A.ev("()=>{startCeremony()}")
         A.pg.wait_for_timeout(600)

@@ -12,7 +12,7 @@ routes = [
 [vars]
 PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
-SITE_PASSWORD = "traitor" # pre-launch gate for the whole site; delete this line to open it to the public
+SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 # Secrets (never in this file): npx wrangler secret put ADMIN_TOKEN ; npx wrangler secret put STRIPE_SECRET_KEY
 
 [assets]

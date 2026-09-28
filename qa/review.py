@@ -29,7 +29,7 @@ with sync_playwright() as p:
     host.fill("#names", "Annie\nRyan\nTom\nannie"); host.click("text=Start game"); host.wait_for_timeout(300)
     check("duplicate names caught inline", not dialogs and "share a name" in host.inner_text("#host"))
     check("target length defaults to 4 hours", host.input_value("#hours") == "4")
-    host.fill("#names", "\n".join(NAMES)); host.fill("#traitors", "2"); host.click("text=Start game"); host.wait_for_timeout(800)
+    host.fill("#names", "\n".join(NAMES)); host.fill("#cloaks", "2"); host.click("text=Start game"); host.wait_for_timeout(800)
     check("valid setup starts the game", host.evaluate("()=>state && state.phase==='lobby' && state.hours===4"))
 
     # shields: the winner's shield is set before the mission (public or secret); the silent option is gone
@@ -47,16 +47,16 @@ with sync_playwright() as p:
     check("the done screen has no shield-mode buttons left to choose", "Tap ceremony" not in done_host and "Show shield on TV" in done_host, done_host[-500:])
     host.evaluate("()=>endMission()"); sync()
     check("public winner's shield: named on the TV and on the candle rail", "Sophie" in tv.inner_text("#stage") and "holds the shield" in tv.inner_text("#stage") and tv.evaluate("()=>state.players[3].shield==='public'"))
-    check("the public view carries no secret shield names", tv.evaluate("()=>!('secIds' in state.shieldCard) && !('secNames' in state.shieldCard) && !('seerName' in state.shieldCard)"))
+    check("the public view carries no secret shield names", tv.evaluate("()=>!('secIds' in state.shieldCard) && !('secNames' in state.shieldCard) && !('witnessName' in state.shieldCard)"))
     check("setShieldMode and the silent mode are gone from the code", host.evaluate("()=>typeof setShieldMode==='undefined' && !/silent/.test(JSON.stringify(state.shieldCard))"))
 
-    # night: the Traitors pick the shielded player; breakfast says the shield held
-    host.evaluate("()=>{openTable();}"); host.evaluate("()=>{banish(state.players.find(p=>p.role==='faithful'&&p.id!==state.players[3].id).id);askGo();revealRole();act(s=>{s.table.step=2;s.ghostIntroDone=true});startNight();beginNight();act(s=>{s.night.victimId=s.players[3].id});finishNight();act(s=>{s.morning.revealed=true})}"); sync()
+    # night: the Cloaks pick the shielded player; dawn says the shield held
+    host.evaluate("()=>{openTable();}"); host.evaluate("()=>{exile(state.players.find(p=>p.role==='candle'&&p.id!==state.players[3].id).id);askGo();revealRole();act(s=>{s.table.step=2;s.ghostIntroDone=true});startNight();beginNight();act(s=>{s.night.victimId=s.players[3].id});finishNight();act(s=>{s.morning.revealed=true})}"); sync()
     check("shielded morning uses the shield line", host.evaluate("()=>state.morning.kind==='shield' && !('silent' in state.morning)") and "it met a shield" in host.inner_text("#host"))
-    check("TV at breakfast: the shield held", "The shield held" in tv.inner_text("#stage"))
+    check("TV at dawn: the shield held", "The shield held" in tv.inner_text("#stage"))
 
-    # dinner from breakfast leads into the next round, then is gone
-    check("breakfast offers dinner", "Dinner now" in host.inner_text("#host"))
+    # dinner from dawn leads into the next round, then is gone
+    check("dawn offers dinner", "Dinner now" in host.inner_text("#host"))
     host.click("text=Dinner now"); sync()
     check("dinner phase on phone and TV", host.evaluate("()=>state.phase==='mingle' && state.mingle.kind==='dinner' && state.mingle.then==='round' && state.dinnerDone") and "Dinner" in tv.inner_text("#stage"))
     check("dinner script uses the real duration", "Dinner. Twenty-five minutes." in host.inner_text("#host"))
@@ -68,10 +68,10 @@ with sync_playwright() as p:
     host.evaluate("()=>{pickMission('snap');startMission();startMission();act(s=>finishPlay(s));endMission()}"); host.wait_for_timeout(300)
     check("no second dinner offered once served", "Dinner · 25 min" not in host.inner_text("#host"))
 
-    # final round with no Traitor left: the table still votes
-    host.evaluate("()=>{act(s=>{s.players.forEach(p=>{if(p.role==='traitor'){p.alive=false}});s.finalRound=s.round;s.phase='day'});openTable();banish(aliveOf(state)[0].id);askGo();revealRole()}"); host.wait_for_timeout(400)
+    # final round with no Cloak left: the table still votes
+    host.evaluate("()=>{act(s=>{s.players.forEach(p=>{if(p.role==='cloak'){p.alive=false}});s.finalRound=s.round;s.phase='day'});openTable();exile(aliveOf(state)[0].id);askGo();revealRole()}"); host.wait_for_timeout(400)
     foot = host.inner_text("#host .foot")
-    check("final round, no Traitors left: End-game vote is offered first", "End-game vote" in foot and "Skip the vote" in foot, foot)
+    check("final round, no Cloaks left: End-game vote is offered first", "End-game vote" in foot and "Skip the vote" in foot, foot)
     host.click("#host .foot >> text=End-game vote"); host.wait_for_timeout(300)
     check("the vote opens", host.evaluate("()=>state.phase==='endvote'"))
 
@@ -86,7 +86,7 @@ with sync_playwright() as p:
 
     # draws are fully random: no memory between games, no repeats within one, quiz levels mixed
     RANDOM = r"""() => {
-      const cfg = {names:['Annie','Ryan','Tom','Sophie','Marcus','Priya'],traitors:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'};
+      const cfg = {names:['Annie','Ryan','Tom','Sophie','Marcus','Priya'],cloaks:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'};
       const firsts = new Set(), orders = new Set(); let repeats = 0, tiered = 0, games = 12;
       for (let g = 0; g < games; g++) {
         newGame(); startGame(cfg); act(s => { s.phase = 'day' });
@@ -96,7 +96,7 @@ with sync_playwright() as p:
         const lv = a.map(id => id[0]).join(''); if (lv === 'E'.repeat(10) + 'M'.repeat(10) + 'H'.repeat(10)) tiered++;
         firsts.add(a.slice().sort().join()); orders.add(a.slice(0, 10).join());
       }
-      return { repeats, tiered, distinctGames: firsts.size, orders: orders.size, games, seenKey: localStorage.getItem('traitors-seen') };
+      return { repeats, tiered, distinctGames: firsts.size, orders: orders.size, games, seenKey: localStorage.getItem('cloaks-seen') };
     }"""
     v = host.evaluate(RANDOM)
     check("two quizzes in one game never repeat a question", v["repeats"] == 0, v)
@@ -144,21 +144,21 @@ with sync_playwright() as p:
     host.click("#host .sheet.bank >> text=Switch all on"); host.wait_for_timeout(900)
     check("switch all on clears a bank", "QUIZ_E" not in (settings() or {}).get("off", {}))
     host.evaluate("()=>{bankOpen=false;renderHost()}")
-    host.evaluate("(n)=>startGame({names:n,traitors:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'})", NAMES[:5]); host.wait_for_timeout(900)
+    host.evaluate("(n)=>startGame({names:n,cloaks:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'})", NAMES[:5]); host.wait_for_timeout(900)
     codes = host.evaluate("""async()=>{const put=pin=>fetch('/api/settings',{method:'PUT',headers:{'Content-Type':'application/json','X-Pin':pin},body:JSON.stringify({settings:{off:{LIKELY:[1]}}})}).then(r=>r.status);return [await put('0000'),await put('4321')]}""")
     check("during a game only the host PIN can change the bank", codes == [403, 200], codes)
     check("TV never needs the switches (public state carries none)", tv.evaluate("()=>!('bankOff' in (state||{}))"))
 
     # ---- v15 final-review regressions ----
-    fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,traitors:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", NAMES[:n])
+    fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,cloaks:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", NAMES[:n])
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
-    su = host.evaluate("""()=>{const t=[defaults(4).t,defaults(5).t,defaults(11).t,maxTraitors(5)];
-      document.querySelector('#names').value='A\\nB\\nC\\nD\\nE';document.querySelector('#traitors').value='3';document.querySelector('#pinset').value='1';submitSetup();const m1=setupMsg,t1=toastMsg;
-      document.querySelector('#traitors').value='';document.querySelector('#names').value='Annie\\nBartholomew Fotheringay\\nC\\nD';submitSetup();const m2=setupMsg;
-      document.querySelector('#names').value='Annie\\nRyan\\nTom\\nSophie';document.querySelector('#potPer').value='0';submitSetup();return {t,m1,t1,m2,started:!!state,tr:state&&state.players.filter(p=>p.role==='traitor').length,pot:state&&state.potPer}}""")
-    check("never as many Traitors as Faithful: 4→1, 5→1, 11→3 suggested; 5 with 3 refused", su["t"] == [1, 1, 3, 2] and "At most 2" in su["m1"] and su["t1"] == su["m1"], su)
+    su = host.evaluate("""()=>{const t=[defaults(4).t,defaults(5).t,defaults(11).t,maxCloaks(5)];
+      document.querySelector('#names').value='A\\nB\\nC\\nD\\nE';document.querySelector('#cloaks').value='3';document.querySelector('#pinset').value='1';submitSetup();const m1=setupMsg,t1=toastMsg;
+      document.querySelector('#cloaks').value='';document.querySelector('#names').value='Annie\\nBartholomew Fotheringay\\nC\\nD';submitSetup();const m2=setupMsg;
+      document.querySelector('#names').value='Annie\\nRyan\\nTom\\nSophie';document.querySelector('#potPer').value='0';submitSetup();return {t,m1,t1,m2,started:!!state,tr:state&&state.players.filter(p=>p.role==='cloak').length,pot:state&&state.potPer}}""")
+    check("never as many Cloaks as Candle: 4→1, 5→1, 11→3 suggested; 5 with 3 refused", su["t"] == [1, 1, 3, 2] and "At most 2" in su["m1"] and su["t1"] == su["m1"], su)
     check("names over 16 characters are refused with a visible message", "too long" in su["m2"], su)
-    check("a 4-player game starts with 1 Traitor, and a pot of 0 per mission is allowed", su["started"] and su["tr"] == 1 and su["pot"] == 0, su)
+    check("a 4-player game starts with 1 Cloak, and a pot of 0 per mission is allowed", su["started"] and su["tr"] == 1 and su["pot"] == 0, su)
     fresh()
     sd = host.evaluate("""()=>{pickMission('quiz');mWin('secret',1);startMission();startMission();const A=aliveOf(state);act(s=>{const m=s.mission;m.secIds=[A[0].id];m.scores={[A[2].id]:14,[A[3].id]:14};finishPlay(s)});
       renderHost();const h=document.querySelector('#host').innerText;return {sdBtn:/sudden death/i.test(h),joint:/Nothing rides on the win/.test(h),sec:state.mission.secIds}}""")
@@ -168,27 +168,27 @@ with sync_playwright() as p:
     check("…but with a public shield on the win, the tie-break is offered", sd2)
     fin = host.evaluate("""()=>{act(s=>{s.phase='day';s.mission=null;s.finalRound=s.round});const room=shieldRoom(state);renderHost();
       const dil=[...document.querySelectorAll('#host .mlist button')].find(b=>/Dilemma/.test(b.textContent));
-      pickMission('snap');renderHost();const seer=/Seer/.test(document.querySelector('#host').innerText),pub=/Winner · public/.test(document.querySelector('#host').innerText);
-      act(s=>{s.phase='day';s.mission=null});pickMission('countdown');mWin('secret',2);startMission();startMission();return {room,dil:dil&&dil.disabled,seer,pub,my:state.mission.mystery,secMax:state.mission.secMax}}""")
-    check("final round: no shields, no Seer, no Dilemma, no hidden rounds", fin["room"] == 0 and fin["dil"] is True and not fin["seer"] and not fin["pub"] and fin["my"] == [] and fin["secMax"] == 0, fin)
+      pickMission('snap');renderHost();const witness=/Witness/.test(document.querySelector('#host').innerText),pub=/Winner · public/.test(document.querySelector('#host').innerText);
+      act(s=>{s.phase='day';s.mission=null});pickMission('countdown');mWin('secret',2);startMission();startMission();return {room,dil:dil&&dil.disabled,witness,pub,my:state.mission.mystery,secMax:state.mission.secMax}}""")
+    check("final round: no shields, no Witness, no Dilemma, no hidden rounds", fin["room"] == 0 and fin["dil"] is True and not fin["witness"] and not fin["pub"] and fin["my"] == [] and fin["secMax"] == 0, fin)
     fresh()
     pv = host.evaluate("""()=>{const P=()=>publicView(JSON.parse(JSON.stringify(state))).night;startNight();
-      const q=state.night.questOpts.find(o=>o.target)||state.night.questOpts[0];questPick(q.i);act(s=>{s.night.mode='recruit'});const pre=P();
+      const q=state.night.questOpts.find(o=>o.target)||state.night.questOpts[0];questPick(q.i);act(s=>{s.night.mode='convert'});const pre=P();
       beginNight();const qs=state.night.questStep;act(s=>{s.night.step=qs});const at=P();act(s=>{s.night.step=qs+1});const post=P();
-      act(s=>{s.night.targetId=s.players.find(p=>p.role==='faithful').id;s.night.targetName='X';s.night.answer='no';s.night.step=s.night.endStep});const end=P();
+      act(s=>{s.night.targetId=s.players.find(p=>p.role==='candle').id;s.night.targetName='X';s.night.answer='no';s.night.step=s.night.endStep});const end=P();
       return {preQuest:pre.quest,preTarget:pre.questTarget,preMode:pre.mode,atQuest:at.quest===state.night.quest,postQuest:post.quest,endTarget:end.targetId,endName:end.targetName,endAnswer:end.answer}}""")
-    check("before the night starts the public view hides the quest, its Traitor and the kind of night", pv["preQuest"] == "…" and pv["preTarget"] is None and pv["preMode"] == "murder", pv)
+    check("before the night starts the public view hides the quest, its Cloak and the kind of night", pv["preQuest"] == "…" and pv["preTarget"] is None and pv["preMode"] == "murder", pv)
     check("the quest shows only on its own line", pv["atQuest"] and pv["postQuest"] == "…", pv)
     check("on the last line (blindfolds off) the target's name is gone again", pv["endTarget"] is None and pv["endName"] is None and pv["endAnswer"] == "no", pv)
     fresh(10)
-    lv = host.evaluate("""()=>{startNight();beginNight();const v=state.players.find(p=>p.role==='faithful');act(s=>{s.night.victimId=v.id;s.night.step=6});
-      const other=aliveOf(state).find(p=>p.role==='faithful'&&p.id!==v.id);playerLeft(other.id);return {step:state.night.step,victim:state.night.victimId===v.id}}""")
+    lv = host.evaluate("""()=>{startNight();beginNight();const v=state.players.find(p=>p.role==='candle');act(s=>{s.night.victimId=v.id;s.night.step=6});
+      const other=aliveOf(state).find(p=>p.role==='candle'&&p.id!==v.id);playerLeft(other.id);return {step:state.night.step,victim:state.night.victimId===v.id}}""")
     check("a guest who isn't part of tonight leaving doesn't restart the night", lv["step"] == 6 and lv["victim"], lv)
     fresh(10)
-    se = host.evaluate("""()=>{const f=state.players.find(p=>p.role==='faithful');act(s=>{s.seer={id:f.id,used:false}});startNight();beginNight();
-      const both=nightScript(state.night,state).findIndex(l=>norm(l).who==='Both');act(s=>{s.night.step=both+1});const tid=state.night.seerTraitorId;playerLeft(tid);return {used:state.seer.used,met:state.seer.metId===tid}}""")
-    check("if the Seer's Traitor leaves after the meeting, the Seer is spent", se["used"] and se["met"], se)
-    xs = host.evaluate("""()=>{newGame();startGame({names:['A1','B2','C3','D4'],traitors:1,title:'T',host:'H',potUnit:'<img src=x onerror=window.__x=1>',potPer:100,prize:'p',hours:4,pin:'4321'});
+    se = host.evaluate("""()=>{const f=state.players.find(p=>p.role==='candle');act(s=>{s.witness={id:f.id,used:false}});startNight();beginNight();
+      const both=nightScript(state.night,state).findIndex(l=>norm(l).who==='Both');act(s=>{s.night.step=both+1});const tid=state.night.witnessCloakId;playerLeft(tid);return {used:state.witness.used,met:state.witness.metId===tid}}""")
+    check("if the Witness's Cloak leaves after the meeting, the Witness is spent", se["used"] and se["met"], se)
+    xs = host.evaluate("""()=>{newGame();startGame({names:['A1','B2','C3','D4'],cloaks:1,title:'T',host:'H',potUnit:'<img src=x onerror=window.__x=1>',potPer:100,prize:'p',hours:4,pin:'4321'});
       const seal=ART.seal({name:'Z',color:'red;x" onload="window.__y=1'});return {money:moneyOf(state,5),seal:/onload/.test(seal)}}""")
     sync()
     check("a pot unit can't inject markup; a seal colour can't inject attributes", "<" not in xs["money"] and not xs["seal"] and tv.evaluate("()=>window.__x===undefined") and host.evaluate("()=>window.__x===undefined"), xs)
@@ -228,21 +228,21 @@ with sync_playwright() as p:
     k4 = b.new_context(viewport={"width": 1920, "height": 1080}, device_scale_factor=2); t4 = k4.new_page(); t4.on("pageerror", lambda e: errs.append("tv4k: " + str(e)))
     t4.goto(URL); t4.wait_for_timeout(1500); t4.evaluate("()=>{window.__noCards=true}")
     LONG = ["Bartholomew", "Claire-Louise", "Wilhelmina", "Maximilian Fox", "Anastasia May", "Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess", "Oliver", "Hannah"]
-    host.evaluate("(n)=>{newGame();startGame({names:n,traitors:3,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id))}", LONG); host.wait_for_timeout(700); t4.wait_for_timeout(1600)
+    host.evaluate("(n)=>{newGame();startGame({names:n,cloaks:3,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id))}", LONG); host.wait_for_timeout(700); t4.wait_for_timeout(1600)
     geo = t4.evaluate("""()=>{const cards=[...document.querySelectorAll('#stage .vcard')],bad=[];cards.forEach(c=>{const r=c.getBoundingClientRect();c.querySelectorAll('.vword,.vn').forEach(e=>{const q=e.getBoundingClientRect();if(q.left<r.left-1||q.right>r.right+1||e.scrollWidth>e.clientWidth+1)bad.push(e.textContent)})});
       const sg=document.querySelector('#stage').getBoundingClientRect(),out=cards.some(c=>{const r=c.getBoundingClientRect();return r.bottom>sg.bottom+2||r.top<sg.top-2});return {n:cards.length,bad,out}}""")
     check("4K ceremony, 14 survivors: every word and name fits its card, nothing leaves the stage", geo["n"] == 14 and not geo["bad"] and not geo["out"], geo)
-    host.evaluate("()=>{finishGame();act(s=>{s.phase='final';s.winner='faithful';s.prizeTo='x';s.players.forEach(p=>p.revealed=true)})}"); t4.wait_for_timeout(1800)
+    host.evaluate("()=>{finishGame();act(s=>{s.phase='final';s.winner='candles';s.prizeTo='x';s.players.forEach(p=>p.revealed=true)})}"); t4.wait_for_timeout(1800)
     rolls = t4.evaluate("()=>[...document.querySelectorAll('#stage .rolls b')].filter(b=>b.scrollWidth>b.clientWidth+1).map(b=>b.textContent)")
     check("the final roll-call never cuts a name", not rolls, rolls)
-    host.evaluate("()=>{newGame();startGame({names:['Annie','Ryan','Tom','Sophie'],traitors:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'});pickMission('snap')}"); t4.wait_for_timeout(1600)
+    host.evaluate("()=>{newGame();startGame({names:['Annie','Ryan','Tom','Sophie'],cloaks:1,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'});pickMission('snap')}"); t4.wait_for_timeout(1600)
     mw = t4.evaluate("()=>{const r=document.querySelector('#stage .rules');return r?getComputedStyle(r).maxWidth:null}")
     check("rules text keeps its reading width on a wide screen", mw not in (None, "100%", "none"), mw)
     k4.close()
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
     # ---- v16: settings before a mission, the 25% shield cap, tiered quiz, countdown clock, the linear host, ghost lore ----
-    fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,traitors:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", (NAMES + ["Hannah", "Dev", "Ben", "Zoe", "Kit", "Max"])[:n])
+    fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,cloaks:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", (NAMES + ["Hannah", "Dev", "Ben", "Zoe", "Kit", "Max"])[:n])
     fresh(14)
     cap = host.evaluate("""()=>{const c=[shieldCap(state)];act(s=>{s.players.slice(0,7).forEach(p=>p.alive=false)});c.push(shieldCap(state));act(s=>{s.players.forEach(p=>p.alive=true)});
       act(s=>{s.players[0].shield='public';s.players[1].shield='secret'});c.push(shieldRoom(state));act(s=>{s.players[2].shield='secret'});c.push(shieldRoom(state));act(s=>{s.players.forEach(p=>p.shield=null)});return c}""")
@@ -256,12 +256,12 @@ with sync_playwright() as p:
     check("TV shows the quiz part, level and question number", "Part one · Easy" in tvq and "Question 1 of 5" in tvq, tvq[:200])
     host.evaluate("()=>act(s=>{s.mission.qi=7;s.mission.qn=8})"); sync()
     check("…and moves to part two, medium", "Part two · Medium" in tv.inner_text("#stage") and "Question 3 of 5" in tv.inner_text("#stage"))
-    both = host.evaluate("""()=>{const A=aliveOf(state),f=A.filter(p=>p.role==='faithful'),t=A.find(p=>p.role==='traitor'),m=state.mission,[r1,r2]=m.mystery;
+    both = host.evaluate("""()=>{const A=aliveOf(state),f=A.filter(p=>p.role==='candle'),t=A.find(p=>p.role==='cloak'),m=state.mission,[r1,r2]=m.mystery;
       act(s=>{s.mission.qi=r1-1;s.mission.qn=r1;s.mission.shouter=f[1].id});quizJudge(true);act(s=>{s.mission.qi=r2-1;s.mission.qn=r2;s.mission.shouter=t.id;s.mission.showA=false});quizJudge(true);
       act(s=>{s.mission.scores[f[0].id]=9});act(s=>finishPlay(s));renderHost();const h=document.querySelector('#host').innerText;endMission();const c=state.shieldCard;
       return {h,mode:c.mode,sec:c.secCount,secNames:c.secNames,wasted:c.wasted,f1:state.players.find(p=>p.id===f[1].id).shield,t:state.players.find(p=>p.id===t.id).shield,tname:t.name,f1name:f[1].name}}""")
     check("a mystery round's winner takes a secret shield in the ceremony", both["mode"] == "secret" and both["sec"] == 1 and both["secNames"] == [both["f1name"]] and both["f1"] == "secret", both)
-    check("a Traitor who wins a mystery round gets no shield and no ceremony tap — the host is told", both["t"] is None and both["wasted"] == [both["tname"]] and "is a Traitor" in both["h"], both)
+    check("a Cloak who wins a mystery round gets no shield and no ceremony tap — the host is told", both["t"] is None and both["wasted"] == [both["tname"]] and "is a Cloak" in both["h"], both)
     host.evaluate("()=>act(s=>{s.shieldCard.step=3})"); sync()
     tvs = tv.inner_text("#stage")
     check("TV card: 'the shield has been claimed', never the name", "has been claimed" in tvs and both["f1name"] not in tvs, tvs)
@@ -278,18 +278,18 @@ with sync_playwright() as p:
     check("mission settings are remembered for the next time", pref["total"] == 5 and "five" not in pref["rules"].lower(), pref)
     fresh(8)
     lin = host.evaluate("""()=>{const txt=()=>document.querySelector('#host').innerText;openTable();renderHost();const talk=txt();act(s=>{s.table.stage='votes'});renderHost();const votes=txt();
-      act(s=>{s.table.votes[s.players[1].id]=3;s.table.stage='banish'});renderHost();const ban=txt();
-      const v=state.players.find(p=>p.role==='faithful');banish(v.id);askGo();revealRole();renderHost();const rev=txt(),foot=document.querySelector('#host .foot').innerText;
+      act(s=>{s.table.votes[s.players[1].id]=3;s.table.stage='exile'});renderHost();const ban=txt();
+      const v=state.players.find(p=>p.role==='candle');exile(v.id);askGo();revealRole();renderHost();const rev=txt(),foot=document.querySelector('#host .foot').innerText;
       return {talk,votes,ban,rev,foot}}""")
-    check("Reckoning, step by step: talk has no vote counter or banish list", "Table talk" in lin["talk"] and "votes counted" not in lin["talk"] and "Most votes" not in lin["talk"] and "Talk’s over" in lin["talk"], lin["talk"][:300])
-    check("…the boards come next, then the banishment with the leader picked out", "The boards" in lin["votes"] and "The banishment" in lin["ban"] and "Most votes" in lin["ban"], lin["ban"][:300])
-    check("first banishment: the host is led into the ghost lore", "becomes the first Ghost" in lin["foot"], lin["foot"])
+    check("Reckoning, step by step: talk has no vote counter or exile list", "Table talk" in lin["talk"] and "votes counted" not in lin["talk"] and "Most votes" not in lin["talk"] and "Talk’s over" in lin["talk"], lin["talk"][:300])
+    check("…the boards come next, then the exile with the leader picked out", "The boards" in lin["votes"] and "The exile" in lin["ban"] and "Most votes" in lin["ban"], lin["ban"][:300])
+    check("first exile: the host is led into the ghost lore", "becomes the first Ghost" in lin["foot"], lin["foot"])
     host.evaluate("()=>{const b=[...document.querySelectorAll('#host .foot button')].find(x=>/first Ghost/.test(x.textContent));b.click()}"); sync()
     gl = host.inner_text("#host")
     check("ghost lore says Ghosts blindfold when the players do", "when the living put their blindfolds on, so do the Ghosts" in gl and host.evaluate("()=>state.ghostIntroDone===true"), gl[:400])
     check("TV shows the Ghosts' rules, blindfolds included", "The Ghosts" in tv.inner_text("#stage") and "so do the Ghosts" in tv.inner_text("#stage"), tv.inner_text("#stage")[:300])
     nt = host.evaluate("""()=>{startNight();beginNight();const txt=()=>document.querySelector('#host').innerText,sc=nightScript(state.night,state);renderHost();const l0=txt();
-      const pk=sc.findIndex(l=>norm(l).pick);act(s=>{s.night.step=pk});renderHost();const lp=txt();act(s=>{s.night.victimId=s.players.find(p=>p.alive&&p.role==='faithful').id;s.night.step=sc.length-1});renderHost();const le=txt();
+      const pk=sc.findIndex(l=>norm(l).pick);act(s=>{s.night.step=pk});renderHost();const lp=txt();act(s=>{s.night.victimId=s.players.find(p=>p.alive&&p.role==='candle').id;s.night.step=sc.length-1});renderHost();const le=txt();
       return {first:norm(sc[0]).tv,l0,lp,le}}""")
     check("night: blindfolds on for the Ghosts too", "Ghosts too" in nt["first"], nt["first"])
     check("night: the victim picker appears only on the pointing lines", "victim — tap as they point" not in nt["l0"].lower() and "victim — tap as they point" in nt["lp"].lower() and "victim — tap as they point" not in nt["le"].lower() and "Victim:" in nt["le"], {k: v[:200] for k, v in nt.items()})
@@ -303,48 +303,48 @@ with sync_playwright() as p:
     check("the Dilemma's lone SHIELD is public (the TV already named them)", dl["mode"] == "public" and dl["pub"] == [dl["name"]] and dl["sh"] == "public", dl)
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
-    # ---- v16.1: every board recorded, the Warrior, shields shown at the table, banter, drumroll, new missions, seats, undo ----
+    # ---- v16.1: every board recorded, the Champion, shields shown at the table, banter, drumroll, new missions, seats, undo ----
     fresh(8)
-    wr = host.evaluate("""()=>{pickMission('estimate');renderHost();const h=document.querySelector('#host').innerText;mWin('public');mWarrior();const pz=prizeOf_(state.mission).tv.join(' ');startMission();startMission();const A=aliveOf(state);
+    wr = host.evaluate("""()=>{pickMission('estimate');renderHost();const h=document.querySelector('#host').innerText;mWin('public');mChampion();const pz=prizeOf_(state.mission).tv.join(' ');startMission();startMission();const A=aliveOf(state);
       act(s=>{s.mission.scores={[A[2].id]:5,[A[3].id]:1};finishPlay(s)});const win=state.mission.winId===A[2].id;endMission();renderHost();const hs=document.querySelector('#host').innerText;
-      const w=state.warrior;act(s=>{s.shieldCard.step=3});return {h,pz,hs,win,w:w&&w.id===A[2].id,warrior:state.shieldCard.warrior,name:A[2].name}}""")
+      const w=state.champion;act(s=>{s.shieldCard.step=3});return {h,pz,hs,win,w:w&&w.id===A[2].id,champion:state.shieldCard.champion,name:A[2].name}}""")
     sync(); tvw = tv.inner_text("#stage")
     wr.update(host.evaluate("""()=>{const A=aliveOf(state);act(s=>{s.phase='day'});pickMission('snap');renderHost();const h2=document.querySelector('#host').innerText;act(s=>{s.phase='day';s.mission=null});
       return {shield:state.players.find(p=>p.id===A[2].id).shield,h2}}"""))
-    check("the dagger is offered before a mission; with the public shield the prize card names the Warrior", "Also give the winner the dagger?" in wr["h"] and "Warrior — shield and dagger" in wr["pz"], wr)
-    check("the Warrior takes the public shield and the dagger, and is told they may lay both down", wr["win"] and wr["w"] and wr["warrior"] and wr["shield"] == "public" and "lay both down" in wr["hs"], wr)
-    check("one dagger a round", "already holds tonight’s dagger — one a round" in wr["h2"], wr["h2"][:400])
-    check("TV card names tonight's Warrior", wr["name"] in tvw and "Warrior" in tvw, tvw[:300])
-    bal = host.evaluate("""()=>{openTable();const A=aliveOf(state),w=state.warrior.id;act(s=>{s.table.stage='votes'});const order=[];
+    check("the blade is offered before a mission; with the public shield the prize card names the Champion", "Also give the winner the blade?" in wr["h"] and "Champion — shield and blade" in wr["pz"], wr)
+    check("the Champion takes the public shield and the blade, and is told they may lay both down", wr["win"] and wr["w"] and wr["champion"] and wr["shield"] == "public" and "lay both down" in wr["hs"], wr)
+    check("one blade a round", "already holds tonight’s blade — one a round" in wr["h2"], wr["h2"][:400])
+    check("TV card names tonight's Champion", wr["name"] in tvw and "Champion" in tvw, tvw[:300])
+    bal = host.evaluate("""()=>{openTable();const A=aliveOf(state),w=state.champion.id;act(s=>{s.table.stage='votes'});const order=[];
       for(const p of A){const nv=nextVoter(state);order.push(nv.id);castBallot(nv.id, nv.id===A[0].id?A[1].id:A[0].id)}
       const v=state.table.votes;renderHost();const foot=document.querySelector('#host .foot').innerText;return {seatOrder:JSON.stringify(order)===JSON.stringify(A.map(p=>p.id)),v0:v[A[0].id],v1:v[A[1].id],n:A.length,wOn0:w!==A[0].id,foot,last:state.table.last===A[A.length-1].id}}""")
-    check("boards are taken in seat order and the Warrior's counts twice", bal["seatOrder"] and bal["v0"] == bal["n"] - 1 + (1 if bal["wOn0"] else 0) and bal["v1"] == 1 and bal["last"], bal)
-    check("the banishment opens once every board is in", "All boards in" in bal["foot"], bal["foot"])
+    check("boards are taken in seat order and the Champion's counts twice", bal["seatOrder"] and bal["v0"] == bal["n"] - 1 + (1 if bal["wOn0"] else 0) and bal["v1"] == 1 and bal["last"], bal)
+    check("the exile opens once every board is in", "All boards in" in bal["foot"], bal["foot"])
     sync(); tvb = tv.inner_text("#stage")
-    check("TV shows who voted for whom as each board comes in", "votes for" in tvb and "Warrior" in tvb, tvb[:300])
+    check("TV shows who voted for whom as each board comes in", "votes for" in tvb and "Champion" in tvb, tvb[:300])
     host.evaluate("()=>{const A=aliveOf(state);castBallot(A[3].id,'blank')}")
-    check("a blank board is recorded and counts for nobody", host.evaluate("()=>state.table.ballots[aliveOf(state)[3].id]==='blank' && Object.values(state.table.votes).reduce((a,b)=>a+b,0)===aliveOf(state).length-1+(state.warrior.id===aliveOf(state)[3].id?0:1)"))
+    check("a blank board is recorded and counts for nobody", host.evaluate("()=>state.table.ballots[aliveOf(state)[3].id]==='blank' && Object.values(state.table.votes).reduce((a,b)=>a+b,0)===aliveOf(state).length-1+(state.champion.id===aliveOf(state)[3].id?0:1)"))
     host.evaluate("()=>{clearBallots();act(s=>{s.table.stage='talk'})}")
-    sh = host.evaluate("""()=>{const A=aliveOf(state),w=state.warrior.id,other=A.find(p=>p.shield===null&&p.id!==w);act(s=>{s.players.find(p=>p.id===other.id).shield='secret'});renderHost();
-      const t0=document.querySelector('#host').innerText,plainBtn=/show their shield/i.test(t0),remind=/lay down your shield and your dagger/.test(t0),wBtn=[...document.querySelectorAll('#host button')].some(b=>/lays down shield and dagger/.test(b.textContent));
-      warriorImmunity();act(s=>{s.table.stage='votes'});castBallot(A.find(p=>p.id!==w).id,w);const refused=!state.table.ballots[A.find(p=>p.id!==w).id];
-      act(s=>{s.table.stage='banish'});renderHost();const inList=[...document.querySelectorAll('#host .plist button')].some(b=>b.textContent.includes(state.players.find(p=>p.id===w).name));
-      return {plainBtn,remind,wBtn,immune:state.table.immune.includes(w),shield:state.players.find(p=>p.id===w).shield,dagger:warriorOf(state),refused,inList}}""")
-    check("only the Warrior may buy immunity — a plain shield can't be shown — and the host reminds them at the table", not sh["plainBtn"] and sh["remind"] and sh["wBtn"], sh)
-    check("the Warrior lays down shield and dagger: immune from this vote, both gone", sh["immune"] and sh["shield"] is None and sh["dagger"] is None and sh["refused"] and not sh["inList"], sh)
+    sh = host.evaluate("""()=>{const A=aliveOf(state),w=state.champion.id,other=A.find(p=>p.shield===null&&p.id!==w);act(s=>{s.players.find(p=>p.id===other.id).shield='secret'});renderHost();
+      const t0=document.querySelector('#host').innerText,plainBtn=/show their shield/i.test(t0),remind=/lay down your shield and your blade/.test(t0),wBtn=[...document.querySelectorAll('#host button')].some(b=>/lays down shield and blade/.test(b.textContent));
+      championImmunity();act(s=>{s.table.stage='votes'});castBallot(A.find(p=>p.id!==w).id,w);const refused=!state.table.ballots[A.find(p=>p.id!==w).id];
+      act(s=>{s.table.stage='exile'});renderHost();const inList=[...document.querySelectorAll('#host .plist button')].some(b=>b.textContent.includes(state.players.find(p=>p.id===w).name));
+      return {plainBtn,remind,wBtn,immune:state.table.immune.includes(w),shield:state.players.find(p=>p.id===w).shield,blade:championOf(state),refused,inList}}""")
+    check("only the Champion may buy immunity — a plain shield can't be shown — and the host reminds them at the table", not sh["plainBtn"] and sh["remind"] and sh["wBtn"], sh)
+    check("the Champion lays down shield and blade: immune from this vote, both gone", sh["immune"] and sh["shield"] is None and sh["blade"] is None and sh["refused"] and not sh["inList"], sh)
     sync()
-    check("TV marks what the Warrior laid down", "laid down shield and dagger" in tv.inner_text("#stage"), tv.inner_text("#stage")[:300])
-    bt = host.evaluate("""()=>{act(s=>{s.table.stage='votes';s.table.immune=[]});const A=aliveOf(state),f=A.find(p=>p.role==='faithful'&&!p.shield);for(const p of A){castBallot(p.id,p.id===f.id?A.find(q=>q.id!==f.id).id:f.id)}
-      act(s=>{s.table.stage='banish'});banish(f.id);askGo();renderHost();const t0=document.querySelector('#host').innerText;const hold=!!document.querySelector('#host .foot button.hold'),foot=document.querySelector('#host .foot').innerText;return {m:state.table.margin,t0,hold,foot}}""")
+    check("TV marks what the Champion laid down", "laid down shield and blade" in tv.inner_text("#stage"), tv.inner_text("#stage")[:300])
+    bt = host.evaluate("""()=>{act(s=>{s.table.stage='votes';s.table.immune=[]});const A=aliveOf(state),f=A.find(p=>p.role==='candle'&&!p.shield);for(const p of A){castBallot(p.id,p.id===f.id?A.find(q=>q.id!==f.id).id:f.id)}
+      act(s=>{s.table.stage='exile'});exile(f.id);askGo();renderHost();const t0=document.querySelector('#host').innerText;const hold=!!document.querySelector('#host .foot button.hold'),foot=document.querySelector('#host .foot').innerText;return {m:state.table.margin,t0,hold,foot}}""")
     check("a near-unanimous vote reads as clear; the host gets a line about the margin", bt["m"] in ("clear", "unanimous") and any(x in bt["t0"] for x in ["made up its mind", "No great mystery", "Unanimous", "Every board"]), bt)
-    check("the banished player says it themselves, so the reveal is one tap — no drumroll", not bt["hold"] and "They’ve said it" in bt["foot"], bt)
+    check("the exiled player says it themselves, so the reveal is one tap — no drumroll", not bt["hold"] and "They’ve said it" in bt["foot"], bt)
     host.evaluate("()=>{[...document.querySelectorAll('#host .foot button')].find(b=>/said it/.test(b.textContent)).click()}"); sync(); tv.wait_for_timeout(2600)
-    check("the tap shows the role; a Faithful gets the gold rays", host.evaluate("()=>state.table.step===1 && !state.table.roll") and tv.evaluate("()=>!!document.querySelector('#stage .rolecard .rays')"))
+    check("the tap shows the role; a Candle gets the gold rays", host.evaluate("()=>state.table.step===1 && !state.table.roll") and tv.evaluate("()=>!!document.querySelector('#stage .rolecard .rays')"))
     lg = host.inner_text("#host")
     check("after the reveal, a line about what the table found", any(x in lg for x in ["Innocent, and gone", "didn't have to lift a finger", "in a row"]), lg[:500])
-    host.evaluate("()=>{act(s=>{s.phase='reveal';s.table.step=0;s.table.banished=s.players.find(p=>p.role==='traitor').id;s.players.find(p=>p.role==='traitor').alive=false;s.voteLog.push({round:s.round,ballots:{},banished:s.table.banished,role:'traitor'})})}")
+    host.evaluate("()=>{act(s=>{s.phase='reveal';s.table.step=0;s.table.exiled=s.players.find(p=>p.role==='cloak').id;s.players.find(p=>p.role==='cloak').alive=false;s.voteLog.push({round:s.round,ballots:{},exiled:s.table.exiled,role:'cloak'})})}")
     host.evaluate("()=>revealRole()"); sync(); tv.wait_for_timeout(3400)
-    check("a Traitor reveal: the seal cracks and the red wash runs long", tv.evaluate("()=>!!document.querySelector('#stage .rolecard .crack') && /redlong/.test(document.querySelector('#flash').className)"), tv.evaluate("()=>({card:!!document.querySelector('#stage .rolecard'),crack:!!document.querySelector('#stage .crack'),flash:document.querySelector('#flash').className,txt:document.querySelector('#stage').innerText.slice(0,120)})"))
+    check("a Cloak reveal: the seal cracks and the red wash runs long", tv.evaluate("()=>!!document.querySelector('#stage .rolecard .crack') && /redlong/.test(document.querySelector('#flash').className)"), tv.evaluate("()=>({card:!!document.querySelector('#stage .rolecard'),crack:!!document.querySelector('#stage .crack'),flash:document.querySelector('#flash').className,txt:document.querySelector('#stage').innerText.slice(0,120)})"))
     check("vote history and the round snapshot never reach the TV", tv.evaluate("()=>!('voteLog' in state) && !('roundSnap' in state)"))
     # new missions
     fresh(8)
@@ -391,27 +391,27 @@ with sync_playwright() as p:
     check("rewind to the start of the round: back to that morning, log kept, and undo returns", rw["can"] and rw["back"]["phase"] == "day" and rw["back"]["round"] == rw["r"] and rw["back"]["pot"] == rw["pot"] and rw["back"]["mission"] is None and rw["back"]["log"] and rw["after"] == "table", rw)
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
-    # ---- v16.2: rules without the Seer or the host's numbers, a mission after a break, tie revotes, the drumroll name ----
+    # ---- v16.2: rules without the Witness or the host's numbers, a mission after a break, tie revotes, the drumroll name ----
     fresh(8)
     rn = host.evaluate("""()=>{const out={};for(const d of MISSIONS){if(!MSET[d.key])continue;pickMission(d.key);const r0=state.mission.rules;for(const [f] of MSET[d.key]){mSet(f,1);mSet(f,1)}out[d.key]={same:state.mission.rules===r0,digits:/[0-9]/.test(r0.replace('1, 2 or 3',''))};act(s=>{s.phase='day';s.mission=null})}return out}""")
     check("ticking a mission's numbers up never changes the rules on the TV, and they show no numbers", all(v["same"] and not v["digits"] for v in rn.values()), rn)
     host.evaluate("()=>act(s=>{s.phase='lobby';s.tvRules=true})"); sync()
-    check("the rules on the TV no longer mention the Seer", "Seer" not in tv.inner_text("#stage") and "Ghosts" in tv.inner_text("#stage"), tv.inner_text("#stage")[:200])
+    check("the rules on the TV no longer mention the Witness", "Witness" not in tv.inner_text("#stage") and "Ghosts" in tv.inner_text("#stage"), tv.inner_text("#stage")[:200])
     mg = host.evaluate("()=>{act(s=>{s.tvRules=false;s.phase='day'});startBreak('mingle');renderHost();const f=document.querySelector('#host .foot').innerText;[...document.querySelectorAll('#host .foot button')].find(b=>/Another mission/.test(b.textContent)).click();return {f,phase:state.phase,mingle:state.mingle}}")
     check("after a mingle, another mission is offered next to the Reckoning", "Another mission" in mg["f"] and "Reckoning" in mg["f"] and mg["phase"] == "day" and mg["mingle"] is None, mg)
     dn = host.evaluate("()=>{startBreak('dinner');renderHost();return document.querySelector('#host .foot').innerText}")
     check("…and after dinner too", "Another mission" in dn, dn)
     rv = host.evaluate("""()=>{openTable();const A=aliveOf(state);act(s=>{s.table.stage='votes'});A.forEach((p,i)=>castBallot(p.id,i%2?A[0].id:A[1].id));
-      act(s=>{s.table.stage='banish'});renderHost();const btn=[...document.querySelectorAll('#host button')].find(b=>/^Revote between/.test(b.textContent));if(!btn)return {btn:false};btn.click();
+      act(s=>{s.table.stage='exile'});renderHost();const btn=[...document.querySelectorAll('#host button')].find(b=>/^Revote between/.test(b.textContent));if(!btn)return {btn:false};btn.click();
       const t=state.table;castBallot(A[2].id,A[3].id);const refused=!t.ballots||!state.table.ballots[A[2].id];renderHost();
       const grid=[...document.querySelectorAll('#host .plist button')].map(b=>b.querySelector('.nm')&&b.querySelector('.nm').textContent).filter(Boolean);
       return {btn:true,label:btn.textContent,revote:state.table.revote,stage:state.table.stage,refused,grid,a0:A[0].name,a1:A[1].name,ballots:Object.keys(state.table.ballots).length}}""")
     check("a tie offers a revote between the tied players only", rv.get("btn") and rv["stage"] == "votes" and len(rv["revote"]) == 2 and rv["refused"] and sorted(rv["grid"]) in (sorted([rv["a0"], rv["a1"]]), [rv["a0"]], [rv["a1"]]) and rv["ballots"] == 0, rv)
     sync()
     check("TV: 'A tie. Vote again.' with only the tied names", "Vote again" in tv.inner_text("#stage") and rv["a0"] in tv.inner_text("#stage"), tv.inner_text("#stage")[:200])
-    host.evaluate("()=>{const A=aliveOf(state);act(s=>{s.table.stage='banish'});banish(A[0].id);askGo()}"); sync(); tv.wait_for_timeout(2400)
+    host.evaluate("()=>{const A=aliveOf(state);act(s=>{s.table.stage='exile'});exile(A[0].id);askGo()}"); sync(); tv.wait_for_timeout(2400)
     lay = tv.evaluate("()=>[...document.querySelectorAll('#stage .typed span')].map(e=>getComputedStyle(e).opacity+'|'+e.getAnimations().length)")
-    check("the banished name's letters finish their animation (no per-letter layers left to box the glow)", lay and all(x.split("|")[1] == "0" and x.split("|")[0] == "1" for x in lay), lay)
+    check("the exiled name's letters finish their animation (no per-letter layers left to box the glow)", lay and all(x.split("|")[1] == "0" and x.split("|")[0] == "1" for x in lay), lay)
     host.evaluate("()=>holdEnd(true)")
 
     # the floor mist: no hard vertical edges where its repeating tiles meet (a blob crossing a tile edge was cut off there)
@@ -428,7 +428,7 @@ with sync_playwright() as p:
     mp.close()
     check("the floor mist has no hard vertical edges", max(jumps) < 0.8, jumps)
 
-    # ---- v16.5: the count, the final at five, the awards, the turned Traitors, variation ----
+    # ---- v16.5: the count, the final at five, the awards, the turned Cloaks, variation ----
     fresh(8)
     nd = host.evaluate("""()=>{openTable();act(s=>{s.table.stage='votes'});const A=aliveOf(state),a=A[6],b=A[7];
       castBallot(A[0].id,a.id);castBallot(A[1].id,b.id);castBallot(A[2].id,a.id);castBallot(A[3].id,b.id);renderHost();const h=document.querySelector('#host').innerText;
@@ -438,21 +438,21 @@ with sync_playwright() as p:
     check("five left at the start of a round: it is the final, automatically", f5["fin"] and f5["alive"] == 5 and "five or fewer" in f5["log"], f5)
     sm = host.evaluate("""()=>{act(s=>{s.phase='day'});pickMission('likely');const st=state.mission.stage;startMission();return {skip:st==='rules'&&state.mission.stage==='play'}}""")
     check("Most Likely To has no prize to set, so it starts straight from the brief", sm["skip"], sm)
-    aw = host.evaluate("""()=>{newGame();startGame({names:['Annie','Ryan','Tom','Sophie','Marcus','Priya','Jess','Oliver'],traitors:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});
-      act(s=>{s.players.forEach((p,i)=>p.role=i<2?'traitor':'faithful');s.phase='day'});const P=state.players;
-      act(s=>{s.voteLog=[{round:1,ballots:{[P[2].id]:P[0].id,[P[3].id]:P[0].id,[P[4].id]:P[5].id,[P[5].id]:P[4].id},banished:P[0].id,role:'traitor'},{round:2,ballots:{[P[2].id]:P[1].id,[P[4].id]:P[3].id,[P[5].id]:P[3].id},banished:P[3].id,role:'faithful'}];
-        s.players[0].alive=false;s.players[3].alive=false;s.players[6].role='traitor';s.players[6].recruited={round:1,mode:'recruit'};s.players[7].refused=[{round:2,mode:'recruit'}];s.stats={wins:{[P[4].id]:2},shields:{},murders:[{id:P[5].id,round:1}]};s.players[5].alive=false});
-      startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));act(s=>{s.final2.order=aliveOf(s).filter(p=>p.role==='traitor').map(p=>p.id);s.final2.revealed=s.final2.order.length;s.final2.order.forEach(id=>s.final2.votes[id]='share')});finishGame();
+    aw = host.evaluate("""()=>{newGame();startGame({names:['Annie','Ryan','Tom','Sophie','Marcus','Priya','Jess','Oliver'],cloaks:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});
+      act(s=>{s.players.forEach((p,i)=>p.role=i<2?'cloak':'candle');s.phase='day'});const P=state.players;
+      act(s=>{s.voteLog=[{round:1,ballots:{[P[2].id]:P[0].id,[P[3].id]:P[0].id,[P[4].id]:P[5].id,[P[5].id]:P[4].id},exiled:P[0].id,role:'cloak'},{round:2,ballots:{[P[2].id]:P[1].id,[P[4].id]:P[3].id,[P[5].id]:P[3].id},exiled:P[3].id,role:'candle'}];
+        s.players[0].alive=false;s.players[3].alive=false;s.players[6].role='cloak';s.players[6].converted={round:1,mode:'convert'};s.players[7].refused=[{round:2,mode:'convert'}];s.stats={wins:{[P[4].id]:2},shields:{},murders:[{id:P[5].id,round:1}]};s.players[5].alive=false});
+      startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));act(s=>{s.final2.order=aliveOf(s).filter(p=>p.role==='cloak').map(p=>p.id);s.final2.revealed=s.final2.order.length;s.final2.order.forEach(id=>s.final2.votes[id]='share')});finishGame();
       const a=state.awards;return {phase:state.phase,a:a.map(x=>x.title+':'+x.names.join('+')),n:P[6].name,refn:P[7].name}}""")
     sync(); tvf = tv.inner_text("#stage")
-    check("the end roll marks a recruited Traitor, and a Faithful who refused", "recruited, round 1" in tvf and "refused the Traitors" in tvf, tvf[:600])
+    check("the end roll marks a converted Cloak, and a Candle who refused", "converted, round 1" in tvf and "refused the Cloaks" in tvf, tvf[:600])
     check("end-of-game awards come from the record", any(x.startswith("The Sharpest Eye:") for x in aw["a"]) and any(x.startswith("Mission Machine:") for x in aw["a"]) and any(x.startswith("Couldn’t Be Bought:") for x in aw["a"]) and any(x.startswith("First Blood:") for x in aw["a"]), aw)
     host.evaluate("()=>act(s=>{s.finalStep=1})"); sync(); tva = tv.inner_text("#stage")
     check("the host calls the awards and the TV shows them", "The Awards" in tva and "Sharpest Eye" in tva and "awards" in host.inner_text("#host").lower(), tva[:300])
     vary = host.evaluate("()=>({t:[1,2,3].map(r=>SAY.table(r)),m:[1,2].map(r=>SAY.morningMurder('X',r)),n:[1,2].map(r=>{const s2=JSON.parse(JSON.stringify(state));s2.round=r;s2.phase='night';return nightScript({mode:'murder',step:0},s2)[0].say})})")
     check("key lines change from round to round", len(set(vary["t"])) == 3 and len(set(vary["m"])) == 2 and len(set(vary["n"])) == 2, vary)
     card = tv.evaluate("()=>PHASECARDS.night0({})[3]")
-    check("'The Traitors Are Chosen' holds for over five seconds before fading into the night", card and card >= 5000, card)
+    check("'The Cloaks Are Chosen' holds for over five seconds before fading into the night", card and card >= 5000, card)
 
     # full screen for a laptop cast to the TV: a button (beside "Enable sound" until the sound is on), the F key, a double-click
     fs = b.new_page(viewport={"width": 1280, "height": 720}); fs.on("pageerror", lambda e: errs.append("fs: " + str(e)))

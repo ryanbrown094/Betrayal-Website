@@ -15,14 +15,14 @@ with sync_playwright() as p:
     api.delete(URL + "api/state", headers={"X-Pin": PIN})
     host = page(390, 844, "#host")
     host.fill("#names", "\n".join(NAMES)); host.fill("#pinset", PIN); host.click("text=Start game"); host.wait_for_timeout(1500)
-    host.evaluate("()=>act(s=>{s.players.forEach((p,i)=>p.role=[1,4].includes(i)?'traitor':'faithful');s.phase='day';s.startedAt=now()})"); host.wait_for_timeout(1500)
+    host.evaluate("()=>act(s=>{s.players.forEach((p,i)=>p.role=[1,4].includes(i)?'cloak':'candle');s.phase='day';s.startedAt=now()})"); host.wait_for_timeout(1500)
     # 1 · PIN survives a reload (localStorage)
     host.reload(); host.wait_for_timeout(2500)
     check("host phone reload keeps the PIN and the game", "pick a mission" in host.inner_text("body"))
     # 2 · second host with a stale PIN in storage is shown the gate and does NOT lock itself out
     h2 = page(390, 844, "#host")
-    h2.evaluate("()=>localStorage.setItem('traitors-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
-    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('traitors-pin')") in (None, ""))
+    h2.evaluate("()=>localStorage.setItem('cloaks-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
+    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('cloaks-pin')") in (None, ""))
     h2.fill("#pin", PIN); h2.click("text=Unlock"); h2.wait_for_timeout(2500)
     check("right PIN still unlocks after a stale one (no lockout)", "pick a mission" in h2.inner_text("body"), h2.inner_text("body")[:120])
     # 3 · both phones act from the same version: one wins, the other is refreshed with a toast, states converge
@@ -46,7 +46,7 @@ with sync_playwright() as p:
     tv.unroute("**/api/state"); tv.wait_for_timeout(2500)
     check("badge clears when polls succeed again", not tv.evaluate("()=>document.querySelector('#net').classList.contains('on')"))
     # 6 · the night's victim is not on the wire until the line that shows it
-    host.evaluate("()=>{openTable();banish(state.players[6].id);askGo();revealRole();startNight();beginNight();act(s=>{s.night.victimId=s.players[2].id;s.night.step=3})}"); host.wait_for_timeout(2500)
+    host.evaluate("()=>{openTable();exile(state.players[6].id);askGo();revealRole();startNight();beginNight();act(s=>{s.night.victimId=s.players[2].id;s.night.step=3})}"); host.wait_for_timeout(2500)
     pub = api.get(URL + "api/state").json()["state"]["night"]
     check("victim hidden from the public view before the murder line", pub["victimId"] is None and pub["revealStep"] > 3, pub)
     host.evaluate("()=>act(s=>{s.night.step=s.night.revealStep})"); host.wait_for_timeout(2500)

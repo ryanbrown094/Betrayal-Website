@@ -161,9 +161,9 @@ export class Registry {
       const [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); return json({ pass: p });
     }
-    if (url.pathname === "/open") { // development only (OPEN_ACCESS): a room without a pass
+    if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
-      return json({ room: await this.room(env, expires, null), expires });
+      return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires });
     }
     if (url.pathname === "/redeem") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
@@ -243,6 +243,9 @@ export default {
     if (p === "/api/games" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
       if (env.OPEN_ACCESS === "1" && !b.pass) return call(env, "/open");
+      // the master passcode (Worker secret MASTER_PASS) opens a fresh room every time, for testing
+      const up = (v) => String(v || "").trim().toUpperCase();
+      if (env.MASTER_PASS && same(up(b.pass), up(env.MASTER_PASS))) return call(env, "/open", { master: true });
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass }) });
     }
@@ -270,6 +273,8 @@ export default {
     }
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
+    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy)\/?$/);
+    if (page) return env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).
     return env.ASSETS.fetch(req);
   },

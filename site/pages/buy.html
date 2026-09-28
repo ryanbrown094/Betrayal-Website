@@ -1,0 +1,37 @@
+<!-- title: Buy a party pass -->
+<div class="eyebrow">checkout</div>
+<h1>Buy a party pass</h1>
+
+<div class="panel">
+<div class="price" id="price"><span class="ph">[£00]</span></div>
+<p style="margin:6px 0 0">One party pass: one game room for one party of 8 to 24 players, open for 48 hours from when you first use it. Price includes VAT where it applies.</p>
+<ul>
+<li>Your pass is shown as soon as you’ve paid, and emailed to you.</li>
+<li>Use it whenever you like: the 48 hours start only when you open your room.</li>
+<li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the host.</li>
+</ul>
+
+<label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
+<label class="check"><input type="checkbox" id="c2"> <span>I want my pass supplied straight away. I understand that once I use it to open a room I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href="/refunds">refunds</a>).</span></label>
+
+<button class="btn" id="pay" disabled>Pay securely with Stripe</button>
+<p id="paymsg" style="font-size:15.5px;margin:12px 0 0"></p>
+</div>
+
+<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you’ll come back here and your pass will be waiting on the home page.</p>
+
+<script>
+"use strict";
+// Checkout settings. stripeUrl: a Stripe Payment Link whose success URL is https://<this domain>/claim?session_id={CHECKOUT_SESSION_ID}.
+const BUY = { stripeUrl: "", price: "" };
+const $ = s => document.querySelector(s);
+if (BUY.price) $("#price").textContent = BUY.price;
+const ready = () => $("#c1").checked && $("#c2").checked;
+function update() {
+  $("#pay").disabled = !BUY.stripeUrl || !ready();
+  $("#paymsg").textContent = !BUY.stripeUrl ? "Party passes go on sale soon. Payments aren’t open yet." : ready() ? "" : "Tick both boxes to continue.";
+}
+$("#c1").onchange = $("#c2").onchange = update;
+$("#pay").onclick = () => { if (BUY.stripeUrl && ready()) location.href = BUY.stripeUrl };
+update();
+</script>

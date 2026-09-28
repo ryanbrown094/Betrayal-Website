@@ -32,7 +32,7 @@ SOCIAL = {
   "story": (1080, 1920, f"""<div style="position:relative;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(900px 900px at 50% 10%,#2a1630,transparent 70%),#09070a;text-align:center">
     <div class="ey" style="margin-top:220px">a dinner-party game</div><img src="{logo('cloak-and-candle-lockup-stacked-rosegold')}" style="width:640px;margin:50px auto 40px;display:block">
     <div class="tag" style="font-size:46px;padding:0 120px">Trust no one. Not even the host who poured your wine.</div>
-    <img src="{shot('tv-09-banished.jpg')}" style="position:absolute;left:-240px;bottom:180px;width:1560px;opacity:.85;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)">
+    <img src="{shot('tv-09-exiled.jpg')}" style="position:absolute;left:-240px;bottom:180px;width:1560px;opacity:.85;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent)">
     <div class="ey" style="position:absolute;left:0;right:0;bottom:150px;color:#e8d0c8">4–14 players · your TV · one phone</div></div>"""),
   "palette": (1600, 900, "<div style='padding:70px;display:grid;grid-template-columns:repeat(5,1fr);gap:24px'>" + "".join(f"<div><div style='height:150px;border-radius:14px;background:{h};border:1px solid rgba(255,255,255,.08)'></div><div style='margin-top:10px;font:700 22px Alegreya Sans'>{n}</div><div style='font:400 18px Alegreya Sans;color:#877e78'>{h}</div></div>" for n, h in PALETTE) + "</div>"),
 }

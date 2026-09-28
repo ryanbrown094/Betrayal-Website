@@ -1,5 +1,5 @@
 /* ===================== CORE: store, helpers, actions, rules ===================== */
-const APPV = "1.0", SCHEMA = 11;
+const APPV = "1.1", SCHEMA = 12;
 const KEY = "candle-v1";
 const isHost = location.hash === "#host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
@@ -176,8 +176,8 @@ const P2 = (s, id) => s.players.find(p => p.id === id);
 const P = id => P2(state, id);
 const aliveOf = s => s.players.filter(p => p.alive);
 const alive = () => aliveOf(state);
-const traitors = () => alive().filter(p => p.role === "traitor");
-const faithful = () => alive().filter(p => p.role === "faithful");
+const cloaks = () => alive().filter(p => p.role === "cloak");
+const candles = () => alive().filter(p => p.role === "candle");
 // with Ghosts off, the dead simply leave: nobody watches, judges or plays on from beyond the table
 const ghostsOf = s => s.rules && s.rules.ghosts === false ? [] : s.players.filter(p => !p.alive && !p.left);
 const seated = s => s.players.filter(p => !p.left);
@@ -196,12 +196,12 @@ const isFinal = s => !!s && s.finalRound === s.round;
 /* ---------- the game plan: every choice the host makes before the game, then the game follows it ---------- */
 // rounds: 0 = decided by the table size (the final starts once five or fewer are left), or a fixed number (the last is the final)
 // perRound: missions a round (1, 2, or 0 = by the clock). dinnerAfter: the round dinner follows (0 = no dinner break).
-// kill: "poison" (the victim announces it at breakfast, then leaves) or "murder" (the victim leaves the table in the night, under blindfold)
+// kill: "poison" (the victim announces it at dawn, then leaves) or "murder" (the victim leaves the table in the night, under blindfold)
 // shield: "mix" (hidden in round-based missions, public otherwise) | "public" | "secret" | "off"
 const RULES0 = {
   rounds: 0, perRound: 0, dinnerAfter: 1, mingle: true, pool: null,
-  kill: "poison", ghosts: true, recruit: true, ultimatum: true, quests: true,
-  shield: "mix", dagger: true, warrior: true, seer: true, dilemma: true
+  kill: "poison", ghosts: true, convert: true, bargain: true, quests: true,
+  shield: "mix", blade: true, champion: true, witness: true, dilemma: true
 };
 const rulesIn = s => Object.assign({}, RULES0, (s && s.rules) || {});
 const killOf = s => rulesIn(s || state).kill === "murder" ? "murder" : "poison";
@@ -210,11 +210,17 @@ const ghostsOn = s => rulesIn(s || state).ghosts !== false;
 // (Pictionary's poisoned apple) is left alone.
 function kw(t, s) {
   if (t == null || killOf(s || state) !== "murder") return t;
-  return String(t).replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
+  return String(t).replace(/\bpoisonings\b/g, "murders").replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
 }
 const kwLines = (a, s) => a.map(l => { const x = norm(l); return { ...x, tv: kw(x.tv, s), say: kw(x.say, s) } });
-// rounds a table of n needs: two leave each round (a banishment and a night) until five or fewer, then the final
-const autoRounds = n => Math.max(1, Math.ceil(Math.max(0, n - 5) / 2)) + 1;
+// How a table shrinks: the Reckoning exiles two while more than sixteen sit at it, the night takes two victims from 12
+// alive, three from 20 — never below five. Rounds a table of n needs, the final included:
+const exilesAt = a => a > 16 ? 2 : 1;
+const killsAt = a => Math.max(1, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
+function roundsFrom(a) { let r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++ } return r }
+const autoRounds = n => roundsFrom(n);
+// about how many are left when a fixed plan's final round starts
+function aliveAtRound(a, round) { for (let r = 1; r < round && a > 5; r++) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a) } return a }
 const plannedRounds = s => rulesIn(s).rounds || autoRounds(seated(s).length);
 // missions the pool allows for this table: the Statue needs Ghosts; the Dilemma is only ever an add-on
 const poolOf = r => (Array.isArray(r.pool) && r.pool.length ? r.pool : MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key))
@@ -250,27 +256,28 @@ function nextPlanned(s) {
 // the prizes a mission carries, set from the plan (the host can still change them on the brief screen)
 function autoPrize(s, m) {
   const r = rulesIn(s), rounded = ROUNDED.includes(m.key);
-  m.seerOffer = false;
+  m.witnessOffer = false;
   if (!m.hasShield || m.key === "dilemma") { m.win = m.hasShield ? m.win : "none"; m.dag = "none"; return }
-  if (r.seer && seerOk(s)) { m.seerOffer = true; m.win = "none"; m.dag = "none"; return }
+  if (r.witness && witnessOk(s)) { m.witnessOffer = true; m.win = "none"; m.dag = "none"; return }
   m.win = r.shield === "off" ? "none" : r.shield === "public" ? "public" : r.shield === "secret" ? (rounded ? "secret" : "public") : rounded ? "secret" : "public";
   m.secN = 1;
-  // one dagger a round, on the first mission that can carry it; with the Warrior on, every other round it rides with the shield
+  // one blade a round, on the first mission that can carry it; with the Champion on, every other round it rides with the shield
   let dag = "none";
-  if (r.dagger && !warriorOf(s)) {
-    if (r.warrior && m.win !== "none" && s.round % 2 === 0) dag = "with";
+  if (r.blade && !championOf(s)) {
+    if (r.champion && m.win !== "none" && s.round % 2 === 0) dag = "with";
     else if (m.win === "none") dag = rounded ? "secret" : "public";
     else if (rounded) dag = "secret";
   }
-  if (!r.warrior && dag === "with") dag = "none";
+  if (!r.champion && dag === "with") dag = "none";
   m.dag = dag;
 }
 const clock = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
 const andList = a => a.length <= 1 ? (a[0] || "") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
-// 4–6 players get 1 Traitor (two could win at the first breakfast), 7–10 get 2, 11+ get 3
-function defaults(n) { return { t: n <= 6 ? 1 : n >= 11 ? 3 : 2 } }
-const maxTraitors = n => Math.max(1, Math.floor((n - 1) / 2));
+// Cloaks by table size: 8–10 get 2, 11–15 get 3, 16–22 get 4, 23–24 get 5 (1 below eight, for old tests)
+function defaults(n) { return { t: n <= 6 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 22 ? 4 : 5 } }
+const MINP = 8, MAXP = 24;
+const maxCloaks = n => Math.max(1, Math.floor((n - 1) / 2));
 // names longer than this crowd the candle rail and the Reckoning on the TV
 const NAMEMAX = 16;
 
@@ -334,10 +341,10 @@ function nightMarks(s) {
 /* ---------- setup ---------- */
 function startGame(cfg) {
   const players = cfg.names.map((n, i) => ({
-    id: "p" + i + "_" + (n.replace(/[^a-z0-9]/gi, "").toLowerCase() || "x"), name: n, role: "faithful",
+    id: "p" + i + "_" + (n.replace(/[^a-z0-9]/gi, "").toLowerCase() || "x"), name: n, role: "candle",
     alive: true, left: false, shield: null, revealed: false, color: COLORS[i % COLORS.length]
   }));
-  shuffle(players.slice()).slice(0, cfg.traitors).forEach(p => p.role = "traitor");
+  shuffle(players.slice()).slice(0, cfg.cloaks).forEach(p => p.role = "cloak");
   setPin(cfg.pin);
   const rules = cleanRules(cfg.rules), rounds = rules.rounds || autoRounds(players.length);
   store.save({
@@ -346,11 +353,11 @@ function startGame(cfg) {
     brand: { title: cfg.title || "Cloak & Candle", host: cfg.host || "the host" },
     phase: "lobby", round: 1, finalRound: rules.rounds === 1 ? 1 : null, roundMissions: 0,
     usedQuiz: [], usedWords: [], usedQuests: [], used: {}, done: {}, ghosts: {}, players,
-    pot: 0, potUnit: cfg.potUnit, potCap: cfg.potCap || 2000, wrongRule: cfg.wrongRule === "all" ? "all" : "traitors", missionsPlayed: 0, hostPin: cfg.pin,
-    log: [clock() + " Game created: " + players.length + " players, " + cfg.traitors + " traitors"],
+    pot: 0, potUnit: cfg.potUnit, potCap: cfg.potCap || 2000, wrongRule: cfg.wrongRule === "all" ? "all" : "cloaks", missionsPlayed: 0, hostPin: cfg.pin,
+    log: [clock() + " Game created: " + players.length + " players, " + cfg.cloaks + " cloaks"],
     tvRules: false, tvBlack: false, tvPause: false, replaySfx: 0, tvText: "large",
     night: null, mission: null, table: null, morning: null, shieldCard: null, mingle: null, endvote: null, final2: null,
-    seer: null, warrior: null, voteLog: [], quest: null, questTally: { done: 0, failed: 0 }, ghostIntroDone: false, prefs: {}, traitorMisses: 0, winner: null, prizeTo: null
+    witness: null, champion: null, voteLog: [], quest: null, questTally: { done: 0, failed: 0 }, ghostIntroDone: false, prefs: {}, cloakMisses: 0, winner: null, prizeTo: null
   });
 }
 function cleanRules(r) {
@@ -358,15 +365,21 @@ function cleanRules(r) {
   const int = (v, lo, hi, d) => { v = Math.round(+v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d };
   o.rounds = int(r.rounds, 0, 12, 0); o.perRound = int(r.perRound, 0, 2, 0); o.dinnerAfter = int(r.dinnerAfter, 0, 12, 1); o.mingle = r.mingle !== false;
   const keys = MISSIONS.filter(m => !m.addon).map(m => m.key); o.pool = Array.isArray(r.pool) ? r.pool.filter(k => keys.includes(k)) : null; if (o.pool && !o.pool.length) o.pool = null;
-  o.kill = r.kill === "murder" ? "murder" : "poison"; o.ghosts = r.ghosts !== false; o.recruit = r.recruit !== false; o.ultimatum = r.ultimatum !== false; o.quests = r.quests !== false;
-  o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.dagger = r.dagger !== false; o.warrior = r.warrior !== false && o.dagger && o.shield !== "off"; o.seer = r.seer !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
+  o.kill = r.kill === "murder" ? "murder" : "poison"; o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
+  o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.blade = r.blade !== false; o.champion = r.champion !== false && o.blade && o.shield !== "off"; o.witness = r.witness !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
   return o;
 }
 function newGame() { store.save(null) }
-const newTable = () => ({ stage: "talk", votes: {}, ballots: {}, last: null, immune: [], revote: null, showDots: false, banished: null, step: 0, talkEnd: null, talkDur: null, roll: null, margin: null });
+const newTable = () => ({ stage: "talk", votes: {}, ballots: {}, last: null, immune: [], revote: null, showDots: false, exiled: null, step: 0, talkEnd: null, talkDur: null, roll: null, margin: null });
 function openTable(log) {
   if (state && isFinal(state) && state.phase !== "endvote" && aliveOf(state).length <= 4) return openEndvote();
-  act(s => { s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable() }, log || "Reckoning opened");
+  act(s => { s.phase = "table"; s.mission = null; s.mingle = null; s.table = newTable(); if (!isFinal(s) && exilesAt(aliveOf(s).length) === 2) s.table.exiles = 2 }, log || "Reckoning opened");
+}
+// A big table (more than sixteen at the Reckoning) exiles twice: after the first reveal the boards go up again. The blade
+// has already fallen, so the second vote counts every board once and nobody may buy immunity.
+const secondVoteDue = s => !!s.table && s.table.exiles === 2 && !s.table.second && !isFinal(s) && aliveOf(s).length > 5;
+function secondVote() {
+  act(s => { if (!secondVoteDue(s)) return; const first = s.table.exiled; s.phase = "table"; s.table = { ...newTable(), exiles: 2, second: true, firstExiled: first }; return { log: "The second vote" } });
 }
 
 /* ---------- missions ---------- */
@@ -490,9 +503,9 @@ function rulesOf(m) {
 const hasPrizeStep = m => !!m && m.key !== "dilemma" && m.key !== "likely";
 // A mission's prizes. Each is won openly by the overall winner, or in secret in a mystery round (missions played in rounds only):
 //   m.win  the shield — "none" | "public" (the overall winner, named on TV) | "secret" (m.secN mystery rounds, one or two)
-//   m.dag  the dagger — "none" | "public" (the overall winner) | "secret" (a mystery round of its own)
-//          | "with" (it goes with the shield: one person holds both — the Warrior — openly or in secret, as the shield is)
-// One dagger a round. Only a Warrior may lay both down at the Reckoning to be safe from that banishment.
+//   m.dag  the blade — "none" | "public" (the overall winner) | "secret" (a mystery round of its own)
+//          | "with" (it goes with the shield: one person holds both — the Champion — openly or in secret, as the shield is)
+// One blade a round. Only a Champion may lay both down at the Reckoning to be safe from that exile.
 const WRONGABLE = ["quiz", "snap", "change"];
 // how a mystery round is won, mission by mission
 const MYST = {
@@ -503,48 +516,48 @@ const MYST = {
   change: { unit: "round", units: "rounds", how: "spots the change first", howN: "be first to spot the change in that round" }
 };
 const mystOf = m => MYST[m && m.key] || { unit: "round", units: "rounds", how: "wins it", howN: "win that one" };
-const daggerOk = (s, m) => !!m && rulesIn(s).dagger && !["dilemma", "likely"].includes(m.key) && !warriorOf(s) && !m.seerOffer;
-const warriorPrize = m => !!m && m.dag === "with" && m.win !== "none";
+const bladeOk = (s, m) => !!m && rulesIn(s).blade && !["dilemma", "likely"].includes(m.key) && !championOf(s) && !m.witnessOffer;
+const championPrize = m => !!m && m.dag === "with" && m.win !== "none";
 // the overall winner takes something named on the TV, so a tie at the top is worth settling
-const prizeRides = m => !!m && m.key !== "dilemma" && !m.seerOffer && (m.win === "public" || m.dag === "public" || (m.dag === "with" && m.win === "public"));
+const prizeRides = m => !!m && m.key !== "dilemma" && !m.witnessOffer && (m.win === "public" || m.dag === "public" || (m.dag === "with" && m.win === "public"));
 // one plain line for the host: who takes what, and how
 function prizeSummary(m) {
-  if (m.seerOffer) return "The winner takes the Seer (the TV says “a special prize”).";
+  if (m.witnessOffer) return "The winner takes the Witness (the TV says “a special prize”).";
   const n = m.secN || 1, bits = [];
   const u = mystOf(m);
-  if (warriorPrize(m)) bits.push(m.win === "public" ? "The overall winner becomes the Warrior — shield and dagger — named on TV." : "One hidden " + u.unit + ": whoever " + u.how + " becomes the Warrior — shield and dagger — in secret." + (n > 1 ? " A second hidden " + u.unit + " gives a shield on its own." : ""));
+  if (championPrize(m)) bits.push(m.win === "public" ? "The overall winner becomes the Champion — shield and blade — named on TV." : "One hidden " + u.unit + ": whoever " + u.how + " becomes the Champion — shield and blade — in secret." + (n > 1 ? " A second hidden " + u.unit + " gives a shield on its own." : ""));
   else {
     if (m.win === "public") bits.push("The overall winner takes a shield, named on TV.");
     if (m.win === "secret") bits.push(n > 1 ? "Two hidden " + u.units + ": whoever " + u.how + " takes a shield, in secret." : "One hidden " + u.unit + ": whoever " + u.how + " takes a shield, in secret.");
-    if (m.dag === "public") bits.push("The overall winner takes the dagger, named on TV.");
-    if (m.dag === "secret") bits.push("Another hidden " + u.unit + ": whoever " + u.how + " takes the dagger, in secret.");
+    if (m.dag === "public") bits.push("The overall winner takes the blade, named on TV.");
+    if (m.dag === "secret") bits.push("Another hidden " + u.unit + ": whoever " + u.how + " takes the blade, in secret.");
   }
-  return bits.join(" ") || "No shield, no dagger — the pot only.";
+  return bits.join(" ") || "No shield, no blade — the pot only.";
 }
 // The prize card: what the TV shows (one labelled line per prize, then the pot) and what the host reads out.
 function prizeOf_(m, fin, s) {
   s = s || state;
   const items = [], say = [], n = m.secN || 1, two = n > 1, u = mystOf(m);
-  const SH = "Whoever holds a shield cannot be poisoned tonight.", DG = "At tonight’s Reckoning, the dagger’s vote counts twice.";
-  if (m.seerOffer) { items.push({ ico: "eye", head: "A special prize", text: "The winner takes it. What it is stays secret." }); say.push("The winner of this one takes a special prize. What it is, I won't tell you — not yet.") }
-  else if (warriorPrize(m) && m.win === "public") {
-    items.push({ ico: "dagger", head: "The Warrior", text: "The overall winner takes the shield and the dagger together — named for all to see. " + SH + " " + DG + " And only a Warrior may lay both down at the Reckoning to be safe from the banishment." });
-    say.push("The overall winner becomes tonight's Warrior. That means two things. A shield: the Traitors cannot poison you tonight. And the dagger: at the Reckoning your vote counts twice. Only a Warrior may lay both down at the table, before the first board, to be safe from the banishment. And everyone will know who it is.");
-  } else if (warriorPrize(m)) {
-    items.push({ ico: "dagger", head: "The Warrior — hidden", text: "One " + u.unit + " of this mission — nobody will say which — makes the Warrior. " + cap1(u.howN) + " and you hold the shield and the dagger together, in secret. It isn't for winning the mission." });
-    say.push("Listen carefully. Hidden in this mission is the Warrior. One " + u.unit + " — I won't say which. " + cap1(u.howN) + ", and you hold a shield and the dagger, in secret. Not for winning the mission: for that one " + u.unit + ". The shield: the Traitors cannot poison you tonight. The dagger: at the Reckoning your vote counts twice — when the last board is in, the table sees where it fell, never whose it was. And only the Warrior may lay both down at the table to be safe from the banishment.");
+  const SH = "Whoever holds a shield cannot be poisoned tonight.", DG = "At tonight’s Reckoning, the blade’s vote counts twice.";
+  if (m.witnessOffer) { items.push({ ico: "eye", head: "A special prize", text: "The winner takes it. What it is stays secret." }); say.push("The winner of this one takes a special prize. What it is, I won't tell you — not yet.") }
+  else if (championPrize(m) && m.win === "public") {
+    items.push({ ico: "blade", head: "The Champion", text: "The overall winner takes the shield and the blade together — named for all to see. " + SH + " " + DG + " And only a Champion may lay both down at the Reckoning to be safe from the exile." });
+    say.push("The overall winner becomes tonight's Champion. That means two things. A shield: the Cloaks cannot poison you tonight. And the blade: at the Reckoning your vote counts twice. Only a Champion may lay both down at the table, before the first board, to be safe from the exile. And everyone will know who it is.");
+  } else if (championPrize(m)) {
+    items.push({ ico: "blade", head: "The Champion — hidden", text: "One " + u.unit + " of this mission — nobody will say which — makes the Champion. " + cap1(u.howN) + " and you hold the shield and the blade together, in secret. It isn't for winning the mission." });
+    say.push("Listen carefully. Hidden in this mission is the Champion. One " + u.unit + " — I won't say which. " + cap1(u.howN) + ", and you hold a shield and the blade, in secret. Not for winning the mission: for that one " + u.unit + ". The shield: the Cloaks cannot poison you tonight. The blade: at the Reckoning your vote counts twice — when the last board is in, the table sees where it fell, never whose it was. And only the Champion may lay both down at the table to be safe from the exile.");
     if (two) { items.push({ ico: "shield", head: "And a shield — hidden", text: "Another " + u.unit + " hides a shield on its own: " + u.howN + " and it's yours. " + SH }); say.push("And another " + u.unit + " hides a second shield, on its own.") }
-    if (m.dag === "public") { items.push({ ico: "dagger", head: "Dagger", text: "The overall winner takes it — named for all to see. " + DG }); say.push("And the overall winner takes the dagger.") }
+    if (m.dag === "public") { items.push({ ico: "blade", head: "Blade", text: "The overall winner takes it — named for all to see. " + DG }); say.push("And the overall winner takes the blade.") }
   } else {
-    if (m.win === "public") { items.push({ ico: "shield", head: "Shield", text: "The overall winner takes it — named for all to see. " + SH }); say.push("The overall winner takes a shield — and everyone will know who holds it. The Traitors cannot poison you tonight.") }
-    if (m.win === "secret") { items.push({ ico: "shield", head: two ? "Two shields — hidden" : "Shield — hidden", text: (two ? "Two " + u.units + " of this mission each hide a shield" : "One " + u.unit + " of this mission hides a shield") + " — nobody will say which. " + cap1(u.howN) + " and " + (two ? "one" : "it") + " is yours, in secret. It isn't for winning the mission. " + SH }); say.push("Listen carefully. Hidden in this mission " + (two ? "are two shields, each in one " + u.unit : "is a shield, in one " + u.unit) + ". " + cap1(u.howN) + " and " + (two ? "one" : "it") + " is yours — not for winning the mission, for that one " + u.unit + ". I won't tell you which " + (two ? u.units + " they are" : u.unit + " it is") + ", and I won't tell anyone who won " + (two ? "them" : "it") + ". The Traitors cannot poison a shield.") }
-    if (m.dag === "public") { items.push({ ico: "dagger", head: "Dagger", text: "The overall winner takes it — named for all to see. " + DG }); say.push((m.win === "secret" ? "And the overall winner" : "The overall winner") + " takes the dagger: at tonight's Reckoning, their vote counts twice.") }
-    if (m.dag === "secret") { items.push({ ico: "dagger", head: "Dagger — hidden", text: (m.win === "secret" ? "A different " : "One ") + u.unit + " hides the dagger. " + cap1(u.howN) + " and it's yours, in secret: your vote counts twice at tonight's Reckoning. The table sees where it fell — never whose." }); say.push((m.win === "secret" ? "And a different " : m.win === "public" ? "And one " : "One ") + u.unit + " hides the dagger. " + cap1(u.howN) + ", and at tonight's Reckoning your vote counts twice. When the last board is in, everyone sees where the dagger fell — never whose it was.") }
-    if (!items.length) { items.push({ ico: "scroll", head: fin ? "No shields in the final" : "No shield, no dagger", text: fin ? "There is no night left to survive. Play for the pot." : "Play for the pot — and for your reputation." }); say.push(fin ? "No shields now. There is no night left to survive." : "No shield and no dagger in this one. You are playing for the pot — and for your reputation.") }
+    if (m.win === "public") { items.push({ ico: "shield", head: "Shield", text: "The overall winner takes it — named for all to see. " + SH }); say.push("The overall winner takes a shield — and everyone will know who holds it. The Cloaks cannot poison you tonight.") }
+    if (m.win === "secret") { items.push({ ico: "shield", head: two ? "Two shields — hidden" : "Shield — hidden", text: (two ? "Two " + u.units + " of this mission each hide a shield" : "One " + u.unit + " of this mission hides a shield") + " — nobody will say which. " + cap1(u.howN) + " and " + (two ? "one" : "it") + " is yours, in secret. It isn't for winning the mission. " + SH }); say.push("Listen carefully. Hidden in this mission " + (two ? "are two shields, each in one " + u.unit : "is a shield, in one " + u.unit) + ". " + cap1(u.howN) + " and " + (two ? "one" : "it") + " is yours — not for winning the mission, for that one " + u.unit + ". I won't tell you which " + (two ? u.units + " they are" : u.unit + " it is") + ", and I won't tell anyone who won " + (two ? "them" : "it") + ". The Cloaks cannot poison a shield.") }
+    if (m.dag === "public") { items.push({ ico: "blade", head: "Blade", text: "The overall winner takes it — named for all to see. " + DG }); say.push((m.win === "secret" ? "And the overall winner" : "The overall winner") + " takes the blade: at tonight's Reckoning, their vote counts twice.") }
+    if (m.dag === "secret") { items.push({ ico: "blade", head: "Blade — hidden", text: (m.win === "secret" ? "A different " : "One ") + u.unit + " hides the blade. " + cap1(u.howN) + " and it's yours, in secret: your vote counts twice at tonight's Reckoning. The table sees where it fell — never whose." }); say.push((m.win === "secret" ? "And a different " : m.win === "public" ? "And one " : "One ") + u.unit + " hides the blade. " + cap1(u.howN) + ", and at tonight's Reckoning your vote counts twice. When the last board is in, everyone sees where the blade fell — never whose it was.") }
+    if (!items.length) { items.push({ ico: "scroll", head: fin ? "No shields in the final" : "No shield, no blade", text: fin ? "There is no night left to survive. Play for the pot." : "Play for the pot — and for your reputation." }); say.push(fin ? "No shields now. There is no night left to survive." : "No shield and no blade in this one. You are playing for the pot — and for your reputation.") }
   }
   const off = m.stake || 0, all = s && s.wrongRule === "all", wr = WRONGABLE.includes(m.key);
-  const pot = off > 0 ? "Up to " + moneyOf(s, off) + " for the pot." + (wr ? (all ? " Every wrong shout costs it — a Traitor’s, double." : " A Traitor’s wrong shout costs it.") : "") : "The pot is full." + (wr ? " Wrong shouts can still cost it." : "");
-  say.push(off > 0 ? "Up to " + moneyOf(s, off) + " goes in the pot." + (wr ? (all ? " Every wrong shout costs it — and a Traitor's costs double." : " And a Traitor's wrong shout costs it.") : "") : "The pot is already full.");
+  const pot = off > 0 ? "Up to " + moneyOf(s, off) + " for the pot." + (wr ? (all ? " Every wrong shout costs it — a Cloak’s, double." : " A Cloak’s wrong shout costs it.") : "") : "The pot is full." + (wr ? " Wrong shouts can still cost it." : "");
+  say.push(off > 0 ? "Up to " + moneyOf(s, off) + " goes in the pot." + (wr ? (all ? " Every wrong shout costs it — and a Cloak's costs double." : " And a Cloak's wrong shout costs it.") : "") : "The pot is already full.");
   items.forEach(i => { i.text = kw(i.text, s) });
   return { items, pot, tv: items.map(i => i.head + ": " + i.text).concat([pot]), say: kw(say.join(" "), s) };
 }
@@ -555,23 +568,23 @@ function defRules(def) {
   if (def.key === "quiz") m.total = m.per * 3;
   return rulesOf(m);
 }
-// Room left tonight decides what this mission may give; the dagger and the Warrior are squared with it.
+// Room left tonight decides what this mission may give; the blade and the Champion are squared with it.
 function mShields(s, m) {
   m.room = shieldRoom(s);
   const rounded = ROUNDED.includes(m.key);
   if (m.key === "dilemma") { m.win = m.room ? "public" : "none"; m.dag = "none"; m.secN = m.secMax = 0; return }
-  if (!m.hasShield || !m.room || m.seerOffer || rulesIn(s).shield === "off") m.win = "none";
+  if (!m.hasShield || !m.room || m.witnessOffer || rulesIn(s).shield === "off") m.win = "none";
   if (m.win === "secret" && !rounded) m.win = "public";
   if (m.dag === "secret" && !rounded) m.dag = "public";
-  if (m.dag === "public" && m.win === "public") m.dag = rulesIn(s).warrior ? "with" : "none";
-  if (m.dag === "with" && !rulesIn(s).warrior) m.dag = "none";
+  if (m.dag === "public" && m.win === "public") m.dag = rulesIn(s).champion ? "with" : "none";
+  if (m.dag === "with" && !rulesIn(s).champion) m.dag = "none";
   if (m.dag === "with" && m.win === "none") m.dag = "public";
-  if (!m.dag || !daggerOk(s, m)) m.dag = "none";
+  if (!m.dag || !bladeOk(s, m)) m.dag = "none";
   m.secN = m.win === "secret" ? Math.max(1, Math.min(m.secN || 1, 2, m.room)) : 0; m.secMax = m.secN;
 }
 // Points on offer for a mission: what is left to reach the pot target, shared over the missions likely still to come.
 function missionsLeft(s) {
-  const a = aliveOf(s).length, rounds = isFinal(s) ? 1 : Math.max(1, Math.ceil((a - 4) / 2) + 1);
+  const a = aliveOf(s).length, rounds = isFinal(s) ? 1 : roundsFrom(a);
   const played = s.missionsPlayed || 0, per = played ? Math.max(1, Math.min(2.5, played / Math.max(1, s.round - 1 + ((s.roundMissions || 0) ? 1 : 0)))) : 1.3;
   return Math.max(1, Math.round(rounds * per - (s.roundMissions || 0)));
 }
@@ -580,16 +593,16 @@ function offerOf(s) {
   const raw = left / missionsLeft(s);
   return Math.min(left, Math.max(100, Math.round(raw / 50) * 50));
 }
-// A wrong shout is noted against the shouter. At the end of the mission it costs the pot — a Traitor's always, a
-// Faithful's only when the table plays "everyone pays" — and the room hears the total, never whose.
+// A wrong shout is noted against the shouter. At the end of the mission it costs the pot — a Cloak's always, a
+// Candle's only when the table plays "everyone pays" — and the room hears the total, never whose.
 function wrongShout(s, m, id) {
-  const p = id && P2(s, id); if (!m || !p) return; m.wrongs = m.wrongs || {}; m.wrongs[id] = (m.wrongs[id] || 0) + 1; if (p.role === "traitor") s.traitorMisses = (s.traitorMisses || 0) + 1;
+  const p = id && P2(s, id); if (!m || !p) return; m.wrongs = m.wrongs || {}; m.wrongs[id] = (m.wrongs[id] || 0) + 1; if (p.role === "cloak") s.cloakMisses = (s.cloakMisses || 0) + 1;
   s.stats = s.stats || {}; s.stats.wrongs = s.stats.wrongs || {}; s.stats.wrongs[id] = (s.stats.wrongs[id] || 0) + 1;
 }
-// 50 a wrong shout: a Traitor's always; with "everyone pays", a Faithful's 50 and a Traitor's 100
+// 50 a wrong shout: a Cloak's always; with "everyone pays", a Candle's 50 and a Cloak's 100
 function penaltyOf(s, m) {
   let t = 0, f = 0;
-  for (const [id, n] of Object.entries(m.wrongs || {})) { const p = P2(s, id); if (p && p.role === "traitor") t += n; else if (p) f += n }
+  for (const [id, n] of Object.entries(m.wrongs || {})) { const p = P2(s, id); if (p && p.role === "cloak") t += n; else if (p) f += n }
   return Math.min(s.wrongRule === "all" ? (t * 2 + f) * 50 : t * 50, Math.max(100, 2 * (m.stake || 0)));
 }
 const fifty = v => Math.round((+v || 0) / 50) * 50;
@@ -601,9 +614,9 @@ function pickMission(key) {
     if (key === "dilemma") s.done.dilemma_r = s.round; else s.roundMissions = (s.roundMissions || 0) + 1;
     const pref = (s.prefs || {})[key] || {};
     const m = s.mission = {
-      mid: Math.random().toString(36).slice(2, 8), key, title: def.title, rules: def.rules, hasShield: !!def.hasShield, seerOffer: false,
+      mid: Math.random().toString(36).slice(2, 8), key, title: def.title, rules: def.rules, hasShield: !!def.hasShield, witnessOffer: false,
       kind: def.kind, stage: "rules", timer: 0, timerEnd: null, timerDur: null, qi: 0, qn: 1, total: def.total || 0, per: 10, showA: false,
-      scores: {}, picks: [], stake: offer, result: null, shouter: null, lastRight: false, tally: {}, seerId: null,
+      scores: {}, picks: [], stake: offer, result: null, shouter: null, lastRight: false, tally: {}, witnessId: null,
       win: ROUNDED.includes(key) ? "secret" : "public", secN: 1, dag: "none", winId: null, secIds: [], secMax: 0, room: 0, mystery: [], mysteryDone: [],
       dagRound: null, dagId: null, dagDone: false, warId: null, wrongs: {}, pen: 0,
       points: offer, actorId: null, seq: null, seqStart: null,
@@ -636,21 +649,21 @@ function mWin(w, n) {
   act(s => {
     const m = s.mission; if (!m || m.stage !== "rules" || !m.hasShield || m.key === "dilemma") return;
     if (w === "secret" && !ROUNDED.includes(m.key)) return;
-    m.win = w; if (w === "secret") m.secN = n || 1; if (w !== "none") m.seerOffer = false;
+    m.win = w; if (w === "secret") m.secN = n || 1; if (w !== "none") m.witnessOffer = false;
     mShields(s, m); m.rules = rulesOf(m);
     s.prefs = s.prefs || {}; const pr = s.prefs[m.key] = s.prefs[m.key] || {}; pr.win = m.win; if (m.win === "secret") pr.secN = m.secN; pr.dag = m.dag;
   });
 }
-// the dagger's setting: none, the overall winner's, a hidden round's, or with the shield (the Warrior)
+// the blade's setting: none, the overall winner's, a hidden round's, or with the shield (the Champion)
 function mDag(d) {
   act(s => {
-    const m = s.mission; if (!m || m.stage !== "rules" || !daggerOk(s, m)) return;
+    const m = s.mission; if (!m || m.stage !== "rules" || !bladeOk(s, m)) return;
     if (d === "secret" && !ROUNDED.includes(m.key)) return;
     m.dag = d; mShields(s, m); m.rules = rulesOf(m);
     s.prefs = s.prefs || {}; const pr = s.prefs[m.key] = s.prefs[m.key] || {}; pr.dag = m.dag;
   });
 }
-function mSeer() { act(s => { const m = s.mission; if (!m || m.stage !== "rules") return; m.seerOffer = !m.seerOffer; if (m.seerOffer) { m.win = "none"; m.dag = "none" } mShields(s, m); m.rules = rulesOf(m) }) }
+function mWitness() { act(s => { const m = s.mission; if (!m || m.stage !== "rules") return; m.witnessOffer = !m.witnessOffer; if (m.witnessOffer) { m.win = "none"; m.dag = "none" } mShields(s, m); m.rules = rulesOf(m) }) }
 function quizBuild(s, m) {
   s.usedQuiz = s.usedQuiz || [];
   const pick = (bank, tag) => {
@@ -670,15 +683,15 @@ function pickMystery(m) {
   if (!need) return { sh: [], dag: null };
   const all = [...Array(Math.max(0, m.total)).keys()].map(i => i + 1), pool = shuffle(all.length > need ? all.slice(1) : all);
   const sh = pool.slice(0, nS).sort((a, b) => a - b);
-  // too few rounds for a round each: the dagger shares one (its winner then holds both)
+  // too few rounds for a round each: the blade shares one (its winner then holds both)
   return { sh, dag: nD ? (pool[nS] || pool[0] || null) : null };
 }
-// what a round hides, for the host's private banner: "a secret shield", "the Warrior", "the dagger"…
+// what a round hides, for the host's private banner: "a secret shield", "the Champion", "the blade"…
 function mysteryAt(m, n) {
   if (!m) return [];
   const out = [];
-  if (m.win === "secret" && (m.mystery || []).includes(n)) out.push(m.dag === "with" && n === m.mystery[0] ? "the Warrior — shield and dagger" : "a shield");
-  if (m.dag === "secret" && m.dagRound === n) out.push("the dagger");
+  if (m.win === "secret" && (m.mystery || []).includes(n)) out.push(m.dag === "with" && n === m.mystery[0] ? "the Champion — shield and blade" : "a shield");
+  if (m.dag === "secret" && m.dagRound === n) out.push("the blade");
   return out;
 }
 // A mission round has been won (or nobody won it). A mystery round's winner takes what it hid, said nowhere but the log.
@@ -688,13 +701,13 @@ function roundWon(s, m, n, id) {
   if (m.win === "secret" && (m.mystery || []).includes(n) && !done.includes(n)) {
     done.push(n);
     const war = m.dag === "with" && n === m.mystery[0];
-    if (!who) logs.push("Mystery round " + n + ": nobody won it — " + (war ? "the Warrior's shield and dagger go" : "that shield goes") + " unclaimed");
+    if (!who) logs.push("Mystery round " + n + ": nobody won it — " + (war ? "the Champion's shield and blade go" : "that shield goes") + " unclaimed");
     else if (m.secIds.includes(who.id)) logs.push("Mystery round " + n + ": " + who.name + " again — one shield each, so this one goes unclaimed");
-    else { if (m.secIds.length < m.secMax) m.secIds.push(who.id); if (war) m.warId = who.id; logs.push("Mystery round " + n + ": " + who.name + (war ? " is the Warrior — shield and dagger, in secret" : " wins a secret shield")) }
+    else { if (m.secIds.length < m.secMax) m.secIds.push(who.id); if (war) m.warId = who.id; logs.push("Mystery round " + n + ": " + who.name + (war ? " is the Champion — shield and blade, in secret" : " wins a secret shield")) }
   }
   if (m.dag === "secret" && m.dagRound === n && !m.dagDone) {
     m.dagDone = true;
-    if (who) { m.dagId = who.id; logs.push("Mystery round " + n + ": " + who.name + " wins the dagger, in secret") } else logs.push("Mystery round " + n + ": nobody won it — the dagger goes unclaimed");
+    if (who) { m.dagId = who.id; logs.push("Mystery round " + n + ": " + who.name + " wins the blade, in secret") } else logs.push("Mystery round " + n + ": nobody won it — the blade goes unclaimed");
   }
   return logs.join(" · ") || null;
 }
@@ -848,14 +861,14 @@ function giveShield(id) {
     if (m.secIds.length < m.secMax) { m.secIds.push(id); return { log: "Secret shield: " + P2(s, id).name } }
   });
 }
-// the hidden dagger's and the secret Warrior's winners, for the same corrections
-function giveDagger(id) { act(s => { const m = s.mission; if (!m || m.dag !== "secret") return; m.dagId = m.dagId === id ? null : id; m.dagDone = true }) }
-function giveWarrior(id) {
+// the hidden blade's and the secret Champion's winners, for the same corrections
+function giveBlade(id) { act(s => { const m = s.mission; if (!m || m.dag !== "secret") return; m.dagId = m.dagId === id ? null : id; m.dagDone = true }) }
+function giveChampion(id) {
   act(s => {
-    const m = s.mission; if (!m || !warriorPrize(m) || m.win !== "secret") return;
+    const m = s.mission; if (!m || !championPrize(m) || m.win !== "secret") return;
     if (m.warId === id) { m.warId = null; return }
     m.warId = id; if (!m.secIds.includes(id)) { if (m.secIds.length >= m.secMax) m.secIds.shift(); m.secIds.unshift(id) }
-    return { log: "Secret Warrior: " + P2(s, id).name };
+    return { log: "Secret Champion: " + P2(s, id).name };
   });
 }
 function togglePick(id) { act(s => { const p = s.mission.picks, i = p.indexOf(id); i >= 0 ? p.splice(i, 1) : p.push(id) }) }
@@ -891,9 +904,9 @@ function shieldPick(id) {
     m.winId = m.winId === id ? null : id; m.autoPicked = true;
   });
 }
-// the Seer is on offer only with five left and a single Traitor, before the final table: whoever it is meets them then
-const seerOk = s => !!s && rulesIn(s).seer && !s.seer && aliveOf(s).length === 5 && aliveOf(s).filter(p => p.role === "traitor").length === 1;
-function seerPick(id) { const pts = ptsInput(); act(s => { const m = s.mission; if (pts !== null) m.points = pts; m.seerId = m.seerId === id ? null : id }) }
+// the Witness is on offer only with five left and a single Cloak, before the final table: whoever it is meets them then
+const witnessOk = s => !!s && rulesIn(s).witness && !s.witness && aliveOf(s).length === 5 && aliveOf(s).filter(p => p.role === "cloak").length === 1;
+function witnessPick(id) { const pts = ptsInput(); act(s => { const m = s.mission; if (pts !== null) m.points = pts; m.witnessId = m.witnessId === id ? null : id }) }
 /* ---------- Higher or Lower: stand, call it, sit when wrong ---------- */
 // a number to call against: near enough to argue about, never the answer itself; years move by years, not by a factor
 function hiloRef(ans) {
@@ -947,7 +960,7 @@ function truthsScore() {
   });
 }
 /* ---------- What Changed? twelve symbols, one change ---------- */
-const CHSYM = ["moon", "sun", "dagger", "crown", "shield", "table", "chalice", "scroll", "hourglass", "scales", "raven", "ghost", "key", "skull", "candle", "eye", "handshake"];
+const CHSYM = ["moon", "sun", "blade", "crown", "shield", "table", "chalice", "scroll", "hourglass", "scales", "raven", "ghost", "key", "skull", "candle", "eye", "handshake"];
 function changeStudy() { act(s => { const m = s.mission; m.grid = shuffle(CHSYM.slice()).slice(0, 12); m.before = null; m.changed = null; m.showA = false; m.cstage = "study"; m.timerDur = m.timer * 1000; m.timerEnd = now() + m.timerDur }) }
 // first half: one symbol swapped for one that wasn't there; second half: two symbols trade places
 function changeBlind() {
@@ -970,21 +983,21 @@ function changeAward(id) {
 function changeNext() { act(s => { const m = s.mission; m.showA = false; m.spotter = null; m.cstage = null; m.grid = null; m.before = null; m.changed = null; m.holdEnd = null; if (m.qn >= m.total) return finishPlay(s); m.qn++ }) }
 
 // The winner's public shield goes first, then the mystery rounds' secret ones, never past tonight's allowance (the
-// Warrior always gets theirs). Someone who already holds a shield keeps it: a public win makes it public. A mystery-round
+// Champion always gets theirs). Someone who already holds a shield keeps it: a public win makes it public. A mystery-round
 // winner who already holds a secret one is still tapped in the ceremony, so nobody can work anything out from who wasn't.
-// The dagger goes to the overall winner, a mystery round's winner, or the Warrior; one a round.
+// The blade goes to the overall winner, a mystery round's winner, or the Champion; one a round.
 function endMission() {
   const pts = ptsInput();
   act(s => {
     const m = s.mission, cap = s.potCap || 2000, points = fifty(pts !== null ? pts : m.points);
     const ok = id => !!(id && P2(s, id) && P2(s, id).alive);
-    const seer = m.seerOffer && ok(m.seerId) ? m.seerId : null, winner = !seer && ok(m.winId) ? m.winId : null;
+    const witness = m.witnessOffer && ok(m.witnessId) ? m.witnessId : null, winner = !witness && ok(m.winId) ? m.winId : null;
     const warId = m.dag === "with" && m.win === "secret" && ok(m.warId) ? m.warId : null;
-    let dagger = null, dagSecret = false;
-    if (!seer && !warriorOf(s)) {
-      if (m.dag === "public" || (m.dag === "with" && m.win === "public")) dagger = winner;
-      else if (m.dag === "secret" && ok(m.dagId)) { dagger = m.dagId; dagSecret = true }
-      else if (warId) { dagger = warId; dagSecret = true }
+    let blade = null, dagSecret = false;
+    if (!witness && !championOf(s)) {
+      if (m.dag === "public" || (m.dag === "with" && m.win === "public")) blade = winner;
+      else if (m.dag === "secret" && ok(m.dagId)) { blade = m.dagId; dagSecret = true }
+      else if (warId) { blade = warId; dagSecret = true }
     }
     const addon = !!(MISSIONS.find(x => x.key === m.key) || {}).addon;
     let room = shieldRoom(s); const pub = [], sec = [], again = [], wasted = [];
@@ -992,8 +1005,8 @@ function endMission() {
     if (pubShield && (room > 0 || P2(s, pubShield).shield)) { pub.push(pubShield); if (!P2(s, pubShield).shield) room-- }
     for (const id of m.win === "secret" ? m.secIds || [] : []) {
       if (!ok(id) || pub.includes(id) || sec.includes(id)) continue;
-      // a Traitor can't be poisoned: a hidden shield they win is spent, with no ceremony — unless it makes them the Warrior
-      if (P2(s, id).role === "traitor" && id !== warId) { wasted.push(id); continue }
+      // a Cloak can't be poisoned: a hidden shield they win is spent, with no ceremony — unless it makes them the Champion
+      if (P2(s, id).role === "cloak" && id !== warId) { wasted.push(id); continue }
       if (P2(s, id).shield) { if (P2(s, id).shield === "secret" && !again.includes(id)) again.push(id); continue }
       if (room <= 0 && id !== warId) continue;
       sec.push(id); room--;
@@ -1006,41 +1019,41 @@ function endMission() {
     [...pub, ...sec].forEach(id => inc("shields", id));
     st.score = st.score || {}; for (const [id, n] of Object.entries(m.scores || {})) if (n > 0) st.score[id] = (st.score[id] || 0) + n;
     pub.forEach(id => P2(s, id).shield = "public"); sec.forEach(id => P2(s, id).shield = "secret");
-    // a Faithful Seer meets the Traitor now, before the final table; a Traitor who won it gets the same ceremony, and nothing
-    let met = null; if (seer) { const tsA = aliveOf(s).filter(p => p.role === "traitor" && p.id !== seer), fake = P2(s, seer).role === "traitor"; met = fake || !tsA.length ? null : tsA[Math.floor(Math.random() * tsA.length)].id; s.seer = { id: seer, used: true, metId: met, fake: fake || !met, round: s.round } }
-    if (dagger) s.warrior = { id: dagger, round: s.round, secret: dagSecret, used: false };
+    // a Candle Witness meets the Cloak now, before the final table; a Cloak who won it gets the same ceremony, and nothing
+    let met = null; if (witness) { const tsA = aliveOf(s).filter(p => p.role === "cloak" && p.id !== witness), fake = P2(s, witness).role === "cloak"; met = fake || !tsA.length ? null : tsA[Math.floor(Math.random() * tsA.length)].id; s.witness = { id: witness, used: true, metId: met, fake: fake || !met, round: s.round } }
+    if (blade) s.champion = { id: blade, round: s.round, secret: dagSecret, used: false };
     const nm = id => P2(s, id).name;
-    // who is tapped in the ceremony, and for what: the secret Warrior, plain secret shields, a secret dagger
-    const tapWar = warId && dagger === warId ? warId : null, tapDag = dagSecret && dagger !== warId ? dagger : null;
+    // who is tapped in the ceremony, and for what: the secret Champion, plain secret shields, a secret blade
+    const tapWar = warId && blade === warId ? warId : null, tapDag = dagSecret && blade !== warId ? blade : null;
     const tapSh = [...sec, ...again].filter(id => id !== tapWar);
-    const warrior = !!dagger && !dagSecret && pub.includes(dagger);
-    const mode = seer ? "seer" : tapSh.length || tapWar || tapDag ? "secret" : pub.length ? "public" : "none";
+    const champion = !!blade && !dagSecret && pub.includes(blade);
+    const mode = witness ? "witness" : tapSh.length || tapWar || tapDag ? "secret" : pub.length ? "public" : "none";
     const earlier = s.players.some(p => p.alive && p.shield && !pub.includes(p.id) && !sec.includes(p.id));
     s.shieldCard = {
       points, offer: m.stake || 0, pen: m.key === "dilemma" ? 0 : m.pen || 0, mode, step: 0, addon, earlier, pubIds: pub, pubNames: pub.map(nm),
       secCount: tapSh.length, secIds: tapSh, secNames: tapSh.map(nm), secWar: !!tapWar, warName: tapWar ? nm(tapWar) : null, secDag: !!tapDag, dagName: tapDag ? nm(tapDag) : null,
-      seerId: seer, seerName: seer ? nm(seer) : null, metName: met ? nm(met) : null, fake: !!(seer && !met), warriorName: dagger && !dagSecret ? nm(dagger) : null, warrior, wasted: wasted.map(nm)
+      witnessId: witness, witnessName: witness ? nm(witness) : null, metName: met ? nm(met) : null, fake: !!(witness && !met), championName: blade && !dagSecret ? nm(blade) : null, champion, wasted: wasted.map(nm)
     };
     s.phase = "shield"; s.mission = null;
     const bits = [...pub.map(id => nm(id) + " (public)"), ...tapSh.map(id => nm(id) + " (secret)")];
-    return { log: "Mission done: " + (points >= 0 ? "+" : "") + points + (m.pen ? " (wrong shouts −" + m.pen + ")" : "") + (seer ? ", Seer " + nm(seer) + (met ? " (meets " + nm(met) + " now)" : " (a Traitor — the ceremony is for show)") : bits.length ? ", shield " + bits.join(", ") : ", no shield") + (wasted.length ? " (mystery round won by Traitor " + wasted.map(nm).join(", ") + " — no shield, no ceremony)" : "") + (tapWar ? ", secret Warrior " + nm(tapWar) : warrior ? ", Warrior (shield + dagger) " + nm(dagger) : dagger ? ", dagger " + nm(dagger) + (dagSecret ? " (secret)" : "") : "") };
+    return { log: "Mission done: " + (points >= 0 ? "+" : "") + points + (m.pen ? " (wrong shouts −" + m.pen + ")" : "") + (witness ? ", Witness " + nm(witness) + (met ? " (meets " + nm(met) + " now)" : " (a Cloak — the ceremony is for show)") : bits.length ? ", shield " + bits.join(", ") : ", no shield") + (wasted.length ? " (mystery round won by Cloak " + wasted.map(nm).join(", ") + " — no shield, no ceremony)" : "") + (tapWar ? ", secret Champion " + nm(tapWar) : champion ? ", Champion (shield + blade) " + nm(blade) : blade ? ", blade " + nm(blade) + (dagSecret ? " (secret)" : "") : "") };
   });
 }
 
-/* ---------- the Reckoning: every board recorded, the Warrior's twice ---------- */
-const warriorOf = s => s.warrior && s.warrior.round === s.round && P2(s, s.warrior.id) && P2(s, s.warrior.id).alive ? s.warrior.id : null;
-// The dagger always counts twice, but the room sees it only at the end: every board counts one as it turns, and once
-// the last is in, the dagger's second vote lands on whoever its holder chalked (a secret holder is never named).
-const daggerLive = s => warriorOf(s);
+/* ---------- the Reckoning: every board recorded, the Champion's twice ---------- */
+const championOf = s => !(s.table && s.table.second && (s.phase === "table" || s.phase === "reveal")) && s.champion && s.champion.round === s.round && P2(s, s.champion.id) && P2(s, s.champion.id).alive ? s.champion.id : null;
+// The blade always counts twice, but the room sees it only at the end: every board counts one as it turns, and once
+// the last is in, the blade's second vote lands on whoever its holder chalked (a secret holder is never named).
+const bladeLive = s => championOf(s);
 function tally(s) {
-  const t = s.table, w = warriorOf(s), v = {};
+  const t = s.table, w = championOf(s), v = {};
   for (const [voter, target] of Object.entries(t.ballots || {})) if (target !== "blank" && P2(s, target)) v[target] = (v[target] || 0) + 1;
-  const dt = w && t.stage === "banish" && (t.ballots || {})[w];
-  t.dagger = dt && dt !== "blank" && P2(s, dt) ? { to: dt, by: s.warrior.secret ? null : w } : null;
-  if (t.dagger) v[dt] = (v[dt] || 0) + 1;
+  const dt = w && t.stage === "exile" && (t.ballots || {})[w];
+  t.blade = dt && dt !== "blank" && P2(s, dt) ? { to: dt, by: s.champion.secret ? null : w } : null;
+  if (t.blade) v[dt] = (v[dt] || 0) + 1;
   t.votes = v;
 }
-function toBanish() { act(s => { const t = s.table; if (!t) return; t.stage = "banish"; tally(s); if (t.dagger) return { log: "The dagger falls on " + P2(s, t.dagger.to).name + " (+1)" } }) }
+function toExile() { act(s => { const t = s.table; if (!t) return; t.stage = "exile"; tally(s); if (t.blade) return { log: "The blade falls on " + P2(s, t.blade.to).name + " (+1)" } }) }
 function toVotes() { act(s => { const t = s.table; if (!t) return; t.stage = "votes"; tally(s) }) }
 // the next board to record, going round the table in seat order
 function nextVoter(s) { const t = s.table; return aliveOf(s).find(p => !(p.id in (t.ballots || {}))) || null }
@@ -1049,7 +1062,7 @@ function castBallot(voter, target) {
     const t = s.table, v = P2(s, voter); if (!t || !v || !v.alive) return;
     if (target !== "blank" && ((t.immune || []).includes(target) || target === voter || !P2(s, target) || !P2(s, target).alive || (t.revote && !t.revote.includes(target)))) return;
     t.ballots = t.ballots || {}; t.ballots[voter] = target; t.last = voter; tally(s);
-    return { log: v.name + " chalked " + (target === "blank" ? "nothing" : P2(s, target).name) + (voter === warriorOf(s) ? " (the dagger — its second vote lands when every board is in)" : "") };
+    return { log: v.name + " chalked " + (target === "blank" ? "nothing" : P2(s, target).name) + (voter === championOf(s) ? " (the blade — its second vote lands when every board is in)" : "") };
   });
 }
 function clearBallot(voter) { act(s => { const t = s.table; if (!t || !t.ballots) return; delete t.ballots[voter]; if (t.last === voter) t.last = null; tally(s) }) }
@@ -1058,37 +1071,37 @@ function tiedOf(s) { const t = s.table, v = t.votes || {}, c = aliveOf(s).filter
 function revoteTied() { act(s => { const tied = tiedOf(s); if (tied.length < 2) return; const t = s.table; t.revote = tied; t.ballots = {}; t.last = null; t.stage = "votes"; tally(s); return { log: "Revote: " + tied.map(id => P2(s, id).name).join(" v ") } }) }
 function revoteAll() { act(s => { const t = s.table; t.revote = null; t.ballots = {}; t.last = null; t.stage = "votes"; tally(s) }, "Revote — everyone") }
 function clearBallots() { act(s => { s.table.ballots = {}; s.table.last = null; tally(s) }, "Votes cleared — revote") }
-// Only the Warrior — dagger and shield — may buy immunity, before the first board: both are laid down, so their vote
+// Only the Champion — blade and shield — may buy immunity, before the first board: both are laid down, so their vote
 // counts once and nothing protects them tonight.
-const warriorArmed = s => { const w = warriorOf(s), p = w && P2(s, w); return p && p.shield ? w : null };
-function warriorImmunity() {
+const championArmed = s => { const w = championOf(s), p = w && P2(s, w); return p && p.shield ? w : null };
+function championImmunity() {
   act(s => {
-    const t = s.table, id = warriorArmed(s), p = id && P2(s, id); if (!t || !p || t.stage === "banish" || Object.keys(t.ballots || {}).length) return;
-    p.shield = null; s.warrior = null; t.immune = t.immune || []; if (!t.immune.includes(id)) t.immune.push(id); t.laid = id;
+    const t = s.table, id = championArmed(s), p = id && P2(s, id); if (!t || !p || t.stage === "exile" || Object.keys(t.ballots || {}).length) return;
+    p.shield = null; s.champion = null; t.immune = t.immune || []; if (!t.immune.includes(id)) t.immune.push(id); t.laid = id;
     for (const k in t.ballots || {}) if (t.ballots[k] === id) delete t.ballots[k];
     tally(s);
-    return { log: p.name + " laid down shield and dagger — immune from this vote, unprotected tonight" };
+    return { log: p.name + " laid down shield and blade — immune from this vote, unprotected tonight" };
   });
 }
-function banish(id) {
+function exile(id) {
   const p0 = P(id); if (!p0 || (state.table && (state.table.immune || []).includes(id))) return;
-  confirmSheet("Banish " + p0.name + "?", "The TV announces it straight away. Undo brings them back if a board was misread.", "Banish " + p0.name, () => act(s => {
+  confirmSheet("Exile " + p0.name + "?", "The TV announces it straight away. Undo brings them back if a board was misread.", "Exile " + p0.name, () => act(s => {
     const p = P2(s, id), t = s.table, v = t.votes || {}, n = Object.values(t.ballots || {}).filter(x => x !== "blank").length;
     const mine = v[id] || 0, others = Object.entries(v).filter(e => e[0] !== id).map(e => e[1]), second = others.length ? Math.max(...others) : 0;
     // how the table got here, for the host's lines and the TV's eyebrow
     t.margin = !n ? null : !others.length && n >= 3 ? "unanimous" : mine > second ? (mine - second <= 1 ? "close" : "clear") : "tie";
-    // the dagger decided it: its extra vote was on them, and without it they wouldn't have had the most
-    const dg = daggerLive(s); t.daggerKill = !!(dg && (t.ballots || {})[dg] === id && mine - 1 <= second);
-    if (t.daggerKill) { s.stats = s.stats || {}; s.stats.daggerKills = s.stats.daggerKills || {}; s.stats.daggerKills[dg] = (s.stats.daggerKills[dg] || 0) + 1 }
-    s.voteLog = (s.voteLog || []).concat([{ round: s.round, ballots: { ...(t.ballots || {}) }, warrior: warriorOf(s), banished: id, role: p.role }]).slice(-20);
-    p.alive = false; p.shield = null; s.mission = null; t.banished = id; t.step = 0; t.talkEnd = null; t.roll = null; s.phase = "reveal";
-    if (t.daggerKill) return { log: "Banished: " + p0.name + " (" + p0.role + ") — the dagger decided it" };
-  }, "Banished: " + p0.name + " (" + p0.role + ")"));
+    // the blade decided it: its extra vote was on them, and without it they wouldn't have had the most
+    const dg = bladeLive(s); t.bladeKill = !!(dg && (t.ballots || {})[dg] === id && mine - 1 <= second);
+    if (t.bladeKill) { s.stats = s.stats || {}; s.stats.bladeKills = s.stats.bladeKills || {}; s.stats.bladeKills[dg] = (s.stats.bladeKills[dg] || 0) + 1 }
+    s.voteLog = (s.voteLog || []).concat([{ round: s.round, ballots: { ...(t.ballots || {}) }, champion: championOf(s), exiled: id, role: p.role }]).slice(-20);
+    p.alive = false; p.shield = null; s.mission = null; t.exiled = id; t.step = 0; t.talkEnd = null; t.roll = null; s.phase = "reveal";
+    if (t.bladeKill) return { log: "Exiled: " + p0.name + " (" + p0.role + ") — the blade decided it" };
+  }, "Exiled: " + p0.name + " (" + p0.role + ")"));
 }
 // A running count for the host to say when it matters: dead level, one in it, or already beyond reach.
 function tableNudge(s) {
   const t = s.table; if (!t || t.stage !== "votes") return null;
-  const A = aliveOf(s), w = warriorOf(s), bal = t.ballots || {}, left = A.filter(p => !(p.id in bal)), nIn = A.length - left.length;
+  const A = aliveOf(s), w = championOf(s), bal = t.ballots || {}, left = A.filter(p => !(p.id in bal)), nIn = A.length - left.length;
   const remaining = left.length + (w ? 1 : 0), v = t.votes || {};
   const ranked = A.filter(p => v[p.id]).sort((a, b) => v[b.id] - v[a.id]);
   if (nIn < 3 || !left.length || !ranked.length) return null;
@@ -1099,15 +1112,15 @@ function tableNudge(s) {
   if (gap > remaining && a >= 3) return ["That's " + nb(a) + " for " + top.name + ". There are not enough boards left to save them.", top.name + " has " + numWord(a) + ". Whatever the last " + bd + " say, it's decided."][k % 2];
   return null;
 }
-function revealRole() { act(s => { s.table.step = 1; s.table.roll = null; if (!isFinal(s)) P2(s, s.table.banished).revealed = true }) }
-function endCheck() { const t = traitors().length, f = faithful().length; return t === 0 || t >= f }
+function revealRole() { act(s => { s.table.step = 1; s.table.roll = null; if (!isFinal(s)) P2(s, s.table.exiled).revealed = true }) }
+function endCheck() { const t = cloaks().length, f = candles().length; return t === 0 || t >= f }
 
 /* ---------- night ---------- */
 function questOptions(s) {
   s.usedQuests = s.usedQuests || [];
   const ok = eligible("QUESTS", QUESTS.length);
   let free = ok.filter(i => !s.usedQuests.includes(i)); if (free.length < 10) free = ok;
-  const F = s.players.filter(p => p.alive && p.role === "faithful"), Tr = s.players.filter(p => p.alive && p.role === "traitor");
+  const F = s.players.filter(p => p.alive && p.role === "candle"), Tr = s.players.filter(p => p.alive && p.role === "cloak");
   return shuffle(free).slice(0, 10).map(i => {
     const t = Tr.length ? Tr[Math.floor(Math.random() * Tr.length)].name : "", targeted = /\{T\}/.test(QUESTS[i]);
     const text = QUESTS[i].replace(/^\{T\}:\s*/, "").replace(/\{T\}/g, t);
@@ -1123,36 +1136,47 @@ function questResolve(ok) {
     return { log: "Side-quest " + (ok ? "completed" : "failed — pot −50") };
   });
 }
+// A big table loses more than one a night, so an evening still reaches the final (see roundsFrom). Only a kill night has
+// more than one; each victim is its own pass of the script.
+const nightKills = s => killsAt(aliveOf(s).length);
+const killsOf = n => n && n.mode === "murder" ? n.kills || 1 : 1;
+function nextVictim() {
+  act(s => {
+    const n = s.night; if (!n || n.mode !== "murder" || !n.victimId || (n.pass || 0) >= killsOf(n) - 1) return;
+    n.victims = (n.victims || []).concat([n.victimId]); n.victimId = null; n.pass = (n.pass || 0) + 1; n.step = 0;
+    return { log: "Night: victim " + n.pass + " of " + killsOf(n) + " chosen" };
+  });
+}
 function startNight() {
   if (state && !isFinal(state) && state.players.length > 5 && aliveOf(state).length <= 5) { toast("Five left: no night. The final round is next — its Reckoning takes five to four."); return nextRound(true) }
   act(s => {
     s.phase = "night"; s.mission = null; s.mingle = null;
     s.night = {
-      mode: autoMode(s), step: 0, targetId: null, targetName: null, answer: null, victimId: null,
+      mode: autoMode(s), step: 0, targetId: null, targetName: null, answer: null, victimId: null, kills: nightKills(s), pass: 0, victims: [],
       quest: null, questTarget: null, questOpts: s.questsOn === false ? [] : questOptions(s), confirmed: false
     };
     s.quest = null;
-    // the plan hands the Traitors a side-quest every night it's on; the host can change it or take it away
+    // the plan hands the Cloaks a side-quest every night it's on; the host can change it or take it away
     const qo = (s.night.questOpts || []).find(o => !o.poison || s.night.mode === "murder"); if (qo) { s.night.quest = qo.text; s.night.questTarget = qo.target }
     return { log: "Night " + s.round + " started" };
   });
 }
-// What the night should be, by the plan: a lone Traitor facing four or more Faithful gets one Recruit, then (if refused) one
-// Ultimatum; every other night is a kill. Only the kinds switched on at setup are offered.
+// What the night should be, by the plan: a lone Cloak facing four or more Candles gets one Conversion, then (if refused) one
+// Bargain; every other night is a kill. Only the kinds switched on at setup are offered.
 function autoMode(s) {
-  const r = rulesIn(s), a = aliveOf(s), t = a.filter(p => p.role === "traitor").length, f = a.length - t;
-  const tries = s.players.flatMap(p => [...(p.recruited ? [p.recruited] : []), ...(p.refused || [])]);
+  const r = rulesIn(s), a = aliveOf(s), t = a.filter(p => p.role === "cloak").length, f = a.length - t;
+  const tries = s.players.flatMap(p => [...(p.converted ? [p.converted] : []), ...(p.refused || [])]);
   if (t !== 1 || f < 4) return "murder";
-  if (!tries.some(x => x.mode === "recruit") && r.recruit) return "recruit";
-  if (!tries.some(x => x.mode === "ultimatum") && r.ultimatum) return "ultimatum";
+  if (!tries.some(x => x.mode === "convert") && r.convert) return "convert";
+  if (!tries.some(x => x.mode === "bargain") && r.bargain) return "bargain";
   return "murder";
 }
 const modeOn = (s, k) => k === "murder" || !!rulesIn(s)[k];
 const modeLabel = (k, s) => k === "murder" ? (killOf(s) === "murder" ? "Murder" : "Poison") : MODES[k].label;
-// the Faithful a quest names is chosen when the Traitors read it: never tonight's victim or target
+// the Candles a quest names is chosen when the Cloaks read it: never tonight's victim or target
 function resolveQuest(s) {
   const n = s.night; if (!n || !n.quest || !/\{F\}/.test(n.quest)) return;
-  const avoid = [n.victimId, n.targetId], F = s.players.filter(p => p.alive && p.role === "faithful" && !avoid.includes(p.id)), f = F.length ? F[Math.floor(Math.random() * F.length)].name : "a Faithful";
+  const avoid = [n.victimId, n.targetId, ...(n.victims || [])], F = s.players.filter(p => p.alive && p.role === "candle" && !avoid.includes(p.id)), f = F.length ? F[Math.floor(Math.random() * F.length)].name : "a Candle";
   n.quest = n.quest.replace(/\{F\}/g, f); if (s.quest) s.quest.text = n.quest;
 }
 function beginNight() {
@@ -1167,26 +1191,31 @@ function finishNight() {
   act(s => {
     const n = s.night; let m, log;
     if (n.mode === "murder") {
-      const v = n.victimId && P2(s, n.victimId);
-      if (!v || !v.alive) { m = { kind: "quiet" }; log = "Night ended with no victim picked" }
-      else if (v.shield || (s.seer && s.seer.id === v.id && !s.seer.fake)) { m = { kind: "shield" }; log = "Murder failed: " + v.name + (v.shield ? " shielded" : " is the Seer"); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
-      else { v.alive = false; m = { kind: "murder", name: v.name, victimId: v.id }; log = "Murdered: " + v.name }
+      const vs = [...(n.victims || []), n.victimId].map(id => id && P2(s, id)).filter(v => v && v.alive), dead = [], logs = [];
+      for (const v of vs) {
+        if (s.players.length > 5 && aliveOf(s).length <= 5) { logs.push(v.name + " spared: five left"); continue } // someone left mid-night
+        if (v.shield || (s.witness && s.witness.id === v.id && !s.witness.fake)) { logs.push("Murder failed: " + v.name + (v.shield ? " shielded" : " is the Witness")); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
+        else { v.alive = false; dead.push(v); logs.push("Murdered: " + v.name) }
+      }
+      if (!vs.length) { m = { kind: "quiet" }; log = "Night ended with no victim picked" }
+      else if (!dead.length) { m = { kind: "shield" }; log = logs.join(" · ") }
+      else { m = { kind: "murder", name: andList(dead.map(v => v.name)), victimId: dead[0].id, victimIds: dead.map(v => v.id), many: dead.length > 1, saved: vs.length > dead.length }; log = logs.join(" · ") }
     } else {
       const t = n.targetId && P2(s, n.targetId);
       if (!t || !t.alive || !n.answer) { m = { kind: "quiet" }; log = "Night ended with no answer recorded" }
       else if (n.answer === "yes") {
-        t.role = "traitor"; t.recruited = { round: s.round, mode: n.mode }; m = { kind: "recruit" }; log = t.name + " accepted " + n.mode + " — now a traitor";
-        if (s.seer && s.seer.id === t.id && !s.seer.used) { s.seer.used = true; log += " (Seer voided: they turned)" }
+        t.role = "cloak"; t.converted = { round: s.round, mode: n.mode }; m = { kind: "convert" }; log = t.name + " accepted " + n.mode + " — now a cloak";
+        if (s.witness && s.witness.id === t.id && !s.witness.used) { s.witness.used = true; log += " (Witness voided: they turned)" }
       }
-      else if (n.mode === "ultimatum") {
+      else if (n.mode === "bargain") {
         t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]);
-        if (t.shield || (s.seer && s.seer.id === t.id && !s.seer.fake)) { m = { kind: "shield" }; log = t.name + " refused ultimatum but was shielded"; s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: t.id, round: s.round }]) }
-        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused ultimatum — murdered" }
+        if (t.shield || (s.witness && s.witness.id === t.id && !s.witness.fake)) { m = { kind: "shield" }; log = t.name + " refused bargain but was shielded"; s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: t.id, round: s.round }]) }
+        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused bargain — murdered" }
       }
-      else { t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]); m = { kind: "recruit", refused: true }; log = t.name + " refused " + n.mode }
+      else { t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]); m = { kind: "convert", refused: true }; log = t.name + " refused " + n.mode }
     }
-    if (m.kind === "recruit") { m.kind = "quiet"; m.recruit = true } // the host's log has it; the room hears nothing
-    if (m.kind === "murder") { s.stats = s.stats || {}; s.stats.murders = (s.stats.murders || []).concat([{ id: m.victimId, round: s.round }]) }
+    if (m.kind === "convert") { m.kind = "quiet"; m.convert = true } // the host's log has it; the room hears nothing
+    if (m.kind === "murder") { s.stats = s.stats || {}; s.stats.murders = (s.stats.murders || []).concat((m.victimIds || [m.victimId]).map(id => ({ id, round: s.round }))) }
     m.revealed = false; m.lastEnd = null; m.lastDone = false;
     s.morning = m; s.phase = "morning"; s.night = null;
     return { log };
@@ -1198,45 +1227,45 @@ function nextRound(final) {
   act(s => {
     if (ghostsOf(s).length) s.ghostIntroDone = true;
     s.round++; if (final) s.finalRound = s.round; s.roundMissions = 0;
-    // five left (in a game that started bigger) and it's the final: one last table with no confessions, then End or Banish
+    // five left (in a game that started bigger) and it's the final: one last table with no confessions, then End or Exile
     let auto = false; if (!s.finalRound && s.players.length > 5 && aliveOf(s).length <= 5) { s.finalRound = s.round; auto = true }
     const planned = rulesIn(s).rounds; if (!s.finalRound && planned && s.round >= planned) s.finalRound = s.round;
     s.phase = "day"; s.morning = null; s.mission = null; s.mingle = null; s.night = null;
-    s.players.forEach(p => p.shield = null); s.warrior = null; snapRound(s);
+    s.players.forEach(p => p.shield = null); s.champion = null; snapRound(s);
     return { log: "Round " + s.round + (isFinal(s) ? (auto ? " (final — five or fewer left)" : " (final)") : "") + " begins" };
   });
 }
-// Dinner is one sitting: once served, the option goes away. Served from breakfast, it leads straight into the next round.
+// Dinner is one sitting: once served, the option goes away. Served from dawn, it leads straight into the next round.
 function startBreak(kind, then) { act(s => { const din = kind === "dinner"; s.phase = "mingle"; s.mingle = { end: null, dur: din ? 1500000 : 600000, kind, then: then || null }; if (din) s.dinnerDone = true }, kind === "dinner" ? "Dinner break" : "Mingle") }
 function declareFinal() { act(s => { s.finalRound = (s.phase === "day" && !(s.roundMissions || 0)) ? s.round : s.round + 1; return { log: "Final round: round " + s.finalRound } }) }
 function pace() {
   const s = state; if (!s.startedAt || s.round < 2) return null;
   const el = (now() - s.startedAt) / 60000, target = (s.hours || 4) * 60, rounds = Math.max(1, s.round - 1), perRound = s.round > 1 ? el / rounds : 55;
-  const a = alive().length, left = isFinal(s) ? 1 : Math.max(1, Math.ceil((a - 4) / 2) + 1), eta = el + left * perRound, diff = eta - target;
+  const a = alive().length, left = isFinal(s) ? 1 : roundsFrom(a), eta = el + left * perRound, diff = eta - target;
   return { el, target, perRound, left, eta, diff, label: Math.abs(diff) < 20 ? "on pace" : diff > 0 ? "running " + Math.round(diff) + " min long" : Math.round(-diff) + " min short" };
 }
 function advice() {
-  const t = traitors().length, f = faithful().length, a = t + f;
-  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, one banishment, then End or Banish.";
-  if (t === 0) return isFinal(state) ? { lvl: "end", text: "No Traitors left, but the table doesn’t know it. Run End or Banish: a unanimous END and the Faithful win; every BANISH costs them another Faithful." } : { lvl: "final", text: "No Traitors left, but the table doesn’t know it." + callIt };
-  if (t >= f) return isFinal(state) ? { lvl: "end", text: "Traitors equal or outnumber the Faithful (" + t + " v " + f + "), but the table doesn’t know it. Run End or Banish: a unanimous END and the Traitors win." } : { lvl: "final", text: "Traitors equal or outnumber the Faithful (" + t + " v " + f + "), but the table doesn’t know it." + callIt };
-  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, the Reckoning, then End or Banish — the vote decides when it ends." };
+  const t = cloaks().length, f = candles().length, a = t + f;
+  const which = state.phase === "day" && !(state.roundMissions || 0) ? "this" : "the next", callIt = state.finalRound && state.finalRound > state.round ? " The next round is already the final." : " Make " + which + " round the final: one mission, one exile, then End or Exile.";
+  if (t === 0) return isFinal(state) ? { lvl: "end", text: "No Cloaks left, but the table doesn’t know it. Run End or Exile: a unanimous END and the Candles win; every EXILE costs them another Candle." } : { lvl: "final", text: "No Cloaks left, but the table doesn’t know it." + callIt };
+  if (t >= f) return isFinal(state) ? { lvl: "end", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it. Run End or Exile: a unanimous END and the Cloaks win." } : { lvl: "final", text: "Cloaks equal or outnumber the Candles (" + t + " v " + f + "), but the table doesn’t know it." + callIt };
+  if (isFinal(state)) return { lvl: "final", text: "Final round in play: one mission, the Reckoning, then End or Exile — the vote decides when it ends." };
   if (state.finalRound && state.finalRound > state.round) return { lvl: "final", text: "Next round is the final. Finish this round normally." };
-  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Traitor") + "). Make " + which + " round the final: one mission, one banishment, then End or Banish." };
-  const rk = ["recruit", "ultimatum"].filter(k => modeOn(state, k)).map(k => MODES[k].label);
-  if (t === 1 && f >= 4 && rk.length) return { lvl: "recruit", text: "One Traitor left against " + f + ". Your plan allows " + (rk.length > 1 ? "a Recruit, then an Ultimatum" : rk[0] === "Recruit" ? "a Recruit" : "an Ultimatum") + " — the phone sets the night for it, or the endgame dies early." };
-  if (a <= 6) return { lvl: "soon", text: a + " left, " + t + " Traitors. One more normal round, then call the final. Two missions this round if the night is young." };
-  const left = Math.max(1, Math.ceil((a - 4) / 2));
-  return { lvl: "ok", text: a + " at the table, " + t + " Traitors. Poison tonight. About " + plural(left, "round") + " before the final" + (left <= 3 ? " — run two missions per round to fill the evening." : ".") };
+  if (a <= 4) return { lvl: "final", text: a + " left (" + plural(t, "Cloak") + "). Make " + which + " round the final: one mission, one exile, then End or Exile." };
+  const rk = ["convert", "bargain"].filter(k => modeOn(state, k)).map(k => MODES[k].label);
+  if (t === 1 && f >= 4 && rk.length) return { lvl: "convert", text: "One Cloak left against " + f + ". Your plan allows " + (rk.length > 1 ? "a Conversion, then a Bargain" : rk[0] === "Conversion" ? "a Conversion" : "a Bargain") + " — the phone sets the night for it, or the endgame dies early." };
+  if (a <= 6) return { lvl: "soon", text: a + " left, " + t + " Cloaks. One more normal round, then call the final. Two missions this round if the night is young." };
+  const left = Math.max(1, roundsFrom(a) - 1);
+  return { lvl: "ok", text: a + " at the table, " + t + " Cloaks. Poison tonight. About " + plural(left, "round") + " before the final" + (left <= 3 ? " — run two missions per round to fill the evening." : ".") };
 }
 
 /* ---------- ghosts ---------- */
 function ghostScores(s) {
   const g = s.ghosts || {};
-  return Object.keys(g).map(gid => { const p = P2(s, g[gid].pick), gh = P2(s, gid); return gh && gh.role !== "traitor" ? { p: gh, hits: p && p.role === "traitor" ? 1 : 0, pickName: p ? p.name : "?" } : null }).filter(Boolean).sort((a, b) => b.hits - a.hits);
+  return Object.keys(g).map(gid => { const p = P2(s, g[gid].pick), gh = P2(s, gid); return gh && gh.role !== "cloak" ? { p: gh, hits: p && p.role === "cloak" ? 1 : 0, pickName: p ? p.name : "?" } : null }).filter(Boolean).sort((a, b) => b.hits - a.hits);
 }
 let handoff = null;
-function ghostGuess(gid, pid) { if (!pid || (P(gid) && P(gid).role === "traitor")) return; handoff = { kind: "return" }; act(s => { s.ghosts = s.ghosts || {}; if (s.ghosts[gid]) return; s.ghosts[gid] = { pick: pid, round: s.round }; return { log: "Ghost " + P2(s, gid).name + " gave a verdict" } }) }
+function ghostGuess(gid, pid) { if (!pid || (P(gid) && P(gid).role === "cloak")) return; handoff = { kind: "return" }; act(s => { s.ghosts = s.ghosts || {}; if (s.ghosts[gid]) return; s.ghosts[gid] = { pick: pid, round: s.round }; return { log: "Ghost " + P2(s, gid).name + " gave a verdict" } }) }
 
 /* ---------- endgame ---------- */
 // From here on nobody's role is shown until the ceremony: the end game is the final, whenever it began.
@@ -1245,14 +1274,14 @@ function castVote(pid, v) { handoff = { kind: "return" }; act(s => { s.endvote.v
 function startEndReveal() {
   act(s => {
     const v = s.endvote, A = aliveOf(s), ends = A.filter(p => v.votes[p.id] === "end"), bans = A.filter(p => v.votes[p.id] !== "end");
-    bans.forEach(p => v.votes[p.id] = "banish");
-    v.order = [...shuffle(ends).map(p => p.id), ...shuffle(bans).map(p => p.id)]; v.revealed = 0; v.count = bans.length; v.result = bans.length ? "banish" : "end";
-    return { log: "End-game vote: " + (bans.length ? bans.length + " banish" : "unanimous end") };
+    bans.forEach(p => v.votes[p.id] = "exile");
+    v.order = [...shuffle(ends).map(p => p.id), ...shuffle(bans).map(p => p.id)]; v.revealed = 0; v.count = bans.length; v.result = bans.length ? "exile" : "end";
+    return { log: "End-game vote: " + (bans.length ? bans.length + " exile" : "unanimous end") };
   });
 }
 // The ceremony: every survivor's seal is turned by the host, one at a time, in whatever order they choose.
 // Nothing about roles reaches the TV until the host taps a name.
-const newFinal2 = () => ({ votes: {}, revealed: 0, order: null, showRoles: false, traitorIds: null, ghostHits: null, ghostRound: null, shown: [] });
+const newFinal2 = () => ({ votes: {}, revealed: 0, order: null, showRoles: false, cloakIds: null, ghostHits: null, ghostRound: null, shown: [] });
 function ceremonyDone(s) { const f = s.final2; return !!f && aliveOf(s).every(p => (f.shown || []).includes(p.id)) }
 // Opening the ceremony again would un-turn seals the room has already seen, so from inside it this does nothing.
 function startCeremony(log) { if (state && (state.phase === "final2" || state.phase === "final")) return; act(s => { s.phase = "final2"; s.final2 = newFinal2(); s.mission = null; s.table = null; s.night = null; s.mingle = null; return { log: log || "The final ceremony" } }) }
@@ -1287,18 +1316,18 @@ function revealSurvivor(id) {
   act(s => {
     const f = s.final2, p = P2(s, id); if (!f) return; f.roll = null; f.shown = f.shown || []; if (!p || !p.alive || f.shown.includes(id)) return;
     p.revealed = true; f.shown.push(id);
-    if (ceremonyDone(s)) { const ts = aliveOf(s).filter(q => q.role === "traitor"); f.showRoles = true; f.traitorIds = ts.map(q => q.id) }
+    if (ceremonyDone(s)) { const ts = aliveOf(s).filter(q => q.role === "cloak"); f.showRoles = true; f.cloakIds = ts.map(q => q.id) }
     return { log: "Revealed: " + p.name + " (" + p.role + ")" };
   });
 }
-function castSteal(pid, v) { handoff = { kind: "return" }; act(s => { const f = s.final2, g = f.ghostRound; if (g && !g.order && g.ids.includes(pid)) g.votes[pid] = v; else f.votes[pid] = v }) }
-function startStealReveal() {
+function castTake(pid, v) { handoff = { kind: "return" }; act(s => { const f = s.final2, g = f.ghostRound; if (g && !g.order && g.ids.includes(pid)) g.votes[pid] = v; else f.votes[pid] = v }) }
+function startTakeReveal() {
   act(s => {
-    const f = s.final2, ts = aliveOf(s).filter(p => p.role === "traitor");
+    const f = s.final2, ts = aliveOf(s).filter(p => p.role === "cloak");
     ts.forEach(p => { if (!f.votes[p.id]) f.votes[p.id] = "share" });
     f.order = shuffle(ts.map(p => p.id)); f.revealed = 0;
     f.ghostHits = ghostScores(s).filter(x => x.hits).map(x => x.p.name);
-    return { log: "Share or steal: revealing" };
+    return { log: "Share or take: revealing" };
   });
 }
 // End-of-game awards, straight from the record: votes, missions, shields, the night. Only awards with a clear winner
@@ -1307,16 +1336,16 @@ function startStealReveal() {
 // had one. The count is trimmed to fill a grid — 2, 4, 6, 8 or 12 — and the list is revealed smallest to biggest.
 function awardsOf(s) {
   const Q = id => P2(s, id), log = s.voteLog || [], st = s.stats || {}, out = [], taken = new Set();
-  const traitorAt = (p, r) => !!p && p.role === "traitor" && (!p.recruited || p.recruited.round < r);
+  const cloakAt = (p, r) => !!p && p.role === "cloak" && (!p.converted || p.converted.round < r);
   const add = (o, k) => { o[k] = (o[k] || 0) + 1 }, hitT = {}, hitF = {}, against = {}, king = {}, lone = {}, stab = {};
   for (const v of log) {
     const cnt = {}; for (const tg of Object.values(v.ballots || {})) if (tg !== "blank") cnt[tg] = (cnt[tg] || 0) + 1;
     for (const [voter, tg] of Object.entries(v.ballots || {})) {
       const t = tg !== "blank" && Q(tg), vo = Q(voter); if (!t || !vo) continue;
-      add(against, tg); if (tg === v.banished) add(king, voter); if (cnt[tg] === 1) add(lone, voter);
-      // a Traitor's board says nothing about their eye — unless it names another Traitor
-      if (traitorAt(vo, v.round)) { if (traitorAt(t, v.round)) add(stab, voter); continue }
-      if (traitorAt(t, v.round)) add(hitT, voter); else add(hitF, voter);
+      add(against, tg); if (tg === v.exiled) add(king, voter); if (cnt[tg] === 1) add(lone, voter);
+      // a Cloak's board says nothing about their eye — unless it names another Cloak
+      if (cloakAt(vo, v.round)) { if (cloakAt(t, v.round)) add(stab, voter); continue }
+      if (cloakAt(t, v.round)) add(hitT, voter); else add(hitF, voter);
     }
   }
   const free = p => !!p && !taken.has(p.id);
@@ -1327,60 +1356,60 @@ function awardsOf(s) {
   };
   const give = (title, icon, ps, why) => { ps = (ps || []).filter(free); if (!ps.length || out.some(a => a.title === title)) return; ps.forEach(p => taken.add(p.id)); out.push({ title, icon, names: ps.map(p => p.name), why }) };
   const times = n => n === 1 ? "once" : n === 2 ? "twice" : numWord(n) + " times", rd = r => "round " + numWord(r);
-  let b = best(hitT, 1, p => p.role === "faithful"); if (b) give("The Sharpest Eye", "eye", b.ps, "chalked a Traitor’s name " + times(b.n));
-  const ts = s.players.filter(p => p.role === "traitor"), tAlive = ts.filter(p => p.alive && free(p));
-  if (tAlive.length) { const low = Math.min(...tAlive.map(p => against[p.id] || 0)), w = tAlive.filter(p => (against[p.id] || 0) === low); if (w.length <= 2) give("The Grand Deceiver", "dagger", w, low ? "reached the end with only " + (low === 1 ? "one vote" : numWord(low) + " votes") + " against them" : "reached the end without a single vote against them") }
-  else if (ts.length) { const lastR = p => { const e = log.filter(v => v.banished === p.id); return e.length ? e[e.length - 1].round : 0 }, cand = ts.filter(free), top = cand.length ? Math.max(...cand.map(lastR)) : 0; if (top > 1) { const w = cand.filter(p => lastR(p) === top); if (w.length <= 2) give("The Grand Deceiver", "dagger", w, "fooled the table until " + rd(top)) } }
-  b = best(st.daggerKills, 1); if (b) give("The Deciding Blade", "dagger", b.ps, "whose dagger decided a banishment");
-  const turned = s.players.filter(p => p.role === "traitor" && p.recruited && free(p)); if (turned.length && turned.length <= 2) give("The Turncoat", "handshake", turned, turned.length === 1 ? (turned[0].recruited.mode === "ultimatum" ? "chose the Traitors over the poison in " : "joined the Traitors in ") + rd(turned[0].recruited.round) : "switched sides in the night");
-  const refused = s.players.filter(p => (p.refused || []).length && p.role === "faithful" && free(p)); if (refused.length && refused.length <= 2) give("Couldn’t Be Bought", "shield", refused, "said no to the Traitors" + (refused.length === 1 ? " in " + rd(refused[0].refused[0].round) : ""));
-  const seers = ghostScores(s).filter(x => x.hits && free(x.p)); if (seers.length && seers.length <= 2) give("The Ghost Who Saw", "ghost", seers.map(x => x.p), seers.length === 1 ? "named " + seers[0].pickName + " from beyond the table" : "named a Traitor from beyond the table");
-  const sr = s.seer && s.seer.metId && !s.seer.fake && Q(s.seer.id); if (sr) give("The Prophet", "eye", [sr], "met " + (Q(s.seer.metId) ? Q(s.seer.metId).name : "a Traitor") + " face to face in the dark");
-  b = best(stab, 1); if (b) give("The Backstabber", "dagger", b.ps, "chalked a fellow Traitor’s name " + times(b.n));
+  let b = best(hitT, 1, p => p.role === "candle"); if (b) give("The Sharpest Eye", "eye", b.ps, "chalked a Cloak’s name " + times(b.n));
+  const ts = s.players.filter(p => p.role === "cloak"), tAlive = ts.filter(p => p.alive && free(p));
+  if (tAlive.length) { const low = Math.min(...tAlive.map(p => against[p.id] || 0)), w = tAlive.filter(p => (against[p.id] || 0) === low); if (w.length <= 2) give("The Grand Deceiver", "blade", w, low ? "reached the end with only " + (low === 1 ? "one vote" : numWord(low) + " votes") + " against them" : "reached the end without a single vote against them") }
+  else if (ts.length) { const lastR = p => { const e = log.filter(v => v.exiled === p.id); return e.length ? e[e.length - 1].round : 0 }, cand = ts.filter(free), top = cand.length ? Math.max(...cand.map(lastR)) : 0; if (top > 1) { const w = cand.filter(p => lastR(p) === top); if (w.length <= 2) give("The Grand Deceiver", "blade", w, "fooled the table until " + rd(top)) } }
+  b = best(st.bladeKills, 1); if (b) give("The Deciding Blade", "blade", b.ps, "whose blade decided an exile");
+  const turned = s.players.filter(p => p.role === "cloak" && p.converted && free(p)); if (turned.length && turned.length <= 2) give("The Turncoat", "handshake", turned, turned.length === 1 ? (turned[0].converted.mode === "bargain" ? "chose the Cloaks over the poison in " : "joined the Cloaks in ") + rd(turned[0].converted.round) : "switched sides in the night");
+  const refused = s.players.filter(p => (p.refused || []).length && p.role === "candle" && free(p)); if (refused.length && refused.length <= 2) give("Couldn’t Be Bought", "shield", refused, "said no to the Cloaks" + (refused.length === 1 ? " in " + rd(refused[0].refused[0].round) : ""));
+  const witnesses = ghostScores(s).filter(x => x.hits && free(x.p)); if (witnesses.length && witnesses.length <= 2) give("The Ghost Who Saw", "ghost", witnesses.map(x => x.p), witnesses.length === 1 ? "named " + witnesses[0].pickName + " from beyond the table" : "named a Cloak from beyond the table");
+  const sr = s.witness && s.witness.metId && !s.witness.fake && Q(s.witness.id); if (sr) give("The Prophet", "eye", [sr], "met " + (Q(s.witness.metId) ? Q(s.witness.metId).name : "a Cloak") + " face to face in the dark");
+  b = best(stab, 1); if (b) give("The Backstabber", "blade", b.ps, "chalked a fellow Cloak’s name " + times(b.n));
   const sv = (st.saved || []).map(x => Q(x.id)).find(free); if (sv) give("The Narrow Escape", "shield", [sv], "the poison came for them — and a shield said no");
-  const fb = (st.murders || [])[0]; if (fb && Q(fb.id)) give("First Blood", "chalice", [Q(fb.id)], "the Traitors’ very first choice");
-  const mt = log.find(v => v.role === "faithful" && free(Q(v.banished))); if (mt) give("The Martyr", "table", [Q(mt.banished)], "banished in " + rd(mt.round) + " — Faithful all along");
+  const fb = (st.murders || [])[0]; if (fb && Q(fb.id)) give("First Blood", "chalice", [Q(fb.id)], "the Cloaks’ very first choice");
+  const mt = log.find(v => v.role === "candle" && free(Q(v.exiled))); if (mt) give("The Martyr", "table", [Q(mt.exiled)], "exiled in " + rd(mt.round) + " — Candle all along");
   b = best(st.wins, 1); if (b) give("Mission Machine", "crown", b.ps, "won " + (b.n === 1 ? "a mission" : numWord(b.n) + " missions"));
   b = best(king, 2); if (b) give("The Kingmaker", "crown", b.ps, "chalked the name that went " + times(b.n));
   b = best(against, 2); if (b) give("The Lightning Rod", "table", b.ps, numWord(b.n) + " boards bore their name");
   b = best(st.wrongs, 1); if (b) give("The Wild Card", "hourglass", b.ps, "shouted " + (b.n === 1 ? "a wrong answer" : numWord(b.n) + " wrong answers") + " with total confidence");
-  b = best(hitF, 2, p => p.role === "faithful"); if (b) give("Barking Up the Wrong Tree", "raven", b.ps, "chalked an innocent name " + times(b.n));
+  b = best(hitF, 2, p => p.role === "candle"); if (b) give("Barking Up the Wrong Tree", "raven", b.ps, "chalked an innocent name " + times(b.n));
   b = best(st.shields, 2); if (b) give("The Shield Bearer", "shield", b.ps, "held " + numWord(b.n) + " shields");
   b = best(st.score, 1); if (b) give("The Point Hoarder", "scales", b.ps, "scored " + numWord(b.n) + " mission points all night");
   b = best(lone, 2); if (b) give("The Lone Wolf", "raven", b.ps, "the only board with that name, " + times(b.n));
   const alive = s.players.filter(p => p.alive && !p.left && free(p));
   if (alive.length) { const low = Math.min(...alive.map(p => against[p.id] || 0)), w = alive.filter(p => (against[p.id] || 0) === low); if (w.length <= 2) give("The Untouchable", "shield", w, low ? "reached the end with only " + (low === 1 ? "one board" : numWord(low) + " boards") + " against them" : "reached the end without their name ever chalked") }
-  const lastF = s.players.filter(p => p.alive && p.role === "faithful" && free(p)); if (s.winner === "traitors" && lastF.length && lastF.length <= 2) give("Last Faithful Standing", "candle", lastF, "still at the table when the Traitors won");
+  const lastF = s.players.filter(p => p.alive && p.role === "candle" && free(p)); if (s.winner === "cloaks" && lastF.length && lastF.length <= 2) give("Last Candle Burning", "candle", lastF, "still at the table when the Cloaks won");
   const n = [12, 8, 6, 4, 2].find(k => k <= out.length) || out.length;
   return out.slice(0, n).reverse();
 }
 function rpsWin(id) { act(s => { const r = s.rps; if (!r || !r.ids.includes(id)) return; r.winner = id; return { log: "Rock, paper, scissors: " + P2(s, id).name + " takes the prize home" } }) }
-function startGhostRound() { act(s => { s.final2.ghostRound = { ids: ghostScores(s).filter(x => x.hits).map(x => x.p.id), votes: {}, order: null, revealed: 0 } }, "Ghosts' share or steal") }
+function startGhostRound() { act(s => { s.final2.ghostRound = { ids: ghostScores(s).filter(x => x.hits).map(x => x.p.id), votes: {}, order: null, revealed: 0 } }, "Ghosts' share or take") }
 function startGhostReveal() { act(s => { const g = s.final2.ghostRound; g.ids.forEach(id => { if (!g.votes[id]) g.votes[id] = "share" }); g.order = shuffle(g.ids.slice()); g.revealed = 0 }) }
 function finishGame() {
   // From anywhere but a finished ceremony, "end the game" only opens the ceremony: the host reveals, nothing is shown by itself.
   if (!(state.phase === "final2" && ceremonyDone(state))) return startCeremony();
-  const lt = traitors();
+  const lt = cloaks();
   if (lt.length >= 2 && !(state.final2.order && state.final2.revealed >= state.final2.order.length)) return startCeremony();
   act(s => {
-    const lt = aliveOf(s).filter(p => p.role === "traitor");
-    s.phase = "final"; s.winner = lt.length ? "traitors" : "faithful"; s.players.forEach(p => p.revealed = true); s.prizeTo = null;
+    const lt = aliveOf(s).filter(p => p.role === "cloak");
+    s.phase = "final"; s.winner = lt.length ? "cloaks" : "candles"; s.players.forEach(p => p.revealed = true); s.prizeTo = null;
     // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps)
     const to = (ids, label) => { s.prizeIds = ids; s.prizeTo = label || andList(ids.map(id => P2(s, id).name)); s.potEach = ids.length ? Math.floor((s.pot || 0) / ids.length) : 0 };
     if (lt.length >= 2) {
-      const f = s.final2, st = lt.filter(p => f.votes[p.id] === "steal");
+      const f = s.final2, st = lt.filter(p => f.votes[p.id] === "take");
       if (st.length === 1) to([st[0].id]);
       else if (st.length === 0) to(lt.map(p => p.id));
       else {
         const g = f.ghostRound, gs = ghostScores(s).filter(x => x.hits);
-        if (g && g.order) { const gst = g.ids.filter(id => g.votes[id] === "steal"); if (gst.length === 1) to([gst[0]], P2(s, gst[0]).name + " — a Ghost"); else if (gst.length === 0) to(g.ids.slice(), andList(g.ids.map(id => P2(s, id).name)) + " — the Ghosts"); else to([], hostOf(s) + " — the Ghosts stole from each other") }
-        else if (gs.length === 1) to([gs[0].p.id], gs[0].p.name + " — a Ghost who named a Traitor");
-        else if (gs.length >= 2) to(gs.map(x => x.p.id), andList(gs.map(x => x.p.name)) + " — the Ghosts who named a Traitor");
+        if (g && g.order) { const gst = g.ids.filter(id => g.votes[id] === "take"); if (gst.length === 1) to([gst[0]], P2(s, gst[0]).name + " — a Ghost"); else if (gst.length === 0) to(g.ids.slice(), andList(g.ids.map(id => P2(s, id).name)) + " — the Ghosts"); else to([], hostOf(s) + " — the Ghosts grabbed at each other") }
+        else if (gs.length === 1) to([gs[0].p.id], gs[0].p.name + " — a Ghost who named a Cloak");
+        else if (gs.length >= 2) to(gs.map(x => x.p.id), andList(gs.map(x => x.p.name)) + " — the Ghosts who named a Cloak");
         else to([], hostOf(s) + " — nobody earned it");
       }
     }
     else if (lt.length === 1) to([lt[0].id]);
-    else { const A = aliveOf(s); to(A.map(p => p.id), A.length ? "the Faithful: " + andList(A.map(p => p.name)) : hostOf(s) + " — nobody left standing") }
+    else { const A = aliveOf(s); to(A.map(p => p.id), A.length ? "the Candles: " + andList(A.map(p => p.name)) : hostOf(s) + " — nobody left standing") }
     s.rps = s.prizeIds.length >= 2 ? { ids: s.prizeIds.slice(), winner: null } : null;
     s.awards = awardsOf(s); s.finalStep = 0; s.awardShown = 0; // worked out here, from the full record (the TV never sees the vote history)
     return { log: "Game over — " + s.winner + " win" };
@@ -1406,19 +1435,20 @@ function playerLeft(id) {
   act(s => {
     const p = P2(s, id); p.alive = false; p.left = true; p.shield = null;
     const m = s.mission;
-    if (m) { m.secIds = (m.secIds || []).filter(x => x !== id); if (m.winId === id) m.winId = null; if (m.standing) m.standing = m.standing.filter(x => x !== id); if (m.out) m.out = m.out.filter(x => x !== id); if (m.right) m.right = m.right.filter(x => x !== id); if (m.tellerId === id) { m.tellerId = null; m.tstage = null; m.timerEnd = null } m.picks = (m.picks || []).filter(x => x !== id); if (m.seerId === id) m.seerId = null; if (m.actorId === id) m.actorId = null; if (m.shouter === id) m.shouter = null }
-    if (s.seer && s.seer.id === id) s.seer.used = true;
+    if (m) { m.secIds = (m.secIds || []).filter(x => x !== id); if (m.winId === id) m.winId = null; if (m.standing) m.standing = m.standing.filter(x => x !== id); if (m.out) m.out = m.out.filter(x => x !== id); if (m.right) m.right = m.right.filter(x => x !== id); if (m.tellerId === id) { m.tellerId = null; m.tstage = null; m.timerEnd = null } m.picks = (m.picks || []).filter(x => x !== id); if (m.witnessId === id) m.witnessId = null; if (m.actorId === id) m.actorId = null; if (m.shouter === id) m.shouter = null }
+    if (s.witness && s.witness.id === id) s.witness.used = true;
     const n = s.night;
     if (n) {
       const involved = n.victimId === id || n.targetId === id;
       if (n.victimId === id) n.victimId = null;
+      if ((n.victims || []).includes(id)) n.victims = n.victims.filter(x => x !== id);
       if (n.targetId === id) { n.targetId = null; n.targetName = null; n.answer = null }
       n.step = involved ? 0 : Math.min(n.step || 0, nightScript(n, s).length - 1);
     }
     if (s.table) { const t = s.table; if (t.revote) { t.revote = t.revote.filter(x => x !== id); if (t.revote.length < 2) t.revote = null } if (t.ballots) { delete t.ballots[id]; for (const k in t.ballots) if (t.ballots[k] === id) delete t.ballots[k] } if (t.immune) t.immune = t.immune.filter(x => x !== id); if (t.last === id) t.last = null; tally(s) }
-    if (s.warrior && s.warrior.id === id) s.warrior = null;
+    if (s.champion && s.champion.id === id) s.champion = null;
     if (s.endvote) { delete s.endvote.votes[id]; if (s.endvote.order) { s.endvote = { votes: {}, order: null, revealed: 0, count: null, result: null } } }
-    if (s.final2) { const f = newFinal2(); f.shown = aliveOf(s).filter(q => q.revealed && (s.final2.shown || []).includes(q.id)).map(q => q.id); s.final2 = f; if (ceremonyDone(s)) { const ts = aliveOf(s).filter(q => q.role === "traitor"); f.showRoles = true; f.traitorIds = ts.map(q => q.id) } }
+    if (s.final2) { const f = newFinal2(); f.shown = aliveOf(s).filter(q => q.revealed && (s.final2.shown || []).includes(q.id)).map(q => q.id); s.final2 = f; if (ceremonyDone(s)) { const ts = aliveOf(s).filter(q => q.role === "cloak"); f.showRoles = true; f.cloakIds = ts.map(q => q.id) } }
     return { log: p.name + " left the party (" + p.role + ")" };
   });
 }
