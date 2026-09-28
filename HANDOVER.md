@@ -285,7 +285,7 @@ Kept as ordinary game words: shield, murder, poison, mission, Ghosts, the Reckon
 
 ## 8. Testing
 
-**Chaos is expensive: run it only after major structural changes (state shape, phase flow, rules engine), and always cap it at 10 minutes in total** — e.g. `timeout 600 python3 qa/chaos.py 20 420` (the second number is the play budget in seconds; the TV replay needs the remaining time). For ordinary changes, smoke166, plan, big and e2e are enough.
+**Never run `qa/chaos.py` unless Ryan explicitly asks for a chaos test.** The standard checks are smoke166, plan, big, claim and e2e.
 
 Never run `build.sh` while chaos or break is running (a new `build.txt` reloads the pages). Kill stray servers with `for pid in $(pgrep -f "^node qa/server.mjs 871[4-9]"); do kill $pid; done` — don't `pkill -f` a pattern your own command line contains.
 
@@ -295,7 +295,7 @@ Never run `build.sh` while chaos or break is running (a new `build.txt` reloads 
 | `qa/smoke166.py` (:8719) | 74 rules checks | clean |
 | `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Witness, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
 | `qa/claim.mjs` | Stripe with its API stubbed: checkout (consent, pending pass, session parameters, rate limit), claim, signed webhook (paid, async, expired, refunded before and after use), Payment Link fallback | clean (27 checks) |
-| `qa/chaos.py` (:8715) | random whole games through the host UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
+| `qa/chaos.py` (:8715) | **only on request.** Random whole games through the host UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
 | `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the rounds control (range, Auto, clamps), round plan, the second vote, a three-victim night (redaction per pass, the picker, a shield), dawn, the five floor, the final voting silently down to four, parity playing on, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
 | `qa/break.py part1` (:8718) | adversarial in-page scenarios + every TV screen at three sizes | clean, 130/130 (found a duplicate-name rename bug, fixed) |
 | `qa/media.py`, `qa/shots.py` | screenshots for the media pack / quick looks | used for 1.0 |
@@ -309,7 +309,7 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 - Not deployed. **Stripe has never been called for real**: this build environment's network policy blocked api.stripe.com. Everything is tested against a stub (`qa/claim.mjs`). First real test: staging with test keys (§6.2).
 - **Legal pages are drafts.** Terms, privacy, cookies, refunds and contact (§6.1) were written to UK consumer and data-protection law as templates, not by a lawyer. Fill every highlighted `[placeholder]` (business name, address, company/VAT/ICO numbers, email, price, dates) and have a solicitor review them before taking payment.
 - **The renamed terms (§5.9) are not a legal clearance.** They remove the obvious borrowings; the underlying hidden-role mechanics are common to many games. A UK IPO / EUIPO search and, ideally, advice on format rights before launch.
-- **Big tables are longer.** Even with two exiles and up to three victims a round, 24 players need about 8 rounds (§5.10). Only simulated and scripted (qa/big.py, chaos), never played.
+- **Big tables are longer.** Even with two exiles and up to three victims a round, 24 players need about 8 rounds (§5.10). Only simulated and scripted (qa/big.py), never played.
 - A chaos run (before the §5.6 rework) had a 16-player game stuck at the Reckoning for 400 random taps — probably random ballots tying and revoting; not investigated.
 - Ideas: a printable guest guide in the new brand; per-mission lengths in the plan; an admin page instead of `tools/passes.sh`; bundle passes (3 parties).
 
