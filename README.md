@@ -1,10 +1,10 @@
-# Cloak & Candle
+# The Betrayal
 
-A hosted dinner-party game for 8–24 players. The TV (a laptop cast to it) runs the show; the host's phone runs the game.
-Sold as a **party pass**: one pass opens one room for 48 hours. Many parties play at once, each in its own room.
+A hosted dinner-party game for 8–24 players. The TV (a laptop cast to it) runs the show; the Keeper's phone runs the game.
+Sold as a **Invitation**: one pass opens one room for 48 hours. Many parties play at once, each in its own room.
 
 - Home page: `https://cloakandcandle.co.uk/` — buy a pass, open a room, join a room on the TV
-- A room: `https://cloakandcandle.co.uk/g/ROOMCD` (TV) and `…/g/ROOMCD#host` (host phone)
+- A room: `https://cloakandcandle.co.uk/g/ROOMCD` (TV) and `…/g/ROOMCD#host` (Keeper phone)
 - Staging: `https://staging.cloakandcandle.co.uk/`
 
 Read `HANDOVER.md` before changing anything.

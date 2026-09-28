@@ -3,9 +3,9 @@
 #   tools/passes.sh mint 5 "gift for Annie"      → five new pass codes
 #   tools/passes.sh list                          → every pass: made, redeemed, which room, when it runs out
 #   tools/passes.sh revoke CNDL-XXXX-XXXX         → cancel a pass (refunds, mistakes)
-# BASE defaults to production; BASE=https://staging.cloakandcandle.co.uk for staging, http://127.0.0.1:8790 for wrangler dev.
+# BASE defaults to production; BASE=https://staging.thebetrayal.co.uk for staging, http://127.0.0.1:8790 for wrangler dev.
 set -e
-BASE=${BASE:-https://cloakandcandle.co.uk}
+BASE=${BASE:-https://thebetrayal.co.uk}
 [ -n "$ADMIN_TOKEN" ] || { echo "set ADMIN_TOKEN" >&2; exit 1; }
 AUTH="Authorization: Bearer $ADMIN_TOKEN"
 case "$1" in

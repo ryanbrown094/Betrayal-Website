@@ -100,7 +100,7 @@ with sync_playwright() as p:
     check("TV sees only the revealed ghost vote", tv.evaluate("()=>Object.values(state.final2.ghostRound.votes).filter(v=>v!=='·').length===1"))
     host.evaluate("()=>{act(s=>{s.final2.ghostRound.revealed=2});finishGame()}"); sync(tv, h2); tv.wait_for_timeout(400)
     check("prize goes to the Ghost who stole", host.evaluate("()=>state.phase==='final' && state.winner==='cloaks' && state.prizeTo") == "Tom — a Ghost", host.evaluate("()=>state.prizeTo"))
-    check("TV final shows every role", tv.evaluate("()=>state.players.every(p=>p.role)") and "The Cloaks win" in tv.inner_text("#stage"))
+    check("TV final shows every role", tv.evaluate("()=>state.players.every(p=>p.role)") and "The Forsworn win" in tv.inner_text("#stage"))
     # undo, then wipe and immediately start again: the TV must not cling to the old game's higher version
     host.evaluate("()=>undo()"); sync(tv, h2)
     check("undo steps the TV back", tv.evaluate("()=>state.phase") == "final2")
@@ -109,7 +109,7 @@ with sync_playwright() as p:
     if ADMIN:
         check("the other room is untouched by this game", api.get(URL + "api/g/" + room2 + "/state").json()["state"] is None)
         tv2 = b.new_context(viewport={"width": 1280, "height": 720}, extra_http_headers=GATE_HDR).new_page(); tv2.goto(URL + "g/" + room2); tv2.wait_for_timeout(3000)
-        check("a fresh room's TV shows its code and the host link", room2 in tv2.inner_text("#stage") and "#host" in tv2.inner_text("#stage"), tv2.inner_text("#stage")[:120])
+        check("a fresh room's TV shows its code and the host link", room2 in tv2.inner_text("#stage") and "#keeper" in tv2.inner_text("#stage"), tv2.inner_text("#stage")[:120])
     check("no page errors on any screen", not errs, errs[:3])
     api.delete(APIU + "state", headers={"X-Pin": PIN})
     b.close()

@@ -23,7 +23,7 @@ with sync_playwright() as p:
     host.goto(URL + "/g/" + code + "#host"); tv.goto(URL + "/g/" + code); host.wait_for_timeout(1500)
     host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'4321'});submitSetup()}", "\n".join(NAMES)); host.wait_for_timeout(1500)
     host.evaluate("()=>{act(s=>{s.phase='day'},'Day');pickMission('quiz')}"); host.wait_for_timeout(1200)
-    host.click("text=Adjust this mission"); host.wait_for_timeout(300)
+    host.click("text=Adjust this Trial"); host.wait_for_timeout(300)
     host.evaluate("()=>setTimeout(()=>{throw new Error('diag test boom')},0)"); host.wait_for_timeout(300)
     tv.evaluate("()=>setTimeout(()=>{throw new Error('tv test boom')},0)"); tv.wait_for_timeout(300)
     host.evaluate("()=>flushEv()"); tv.evaluate("()=>flushEv()"); host.wait_for_timeout(800)
@@ -46,13 +46,13 @@ with sync_playwright() as p:
     check("both reports are listed, linked to the room", len(mine) == 2 and {r["host"] for r in mine} == {True, False}, mine)
     hr = [r for r in mine if r["host"]][0]
     full = api("/api/admin/report?id=" + hr["id"])
-    check("the phone's report has the form, the email, a snapshot and its trail of taps", full["what"] == "The quiz brief looked wrong" and full["email"] == "host@example.com" and len(full["snap"]) > 1000 and any(c["k"] == "tap" and "Adjust this mission" in c["m"] for c in full["crumbs"]), {k: full[k] for k in ("what", "email")})
+    check("the phone's report has the form, the email, a snapshot and its trail of taps", full["what"] == "The quiz brief looked wrong" and full["email"] == "host@example.com" and len(full["snap"]) > 1000 and any(c["k"] == "tap" and "Adjust this Trial" in c["m"] for c in full["crumbs"]), {k: full[k] for k in ("what", "email")})
     check("…and points at the save it was made at", full["rec"] >= 3, full["rec"])
     room = api(f"/api/admin/room/{code}/room")
     check("the room: full config, players and roles, the PIN-protected state", room["state"]["rules"]["rounds"] == 4 and len(room["state"]["players"]) == 10 and sum(1 for x in room["state"]["players"] if x["role"] == "cloak") == 2, room["state"]["rules"])
     check("…kept 90 days because of the reports", room["meta"].get("keepUntil", 0) > room["meta"]["expires"] and len(room["meta"].get("reports", [])) == 2, room["meta"])
     recs = api(f"/api/admin/room/{code}/recs")["recs"]
-    check("every save is recorded, with its log line", len(recs) >= 3 and recs[0]["kind"] == "start" and "Game created" in recs[0]["line"] and any("Mission: Rapid Quiz" in (r["line"] or "") for r in recs), [(r["kind"], r["line"]) for r in recs][:5])
+    check("every save is recorded, with its log line", len(recs) >= 3 and recs[0]["kind"] == "start" and "Game created" in recs[0]["line"] and any("Trial: Rapid Quiz" in (r["line"] or "") for r in recs), [(r["kind"], r["line"]) for r in recs][:5])
     st = api(f"/api/admin/room/{code}/rec?n=" + str(recs[-1]["n"]))
     check("a recorded save opens as the whole game", st.get("phase") == "mission" and st["mission"]["key"] == "quiz")
     evs = api(f"/api/admin/room/{code}/events")["events"]

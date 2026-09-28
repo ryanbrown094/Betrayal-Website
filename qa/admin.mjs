@@ -47,4 +47,12 @@ const after = (await J(await post("/api/admin/login", { user: "ryanab94.admin", 
 check("twenty wrong passwords from one address, then it waits an hour (even the right one)", tries.slice(0, 20).every(s => s === 401) && tries.slice(20).every(s => s === 429) && after === 429, tries);
 check("…other addresses are unaffected", (await J(await post("/api/admin/login", { user: "ryanab94.admin", password: "right-horse-battery" }, { "CF-Connecting-IP": "198.51.100.10" })))[0] === 200);
 
+// the domain move: pages on the old domain and on www. go to thebetrayal.co.uk (/g/ becomes /t/); the API answers everywhere
+const hosts = { ...env, SITE_HOST: "thebetrayal.co.uk", OLD_HOSTS: "cloakandcandle.co.uk,www.cloakandcandle.co.uk", ASSETS: { fetch: async () => new Response("page") } };
+const at = (u, init) => worker.fetch(new Request(u, init), hosts);
+const r1 = await at("https://cloakandcandle.co.uk/g/ABC234?x=1"), r2 = await at("https://www.thebetrayal.co.uk/rules"), r3 = await at("https://cloakandcandle.co.uk/api/admin/me", { headers: { Authorization: "Bearer tok" } }), r4 = await at("https://thebetrayal.co.uk/t/ABC234");
+check("old domain: a Table link moves to the new domain's /t/", r1.status === 301 && r1.headers.get("Location") === "https://thebetrayal.co.uk/t/ABC234?x=1", r1.headers.get("Location"));
+check("www. goes to the bare domain", r2.status === 301 && r2.headers.get("Location") === "https://thebetrayal.co.uk/rules");
+check("the API still answers on the old domain (Stripe's webhook, open Tables)", r3.status === 200);
+check("the new domain serves /t/CODE", r4.status === 200 && (await r4.text()) === "page");
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

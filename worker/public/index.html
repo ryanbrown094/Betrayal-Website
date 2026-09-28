@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928212926">
-<title>Cloak &amp; Candle — the dinner-party game of loyalty and lies</title>
-<meta name="description" content="Cloak &amp; Candle turns your dinner party into a game of hidden Cloaks, secret shields and midnight murders. Your TV runs the show; your phone runs the game.">
+<meta name="build" content="20260928223907">
+<title>The Betrayal — the dinner-party game of loyalty and lies</title>
+<meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
-<meta property="og:title" content="Cloak &amp; Candle — the dinner-party game of loyalty and lies">
-<meta property="og:description" content="Every guest gets a candle. Somebody is wearing a cloak. The dinner-party game of loyalty and lies — your TV runs the show; your phone runs the game.">
+<meta property="og:title" content="The Betrayal — the dinner-party game of loyalty and lies">
+<meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies — your TV runs the show; your phone runs the game.">
 <meta property="og:image" content="/media/og-card.png">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <style>
@@ -71,9 +71,9 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <header class="hero">
     <svg class="mark" viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 16l44 54-44 54-44-54z" fill="currentColor" fill-opacity=".14" stroke="none"/><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 16l44 54-44 54-44-54z" stroke-width="1"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 41c-6 5-9 10.5-9 16 0 6 4 9.5 9 9.5s9-3.5 9-9.5c0-5.5-3-11-9-16z" stroke-width="1.4"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/><circle cx="60" cy="70.5" r="1.6"/><path d="M60 73c-.4 8-.8 15.5-1.2 23" stroke-width="1.3"/><path d="M50 77c-1 6.5-2 13-3 19M70 77c1 6.5 2 13 3 19" stroke-width="1"/><path d="M27 70h-9M93 70h9" stroke-width="1.4"/><circle cx="14" cy="70" r="1.6"/><circle cx="106" cy="70" r="1.6"/></svg>
     <div class="eyebrow" style="margin-top:18px">a dinner-party game</div>
-    <h1>Cloak &amp; Candle</h1>
-    <p class="tag">Every guest gets a candle. Somebody at the table is wearing a cloak. By the end of the night, everyone will know who.</p>
-    <div class="ctas"><a class="btn" id="buy" href="#start">Buy a party pass</a><a class="btn ghost" href="#start">I have a pass</a></div>
+    <h1>The Betrayal</h1>
+    <p class="tag">Everyone swore an oath. Not everyone meant it. By the end of the night, everyone will know who lied.</p>
+    <div class="ctas"><a class="btn" id="buy" href="#start">Buy an Invitation</a><a class="btn ghost" href="#start">I have an Invitation</a></div>
     <div class="price" id="price"></div>
     <div class="shot"><img src="/media/tv-table.jpg" alt="The Reckoning on the TV: eight players' seals around a glowing table, with the words ‘Talk. Accuse. Defend. Deflect.’" width="1920" height="1080"></div>
   </header>
@@ -82,38 +82,38 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="eyebrow">how it works</div><h2>Your TV runs the show. Your phone runs the game.</h2>
     <div class="grid3">
       <div class="card"><b>1 · plan</b><h3>Set it up once</h3><p>On your phone, before anyone arrives. One question a page, each one explained, with a recommended answer already picked. Five minutes, even the first time.</p></div>
-      <div class="card"><b>2 · cast</b><h3>Put it on the TV</h3><p>Open your room on a laptop and cast it. Title cards, missions, the Reckoning, candlelit nights and a full score — all on the big screen.</p></div>
-      <div class="card"><b>3 · play</b><h3>Tap, read, reveal</h3><p>The phone gives you every line to read and every secret to keep. You just tap Next. The game counts the votes, deals the missions and keeps the pot.</p></div>
+      <div class="card"><b>2 · cast</b><h3>Put it on the TV</h3><p>Open your Table on a laptop and cast it. Title cards, Trials, the Reckoning, candlelit nights and a full score — all on the big screen.</p></div>
+      <div class="card"><b>3 · play</b><h3>Tap, read, reveal</h3><p>The phone gives you every line to read and every secret to keep. You just tap Next. The game counts the votes, deals the Trials and keeps the Purse.</p></div>
     </div>
     <div class="ctas" style="margin-top:22px"><a class="btn ghost" href="/tour">See a game, screen by screen</a><a class="btn ghost" href="/rules">Read the rules</a></div>
   </section>
 
   <section id="start">
-    <div class="eyebrow">start</div><h2>Open your room</h2>
-    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your party pass</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Write it down or take a screenshot: it opens your room, and entering it again brings the same room back.</p><button class="btn" id="claimgo">Start my game</button></div>
+    <div class="eyebrow">start</div><h2>Open your Table</h2>
+    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your Invitation</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><button class="btn" id="claimgo">Start my game</button></div>
     <div class="forms">
-      <div class="panel"><label for="pass">Party pass or subscription code</label><div class="row"><input id="pass" placeholder="CNDL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="go">Open room</button></div><p class="msg" id="passmsg">One pass, one party: your room stays open for 48 hours from the moment you open it. Do this on the phone you’ll host with.</p><p class="msg">Subscribers: enter your code to start a game, or <a href="#" id="manage">manage your subscription</a>.</p></div>
-      <div class="panel"><label for="room">Setting up the TV? Room code</label><div class="row"><input id="room" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg">Open this on the laptop you’ll cast to the TV.</p></div>
+      <div class="panel"><label for="pass">Invitation or Standing Invitation code</label><div class="row"><input id="pass" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg">One Invitation, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll Keeper with.</p><p class="msg">Subscribers: enter your code to start a game, or <a href="#" id="manage">manage your subscription</a>.</p></div>
+      <div class="panel"><label for="room">Setting up the TV? Table code</label><div class="row"><input id="room" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg">Open this on the laptop you’ll cast to the TV.</p></div>
     </div>
   </section>
 
   <section>
     <div class="eyebrow">what you need</div><h2>Bring the people. We bring the lies.</h2>
-    <ul class="need"><li>8 to 24 players (10–16 is the sweet spot)</li><li>3½ to 4½ hours for up to 12 players, with dinner in the middle. Bigger tables play longer, and setup gives you an estimate.</li><li>A TV, and a laptop to cast to it</li><li>A phone for the host</li><li>A blindfold for everyone</li><li>A small chalkboard and chalk each</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
+    <ul class="need"><li>8 to 24 players (10–16 is the sweet spot)</li><li>About 3¼ to 4¼ hours for 8 to 12 players, with dinner in the middle. Bigger tables play longer, and setup gives you an estimate.</li><li>A TV, and a laptop to cast to it</li><li>A phone for the Keeper</li><li>A blindfold for everyone</li><li>A small chalkboard and chalk each</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
   </section>
 
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
-    <details><summary>Does everyone need a phone?</summary><p>No. Only the host uses one. Guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. At a few moments the host hands the phone round for a secret vote.</p></details>
-    <details><summary>What does a pass get me?</summary><p>One room for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>Does everyone need a phone?</summary><p>No. Only the Keeper uses one. Guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. At a few moments the Keeper hands the phone round for a secret vote.</p></details>
+    <details><summary>What does an Invitation get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What about the monthly subscription?</summary><p>£20 a month gets you one code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
-    <details><summary>Does the host get to play?</summary><p>The host runs the game — like a presenter. They know who the Cloaks are from the start, so they don’t play a role.</p></details>
-    <details><summary>Why “Cloak &amp; Candle”?</summary><p>Every guest has a candle burning on the TV. The Cloaks hide under the cloak. Each night a candle goes out — and the Candles have until the last one to pull the cloak away.</p></details>
+    <details><summary>Does the host get to play?</summary><p>The host is the game’s <b>Keeper</b>: they run it — like a presenter. They know who the Forsworn are from the start, so they don’t play a role.</p></details>
+    <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave.</p></details>
     <details><summary>What if the Wi-Fi drops?</summary><p>Both screens reconnect by themselves, and the phone keeps every change until the server has it. Nothing is lost.</p></details>
   </section>
 
-  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>Cloak &amp; Candle is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
+  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
 </div>
 <script>
 "use strict";
@@ -125,13 +125,13 @@ $("#price").textContent = SHOP.price ? SHOP.price + " · 8 to 24 players" : "";
 if (SHOP.contact) $("#contact").innerHTML = ' · <a href="mailto:' + SHOP.contact + '">' + SHOP.contact + "</a>";
 const say = (el, t, err) => { el.textContent = t; el.className = "msg" + (err ? " err" : "") };
 async function open(pass, fresh) {
-  const b = $("#go"); b.disabled = true; say($("#passmsg"), "Opening your room…");
+  const b = $("#go"); b.disabled = true; say($("#passmsg"), "Opening your Table…");
   try {
     const r = await fetch("/api/games", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass, fresh: !!fresh }) });
     const j = await r.json().catch(() => ({}));
     // a subscriber with a game still open: carry on with it, or start a new one (which closes it)
     if (r.ok && j.room && j.sub && j.again) { b.disabled = false; return subChoice(pass, j.room) }
-    if (r.ok && j.room) { location.href = "/g/" + j.room + "#host"; return }
+    if (r.ok && j.room) { location.href = "/t/" + j.room + "#keeper"; return }
     say($("#passmsg"), j.error || "That didn’t work — try again.", true);
   } catch (e) { say($("#passmsg"), "Can’t reach the server. Check you’re online.", true) }
   b.disabled = false;
@@ -140,7 +140,7 @@ function subChoice(pass, room) {
   const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
   m.append("You have a game open. Carry on with it, or start a new one? A new game closes the one that’s open.");
   const row = document.createElement("div"); row.className = "row";
-  const a = document.createElement("button"); a.className = "btn"; a.textContent = "Carry on"; a.onclick = () => { location.href = "/g/" + room + "#host" };
+  const a = document.createElement("button"); a.className = "btn"; a.textContent = "Carry on"; a.onclick = () => { location.href = "/t/" + room + "#keeper" };
   const n = document.createElement("button"); n.className = "btn ghost"; n.textContent = "Start a new game"; n.onclick = () => open(pass, true);
   row.append(a, n); m.append(row);
 }
@@ -156,9 +156,9 @@ async function manage() {
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = e => { e.preventDefault(); manage() };
-$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter your pass or subscription code.", true); open(v) };
+$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter your Invitation code.", true); open(v) };
 $("#pass").onkeydown = e => { if (e.key === "Enter") $("#go").click() };
-$("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.length !== 6) return say($("#roommsg"), "Room codes are six letters and numbers.", true); location.href = "/g/" + v };
+$("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.length !== 6) return say($("#roommsg"), "Table codes are six letters and numbers.", true); location.href = "/t/" + v };
 $("#room").onkeydown = e => { if (e.key === "Enter") $("#join").click() };
 // back from checkout: fetch this session's pass and show it
 const sid = new URLSearchParams(location.search).get("session_id");
@@ -168,7 +168,7 @@ if (sid) (async () => {
     try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (j.sub) { $("#claimhead").textContent = "thank you — here is your subscription code"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
-  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your pass will appear here.", true);
+  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your Invitation will appear here.", true);
 })();
 </script>
 </body>
