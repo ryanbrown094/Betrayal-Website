@@ -128,11 +128,12 @@ export class Registry {
   }
   failed(ip) { const rec = this.fails.get(ip) || []; rec.push(Date.now()); this.fails.set(ip, rec); }
 
-  async mint(count, note, source) {
+  async mint(count, note, source, kind) {
     const out = [];
     for (let i = 0; i < count; i++) {
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin" });
+      // a free unlimited code (from the admin page) works like a subscription that never lapses, until it's cancelled
+      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin", ...(kind === "sub" ? { kind: "sub", subActive: true, subStatus: "free" } : {}) });
       out.push(p);
     }
     return out;
@@ -148,7 +149,10 @@ export class Registry {
   async fetch(req) {
     const url = new URL(req.url), env = this.env, b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const ip = req.headers.get("CF-Connecting-IP") || "?";
-    if (url.pathname === "/mint") return json({ passes: await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin") });
+    if (url.pathname === "/mint") return json({ passes: await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind) });
+    // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
+    if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts — try again in an hour." }, 429) : json({ ok: true });
+    if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
     if (url.pathname === "/list") {
       const rows = [];
       for (const [k, v] of await this.storage.list({ prefix: "pass:" })) rows.push({ pass: k.slice(5), ...v });
@@ -252,7 +256,21 @@ const registry = (env) => env.REGISTRY.get(env.REGISTRY.idFromName("registry"));
 const call = (env, path, body) => registry(env).fetch("https://registry" + path, { method: "POST", body: JSON.stringify(body || {}) });
 // constant-time compare, so the admin token can't be found a character at a time
 const same = (a, b) => { a = String(a || ""); b = String(b || ""); if (!a || a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
-const admin = (req, env) => same((req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, ""), env.ADMIN_TOKEN);
+const bearer = (req, env) => !!env.ADMIN_TOKEN && same((req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, ""), env.ADMIN_TOKEN);
+// The /admin page signs in with ADMIN_USER (var) and ADMIN_PASSWORD (secret) and gets a 12-hour session cookie: the
+// expiry, signed with the password, so changing the password signs every session out.
+const ADMIN_COOKIE = "cc_admin", ADMIN_HOURS = 12;
+async function hmacHex(key, msg) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return [...new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+const sessionFor = async (env, exp) => exp + "." + (await hmacHex(env.ADMIN_PASSWORD, "admin:" + env.ADMIN_USER + ":" + exp));
+async function adminSession(req, env) {
+  if (!env.ADMIN_USER || !env.ADMIN_PASSWORD) return false;
+  const c = cookieOf(req, ADMIN_COOKIE), exp = +(c.split(".")[0] || 0);
+  return !!exp && Date.now() < exp && same(c, await sessionFor(env, exp));
+}
+const admin = async (req, env) => bearer(req, env) || (await adminSession(req, env));
 
 // Stripe: a Payment Link or Checkout whose success URL is https://<domain>/claim?session_id={CHECKOUT_SESSION_ID}.
 // The page asks us for its pass; we check with Stripe that the session is paid, then mint (once per session).
@@ -394,8 +412,27 @@ export default {
       if (!s || s.payment_status !== "paid") return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
       return call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer) });
     }
+    if (p === "/api/admin/login" && req.method === "POST") {
+      if (!env.ADMIN_USER || !env.ADMIN_PASSWORD) return json({ error: "The admin sign-in isn’t set up." }, 503);
+      const ip = req.headers.get("CF-Connecting-IP") || "?", hdr = { "CF-Connecting-IP": ip };
+      const gate2 = await registry(env).fetch("https://registry/signin-check", { method: "POST", headers: hdr, body: "{}" });
+      if (!gate2.ok) return json(await gate2.json(), gate2.status);
+      const b = await req.json().catch(() => ({}));
+      if (!(same(String(b.user || "").trim().toLowerCase(), String(env.ADMIN_USER).toLowerCase()) & same(String(b.password || ""), env.ADMIN_PASSWORD))) {
+        await registry(env).fetch("https://registry/signin-failed", { method: "POST", headers: hdr, body: "{}" });
+        return json({ error: "That username and password don’t match." }, 401);
+      }
+      const exp = Date.now() + ADMIN_HOURS * 3600000;
+      return json({ ok: true, until: exp }, 200, { "Set-Cookie": `${ADMIN_COOKIE}=${await sessionFor(env, exp)}; Path=/; Max-Age=${ADMIN_HOURS * 3600}; HttpOnly; Secure; SameSite=Strict` });
+    }
+    if (p === "/api/admin/logout" && req.method === "POST") return json({ ok: true }, 200, { "Set-Cookie": `${ADMIN_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict` });
     if (p.startsWith("/api/admin/")) {
-      if (!env.ADMIN_TOKEN || !admin(req, env)) return json({ error: "Not allowed" }, 401);
+      if (!(await admin(req, env))) return json({ error: "Not allowed" }, 401);
+      // a signed-in browser may only act from this site's own pages
+      const origin = req.headers.get("Origin");
+      if (req.method !== "GET" && !bearer(req, env) && origin && origin !== url.origin) return json({ error: "Not allowed" }, 403);
+      if (p === "/api/admin/me") return json({ ok: true, user: env.ADMIN_USER || "token" });
+      if (p === "/api/admin/room" && req.method === "POST") return call(env, "/open", { master: true });
       if (p === "/api/admin/passes" && req.method === "POST") return call(env, "/mint", await req.json().catch(() => ({})));
       if (p === "/api/admin/passes" && req.method === "GET") return registry(env).fetch("https://registry/list");
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
@@ -410,8 +447,13 @@ export default {
     }
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
-    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy)\/?$/);
-    if (page) return env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
+    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin)\/?$/);
+    if (page) {
+      const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
+      if (page[1] !== "admin") return r;
+      const h = new Headers(r.headers); h.set("X-Robots-Tag", "noindex, nofollow"); h.set("Cache-Control", "no-store"); h.set("X-Frame-Options", "DENY");
+      return new Response(r.body, { status: r.status, headers: h });
+    }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).
     return env.ASSETS.fetch(req);
   },

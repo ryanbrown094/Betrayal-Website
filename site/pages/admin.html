@@ -1,0 +1,148 @@
+<!-- title: Admin -->
+<style>
+.wrap { max-width: 1100px }
+.adm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end }
+.adm-row > label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose) }
+.adm-row input, .adm-row select { display: block; margin-top: 6px; min-height: 46px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 500 17px/1 var(--ui) }
+.btn.small { min-height: 46px; padding: 8px 18px; font-size: 16px } .btn.ghost { background: transparent; color: var(--ivory) } .btn.danger { background: transparent; border-color: #ff9dbf; color: #ff9dbf }
+.btn.tiny { min-height: 34px; padding: 4px 10px; font-size: 14px; border-radius: 8px }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 }
+.stat { padding: 14px 16px; border-radius: 12px; background: var(--plum); border: 1px solid rgba(230,165,140,.25) } .stat b { display: block; font: 600 34px/1 var(--disp); color: var(--ivory) } .stat span { color: var(--ivory2); font-size: 15px }
+.msg { min-height: 1.4em; font-size: 15.5px; color: var(--ivory2); margin: 10px 0 0 } .msg.err { color: #ff9dbf }
+.codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 8px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
+table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.notecol { white-space: normal; max-width: 240px; overflow-wrap: anywhere }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1px solid currentColor }
+.t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
+@media (max-width: 700px) {
+  table.passes thead { display: none } table.passes tr { display: block; padding: 10px 0; border-bottom: 1px solid rgba(230,165,140,.18) }
+  table.passes td { display: block; border: 0; padding: 2px 0; white-space: normal } table.passes td[data-l]::before { content: attr(data-l) ": "; color: #877e78 }
+}
+</style>
+<div class="eyebrow">admin</div>
+<h1>Passes</h1>
+
+<div id="login" hidden>
+  <div class="panel" style="max-width:420px">
+    <form id="lf" class="adm-row" style="flex-direction:column;align-items:stretch">
+      <label>Username <input id="lu" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label>Password <input id="lp" type="password" autocomplete="current-password" required></label>
+      <button class="btn">Sign in</button>
+    </form>
+    <p class="msg" id="lmsg" role="alert"></p>
+  </div>
+</div>
+
+<div id="dash" hidden>
+  <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
+  <div class="stats" id="stats"></div>
+
+  <h2>Create passes</h2>
+  <div class="panel">
+    <form id="mf" class="adm-row">
+      <label>How many <input id="mc" type="number" min="1" max="50" value="1" style="width:100px"></label>
+      <label>Type <select id="mk"><option value="one">One party (one game)</option><option value="sub">Free unlimited (until cancelled)</option></select></label>
+      <label style="flex:1;min-width:200px">Note <input id="mn" maxlength="120" placeholder="Who it’s for" style="width:100%"></label>
+      <button class="btn small">Create</button>
+    </form>
+    <p class="msg" id="mmsg"></p>
+    <div class="codes" id="made"></div>
+  </div>
+
+  <h2>Test room</h2>
+  <div class="panel">
+    <div class="adm-row"><button class="btn small" id="room">Open a test room</button></div>
+    <p class="msg" id="rmsg">A fresh room for trying the game, open for 48 hours. It doesn’t use a pass.</p>
+  </div>
+
+  <h2>All passes</h2>
+  <div class="adm-row" style="margin-bottom:10px">
+    <label style="flex:1;min-width:200px">Search <input id="q" placeholder="Code, note, email, room" style="width:100%"></label>
+    <label>Show <select id="f">
+      <option value="all">All</option><option value="unused">Unused</option><option value="play">In play</option><option value="used">Used</option>
+      <option value="sub">Subscriptions</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
+    </select></label>
+    <button class="btn ghost small" id="reload">Refresh</button>
+  </div>
+  <div class="table-scroll"><table class="passes"><thead><tr><th>Code</th><th>Type</th><th>Status</th><th>Created</th><th>Room</th><th>Note / email</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+  <p class="msg" id="tmsg"></p>
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const say = (el, t, err) => { el.textContent = t; el.className = "msg" + (err ? " err" : "") };
+const api = async (path, body) => {
+  const r = await fetch("/api/admin/" + path, body === undefined ? { cache: "no-store" } : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== "login") { show(false); throw new Error("Signed out") }
+  if (!r.ok) throw new Error(j.error || "That didn’t work (" + r.status + ")");
+  return j;
+};
+const when = t => t ? new Date(t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+function statusOf(p) {
+  const now = Date.now();
+  if (p.revoked) return ["cancel", p.refunded ? "Refunded" : "Cancelled"];
+  if (p.pending) return ["pending", "Awaiting payment"];
+  if (p.kind === "sub") return p.subActive ? ["sub", p.subStatus === "free" ? "Free unlimited" : "Subscribed"] : ["cancel", "Subscription " + (p.subStatus || "inactive").replace("_", " ")];
+  if (p.room && now < p.expires) return ["play", "In play until " + when(p.expires)];
+  if (p.room) return ["used", "Used"];
+  return ["unused", "Unused"];
+}
+let all = [];
+function render() {
+  const q = $("#q").value.trim().toLowerCase(), f = $("#f").value, rows = $("#rows"); rows.textContent = "";
+  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub")) && (!q || [p.pass, p.note, p.room, p.source].join(" ").toLowerCase().includes(q)) });
+  for (const p of list) {
+    const [k, label] = statusOf(p), tr = document.createElement("tr");
+    const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
+    const code = document.createElement("code"); code.textContent = p.pass; cell("Code", code);
+    cell("Type", p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party");
+    const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; cell("Status", tag);
+    cell("Created", when(p.created) + (p.source && p.source !== "admin" ? " · " + (p.source.startsWith("stripe") ? "Stripe" : p.source) : ""));
+    cell("Room", p.room ? p.room + (p.games > 1 ? " · " + p.games + " games" : "") : "");
+    cell("Note", p.note || "", "notecol");
+    const td = cell("", ""), cp = document.createElement("button"); cp.className = "btn ghost tiny"; cp.textContent = "Copy"; cp.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); cp.textContent = "Copied" }; td.append(cp);
+    if (!p.revoked) { const x = document.createElement("button"); x.className = "btn danger tiny"; x.style.marginLeft = "6px"; x.textContent = "Cancel"; x.onclick = () => cancel(p.pass); td.append(x) }
+    rows.append(tr);
+  }
+  say($("#tmsg"), list.length ? list.length + " of " + all.length + " passes" : all.length ? "Nothing matches." : "No passes yet.");
+}
+function stats() {
+  const c = k => all.filter(p => statusOf(p)[0] === k).length, subs = all.filter(p => p.kind === "sub" && p.subActive && !p.revoked);
+  const box = [["Passes", all.length], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length]];
+  $("#stats").textContent = ""; for (const [l, n] of box) { const d = document.createElement("div"); d.className = "stat"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("#stats").append(d) }
+}
+async function load() { try { all = (await api("passes")).passes || []; stats(); render() } catch (e) { say($("#tmsg"), e.message, true) } }
+async function cancel(pass) {
+  if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;
+  try { await api("revoke", { pass }); await load() } catch (e) { say($("#tmsg"), e.message, true) }
+}
+function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load() } else $("#lu").focus() }
+$("#lf").onsubmit = async e => {
+  e.preventDefault(); say($("#lmsg"), "Signing in…");
+  try { await api("login", { user: $("#lu").value, password: $("#lp").value }); $("#lp").value = ""; say($("#lmsg"), ""); show(true, $("#lu").value.trim()) }
+  catch (err) { say($("#lmsg"), err.message, true) }
+};
+$("#out").onclick = async () => { await fetch("/api/admin/logout", { method: "POST" }).catch(() => {}); show(false) };
+$("#mf").onsubmit = async e => {
+  e.preventDefault(); const n = Math.max(1, Math.min(50, +$("#mc").value || 1)); say($("#mmsg"), "Creating…"); $("#made").textContent = "";
+  try {
+    const j = await api("passes", { count: n, note: $("#mn").value.trim(), kind: $("#mk").value });
+    for (const p of j.passes) { const c = document.createElement("code"); c.textContent = p; $("#made").append(c) }
+    const n2 = j.passes.length, sub = $("#mk").value === "sub";
+    say($("#mmsg"), "Created " + n2 + (sub ? " free unlimited code" + (n2 > 1 ? "s" : "") : " pass" + (n2 > 1 ? "es" : "")) + ".");
+    if (navigator.clipboard) navigator.clipboard.writeText(j.passes.join("\n")).then(() => say($("#mmsg"), $("#mmsg").textContent + " Copied to the clipboard."), () => {});
+    load();
+  } catch (err) { say($("#mmsg"), err.message, true) }
+};
+$("#room").onclick = async () => {
+  try {
+    const j = await api("room", {}), m = $("#rmsg"); m.className = "msg"; m.textContent = "Room " + j.room + ": ";
+    const a = document.createElement("a"); a.href = "/g/" + j.room + "#host"; a.textContent = "host phone"; a.target = "_blank";
+    const b = document.createElement("a"); b.href = "/g/" + j.room; b.textContent = "TV"; b.target = "_blank";
+    m.append(a, " · ", b);
+  } catch (err) { say($("#rmsg"), err.message, true) }
+};
+$("#q").oninput = render; $("#f").onchange = render; $("#reload").onclick = load;
+fetch("/api/admin/me", { cache: "no-store" }).then(r => r.ok ? r.json().then(j => show(true, j.user)) : show(false)).catch(() => show(false));
+</script>

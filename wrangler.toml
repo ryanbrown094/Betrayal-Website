@@ -17,8 +17,9 @@ KEEP_DAYS = "7"          # then the room is read-only for this many days, then d
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 STRIPE_PRICE_ID = "price_1UKk9M9eT91BoTqdQ5HJ0lQa"  # the £15 party pass's Stripe Price — LIVE MODE. Empty = checkout closed
 STRIPE_SUB_PRICE_ID = "price_1UKk9M9eT91BoTqd9P9iSm1I"  # the £20/month unlimited subscription's Price — LIVE MODE; empty = subscription not on sale
+ADMIN_USER = "ryanab94.admin"  # the /admin page's username; its password is the ADMIN_PASSWORD secret
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
-#   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
+#   ADMIN_PASSWORD, ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
 
 # Previews: Cloudflare builds every non-main branch with `wrangler preview`. Nothing is inherited from above, so it is all
 # spelled out here. Each preview gets its own, empty Durable Objects (no production passes or rooms), no secrets (no
