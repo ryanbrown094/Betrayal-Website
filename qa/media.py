@@ -15,8 +15,8 @@ with sync_playwright() as p:
     host.reload(); host.wait_for_timeout(1500)
     H = lambda js: host.evaluate(js)
     hs = lambda n: host.screenshot(path=f"{OUT}/phone-{n}.png")
-    host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1234',host:'Sam'});renderHost()}", "\n".join(NAMES)); host.wait_for_timeout(300)
-    for i, step in enumerate(["welcome", "cloaks", "rounds", "shield", "review"]):
+    host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1234',host:'Sam',prize:'a bottle of champagne',prize3:'dinner out, on the losers'});renderHost()}", "\n".join(NAMES)); host.wait_for_timeout(300)
+    for i, step in enumerate(["welcome", "hours", "keeper", "prize", "review"]):
         H("()=>wGo('" + step + "')"); host.evaluate("()=>window.scrollTo(0,0)"); host.wait_for_timeout(250); hs(f"0{i}-setup-{step}")
     H("()=>startGame({names:" + str(NAMES) + ",cloaks:2,title:'',host:'Sam',potUnit:'£',potCap:2000,prize:'a bottle of champagne',hours:4,pin:'1234',rules:{kill:'murder'}})")
     H("()=>act(s=>{s.players.forEach((p,i)=>p.role=[2,6].includes(i)?'cloak':'candle');s.plan=['quiz','countdown','charades','hilo','truths','change','memory','draw','estimate'];s.planAt=0})")

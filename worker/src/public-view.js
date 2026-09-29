@@ -6,7 +6,8 @@ export function publicView(s) {
   const o = { ...s };
   for (const k of ["prev", "log", "hostPin", "stamps", "witness", "quest", "used", "usedQuiz", "usedWords", "usedQuests", "voteLog", "roundSnap"]) delete o[k];
   const over = s.phase === "final";
-  if (!over) { delete o.cloakMisses; delete o.questTally; delete o.ghosts; delete o.prize; delete o.stats; }
+  if (!over) { delete o.cloakMisses; delete o.questTally; delete o.ghosts; delete o.prize; delete o.prizes; delete o.stats; }
+  if (!over && s.prizes && s.prizes.length) o.tiers = s.prizes.map((x) => x.at); // the room knows a fuller Purse wins more, never what
 
   // A poisoned player sits at the table, alive to everyone else, until dawn reveals it.
   const hidden = s.phase === "morning" && s.morning && !s.morning.revealed && s.morning.kind === "murder" ? s.morning.victimId : null;

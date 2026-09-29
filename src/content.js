@@ -466,7 +466,7 @@ const MISSIONS=[
 {key:"draw",kind:"screen",when:"Later — best with Ghosts",title:"Chalkboard Pictionary",rules:"Everyone blindfolds on except the artist, who reads the screen. Blindfolds off: they draw it on their chalkboard against the clock, no letters, no numbers. Guesser and artist both score.",hasShield:true,total:0},
 {key:"hilo",kind:"screen",when:"Any time",title:"Higher or Lower",rules:"Everyone stands. A question, and a number: is the real answer higher or lower? On three, thumbs up for higher, down for lower. Wrong, and you sit. Last one standing wins the round.",hasShield:true,total:4},
 {key:"change",kind:"screen",when:"Any time",title:"What Changed?",rules:"Twelve symbols appear. Study them. The screen goes dark for ten seconds — and something changes. When the grid comes back, first to shout what changed takes the point.",hasShield:true,total:6},
-{key:"dilemma",kind:"screen",when:"When nobody holds Sanctuary",addon:true,title:"The Temptation",rules:"Chalk PURSE or SANCTUARY, board face down. Exactly one SANCTUARY: they take it and the Purse grows by {P}. Two or more: nobody gets it and the Purse loses {P}. Nobody: the Purse grows by {P2}.",hasShield:true,total:0},
+{key:"dilemma",kind:"screen",when:"When nobody holds Sanctuary",addon:true,title:"The Temptation",rules:"Chalk PURSE or SELF, board face down. Exactly one SELF: they take Sanctuary and the Purse grows by {P}. Two or more: nobody gets it and the Purse loses {P}. Nobody: the Purse grows by {P2}.",hasShield:true,total:0},
 {key:"custom",kind:"physical",when:"Any time",title:"Custom Trial",rules:"Keeper explains the rules.",hasShield:true,total:0}];
 
 const MODES={

@@ -26,7 +26,7 @@ function patch(el, html, replace) {
 const PHASECARDS = {
   day: s => ["Round " + s.round, isFinal(s) ? "The final round · chalkboards ready" : "A new day · chalkboards ready", "sun"],
   mission: s => s.mission && s.mission.key === "dilemma" ? ["The Temptation", "Round " + s.round, "scales"] : ["Trial " + Math.max(1, s.roundMissions || 1), "Round " + s.round + " · earn the Purse", "scroll"],
-  mingle: s => s.mingle && s.mingle.kind === "dinner" ? ["Dinner", "Eat, drink · watch who sits where", "chalice"] : ["Interval", "Up from the table · talk, accuse, lie", "chalice"],
+  mingle: s => s.mingle && s.mingle.course ? [{ starter: "The Starter", main: "The Main Course", dessert: "Dessert" }[s.mingle.course], { starter: "Eat, drink · watch who sits where", main: "The longest break of the night", dessert: "Then the final" }[s.mingle.course], "chalice"] : s.mingle && s.mingle.kind === "dinner" ? ["Dinner", "Eat, drink · watch who sits where", "chalice"] : ["Interval", "Up from the table · talk, accuse, lie", "chalice"],
   table: s => s.table && s.table.second ? ["The Second Vote", "The house demands another", "table"] : ["The Reckoning", "Take your seats · chalk a name", "table"],
   reveal: () => ["Exile", "The table has spoken", "blade"],
   night: () => ["Night Falls", "The candles burn low", "moon"],
@@ -34,7 +34,7 @@ const PHASECARDS = {
   final: () => ["The Unmasking", "Every oath laid bare", "crown"],
   final2: () => ["The Final", "The last chairs", "hourglass"],
   shield: s => s.shieldCard && (s.shieldCard.mode === "witness" || s.shieldCard.mode === "none") ? ["Trial Complete", "", "scroll"] : ["Sanctuary", "", "shield"],
-  night0: () => ["The Sacrament", "Blindfolds ready", "moon", 5600], // held long enough to read, then a slow fade into the night
+  night0: () => ["The Oath", "Blindfolds ready", "moon", 5600], // held long enough to read, then a slow fade into the night
   endvote: () => ["Trust or Doubt?", "In secret, on the phone", "scales"]
 };
 const RULES_TV = h => [
@@ -61,7 +61,7 @@ const deadAt = {}; let railBooted = false;
 function railHTML(s, o) {
   o = o || {}; const A = seated(s), t = performance.now();
   // room per seat in px; when a name would not fit at full size, plaques alternate between two rows and may use the neighbour's width
-  const vh = innerHeight / 100, seatW = Math.min(14 * vh, (innerWidth - 34 * vh) / Math.max(1, A.length)), base = s.tvText === "standard" ? 1.95 : 2.3;
+  const vh = innerHeight / 100, seatW = Math.min(14 * vh, (innerWidth - 34 * vh) / Math.max(1, A.length)), base = s.tvText === "standard" ? 1.95 : 2.5;
   const need = n => 2.4 * vh + n.length * 0.8 * base * vh; // plaque width at full size: small caps plus letter-spacing
   const crowded = A.some(p => need(p.name) > seatW * 1.15);
   // a staggered plaque may borrow its neighbours' width, but only up to the edge of their seals
@@ -106,7 +106,7 @@ function nightSlide(script, step) {
   return `<div class="nightwho fx-fade" data-k="w${step}">${esc(e.who)}</div><div class="nighttext ${len <= 50 ? "short" : len <= 110 ? "mid" : len > 200 ? "long" : ""} fx-rise" data-k="t${step}${len}">${esc(e.tv)}</div>`;
 }
 function ghostVerdictTV(s) {
-  const gs = ghostScores(s); if (!gs.length) return "";
+  const gs = ghostScores(s).filter(x => (s.ghosts || {})[x.p.id]); if (!gs.length) return "";
   const w = gs.filter(x => x.hits);
   return `<div class="sub small">The Ghosts’ verdict — ${gs.map(x => esc(x.p.name) + " named " + esc(x.pickName) + (x.hits ? " ✓" : " ✗")).join(" · ")}${w.length ? `<br><b>${esc(w.map(x => x.p.name).join(" and "))}</b> saw a Forsworn from beyond the table.` : ""}</div>`;
 }
@@ -211,7 +211,7 @@ function tvView(s) {
     }
     case "night0": { const sc = NIGHT0_(hostOf(s)), st = s.night ? s.night.step : 0; v.night = true; v.scene = "night"; v.key += st; v.sfx = st === sc.length - 1 ? "chime" : null; v.html = nightSlide(sc, st); break }
     case "day":
-      v.html = `<div class="eyebrow fx-fade">round ${s.round}${isFinal(s) ? " — the final" : ""}</div><h1 class="fx-title">${isFinal(s) ? "The last day at the house" : "A new day at the house"}</h1><div class="rule"></div><div class="sub fx-rise" style="--d:.7s">${(s.roundMissions || 0) ? "Another Trial. Nobody sits down yet." : "Chalkboards ready. The Purse only grows if you work together."}</div>`; break;
+      v.html = `<div class="eyebrow fx-fade">round ${s.round}${isFinal(s) ? " — the final" : ""}</div><h1 class="fx-title">${isFinal(s) ? "The last day at the house" : "A new day at the house"}</h1><div class="rule"></div><div class="sub fx-rise" style="--d:.7s">${(s.roundMissions || 0) ? "Another Trial. Nobody sits down yet." : (s.tiers || (s.prizes || []).map(x => x.at)).length ? "Chalkboards ready. The fuller the Purse, the better the prize." : "Chalkboards ready. The Purse only grows if you work together."}</div>`; break;
     case "mission": v.scene = "mission"; missionTV(s, v); if (v.night) v.scene = "night"; break;
     case "shield": {
       const c = s.shieldCard, g = ghostsOf(s).length > 0, cer = c.mode === "witness" ? WITNESSNOW_(hostOf(s), g, c) : CEREMONY_(hostOf(s), g, c);
@@ -222,17 +222,18 @@ function tvView(s) {
       // what was won in secret: said, never by whom
       const hidden = [c.secWar ? ["blade", "The Crown was chosen in secret — Sanctuary and Casting Vote"] : null, sec ? ["shield", sec > 1 ? sec + " Sanctuaries were claimed in secret" : "Sanctuary was claimed in secret"] : null, c.secDag ? ["blade", "The Casting Vote was claimed in secret"] : null].filter(Boolean);
       const tags = hidden.map((h, i) => `<div class="tag fx-rise" style="--d:${(1.4 + i * 0.5).toFixed(1)}s">${ART.icon(h[0])} ${esc(h[1])}</div>`).join("");
-      const dagTag = wn && !c.champion && pub.length ? `<div class="tag fx-rise" style="--d:1.2s">${ART.icon("blade")} ${esc(wn)} holds the Casting Vote — their vote counts twice tonight</div>` : "";
+      const dagTag = wn && !c.champion && pub.length ? `<div class="tag fx-rise" style="--d:1.2s">${ART.icon("blade")} ${esc(wn)} holds the Casting Vote — if tonight’s vote ties, their board decides it</div>` : "";
       v.html = `<div class="eyebrow fx-fade">${c.mode === "witness" ? "the special prize" : none ? "Trial complete" : c.champion ? "the crown" : pub.length ? "Sanctuary" : wn ? "the Casting Vote" : "the prizes"}</div>` + (c.mode === "witness" ? `<h1 class="gold fx-title">The special prize has been claimed</h1><div class="sub">Somebody at this table knows more than they did a minute ago.</div>`
         : none ? `<h1 class="md fx-title">The Trial is over</h1><div class="sub">${c.earlier ? "Sanctuary from earlier still stands." : "Back to the table."}</div>`
-          : c.champion ? `<h1 class="gold fx-title ${hsize(wn, 14, 24)}">${esc(wn)}</h1><div class="sub">wears tonight’s Crown. Sanctuary — the Forsworn cannot poison them tonight. And the Casting Vote — at the Reckoning their vote counts twice. Only whoever wears the Crown may lay both down to be safe from the exile.</div>`
+          : c.champion ? `<h1 class="gold fx-title ${hsize(wn, 14, 24)}">${esc(wn)}</h1><div class="sub">wears tonight’s Crown. Sanctuary — the Forsworn cannot poison them tonight. And the Casting Vote — if the Reckoning ties, their board decides it. Only whoever wears the Crown may lay both down to be safe from the exile.</div>`
             : pub.length ? `<h1 class="gold fx-title ${hsize(pub.join(" & "), 14, 24)}">${esc(pub.join(" & "))}</h1><div class="sub">${pub.length > 1 ? "hold Sanctuaries and cannot be poisoned tonight." : "holds Sanctuary and cannot be poisoned tonight."}</div>${dagTag}`
-              : wn ? `<h1 class="gold fx-title ${hsize(wn, 14, 24)}">${esc(wn)}</h1><div class="sub">holds the Casting Vote. At tonight’s Reckoning, their vote counts twice.</div>${c.earlier ? `<div class="sub small">Sanctuary from earlier still stands.</div>` : ""}`
+              : wn ? `<h1 class="gold fx-title ${hsize(wn, 14, 24)}">${esc(wn)}</h1><div class="sub">holds the Casting Vote. If tonight’s Reckoning ties, their board decides it.</div>${c.earlier ? `<div class="sub small">Sanctuary from earlier still stands.</div>` : ""}`
                 : `<h1 class="gold fx-title">${hidden.length > 1 ? "Claimed in secret" : c.secWar ? "The Crown walks among you" : c.secDag ? "The Casting Vote has been claimed" : sec > 1 ? "Sanctuaries have been claimed" : "Sanctuary has been claimed"}</h1><div class="sub">${hidden.length > 1 || sec > 1 ? "The holders know. Nobody else does." : c.secDag && !c.secWar ? "It counts automatically: when every board is in, the table sees where it fell — never whose it was." : "Its holder knows. Nobody else does."}</div>`) + (c.mode === "witness" || none ? "" : c.champion || pub.length || wn ? tags : hidden.length > 1 ? tags : "") + pot; break;
     }
     case "mingle": {
-      const g = s.mingle, din = g.kind === "dinner"; v.scene = "mingle"; v.key += g.kind + (g.end ? "t" : "");
-      v.html = `<div class="eyebrow fx-fade">${din ? "dinner is served" : "between Trials"}</div><h1 class="gold md fx-title">${din ? "Dinner" : "Interval"}</h1><div class="sub">${din ? "Eat. Drink. Watch who sits next to whom. Back when the ring runs out." : "Up from the table. Talk. Accuse. Lie. Back when the ring runs out."}</div>${g.end ? ring(g.end, g.dur, "sm") : `<div class="sub small">Waiting for ${host}…</div>`}`; break;
+      const g = s.mingle, din = g.kind === "dinner", cs = g.course && { starter: ["the starter is served", "The Starter", "Eat. Drink. Watch who sits next to whom. Back when the ring runs out."], main: ["the main course is served", "The Main Course", "The longest break of the night. Alliances are made over food, and so are lies."], dessert: ["dessert is served", "Dessert", "The last sweet thing before the final. Enjoy it."] }[g.course];
+      v.scene = "mingle"; v.key += g.kind + (g.course || "") + (g.end ? "t" : "");
+      v.html = `<div class="eyebrow fx-fade">${cs ? cs[0] : din ? "dinner is served" : "between Trials"}</div><h1 class="gold md fx-title">${cs ? cs[1] : din ? "Dinner" : "Interval"}</h1><div class="sub">${cs ? cs[2] : din ? "Eat. Drink. Watch who sits next to whom. Back when the ring runs out." : "Up from the table. Talk. Accuse. Lie. Back when the ring runs out."}</div>${g.end ? ring(g.end, g.dur, "sm") : `<div class="sub small">Waiting for ${host}…</div>`}`; break;
     }
     case "table": {
       const t = s.table, talk = t.stage === "talk", rv = !talk && t.revote ? t.revote.map(id => P2(s, id)).filter(Boolean) : [], w = championOf(s), wp = w && P2(s, w), imm = (t.immune || []).map(id => P2(s, id)).filter(Boolean);
@@ -240,8 +241,8 @@ function tvView(s) {
       v.scene = "table"; v.norail = true; v.key += talk ? "talk" + (t.talkEnd ? "t" : "") : (t.stage || "") + (t.stage === "exile" && t.blade ? "d" : ""); v.votes = Object.values(t.votes || {}).reduce((a, b) => a + b, 0);
       const armed = wp && wp.shield === "public", dgTo = t.stage === "exile" && t.blade && P2(s, t.blade.to), dgBy = dgTo && t.blade.by && P2(s, t.blade.by);
       if (dgTo) v.sfx = "sting";
-      const dagBallot = dgTo ? `<div class="ballot blade fx-rise" data-k="df${dgTo.id}">${ART.icon("blade")}<span>the Casting Vote fell on</span><b>${esc(dgTo.name)}</b></div>` : "";
-      const tags = (wp ? `<div class="tag rtag" data-k="w${w}">${ART.icon("blade")} ${esc(wp.name)} ${armed ? "wears the Crown — Sanctuary and Casting Vote" : "holds the Casting Vote"} — the Casting Vote votes too, once every board is in</div>` : "") + (imm.length ? `<div class="tag rtag safe" data-k="i${imm.length}">${ART.icon("shield")} ${esc(imm.map(p => p.name).join(" & "))} laid down Sanctuary and Casting Vote — safe from this vote</div>` : "");
+      const dagBallot = dgTo ? `<div class="ballot blade fx-rise" data-k="df${dgTo.id}">${ART.icon("blade")}<span>a tie — the Casting Vote breaks it for</span><b>${esc(dgTo.name)}</b></div>` : "";
+      const tags = (wp ? `<div class="tag rtag" data-k="w${w}">${ART.icon("blade")} ${esc(wp.name)} ${armed ? "wears the Crown — Sanctuary and Casting Vote" : "holds the Casting Vote"} — if the boards tie, the Casting Vote decides</div>` : "") + (imm.length ? `<div class="tag rtag safe" data-k="i${imm.length}">${ART.icon("shield")} ${esc(imm.map(p => p.name).join(" & "))} laid down Sanctuary and Casting Vote — safe from this vote</div>` : "");
       const ballot = !talk && lv ? `<div class="ballot fx-rise" data-k="b${t.last}${lt}"><span>${esc(lv.name)} votes for</span><b>${ltp ? esc(ltp.name) : "nobody"}</b></div>` : "";
       v.html = `<div class="rtwrap"><div class="rtcopy"><div class="eyebrow fx-fade">the reckoning${isFinal(s) ? " — the final exile" : t.second ? " — the second vote" : t.exiles === 2 ? " — the first of two votes" : ""}</div><h1 class="fx-title" data-k="${talk ? "a" : tieNow.length > 1 ? "t" + rv.length : rv.length ? "r" : "b"}">${talk ? "Talk." : tieNow.length > 1 ? (rv.length ? "Still tied." : "A tie.") : rv.length ? "A tie. Vote again." : "Who do you exile?"}</h1><div class="rule" style="margin:0"></div>${tieNow.length > 1 ? dagBallot + `<div class="sub">Between ${esc(andList(tieNow.map(id => P2(s, id).name)))}.</div>` : dagBallot || ballot || `<div class="sub">${talk ? "Accuse. Defend. Deflect. When the talking stops, the chalk comes out." : rv.length ? "Only " + esc(rv.map(p => p.name).join(" or ")) + ". Boards up, one at a time." : "Chalk a name. Boards up, one at a time. Then explain your vote to their face."}</div>`}${tags}</div>${roundTable(s, { votes: talk ? null : t.showDots ? t.votes : null, immune: t.immune, champion: w, only: rv.length ? t.revote : null, centre: talk && t.talkEnd ? ring(t.talkEnd, t.talkDur, "sm") : null })}</div>`; break;
     }
@@ -249,9 +250,9 @@ function tvView(s) {
       const p = P2(s, s.table.exiled), st = s.table.step; v.scene = "table"; v.key += st + p.id;
       const stab = s.table.bladeKill ? `<div class="stab" aria-hidden="true"><div class="knife">${ART.icon("blade")}</div><div class="drop"></div><div class="splat"></div></div>` : "";
       if (st === 0) { v.sfx = s.table.bladeKill ? "sting" : "reveal"; v.sfxDelay = s.table.bladeKill ? 700 : 0; v.key += s.table.bladeKill ? "stab" : ""; v.rail = { hot: p.id }; v.html = `<div class="eyebrow fx-fade ${s.table.roll ? "rollwait" : ""}">${s.table.bladeKill ? "the Casting Vote decided it" : ({ unanimous: "the table has decided — unanimously", close: "the table has decided — by a single vote", tie: "the table was split — and still it decided" })[s.table.margin] || "the table has decided"}</div>${stab}<h1 class="blood xl ${s.table.roll ? "rolling" : ""}">${typed(p.name)}</h1><div class="sub fx-fade" style="--d:${(p.name.length * 0.095 + 0.6).toFixed(2)}s">${s.table.roll && !isFinal(s) ? "Loyal… or Forsworn?" : "You are exiled from the house."}</div>` }
-      else if (st === 2) { v.sfx = "chime"; v.key += "g"; v.norail = s.players.length > 16; v.html = `<div class="eyebrow fx-fade">a word about the dead</div><h1 class="gold md fx-title">The Ghosts</h1><div class="sub fx-rise" style="--d:.5s">${esc(p.name)} is the first.</div><div class="rulelist ghostrules">${[["They stay.", "At the party, beside the table, watching everything."], ["They judge.", "Each Ghost names one Forsworn, once. It counts at the end."], ["They perform", "in Trials, when " + esc(hostOf(s)) + " calls on them."], ["They never", "vote, whisper or warn the living."], ["Blindfolds:", "when the living put theirs on, so do the Ghosts. Every time."]].map((r, i) => `<div style="--i:${i}"><b>${r[0]}</b> ${r[1]}</div>`).join("")}</div>` }
+      else if (st === 2) { v.sfx = "chime"; v.key += "g"; v.norail = s.players.length > 16; v.html = `<div class="eyebrow fx-fade">a word about the dead</div><h1 class="gold md fx-title">The Ghosts</h1><div class="sub fx-rise" style="--d:.5s">${esc(p.name)} is the first.</div><div class="rulelist ghostrules">${[["They stay.", "At the party, beside the table, watching everything."], ["They judge.", "Each names one Forsworn, once, and calls every exile."], ["They perform", "in Trials, when " + esc(hostOf(s)) + " calls on them."], ["They never", "vote, whisper or warn the living."], ["Blindfolds:", "when the living put theirs on, so do the Ghosts. Every time."]].map((r, i) => `<div style="--i:${i}"><b>${r[0]}</b> ${r[1]}</div>`).join("")}</div>` }
       else if (isFinal(s) || !p.revealed) { v.sfx = "drum"; v.html = `<div class="eyebrow fx-fade">exiled</div><h1 class="blood xl fx-title">${esc(p.name)}</h1><div class="sub">Leaves the house. Loyal or Forsworn? You won’t know until the end.</div>` }
-      else { const tr = p.role === "cloak"; v.sfx = tr ? "sting" : "gold"; v.sfxDelay = tr ? 700 : 1600; v.fxDelay = 1600; v.flash = tr ? "redlong" : "goldsoft"; v.burst = tr ? "red" : "gold"; v.norail = false; v.html = `<div class="eyebrow fx-fade">${esc(p.name)} was a…</div><div class="rolecard ${tr ? "rc-t" : "rc-f"}">${tr ? "" : `<div class="rays"></div>`}<div class="inner"><div class="face back"><div class="crest">${ART.crest()}</div></div><div class="face front ${tr ? "t" : "f"}"><div class="bigseal">${ART.bigSeal(tr ? "t" : "f", tr ? "blade" : "shield")}${tr ? `<svg class="crack" viewBox="0 0 100 100"><path d="M52 4 L47 22 L56 34 L44 50 L55 63 L46 78 L51 96"/><path d="M47 22 L33 28 M56 34 L70 30 M44 50 L28 56 M55 63 L72 70"/></svg>` : ""}</div><div class="word ${tr ? "" : "gold"}">${tr ? "Forsworn" : "Loyal"}</div><div class="who">${esc(p.name)}</div></div></div></div>`; v.tight = true }
+      else { const tr = p.role === "cloak"; v.sfx = tr ? "sting" : "gold"; v.sfxDelay = tr ? 700 : 1600; v.fxDelay = 1600; v.flash = tr ? "redlong" : "goldsoft"; v.burst = tr ? "red" : "gold"; v.norail = false; v.html = `<div class="eyebrow fx-fade">${esc(p.name)} was a…</div><div class="rolecard ${tr ? "rc-t" : "rc-f"}">${tr ? "" : `<div class="rays"></div>`}<div class="inner"><div class="face back"><div class="crest">${ART.crest()}</div></div><div class="face front ${tr ? "t" : "f"}"><div class="bigseal">${ART.bigSeal(tr ? "t" : "f", tr ? "blade" : "shield")}${tr ? `<svg class="crack" viewBox="0 0 100 100"><path d="M52 4 L47 22 L56 34 L44 50 L55 63 L46 78 L51 96"/><path d="M47 22 L33 28 M56 34 L70 30 M44 50 L28 56 M55 63 L72 70"/></svg>` : ""}</div><div class="word ${tr ? "" : "gold"}">${tr ? "Forsworn" : "Loyal"}</div><div class="who">${esc(p.name)}</div></div></div></div>${((s.calls || {})[callKey(s)] || []).length ? `<div class="gcall fx-rise" style="--d:2.6s">${ART.icon("ghost")}<span>called it from beyond:</span> <b>${esc(andList(s.calls[callKey(s)].map(id => (P2(s, id) || {}).name).filter(Boolean)))}</b></div>` : ""}`; v.tight = true }
       break;
     }
     case "night": {
@@ -272,7 +273,7 @@ function tvView(s) {
       if (!e.order) { v.quiet = true; v.html = `<div class="eyebrow fx-fade">the final</div><h1 class="gold fx-title">Trust or Doubt?</h1><div class="sub">In secret, on ${host}’s phone. TRUST if every Forsworn is gone. DOUBT if one still sits among you. Only a unanimous TRUST stops the game.</div><div class="tag num">${cast} of ${A.length} have voted</div>`; break }
       const ord = e.order.map(id => P2(s, id)).filter(Boolean), last = e.order[e.revealed - 1], done = e.revealed >= e.order.length;
       v.sfx = done ? (e.result === "end" ? "gold" : "sting") : last ? (e.votes[last] === "end" ? "seal" : "drum") : null; v.norail = ord.length > 6; v.quiet = true;
-      v.html = `<div class="eyebrow">the final</div><h1 class="md ${done ? (e.result === "end" ? "gold" : "blood") : ""}" data-k="h${done}">${done ? (e.result === "end" ? "Unanimous. The game ends." : e.count + " chose to exile.") : "Trust or Doubt?"}</h1>${vcards(ord, e.revealed, e.votes, "end", { g: "TRUST", b: "DOUBT", gi: "crown" })}`; break;
+      v.html = `<div class="eyebrow">the final</div><h1 class="md ${done ? (e.result === "end" ? "gold" : "blood") : ""}" data-k="h${done}">${done ? (e.result === "end" ? "Unanimous. The game ends." : e.count + " chose DOUBT.") : "Trust or Doubt?"}</h1>${vcards(ord, e.revealed, e.votes, "end", { g: "TRUST", b: "DOUBT", gi: "crown" })}`; break;
     }
     case "final2": {
       const f = s.final2, tids = f.cloakIds || [], ts = tids.map(id => P2(s, id)).filter(Boolean), nT = ts.length, g = f.ghostRound;
@@ -281,7 +282,7 @@ function tvView(s) {
       v.key += "c" + shown.length; v.norail = surv.length > 6; // a big table needs the whole screen for its seals, as the end vote does
       // seals turned one at a time by the host; the winner line appears with the last seal
       const rollId = f.roll && !shown.includes(f.roll.id) ? f.roll.id : null;
-      const rcard = p => { const r = shown.includes(p.id), tr = r && p.role === "cloak", fresh = p.id === lastId; return `<div class="vcard ${r ? (tr ? "bad" : "good") : ""} ${p.id === rollId ? "rolling" : ""}" data-k="${p.id}">${ART.seal(p)}<div class="vn">${esc(p.name)}</div>${r ? `<div class="vseal ${fresh ? "stamped" : ""}">${ART.bigSeal(tr ? "t" : "f", tr ? "blade" : "shield")}</div>` : '<div class="vseal blank"></div>'}<div class="vword">${r ? (tr ? "CLOAK" : "CANDLE") : "?"}</div></div>` };
+      const rcard = p => { const r = shown.includes(p.id), tr = r && p.role === "cloak", fresh = p.id === lastId; return `<div class="vcard ${r ? (tr ? "bad" : "good") : ""} ${p.id === rollId ? "rolling" : ""}" data-k="${p.id}">${ART.seal(p)}<div class="vn">${esc(p.name)}</div>${r ? `<div class="vseal ${fresh ? "stamped" : ""}">${ART.bigSeal(tr ? "t" : "f", tr ? "blade" : "shield")}</div>` : '<div class="vseal blank"></div>'}<div class="vword">${r ? (tr ? "FORSWORN" : "LOYAL") : "?"}</div></div>` };
       const grid = `<div class="votecards ${surv.length <= 4 ? "few" : surv.length > 8 ? "many" : surv.length > 5 ? "mid" : ""}">${surv.map(rcard).join("")}</div>`;
       if (!allShown) {
         v.sfx = lastP ? (lastP.role === "cloak" ? "sting" : "gold") : null; v.flash = lastP && lastP.role === "cloak" ? "red" : null; v.burst = lastP ? (lastP.role === "cloak" ? "red" : "gold") : null; v.quiet = true;
@@ -314,12 +315,13 @@ function tvView(s) {
         v.html = `<div class="eyebrow fx-fade">before you go</div><h1 class="gold md fx-title">The Awards</h1>${aw.length ? `<div class="awards c${aw.length <= 4 ? 2 : aw.length === 6 ? 3 : 4} ${aw.length > 8 ? "dense" : aw.length > 4 ? "mid" : ""}">${aw.map((a, i) => i < k ? `<div class="award ${i === k - 1 ? "fresh fx-rise" : ""}" ${i === k - 1 ? 'style="--d:.2s"' : ""}><div class="aico">${ART.icon(a.icon)}</div><div class="at">${esc(a.title)}</div><b>${esc(andList(a.names))}</b><small>${esc(a.why)}</small></div>` : `<div class="award sealed"><div class="aico">${ART.icon("scroll")}</div><div class="at">${cap1(numWord(i + 1))}</div></div>`).join("")}</div>${k ? "" : `<div class="sub fx-rise" style="--d:.6s">${cap1(numWord(aw.length))}, one at a time.</div>`}` : `<div class="sub">No clear winners tonight — everyone was equally suspicious.</div>`}`; break;
       }
       // how each Cloak became one: from the start, converted, or by bargain; and who refused
-      const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer, rd " : "Forsworn · by the Last Offer, round ") + p.converted.round : (many ? "Forsworn · Whisper, rd " : "Forsworn · by a Whisper, round ") + p.converted.round) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
+      const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer" : "Forsworn · by the Last Offer, round " + p.converted.round) : (many ? "Forsworn · Whisper" : "Forsworn · by a Whisper, round " + p.converted.round)) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
       v.scene = "final"; v.norail = true; v.tight = true; v.sfx = tr ? "sting" : "win"; v.flash = tr ? "red" : "gold"; v.waves = tr ? "red" : "gold";
-      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s));
+      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
+      const plabel = pt === undefined ? "the prize" : !pt ? "the Purse didn’t reach half: the prize" : pt.at >= 1 ? "a full Purse: the best prize" : "a half-full Purse: the better prize";
       if (rw) { v.key += "·" + rw.id; v.sfx = "win"; v.flash = "gold"; v.waves = "gold" }
       const prizeLine = rw ? `<div class="prizeline fx-rise" style="--d:.6s"><span>takes home</span><b>${prz}</b></div>`
-        : `<div class="prizeline fx-rise" style="--d:1.4s"><span>the prize</span><b>${prz}</b>${r ? `<em>Only one of it. ${r.ids.length <= 3 ? esc(andList(r.ids.map(id => P2(s, id)).filter(Boolean).map(p => p.name))) : cap1(numWord(r.ids.length)) + " winners"} — rock, paper, scissors for it.${esc(potSplitTV(s))}</em>` : s.prizeTo ? `<em>It goes to ${esc(s.prizeTo)}.${esc(potSplitTV(s))}</em>` : ""}</div>`;
+        : `<div class="prizeline fx-rise" style="--d:1.4s"><span>${plabel}</span><b>${prz}</b>${r ? `<em>Only one of it. ${r.ids.length <= 3 ? esc(andList(r.ids.map(id => P2(s, id)).filter(Boolean).map(p => p.name))) : cap1(numWord(r.ids.length)) + " winners"} — rock, paper, scissors for it.${esc(potSplitTV(s))}</em>` : s.prizeTo ? `<em>It goes to ${esc(s.prizeTo)}.${esc(potSplitTV(s))}</em>` : ""}</div>`;
       v.html = rw ? `<div class="eyebrow fx-fade">the prize</div><h1 class="gold fx-slam ${hsize(rw.name, 10, 16)}">${esc(rw.name)}</h1>${prizeLine}` : `<div class="eyebrow fx-fade">the end</div><h1 class="${tr ? "blood" : "gold"} fx-slam">${tr ? "The Forsworn win" : "The Loyal win"}</h1>${many ? "" : `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Loyal built a Purse of " + moneyOf(s, s.pot) + " — and the Forsworn take it." : "Every Forsworn is gone. Purse: " + moneyOf(s, s.pot) + "."}</div>`}${prizeLine}${rw || many ? "" : ghostVerdictTV(s)}${!rw && ps.length <= 12 && (s.cloakMisses || (s.questTally && (s.questTally.done || s.questTally.failed))) ? `<div class="sub small">${[s.cloakMisses ? `Forsworn shouted <b>${s.cloakMisses}</b> wrong answer${s.cloakMisses === 1 ? "" : "s"} all night.` : "", s.questTally && (s.questTally.done || s.questTally.failed) ? `Errands: ${s.questTally.done} completed, ${s.questTally.failed} failed — in plain sight.` : ""].filter(Boolean).join(" ")}</div>` : ""}<div class="rolls ${huge ? "huge" : ps.length > 10 ? "many" : ""}" style="grid-template-columns:repeat(${huge ? 6 : cols},minmax(0,1fr))">${ps.map((p, i) => `<div class="${p.role === "cloak" ? "t" : "f"}" style="--d:${(1.5 + i * Math.min(0.7, 20 / ps.length)).toFixed(1)}s">${ART.seal(p)}<span><b>${esc(p.name)}</b><small>${how(p)}${p.left ? " · left" : p.alive ? "" : " · out"}</small></span></div>`).join("")}</div>`; break;
     }
   }
@@ -361,8 +363,22 @@ function showCard(s) {
   clearTimeout(cardTimer); cardTimer = setTimeout(() => { el.className = "" }, dur);
   return dur;
 }
+// The narrator: the TV speaks a line the Keeper sent with ▶ TV, once. A reload, an undo or a replay never repeats one:
+// the line already on the state when the TV loads counts as spoken.
+const spokenIds = new Set(); let narrReady = false;
+function narrTV(s) {
+  const n = s && s.narr; if (!narrReady) { narrReady = true; if (n && n.id) spokenIds.add(n.id); return }
+  if (!n || !n.id || spokenIds.has(n.id)) return; spokenIds.add(n.id);
+  if (REPLAY || muted || !window.speechSynthesis) return;
+  try {
+    const vs = speechSynthesis.getVoices(), v = vs.find(x => /en-GB/i.test(x.lang) && /Daniel|Arthur|Serena|UK English Male/i.test(x.name)) || vs.find(x => /en-GB/i.test(x.lang)) || vs.find(x => /^en/i.test(x.lang));
+    const u = new SpeechSynthesisUtterance(n.t); if (v) u.voice = v; u.lang = (v && v.lang) || "en-GB"; u.rate = .94; u.pitch = .9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch (e) { console.warn("narrator", e) }
+}
 function renderTV() {
   if (!tvBuilt) tvBuild();
+  narrTV(state);
   const tv = $("#tv"), sb = $("#soundbtn");
   sb.textContent = AC ? (muted ? "off" : "♪") : "Enable sound"; sb.title = AC ? (muted ? "Sound is off — tap to unmute" : "Sound is on — tap to mute") : "Browsers only allow sound after a tap"; sb.className = AC ? "" : "ask"; sb.setAttribute("aria-label", AC ? (muted ? "Sound off. Turn sound on" : "Sound on. Turn sound off") : "Enable sound");
   const net = $("#net"); if (net) net.className = offline() ? "on" : "";
@@ -372,7 +388,7 @@ function renderTV() {
     if (connecting) { patch($("#stage"), `<div class="crestbig crest">${ART.crest(true)}</div>`, false); return }
     if (roomMissing) { patch($("#stage"), `<div class="crestbig crest">${ART.crest()}</div><h1 class="gold md">No game at this code</h1><div class="sub">Check the Table code — it’s six letters and numbers, shown on the Keeper’s phone.</div>`, false); return }
     const join = ROOM ? `<div class="roomjoin fx-rise" style="--d:2.2s"><span>table</span><b class="num">${esc(ROOM)}</b><em>Keeper: open <u>${esc(location.host)}/t/${esc(ROOM)}#keeper</u> on your phone</em></div>` : "";
-    patch($("#stage"), `<div class="crestbig crest">${ART.crest(true)}</div><div class="eyebrow fx-fade" style="--d:1.2s">an evening of</div><h1 class="wordmark gold fx-title" style="--d:1.6s">The Betrayal</h1><div class="rule"></div><div class="sub">${roomExpired ? "This Invitation has expired." : "Waiting for the Keeper to open the doors…"}</div>${join}`, false);
+    patch($("#stage"), `<div class="crestbig crest">${ART.crest(true)}</div><div class="eyebrow fx-fade" style="--d:1.2s">an evening of</div><h1 class="wordmark gold fx-title" style="--d:1.6s">The Betrayal</h1><div class="rule"></div><div class="sub">${roomExpired ? "This Table has closed." : "Waiting for the Keeper to open the doors…"}</div>${join}`, false);
     if (AC) MUSIC.setScene("lobby"); return;
   }
   const s = publicView(state);

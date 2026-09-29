@@ -2,6 +2,7 @@
 // parameters), the claim from the thank-you page, the signed webhook (paid, expired, refunded) and what a pending,
 // paid, expired or refunded pass may do. node qa/claim.mjs
 import worker, { Registry } from "../worker/src/index.js";
+import { passKey } from "../worker/src/codes.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond };
 const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a, b] of Object.entries(k)) m.set(a, b); else m.set(k, v) }, delete: async k => { for (const x of [].concat(k)) m.delete(x) },
@@ -38,7 +39,8 @@ const J = async r => [r.status, await r.json().catch(() => ({}))];
 const checkout = (body, env, ip) => W("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip || "203.0.113.1" }, body: JSON.stringify(body) }, env).then(J);
 const redeem = (pass, fresh) => W("/api/games", { method: "POST", body: JSON.stringify({ pass, fresh }) }).then(J);
 const claim = id => W("/api/claim?session_id=" + id, {}).then(J);
-const passOf = async p => (await reg.storage.get("pass:" + p));
+// codes are shown as OATH-…; the records keep their CNDL- keys
+const passOf = async p => (await reg.storage.get("pass:" + passKey(p)));
 async function hook(ev, secret, t) {
   const body = JSON.stringify(ev); t = t || Math.floor(Date.now() / 1000);
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret || "whsec_test"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -55,7 +57,7 @@ check("checkout: sends the buyer to Stripe", s1 === 200 && /^https:\/\/checkout\
 check("the session: one party pass at the configured price, payment mode, secret key", q.get("mode") === "payment" && q.get("line_items[0][price]") === "price_123" && q.get("line_items[0][quantity]") === "1" && made[0].auth === "Bearer sk_test_x");
 check("the session: Managed Payments on, with its API version, and no promotion codes", q.get("managed_payments[enabled]") === "true" && made[0].version === "2026-02-25.preview" && !q.has("allow_promotion_codes"), [made[0].version, q.get("managed_payments[enabled]")]);
 check("the session: success and cancel URLs", q.get("success_url") === "https://cloakandcandle.co.uk/claim?session_id={CHECKOUT_SESSION_ID}" && q.get("cancel_url") === "https://cloakandcandle.co.uk/buy", [q.get("success_url"), q.get("cancel_url")]);
-check("the session: the pass and the consent timestamps in its metadata, and nothing Managed Payments refuses", /^CNDL-/.test(pass1) && q.get("metadata[pass]") === pass1 && !!q.get("metadata[consent_supply]") && ![...q.keys()].some(k => /^(invoice_creation|payment_intent_data|subscription_data\[description)/.test(k)), [...q.keys()]);
+check("the session: the pass and the consent timestamps in its metadata, and nothing Managed Payments refuses", /^OATH-/.test(pass1) && q.get("metadata[pass]") === pass1 && !!q.get("metadata[consent_supply]") && ![...q.keys()].some(k => /^(invoice_creation|payment_intent_data|subscription_data\[description)/.test(k)), [...q.keys()]);
 check("the pass exists, pending, linked to its session", (await passOf(pass1)).pending === true && (await passOf(pass1)).session === "cs_test_000000000000");
 check("a pending pass can't open a room", (await redeem(pass1))[0] === 402);
 failCreate = true; const bad = await checkout({ terms: true, supply: true }, base, "203.0.113.9"); failCreate = false;
@@ -71,6 +73,7 @@ const [cs, cj] = await claim("cs_test_000000000000"), again = await claim("cs_te
 check("paid: the claim returns the same pass the invoice carries, every time", cs === 200 && cj.pass === pass1 && again[1].pass === pass1, [cs, cj, again]);
 check("…and the pass is active", (await passOf(pass1)).pending === false && (await passOf(pass1)).note === "buyer@example.com");
 check("an active pass opens a room", (await redeem(pass1))[0] === 200);
+check("the same code typed with the old CNDL- prefix, or none, finds the same Table", (await redeem("CNDL-" + pass1.slice(5)))[1].room === (await redeem(pass1.slice(5)))[1].room);
 check("not a session id: 400", (await claim("bogus"))[0] === 400);
 
 // the webhook
@@ -100,7 +103,7 @@ await hook({ type: "checkout.session.async_payment_failed", data: { object: sess
 check("webhook: a bank payment that fails is kept and cancelled", (await listed()).includes(pass8) && !!(await passOf(pass8)).revoked && /bank/.test((await passOf(pass8)).failWhy));
 check("webhook: a refused payment that isn't ours changes nothing", (await hook({ type: "payment_intent.payment_failed", data: { object: { id: "pi_other", metadata: {}, last_payment_error: { message: "x" } } } }))[0] === 200);
 const [, c9] = await checkout({ terms: true, supply: true }, base, "203.0.113.10"), pass9 = sessions[c9.url.split("/").pop()].metadata.pass;
-await reg.storage.put("pass:" + pass9, { ...(await passOf(pass9)), created: Date.now() - 49 * 3600000 }); await listed();
+await reg.storage.put("pass:" + passKey(pass9), { ...(await passOf(pass9)), created: Date.now() - 49 * 3600000 }); await listed();
 check("admin: an abandoned checkout the webhook never closed is cleared after two days", !(await passOf(pass9)));
 await hook({ type: "charge.refunded", data: { object: { id: "ch_2", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions[id2].payment_intent } } });
 check("webhook: refunded before use → the pass is cancelled", !!(await passOf(pass2)).revoked && (await redeem(pass2))[0] === 410);
@@ -130,7 +133,7 @@ check("no webhook secret configured: every webhook refused", (await W("/api/stri
 // a Payment Link checkout (no pass of its own) still mints one on claim
 sessions.cs_test_paymentlink1 = { id: "cs_test_paymentlink1", payment_status: "paid", metadata: {}, customer_details: { email: "x@y.z" } };
 const pl = await claim("cs_test_paymentlink1");
-check("a checkout without a pending pass mints one when paid", pl[0] === 200 && /^CNDL-/.test(pl[1].pass) && (await passOf(pl[1].pass)).source === "stripe:cs_test_paymentlink1");
+check("a checkout without a pending pass mints one when paid", pl[0] === 200 && /^OATH-/.test(pl[1].pass) && (await passOf(pl[1].pass)).source === "stripe:cs_test_paymentlink1");
 
 // the monthly subscription: one code, a new game whenever they like, one at a time, only while it's paid
 check("subscription not on sale: 503", (await checkout({ plan: "sub", terms: true, supply: true }, { ...base, STRIPE_SUB_PRICE_ID: "" }, "203.0.113.20"))[0] === 503);

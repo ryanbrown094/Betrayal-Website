@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929090557">
+<meta name="build" content="20260929104245">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
@@ -11,6 +11,8 @@
 <meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies — your TV runs the show; your phone runs the game.">
 <meta property="og:image" content="/media/og-card.png">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <style>
 @font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
@@ -50,18 +52,18 @@ h1 { font: 600 clamp(46px, 11.5vw, 112px)/0.95 var(--disp); margin: 18px 0 8px; 
 .shot { margin: 40px auto 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(230,165,140,.3); box-shadow: 0 30px 80px rgba(0,0,0,.6); max-width: 960px; background: #000 }
 .shot img { display: block; width: 100%; height: auto }
 section { padding: 56px 0 8px }
-h2 { font: 600 clamp(38px, 6vw, 56px)/1 var(--disp); margin: 10px 0 18px; color: var(--ivory); text-wrap: balance }
+h2 { font: 400 clamp(34px, 5.4vw, 50px)/1.08 var(--book); letter-spacing: -.005em; margin: 10px 0 18px; color: var(--ivory); text-wrap: balance }
 .duo { display: grid; grid-template-columns: 3.85fr 1fr; gap: 16px; margin: 26px 0 0; align-items: start }
 .duo figure { margin: 0 } .duo img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(230,165,140,.25); background: #130d14 }
 .duo figcaption { margin-top: 10px; font-size: 15.5px; color: var(--ivory2) } .duo figcaption b { color: var(--ivory) }
 .prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
-.prices .card { display: flex; flex-direction: column; gap: 10px; padding: 24px } .prices .amt { font: 600 52px/1 var(--disp); color: var(--ivory) } .prices .amt em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.prices .card { display: flex; flex-direction: column; gap: 10px; padding: 24px } .prices .amt { font: 400 52px/1 var(--book); color: var(--ivory) } .prices .amt em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
 .prices ul { margin: 0; padding-left: 20px; color: var(--ivory2); font-size: 16.5px } .prices .btn { margin-top: auto; align-self: flex-start }
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px }
 .card { padding: 20px; border-radius: 14px; background: linear-gradient(180deg, rgba(230,165,140,.08), rgba(230,165,140,.02)); border: 1px solid rgba(230,165,140,.22) }
 .card b { display: block; font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose); margin-bottom: 8px }
 .card p { margin: 0; color: var(--ivory2); font-size: 17px }
-.card h3 { font: 600 30px/1 var(--disp); margin: 0 0 8px; color: var(--ivory) }
+.card h3 { font: 400 28px/1.1 var(--book); margin: 0 0 8px; color: var(--ivory) }
 .panel { padding: 22px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.35) }
 .forms { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px }
 label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose); margin: 0 0 8px }
@@ -93,7 +95,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="eyebrow" style="margin-top:18px">a dinner-party game</div>
     <h1 translate="no">The Betrayal</h1>
     <p class="tag">Everyone swore an oath. Not everyone meant it. By the end of the night, everyone will know who lied.</p>
-    <div class="ctas"><a class="btn" id="buy" href="#start">Buy an Invitation</a><a class="btn ghost" href="#start">I have an Invitation</a></div>
+    <div class="ctas"><a class="btn" id="buy" href="#start">Book a Table</a><a class="btn ghost" href="#start">I have a booking</a></div>
     <div class="price" id="price"></div>
     <div class="shot"><img src="/media/tv-table.jpg" fetchpriority="high" alt="The Reckoning on the TV: eight players' seals around a glowing table, with the words ‘Talk. Accuse. Defend. Deflect.’" width="1920" height="1080"></div>
   </header>
@@ -101,7 +103,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">how it works</div><h2>Your TV runs the show. Your phone runs the game.</h2>
     <div class="grid3">
-      <div class="card"><b>1 · plan</b><h3>Set it up once</h3><p>On your phone, before anyone arrives. One question a page, each one explained, with a recommended answer already picked. Five minutes, even the first time.</p></div>
+      <div class="card"><b>1 · plan</b><h3>Set it up once</h3><p>On your phone, before anyone arrives. Five questions, and the rest is planned for you, every choice explained if you want to change it. Five minutes, even the first time.</p></div>
       <div class="card"><b>2 · cast</b><h3>Put it on the TV</h3><p>Open your Table on a laptop and cast it. Title cards, Trials, the Reckoning, candlelit nights and a full score — all on the big screen.</p></div>
       <div class="card"><b>3 · play</b><h3>Tap, read, reveal</h3><p>The phone gives you every line to read and every secret to keep. You just tap Next. The game counts the votes, deals the Trials and keeps the Purse.</p></div>
     </div>
@@ -114,14 +116,14 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section>
     <div class="eyebrow">what you need</div><h2>Bring the people. We bring the lies.</h2>
-    <ul class="need"><li>8 to 24 players (10–16 is the sweet spot)</li><li>About 3¼ to 4¼ hours for 8 to 12 players, with dinner in the middle. Bigger tables play longer, and setup gives you an estimate.</li><li>A TV, and a laptop to cast to it</li><li>A phone for the Keeper</li><li>A blindfold for everyone</li><li>A small chalkboard and chalk each</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
+    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 4 hours for 8 to 12 players, with dinner served in courses between the rounds. A Short game takes about 2 hours.</li><li>A TV, and a laptop to cast to it</li><li>A phone for the Keeper</li><li>A blindfold for everyone</li><li>A small chalkboard and chalk each</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
   </section>
 
   <section>
     <div class="eyebrow">the price</div><h2>One code. The whole evening.</h2>
     <div class="prices">
-      <div class="card"><b>one party</b><div class="amt">£15</div><ul><li>One Table for 8 to 24 players</li><li>Open for 48 hours from the moment you start it</li><li>Buy it now, play it whenever you like</li></ul><a class="btn" href="/buy">Buy an Invitation</a></div>
-      <div class="card"><b>unlimited</b><div class="amt">£20<em> a month</em></div><ul><li>A Standing Invitation: a new game whenever you like</li><li>One game at a time, each open for 48 hours</li><li>Cancel any time</li></ul><a class="btn ghost" href="/buy">Subscribe</a></div>
+      <div class="card"><b>one party</b><div class="amt">£15</div><ul><li>One Table for 8 to 24 players</li><li>Open for 48 hours from the moment you start it</li><li>Buy it now, play it whenever you like</li></ul><a class="btn" href="/buy">Book a Table</a></div>
+      <div class="card"><b>a regular</b><div class="amt">£20<em> a month</em></div><ul><li>A booking code that opens a new Table whenever you like</li><li>One game at a time, each open for 48 hours</li><li>Cancel any time</li></ul><a class="btn ghost" href="/buy">Become a Regular</a></div>
     </div>
     <p style="color:var(--ivory2);font-size:16px;margin-top:14px">Both include all fifteen Trials, thousands of questions and prompts, the full TV show and the Keeper’s script. Payments by Stripe.</p>
   </section>
@@ -129,9 +131,10 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
     <details><summary>Does everyone need a phone?</summary><p>No. Only the Keeper uses one. Guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. At a few moments the Keeper hands the phone round for a secret vote.</p></details>
-    <details><summary>What does an Invitation get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
-    <details><summary>What about the monthly subscription?</summary><p>£20 a month gets you one code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
-    <details><summary>Does the host get to play?</summary><p>The host is the game’s <b>Keeper</b>: they run it — like a presenter. They know who the Forsworn are from the start, so they don’t play a role.</p></details>
+    <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
+    <details><summary>Does the host get to play?</summary><p>The game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
+    <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 to 10 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave.</p></details>
     <details><summary>What if the Wi-Fi drops?</summary><p>Both screens reconnect by themselves, and the phone keeps every change until the server has it. Nothing is lost.</p></details>
@@ -139,9 +142,9 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section id="start">
     <div class="eyebrow">start</div><h2>Open your Table</h2>
-    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your Invitation</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
+    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your booking code</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
     <div class="forms">
-      <div class="panel"><label for="pass">Invitation or Standing Invitation code</label><div class="row"><input id="pass" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="invitation" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One Invitation, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Subscribers: enter your code to start a game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
+      <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="invitation" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
       <div class="panel"><label for="room">Setting up the TV? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Open this on the laptop you’ll cast to the TV.</p></div>
     </div>
   </section>
@@ -153,10 +156,10 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 <script>
 "use strict";
 // Shop settings: the price shown and a contact address. The Stripe Payment Link goes in BUY at the bottom of site/pages/buy.html.
-const SHOP = { price: "£15 a party · or £20 a month for unlimited games", contact: "" };
+const SHOP = { price: "£15 a Table · or £20 a month as a Regular", contact: "" };
 const $ = s => document.querySelector(s);
 $("#buy").href = "/buy";
-$("#price").textContent = SHOP.price ? SHOP.price + " · 8 to 24 players" : "";
+$("#price").textContent = SHOP.price ? SHOP.price + " · best with 8 to 16 players" : "";
 if (SHOP.contact) $("#contact").innerHTML = ' · <a href="mailto:' + SHOP.contact + '">' + SHOP.contact + "</a>";
 const say = (el, t, err) => { el.textContent = t; el.className = "msg" + (err ? " err" : "") };
 async function open(pass, fresh) {
@@ -181,7 +184,7 @@ function subChoice(pass, room) {
 }
 async function manage() {
   const v = $("#pass").value.trim(), m = $("#passmsg");
-  if (!v) return say(m, "Enter your subscription code above, then tap Manage subscription.", true);
+  if (!v) return say(m, "Enter your Regular’s booking code above, then tap Manage subscription.", true);
   say(m, "Opening your subscription…");
   try {
     const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass: v }) });
@@ -191,7 +194,7 @@ async function manage() {
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = () => manage();
-$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter your Invitation code.", true); open(v) };
+$("#go").onclick = () => { const v = $("#pass").value.trim(); if (!v) return say($("#passmsg"), "Enter your booking code.", true); open(v) };
 $("#pass").onkeydown = e => { if (e.key === "Enter") $("#go").click() };
 $("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""); if (v.length !== 6) return say($("#roommsg"), "Table codes are six letters and numbers.", true); location.href = "/t/" + v };
 $("#room").onkeydown = e => { if (e.key === "Enter") $("#join").click() };
@@ -200,10 +203,10 @@ const sid = new URLSearchParams(location.search).get("session_id");
 if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
-    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (j.sub) { $("#claimhead").textContent = "thank you — here is your subscription code"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (j.sub) { $("#claimhead").textContent = "thank you — you’re a Regular"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
-  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your Invitation will appear here.", true);
+  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your booking code will appear here.", true);
 })();
 </script>
 </body>

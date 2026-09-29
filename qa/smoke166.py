@@ -17,6 +17,7 @@ try:
         h.on("console", lambda m: errs.append("host: " + m.text[:200]) if "stale tap" in m.text else None)
         h.goto(f"http://localhost:{PORT}/play.html#host"); h.wait_for_timeout(1200)
         E = lambda js: h.evaluate(js)
+        E("()=>localStorage.setItem('candle-played','1')")  # a second night: the setup recommends every twist, which these checks need
         # setup: a pot target and the wrong-shout rule
         h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111',cloaks:'2',touched:['cloaks'],step:'pot'});renderHost()}", "\n".join(NAMES)); h.wait_for_timeout(200)
         pc = h.input_value("#potCap"); E("()=>wGo('wrong')"); body = h.inner_text("body")
@@ -60,17 +61,22 @@ try:
         E("()=>act(s=>{s.shieldCard.step=99})")
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
         check("TV after the ceremony: the Champion was chosen in secret, and the wrong-shout cost", "Crown" in tvtxt and "Wrong shouts cost it" in tvtxt, tvtxt)
-        # the table: a secret Champion isn't named; their blade counts twice only once revealed
+        # the table: a secret Crown isn't named; its Casting Vote only breaks a tie, once every board is in
         E("()=>openTable()"); t = h.inner_text("#host")
         check("talk line reminds a secret Champion without naming them", "if any of you wears the Crown" in t and "Tom: you wear the Crown" not in t)
         E("()=>{act(s=>{s.table.stage='votes'});const A=aliveOf(state);castBallot(A[2].id,A[5].id)}")
         once = E("()=>state.table.votes[aliveOf(state)[5].id]")
         E("()=>{const A=aliveOf(state);for(const p of A)if(!(p.id in state.table.ballots))castBallot(p.id,A[5].id)}"); allin = E("()=>state.table.votes[aliveOf(state)[5].id]")
         E("()=>toExile()"); after = E("()=>state.table.votes[aliveOf(state)[5].id]")
-        check("blade: counts one as the boards turn, +1 once every board is in (no reveal needed)", once == 1 and after == allin + 1, (once, allin, after))
+        check("Casting Vote: counts one as the boards turn; with no tie it adds nothing", once == 1 and after == allin, (once, allin, after))
+        # a tie, with the holder's board on one side of it: the Casting Vote breaks it
+        E("()=>{toVotes();clearBallots();const A=aliveOf(state),w=championOf(state),o=A.find(p=>p.id!==w&&p.id!==A[6].id);castBallot(w,A[5].id);castBallot(o.id,A[6].id);for(const p of A)if(!(p.id in state.table.ballots))castBallot(p.id,'blank')}")
+        tie = E("()=>{const A=aliveOf(state);return [state.table.votes[A[5].id],state.table.votes[A[6].id]]}")
+        E("()=>toExile()"); broke = E("()=>state.table.votes[aliveOf(state)[5].id]")
+        check("Casting Vote: a 1–1 tie with the holder's board on one side becomes 2–1", tie == [1, 1] and broke == 2, (tie, broke))
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
-        check("TV: the blade's line is the main line — it fell on someone, and the holder isn't named", "the Casting Vote fell on" in tvtxt and "votes for" not in tvtxt and E("()=>!publicView(state).champion"), tvtxt[-200:])
-        E("()=>toVotes()"); check("back to the boards: the blade's vote comes off again", E("()=>state.table.votes[aliveOf(state)[5].id]") == allin)
+        check("TV: the tie-break is the main line, and the holder isn't named", "the Casting Vote breaks it for" in tvtxt and "votes for" not in tvtxt and E("()=>!publicView(state).champion"), tvtxt[-200:])
+        E("()=>toVotes()"); check("back to the boards: the tie-break comes off again", E("()=>state.table.votes[aliveOf(state)[5].id]") == 1)
         # exile: the new Ghost gives their verdict straight away
         E("()=>{const A=aliveOf(state);toExile();exile(A[5].id);askGo();revealRole()}")
         E("()=>act(s=>{s.table.step=2;s.ghostIntroDone=true})")

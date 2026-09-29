@@ -1,16 +1,16 @@
-<!-- title: Get an Invitation -->
+<!-- title: Book a Table -->
 <div class="eyebrow">checkout</div>
-<h1>Buy an Invitation</h1>
-<p class="lede">Everything for the evening, in one code: fifteen Trials, thousands of questions and prompts, a full show on your TV with its own music, and every line the Keeper needs to read. Play once, or as often as you like.</p>
+<h1>Book a Table</h1>
+<p class="lede">Everything for the evening, in one booking: fifteen Trials, thousands of questions and prompts, a full show on your TV with its own music, and every line the Keeper needs to read. Play once, or as often as you like.</p>
 
 <fieldset class="plans"><legend class="vh">Choose how to play</legend>
 <label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price">£15</span><small>One Table for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
-<label class="plan"><input type="radio" name="plan" value="sub"><span><b>Unlimited</b><span class="price">£20<em> a month</em></span><small>A Standing Invitation: one code that starts a new game whenever you like, one at a time, for as long as you’re subscribed. Cancel any time.</small></span></label>
+<label class="plan"><input type="radio" name="plan" value="sub"><span><b>Regular</b><span class="price">£20<em> a month</em></span><small>Become a Regular: one booking code that starts a new game whenever you like, one at a time, for as long as you’re subscribed. Cancel any time.</small></span></label>
 </fieldset>
 
 <div class="panel">
 <ul>
-<li id="li1">Your Invitation code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.</li>
+<li id="li1">Your booking code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.</li>
 <li id="li2">Use it whenever you like: the 48 hours start only when you open your Table.</li>
 <li>No app, no accounts. You need a TV with a laptop to cast to it, and a phone for the Keeper. Prices include VAT where it applies.</li>
 </ul>
@@ -22,15 +22,15 @@
 <p id="paymsg" class="formmsg" role="status"></p>
 </div>
 
-<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your Invitation code on screen, and Stripe emails you a receipt.</p>
+<p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your booking code on screen, and Stripe emails you a receipt.</p>
 
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
 const plan = () => (document.querySelector("input[name=plan]:checked") || {}).value || "one";
 const TEXT = {
-  one: { c2: "I want my Invitation supplied straight away. I understand that once I use it to open my Table I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href=\"/refunds\">refunds</a>).",
-    li1: "Your Invitation code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.", li2: "Use it whenever you like: the 48 hours start only when you open your Table." },
+  one: { c2: "I want my booking code supplied straight away. I understand that once I use it to open my Table I lose my 14-day right to cancel. Until then I can still cancel for a full refund (<a href=\"/refunds\">refunds</a>).",
+    li1: "Your booking code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.", li2: "Use it whenever you like: the 48 hours start only when you open your Table." },
   sub: { c2: "I understand my subscription renews every month at £20 until I cancel, which I can do at any time from “Manage subscription”. I want it to start straight away, and I lose my 14-day right to cancel the first month once I use my code to open a Table (<a href=\"/refunds\">refunds</a>).",
     li1: "Your code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.", li2: "Each Table stays open for 48 hours; start a new one whenever you like." }
 };
