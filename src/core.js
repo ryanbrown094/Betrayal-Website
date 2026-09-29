@@ -190,10 +190,13 @@ const titleOf = s => (s && s.brand && s.brand.title) || "The Betrayal";
 const H = () => hostOf(state), T = () => titleOf(state);
 const moneyOf = (s, v) => { const u = String((s && s.potUnit) || "pts").replace(/[<>&"'`]/g, ""); return /^[£$€]$/.test(u) ? u + v : v + " " + u };
 const money = v => moneyOf(state, v);
-const PRIZE0 = "a bottle of champagne"; // the default prize; the host sets their own at setup
+const PRIZE0 = "a box of chocolates"; // the default prize; the host sets their own at setup
 // The prize can come in tiers: a better one once the Purse is half full, the best once it's full (s.prizes, set up front).
-// Until the end the TV only hears that a fuller Purse wins a better prize; the prizes themselves stay secret.
-const prizeTier = s => { const cap = (s && s.potCap) || 2000, t = ((s && s.prizes) || []).filter(x => x && x.what && ((s.pot || 0) >= x.at * cap)); return t.length ? t[t.length - 1] : null };
+// Until the end the TV only hears that the Purse decides the prize; the prizes themselves stay secret.
+// What the winners take from the Purse: the Loyal take what they built; the Forsworn take what it fell short of its target,
+// so every point they sabotage is theirs. The prize tiers follow the same amount.
+const wonPot = s => s && s.winner === "cloaks" ? Math.max(0, ((s.potCap) || 2000) - (s.pot || 0)) : (s && s.pot) || 0;
+const prizeTier = s => { const cap = (s && s.potCap) || 2000, t = ((s && s.prizes) || []).filter(x => x && x.what && (wonPot(s) >= x.at * cap)); return t.length ? t[t.length - 1] : null };
 const prizeOf = s => { const t = prizeTier(s); return (t && t.what) || (s && s.prize) || PRIZE0 };
 // Dinner in three courses: the starter after round one, the main course mid-game, dessert before the final.
 const COURSES = [{ k: "starter", name: "The Starter", dur: 900000 }, { k: "main", name: "The Main Course", dur: 1500000 }, { k: "dessert", name: "Dessert", dur: 900000 }];
@@ -1464,7 +1467,7 @@ function finishGame() {
     const lt = aliveOf(s).filter(p => p.role === "cloak");
     s.phase = "final"; s.winner = lt.length ? "cloaks" : "candles"; s.players.forEach(p => p.revealed = true); s.prizeTo = null;
     // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps)
-    const to = (ids, label) => { s.prizeIds = ids; s.prizeTo = label || andList(ids.map(id => P2(s, id).name)); s.potEach = ids.length ? Math.floor((s.pot || 0) / ids.length) : 0 };
+    const to = (ids, label) => { s.prizeIds = ids; s.prizeTo = label || andList(ids.map(id => P2(s, id).name)); s.potEach = ids.length ? Math.floor(wonPot(s) / ids.length) : 0 };
     if (lt.length >= 2) {
       const f = s.final2, st = lt.filter(p => f.votes[p.id] === "take");
       if (st.length === 1) to([st[0].id]);

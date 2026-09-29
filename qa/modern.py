@@ -115,7 +115,8 @@ with sync_playwright() as p:
             check("…and the host can still accept a near miss", until(lambda: host.locator("text=Mark a near miss right").count() == 1, 4))
             shot(phones[2], "06-quiz-reveal"); shot(tv, "tv-02-quiz-reveal")
     check("quiz: eight questions, one after another, by themselves", until(lambda: "the result" in host.inner_text("#app"), 30) and len(seen) >= 6, len(seen))
-    check("the winner (Ryan, who knew every answer) alone is told they hold the Casting Vote", until(lambda: "You won the Casting Vote" in phones[1].inner_text("#app"), 5) and sum("Casting Vote" in q.inner_text("#app") for q in phones) == 1 and until(lambda: "Only they know it" in tv.inner_text("#tvapp"), 4))
+    check("the winner (Ryan, who knew every answer) alone is told they hold the Casting Vote", until(lambda: "You won the Casting Vote" in phones[1].inner_text("#app"), 5) and sum("You won the Casting Vote" in q.inner_text("#app") for q in phones) == 1)
+    check("…and nobody else, the TV included, is told who won it", until(lambda: "The Casting Vote is taken" in tv.inner_text("#tvapp"), 4) and "Ryan wins" not in tv.inner_text("#tvapp") and "Ryan wins" not in phones[2].inner_text("#app"))
     shot(host, "07-trial-result"); host.click("[data-a=cont]")
 
     # the Temptation, straight after
@@ -166,7 +167,13 @@ with sync_playwright() as p:
     ctx2 = b.new_context(viewport={"width": 390, "height": 844}); lost = ctx2.new_page(); lost.on("pageerror", lambda e: errs.append(str(e)))
     li = [i for i in L if i not in (ti, vi, gone)][0]
     lost.goto(URL + "/m/" + code); lost.fill("#name", NAMES[li]); lost.click("[data-a=join]")
-    check("a lost phone asks by name, and the host lets them in", until(lambda: "asking to come back in" in host.inner_text("#app")) and (host.click("[data-a=letin]") or True) and until(lambda: NAMES[li] in lost.inner_text(".top")))
+    check("a lost phone asks by name", until(lambda: "asking to come back in" in host.inner_text("#app")))
+    host.click("[data-a=letin]")
+    check("…but while their own phone is still connected, it can't be taken over", until(lambda: "still connected" in host.inner_text("#app"), 5))
+    errs[:] = [e for e in errs if "409" not in e]  # the refusal above is a 409, as it should be
+    phones[li].context.close(); time.sleep(21)  # the phone is really lost now
+    until(lambda: host.locator("[data-a=letin]").count(), 10); host.click("[data-a=letin]")
+    check("…once it's gone quiet, the host lets them in, and it's that player again", until(lambda: NAMES[li] in lost.inner_text(".top")))
 
     # the TV's narrator and sound
     tv.evaluate("() => { window.__said = []; Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: { getVoices: () => [], cancel() {}, speak(u) { __said.push(u.text) } } }); window.SpeechSynthesisUtterance = function (t) { this.text = t } }")
@@ -184,7 +191,7 @@ with sync_playwright() as p:
     check("admin replay: back to the start shows the lobby", code in ad.frame_locator(".tvbox iframe").locator("#tvapp").inner_text())
     shot(ad, "admin-room")
 
-    wide = [i for i, q in enumerate(phones) if q.evaluate("document.documentElement.scrollWidth") > q.viewport_size["width"]]
+    wide = [i for i, q in enumerate(phones) if not q.is_closed() and q.evaluate("document.documentElement.scrollWidth") > q.viewport_size["width"]]
     check("no phone scrolls sideways (320px included)", not wide, wide)
     check("no page errors", not errs, errs[:5])
     b.close()

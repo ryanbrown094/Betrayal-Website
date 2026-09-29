@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929132000">
+<meta name="build" content="20260929153644">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
-<meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Your TV runs the show; your phone runs the game.">
+<meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Play it Classic, with a Keeper and your TV, or Modern, with everyone on their own phone.">
+<link rel="canonical" href="https://thebetrayal.co.uk/">
 <meta name="theme-color" content="#09070a">
 <meta property="og:title" content="The Betrayal — the dinner-party game of loyalty and lies">
-<meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies — your TV runs the show; your phone runs the game.">
-<meta property="og:image" content="/media/og-card.png">
+<meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies, played with a Keeper and your TV, or on everyone’s phones.">
+<meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -37,7 +39,7 @@ a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 4px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
-nav.topnav { display: flex; justify-content: flex-end; gap: 0 22px; padding-top: 10px } nav.topnav a { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 12px 0 } nav.topnav a:hover { color: var(--ivory) }
+nav.topnav { display: flex; justify-content: flex-end; gap: 0 22px; padding-top: 10px } nav.topnav a { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 12px 0; white-space: nowrap } @media (max-width: 360px) { nav.topnav { gap: 0 14px } nav.topnav a { font-size: 15px } } nav.topnav a:hover { color: var(--ivory) }
 header.hero { text-align: center; padding: 22px 0 28px }
 .mark { width: 92px; height: 108px; margin: 0 auto; color: var(--rose); filter: drop-shadow(0 0 22px rgba(230,165,140,.35)) }
 h1 { font: 600 clamp(46px, 11.5vw, 112px)/0.95 var(--disp); margin: 18px 0 8px; background: linear-gradient(176deg, #f4c9b7 8%, var(--rose) 40%, var(--copper) 70%, #763c29); -webkit-background-clip: text; background-clip: text; color: transparent }
@@ -57,7 +59,7 @@ h2 { font: 400 clamp(34px, 5.4vw, 50px)/1.08 var(--book); letter-spacing: -.005e
 .duo figure { margin: 0 } .duo img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(230,165,140,.25); background: #130d14 }
 .duo figcaption { margin-top: 10px; font-size: 15.5px; color: var(--ivory2) } .duo figcaption b { color: var(--ivory) }
 .prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
-.prices .card { display: flex; flex-direction: column; gap: 10px; padding: 24px } .prices .amt { font: 400 52px/1 var(--book); color: var(--ivory) } .prices .amt em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
+.prices .card { display: flex; flex-direction: column; gap: 10px; padding: 24px } .prices .amt { font: 600 52px/1 var(--ui); font-variant-numeric: lining-nums; color: var(--ivory) } .prices .amt em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
 .prices ul { margin: 0; padding-left: 20px; color: var(--ivory2); font-size: 16.5px } .prices .btn { margin-top: auto; align-self: flex-start }
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px } .grid3.two { grid-template-columns: repeat(2, minmax(0, 1fr)) }
 .card { padding: 20px; border-radius: 14px; background: linear-gradient(180deg, rgba(230,165,140,.08), rgba(230,165,140,.02)); border: 1px solid rgba(230,165,140,.22) }
@@ -83,7 +85,7 @@ details summary { display: flex; justify-content: space-between; align-items: ce
 details summary::after { content: "+"; flex: none; font: 400 26px/.8 var(--ui); color: var(--rose); transition: transform .2s ease } details[open] summary::after { transform: rotate(45deg) } details summary:hover { color: #f4ddd4 }
 details p { color: var(--ivory2); margin: 0 0 16px; max-width: 46em }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
-footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-bottom: 12px } footer nav.legal a { color: var(--ivory2); display: inline-block; padding: 10px 0 }
+footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-bottom: 12px } footer nav.legal a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
 @media (max-width: 760px) { .grid3, .grid3.two, .forms, .prices { grid-template-columns: 1fr } ul.need { columns: 1 } .duo { grid-template-columns: 1fr } .duo figure.ph { max-width: 260px; margin: 0 auto } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
 </style>
@@ -104,7 +106,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   </header>
 
   <section>
-    <div class="eyebrow">how it works</div><h2>Your TV runs the show. Your phone runs the game.</h2>
+    <div class="eyebrow">how Classic works</div><h2>Your TV runs the show. Your phone runs the game.</h2>
     <div class="grid3">
       <div class="card"><b>1 · plan</b><h3>Set it up once</h3><p>On your phone, before anyone arrives. Five questions, and the rest is planned for you, every choice explained if you want to change it. Five minutes, even the first time.</p></div>
       <div class="card"><b>2 · cast</b><h3>Put it on the TV</h3><p>Open your Table on a laptop and cast it. Title cards, Trials, the Reckoning, candlelit nights and a full score — all on the big screen.</p></div>
@@ -121,7 +123,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="eyebrow">two ways to play</div><h2>Classic or Modern. You choose on the night.</h2>
     <div class="grid3 two">
       <div class="card"><b>classic</b><h3>A Keeper, blindfolds and chalk</h3><p>One phone runs the game. The Keeper reads the script and keeps the secrets, the guests wear blindfolds at night and chalk their votes, and the TV puts on the show. The Keeper doesn’t play.</p></div>
-      <div class="card"><b>modern</b><h3>Everyone on their own phone</h3><p>Guests join at thebetrayal.co.uk/join with the Table code, a bit like a pub quiz app. Roles, votes, nights and poisonings arrive in secret on each phone, and quizzes are answered there too. No blindfolds, no chalkboards, the TV is optional, and the host plays as well.</p></div>
+      <div class="card"><b>modern</b><h3>Everyone on their own phone</h3><p>Guests scan the code on the TV or go to <a href="/join">thebetrayal.co.uk/join</a> with the Table code, a bit like a pub quiz app. Roles, votes, nights and poisonings arrive in secret on each phone, and quizzes are answered there too. No blindfolds, no chalkboards, the TV is optional, and the host plays as well.</p></div>
     </div>
   </section>
 
@@ -145,10 +147,11 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>In Modern, yes: the host’s phone also starts each Trial and calls the breaks, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
-    <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 to 10 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
+    <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 or 9 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
-    <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave.</p></details>
-    <details><summary>What if the Wi-Fi drops?</summary><p>Both screens reconnect by themselves, and the phone keeps every change until the server has it. Nothing is lost.</p></details>
+    <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave. In Modern, the victim is told on their phone instead of being tapped.</p></details>
+    <details><summary>What if the Wi-Fi drops?</summary><p>Every screen reconnects by itself. In Classic the Keeper’s phone keeps every change until the server has it; in Modern the game lives on the server, so a phone that drops just picks up where it was, and a lost phone can be let back in by the host. Nothing is lost.</p></details>
+    <details><summary>Who wins the Purse?</summary><p>The Loyal, if they win, take the Purse they built. The Forsworn, if they win, take what it <b>fell short</b> of its target, so every point they quietly sabotage is theirs. <a href="/rules#pot">More in the rules</a>.</p></details>
   </section>
 
   <section id="start">
@@ -162,7 +165,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
 
   </main>
-  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
+  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
 </div>
 <script>
 "use strict";

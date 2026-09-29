@@ -39,7 +39,7 @@ try:
         start({"rounds": 4}, {"prizes": [{"at": 0.5, "what": "champagne"}, {"at": 1, "what": "a night out"}]})
         pv = E("()=>{act(s=>{s.pot=1100});const v=publicView(state);return {prizes:'prizes' in v,prize:'prize' in v,tiers:v.tiers}}")
         check("tiers: before the end the TV knows only that there are tiers, never the prizes", not pv["prizes"] and not pv["prize"] and pv["tiers"] == [0.5, 1], pv)
-        check("tiers: the TV's morning says a fuller Purse wins a better prize", "fuller the Purse, the better the prize" in E("()=>{act(s=>{s.phase='day';s.roundMissions=0});const v=tvView(publicView(state));return v.html}"))
+        check("tiers: the TV's morning says a fuller Purse wins a better prize", "fuller the Purse, the better the Loyal’s prize" in E("()=>{act(s=>{s.phase='day';s.roundMissions=0});const v=tvView(publicView(state));return v.html}"))
         got = E("()=>{const out=[];for(const pot of [500,1100,2000]){act(s=>{s.pot=pot});out.push(prizeOf(state))}return out}")
         check("tiers: 500 → the prize, 1100 → the better one, 2000 → the best", got == ["a bottle of wine", "champagne", "a night out"], got)
         E("()=>act(s=>{s.pot=1100;s.phase='final';s.winner='candles';s.finalStep=0;s.players.forEach(p=>p.revealed=true)})")

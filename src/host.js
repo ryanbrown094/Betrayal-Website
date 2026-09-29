@@ -157,7 +157,7 @@ function advicePanel() {
 function prizeHost(s) {
   if (!s.prizeTo) return `<p class="note">The TV shows every role.</p>`;
   const r = s.rps, w = r && r.winner && P(r.winner);
-  const pot = (s.prizeIds || []).length ? say(SAY.potSplit(money(s.pot || 0), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
+  const pot = (s.prizeIds || []).length ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
   if (!r) return say(SAY.prize(prizeOf(s), s.prizeTo)) + pot + `<p class="note">Hand it over. The TV shows the prize, the Purse and every role.</p>`;
   const names = andList(r.ids.map(id => P(id)).filter(Boolean).map(p => p.name));
   return pot + say(SAY.prizeRps(prizeOf(s), names)) + (w ? say(SAY.prizeHome(w.name, prizeOf(s))) + `<p class="note">On the TV now. Wrong name? Undo.</p>`
@@ -339,9 +339,10 @@ ${P_("Every night, everyone puts their blindfolds on. The Forsworn take theirs o
 ${why("Either way", "The phone gives you every line and step, and the TV uses your choice’s words all night: poisoned or murdered.")}` },
   { id: "prize", core: true, sec: "The prize", title: () => "What’s the prize?", body: d => `
 ${P_("The prize goes to the winners at the end: the Loyal if they exiled every Forsworn, or the Forsworn if they survived. Choose something people will scheme for.")}
+${P_("The Purse goes with it. The Loyal take what they built. The Forsworn take what it <b>fell short</b> of its target, so every point they sabotage is theirs.")}
 <label for="prize">The prize</label><input id="prize" value="${esc(d.prize)}" placeholder="${esc(PRIZE0)}" oninput="draft()">
 <h3>make the Purse matter <small>(optional)</small></h3>
-${P_("The Trials fill a shared <b>Purse</b>. Give the table something to fill it for: a better prize if it ends at least half full, the best if it’s full. The table hears only that a fuller Purse wins a better prize, never what the prizes are.")}
+${P_("The Trials fill a shared <b>Purse</b>. Give the table something to fill it for: a better prize if it ends at least half full, the best if it’s full. If the Forsworn win, it works the other way: half empty wins them the better prize, empty the best. The table hears only that the Purse decides the prize, never what the prizes are.")}
 <label for="prize2">A better prize, if the Purse is half full</label><input id="prize2" value="${esc(d.prize2)}" placeholder="e.g. the good bottle, not the usual one" oninput="draft()">
 <label for="prize3">The best prize, if the Purse is full</label><input id="prize3" value="${esc(d.prize3)}" placeholder="e.g. a night out, paid for by the losers" oninput="draft()">
 ${why("It stays secret", "Nothing names the prize, not the TV and not your script, until the game is won. Tell your guests yourself if you want them to know. If two or more people win, the game has them play rock, paper, scissors for it.")}
@@ -435,7 +436,7 @@ ${P_("Each night the Forsworn can get a <b>secret Errand</b> to complete at the 
 ${P_("A completed quest counts for the Forsworn at the end. A failed one costs the Purse " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". Quests give the Forsworn something to do beyond acting innocent, and the Loyal something odd to spot.")}
 <div class="wopts">${wopt(d, "quests", true, "Yes, an Errand each night", d.mingle ? "They happen during the Interval, so the Forsworn have time to pull them off." : "You chose no Interval, so the Forsworn will have to do them during Trials and dinner. That’s harder, but possible.")}${wopt(d, "quests", false, "No Errands", "The Forsworn just have to blend in. A little simpler to run.")}</div>` },
   { id: "pot", sec: "The Purse and prize", check: d => !(+d.potCap > 0) ? "Set a Purse target." : "", title: () => "The Purse", body: d => `
-${P_("Trials fill a shared <b>Purse</b>. At the end, the winners split it. It’s a score for the evening, and you can make it real money if your group wants to. The Purse stops growing once it reaches its target, so it fills steadily across the game.")}
+${P_("Trials fill a shared <b>Purse</b>. At the end, the winners split it: the Loyal take what they built, the Forsworn what it fell short of its target. It’s a score for the evening, and you can make it real money if your group wants to. The Purse stops growing once it reaches its target, so it fills steadily across the game.")}
 <div class="row"><div><label for="unit">Written as</label><input id="unit" value="${esc(d.unit)}" oninput="draft()" placeholder="pts, £, coins…"></div><div><label for="potCap">Target</label><input id="potCap" type="number" inputmode="numeric" value="${esc(d.potCap || "2000")}" oninput="draft()"></div></div>
 ${why("Points or money?", "Leave it as <b>pts</b> for a score, or type <b>£</b> if everyone has chipped in and the Purse is real, for example £20 each. The target is then the total you’ve collected.")}
 ${why("Wrong answers cost the Purse", "In the shouting games, a wrong answer costs the Purse. That’s the next page.")}` },

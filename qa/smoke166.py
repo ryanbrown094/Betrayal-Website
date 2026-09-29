@@ -108,8 +108,8 @@ try:
         check("no roles revealed in the end game", E("()=>{const d=state.players.filter(p=>!p.alive);return !d[d.length-1].revealed}"))
         E("()=>{act(s=>{s.phase='day';s.table=null;s.endvote=null})}"); E("()=>openTable()")
         check("a table in the final with four or fewer opens the vote instead", E("()=>state.phase==='endvote'"), E("()=>state.phase"))
-        # share: two Cloaks split the pot, rock paper scissors for the prize
-        E("()=>{act(s=>{s.pot=1800;s.players.forEach((p,i)=>p.alive=i<3)});act(s=>{s.phase='day';s.endvote=null});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));const f=state.final2;f.cloakIds.forEach(id=>castTake(id,'share'));handoff=null;startTakeReveal();act(s=>{s.final2.revealed=s.final2.order.length});finishGame()}")
+        # share: two Cloaks split what the Purse fell short (2000 − 200), rock paper scissors for the prize
+        E("()=>{act(s=>{s.pot=200;s.players.forEach((p,i)=>p.alive=i<3)});act(s=>{s.phase='day';s.endvote=null});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));const f=state.final2;f.cloakIds.forEach(id=>castTake(id,'share'));handoff=null;startTakeReveal();act(s=>{s.final2.revealed=s.final2.order.length});finishGame()}")
         fin = E("()=>({each:state.potEach,ids:state.prizeIds,rps:!!state.rps})")
         check("all share: the pot is split and they play for the prize", fin["each"] == 900 and len(fin["ids"]) == 2 and fin["rps"], fin)
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
