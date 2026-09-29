@@ -20,7 +20,7 @@ Everything about the game and the brand, in one place, for building ads, social 
 | `04-screenshots/web-sized/` | the same, compressed for the web (TV 1280 × 720, phone 780 wide) |
 | `05-social/` | link preview (1200 × 630), square post (1080 × 1080), story (1080 × 1920), a profile avatar (the seal, 1080 × 1080), and the hero image of the TV |
 | `06-launch/` | four Meta ads (feed and story sizes), the A6 “You survived” table card with a QR code, ad copy, six short-video scripts, outreach templates and a 28-day content calendar |
-| `NEXT-STEPS.md` | what has to happen before The Betrayal goes public (trade mark check first) |
+| `NEXT-STEPS.md` | what has to happen before The Betrayal goes public |
 
 ## Key facts at a glance
 

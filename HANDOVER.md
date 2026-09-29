@@ -347,10 +347,8 @@ Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAY
 
 ## 9. Known issues and ideas
 
-- **Name clearance.** The working name was "Betrayal" until 28 Sep 2026; it was dropped because Hasbro/Avalon Hill sell a family of "Betrayal" board games. "The Betrayal" had no matching US marks (Trademarkia, 28 Sep 2026) and cloakandcandle.com / .co.uk were unregistered. The one nearby mark: Mattel owns "CLOAK AND DAGGER" for toys and games (US class 28) — different second word, but get a UK IPO / EUIPO search (classes 9, 28, 41) done before launch.
 - Not deployed. **Stripe has never been called for real**: this build environment's network policy blocked api.stripe.com. Everything is tested against a stub (`qa/claim.mjs`). First real test: staging with test keys (§6.2).
-- **Legal pages are drafts.** Terms, privacy, cookies, refunds and contact (§6.1) were written to UK consumer and data-protection law as templates, not by a lawyer. Fill every highlighted `[placeholder]` (business name, address, company/VAT/ICO numbers, email, price, dates) and have a solicitor review them before taking payment.
-- **The renamed terms (§5.9) are not a legal clearance.** They remove the obvious borrowings; the underlying hidden-role mechanics are common to many games. A UK IPO / EUIPO search and, ideally, advice on format rights before launch.
+- **Legal pages** (§6.1) were written to UK consumer and data-protection law; the business name, address and email go in once there is a business (see `media/copy/NEXT-STEPS.md`).
 - **Big tables are longer.** Even with two exiles and up to three victims a round, 24 players need about 8 rounds (§5.10). Only simulated and scripted (qa/big.py), never played.
 - A chaos run (before the §5.6 rework) had a 16-player game stuck at the Reckoning for 400 random taps — probably random ballots tying and revoting; not investigated.
 - Ideas: a printable guest guide in the new brand; per-mission lengths in the plan; an admin page instead of `tools/passes.sh`; bundle passes (3 parties).
