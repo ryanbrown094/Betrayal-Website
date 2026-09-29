@@ -1,6 +1,6 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
-import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor } from "../worker/src/modern.js";
+import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots } from "../worker/src/modern.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const dict = { has: (w) => w.length >= 3 };
@@ -189,6 +189,33 @@ for (const [n, fw] of [[6, 0], [8, 1], [12, 0], [17, 1], [24, 0], [10, 1]]) {
   check(`${n} players: the courses were served`, n < 8 || (g.s.done.starter && g.s.done.dessert));
   const v = viewFor(g.s, g.ids[2], g.now); check(`${n} players: at the end every role is shown`, v.players.every((p) => p.role));
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
+}
+// 7. a test game: one person against bots; Trials score at random, every clock is ten seconds at most
+for (const n of [8, 16]) {
+  let now = 1e12; const s = newGame(now, rnd, {}); s.test = true; const me = join(s, "Ryan", now, rnd).id; addBots(s, n, now, rnd);
+  const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
+  check(`test game: ${n - 1} bots join`, s.players.length === n && s.players.filter((p) => p.bot).length === n - 1);
+  A(g, me, { a: "start" }); A(g, me, { a: "optin", v: "any" }); run(g, 1000);
+  check("…the bots swear and the roles are dealt", s.phase === "roles");
+  A(g, me, { a: "ack" }); run(g, 1000);
+  let guard = 0, maxClock = 0; const clk = (end) => { if (end) maxClock = Math.max(maxClock, end - g.now); };
+  while (s.phase !== "end" && guard++ < 400) {
+    const I = s.players.find((p) => p.id === me);
+    if (s.phase === "day") A(g, me, { a: "next" });
+    else if (s.phase === "break") { clk(s.brk.end); run(g, 11000, 1000); }
+    else if (s.phase === "trial") { clk(s.trial.introEnd); if (s.trial.item) clk(s.trial.item.end); if (s.trial.item && s.trial.item.k === "tempt" && I.alive) A(g, me, { a: "ans", v: "purse" }); if (s.trial.stage === "done") A(g, me, { a: "cont" }); else run(g, 1000); }
+    else if (s.phase === "talk") { clk(s.vote.talkEnd); run(g, 11000, 1000); }
+    else if (s.phase === "vote") { clk(s.vote.voteEnd); if (I.alive) A(g, me, { a: "ballot", v: alive(s).find((q) => q.id !== me && (!s.vote.revote || s.vote.revote.includes(q.id))).id }); run(g, 1000); }
+    else if (s.phase === "reveal") { run(g, 6000, 1000); A(g, me, { a: "cont" }); }
+    else if (s.phase === "night") { clk(s.night.end); if (I.alive) A(g, me, I.role === "f" ? { a: "pick", v: alive(s).find((q) => q.role !== "f").id } : { a: "sleep" }); run(g, 1000); }
+    else if (s.phase === "dawn") { A(g, me, { a: "cont" }); if (s.dawn && s.dawn.lastEnd) clk(s.dawn.lastEnd); A(g, me, { a: "cont" }); }
+    else if (s.phase === "trust") { clk(s.trust.end); if (I.alive) A(g, me, { a: "trust", v: "trust" }); run(g, 8000, 1000); }
+    else if (s.phase === "honour") { if (I.alive && I.role === "f") A(g, me, { a: "honour", v: "honour" }); run(g, 2000, 1000); }
+    else run(g, 2000, 1000);
+  }
+  check(`test game, ${n} players: finishes with only the host tapping (${s.result && s.result.winner}, ${s.round} rounds)`, s.phase === "end", [s.phase, guard]);
+  check(`…no countdown longer than ten seconds (longest ${Math.round(maxClock / 1000)}s)`, maxClock <= 10000);
+  check("…Trials scored at random", s.stats && Object.keys(s.stats.wins).length > 0);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);
