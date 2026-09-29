@@ -1,19 +1,31 @@
-"""Render The Betrayal's ads, social images and print card with the brand fonts (needs playwright and segno)."""
-import pathlib, segno
+"""Render The Betrayal's ads, social images and print card with the brand fonts (needs playwright with Chromium, and segno).
+
+    python3 tools/brand/make_creatives.py
+
+Reads the fonts from worker/public/fonts and the logos from media/logos. Writes:
+    media/launch/ads/0N-…-feed-1080x1350.png and -story-1080x1920.png   four Meta ads, two sizes each
+    media/social/og-card.png (1200 × 630), square.png (1080 × 1080), story.png (1080 × 1920)
+    media/social/avatar.png (1080 × 1080)   the secondary mark, the cracked seal, for profile pictures
+    media/launch/print/host-your-own-card-A6.png and .pdf   the "You survived" table card with its QR code
+
+Type follows the brand rule: Grenze Gotisch only in the wordmark (the outlined logo files), headings in IM Fell DW Pica
+(its italic for spoken lines), body in Alegreya Sans, eyebrows in Alegreya Sans SC.
+"""
+import pathlib, tempfile, segno
 from playwright.sync_api import sync_playwright
 
-PACK = pathlib.Path(__file__).resolve().parents[1]
-FONTS = PACK / '01-brand' / 'fonts' / 'web'
-LOGOS = PACK / '01-brand' / 'logos'
-ADS = PACK / '04-launch' / 'ads'
-SOCIAL = PACK / '03-social'
-PRINT = PACK / '04-launch' / 'print'
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+FONTS = ROOT / 'worker' / 'public' / 'fonts'
+LOGOS = ROOT / 'media' / 'logos'
+ADS = ROOT / 'media' / 'launch' / 'ads'
+SOCIAL = ROOT / 'media' / 'social'
+PRINT = ROOT / 'media' / 'launch' / 'print'
 for d in (ADS, SOCIAL, PRINT):
     d.mkdir(parents=True, exist_ok=True)
 SITE = 'thebetrayal.co.uk'
 MARK = (LOGOS / 'the-betrayal-mark-rosegold.svg').read_text()
 STACK = (LOGOS / 'the-betrayal-lockup-stacked-rosegold.svg').read_text()
-HORIZ = (LOGOS / 'the-betrayal-lockup-horizontal-rosegold.svg').read_text()
+SEAL = (LOGOS / 'the-betrayal-seal.svg').as_uri()
 
 def f(n):
     return (FONTS / n).as_uri()
@@ -32,20 +44,20 @@ html,body{{background:#09070A}}
    display:flex;flex-direction:column;align-items:center;text-align:center}}
 .svgbox svg{{width:100%;height:auto;display:block}}
 .eyebrow{{font-family:SansSC;font-weight:700;letter-spacing:.3em;text-transform:lowercase;color:#E6A58C}}
-.h{{font-family:Grenze;font-weight:600;line-height:1.04;
+.h{{font-family:Fell;font-weight:400;line-height:1.02;letter-spacing:-.01em;
    background:linear-gradient(172deg,#F4C9B7 0%,#E6A58C 38%,#AE6249 78%,#763C29 100%);
-   -webkit-background-clip:text;background-clip:text;color:transparent}}
-.say{{font-family:Fell;font-style:italic;color:#E8D0C8;line-height:1.32}}
+   -webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:.08em}}
+.say{{font-family:Fell;font-style:italic;color:#E8D0C8;line-height:1.32;text-wrap:balance}}
+.body{{font-family:Sans;font-weight:500;color:#E8D0C8;line-height:1.35}}
 .foot{{font-family:Sans;font-weight:700;color:#AFA198;letter-spacing:.02em}}
 .foot b{{color:#E6A58C;font-weight:700}}
 .rule{{height:1px;background:linear-gradient(90deg,transparent,#AE6249,transparent)}}
-ul.need{{list-style:none;font-family:Fell;color:#E8D0C8}}
+ul.need{{list-style:none;font-family:Sans;font-weight:500;color:#E8D0C8}}
 ul.need li{{padding:.42em 0;border-bottom:1px solid rgba(175,161,152,.18)}}
 ul.need li:last-child{{border:0}}
 .card{{border:1px solid rgba(230,165,140,.45);border-radius:18px;background:rgba(19,13,20,.72);
    box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 60px rgba(230,165,140,.08);text-align:left}}
 .label{{font-family:SansSC;font-weight:700;letter-spacing:.22em;text-transform:lowercase;color:#E6A58C}}
-.table{{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:flex-end}}
 """
 
 SEALS = ['#d9b44a', '#8fb3d9', '#e0895a', '#7fbf94', '#b48fd0', '#e46a8c', '#5fb3a8', '#c9c35e', '#7aa6e0', '#e6a0c0']
@@ -67,19 +79,18 @@ def candles(n=10, out=(3, 6), h=150, gap=34):
     items = ''.join(f'<div style="margin:0 {gap/2}px">{candle(i not in out, h)}</div>' for i in range(n))
     return f'<div style="display:flex;align-items:flex-end;justify-content:center">{items}</div>'
 
-def seal(letter, col, size=120, cracked=False, count=None):
-    crack = ('<path d="M42 18l8 20-7 10 9 14-5 20" fill="none" stroke="#130D14" stroke-width="3" stroke-linejoin="round" opacity=".8"/>'
-             if cracked else '')
-    badge = (f'<div style="position:absolute;right:-10px;top:-6px;background:#7A1439;color:#F4C9B7;font-family:Grenze;font-weight:600;'
-             f'font-size:{size*.34:.0f}px;line-height:1;padding:{size*.06:.0f}px {size*.12:.0f}px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.5)">{count}</div>'
+def seal(letter, col, size=120, count=None):
+    # a guest's seal as the TV draws it at the Reckoning (the initial is pressed in blackletter, as on the TV)
+    badge = (f'<div style="position:absolute;right:-10px;top:-6px;background:#7A1439;color:#F4C9B7;font-family:Sans;font-weight:700;'
+             f'font-size:{size*.3:.0f}px;line-height:1;padding:{size*.07:.0f}px {size*.13:.0f}px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.5)">{count}</div>'
              if count else '')
     return (f'<div style="position:relative;width:{size}px;height:{size}px">'
             f'<svg viewBox="0 0 100 100" width="{size}" height="{size}">'
             f'<path d="M50 4c8 0 11 5 18 7s13 1 17 8-1 12 1 19 8 10 6 18-9 8-12 14-2 13-9 17-11-2-18 0-10 8-18 8-11-6-17-9-13-2-16-9 2-12 0-19-8-11-5-18 9-8 13-13 6-11 13-14 12-3 13-8z" fill="{col}"/>'
             f'<circle cx="50" cy="50" r="30" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"/>'
-            f'<text x="50" y="63" text-anchor="middle" font-family="Grenze" font-weight="600" font-size="38" fill="rgba(30,18,28,.62)">{letter}</text>{crack}</svg>{badge}</div>')
+            f'<text x="50" y="63" text-anchor="middle" font-family="Grenze" font-weight="600" font-size="38" fill="rgba(30,18,28,.62)">{letter}</text></svg>{badge}</div>')
 
-FOOT = f'8–24 players &nbsp;·&nbsp; <b>£15 an Invitation</b> &nbsp;·&nbsp; {SITE}'
+FOOT = f'Best with 8–16 players &nbsp;·&nbsp; <b>Book a Table, £15</b> &nbsp;·&nbsp; {SITE}'
 
 def pad(tall):
     return f"padding:{250 if tall else 90}px 70px {340 if tall else 70}px"
@@ -101,14 +112,15 @@ def keeper(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;{pad(tall)}">
       <div class=eyebrow style="font-size:26px">for the host</div>
       <div class=h style="font-size:{112 if tall else 100}px;margin-top:20px">Your phone<br>runs the game.</div>
-      <div class=say style="font-size:{40 if tall else 36}px;margin-top:26px;max-width:880px">Every line to read. Every secret kept. You just tap Next.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;margin-top:26px;max-width:900px">Five questions to set up.<br>Every line to read. You just tap Next.</div>
       <div style="flex:1"></div>
       <div class=card style="width:{880 if tall else 820}px;padding:{46 if tall else 38}px 50px">
         <div class=label style="font-size:22px">say this</div>
         <div class=say style="font-size:{46 if tall else 40}px;margin-top:16px;border-left:3px solid #E6A58C;padding-left:26px">“Blindfolds on. Hands flat on the table. If you feel my hand on your shoulder, you are Forsworn.”</div>
         <div class=label style="font-size:22px;margin-top:30px;color:#8FA3B8">private · only you see this</div>
-        <div style="font-family:Sans;font-weight:500;font-size:{30 if tall else 27}px;color:#AFA198;margin-top:10px">12 at the Table · 3 Forsworn · poison tonight</div></div>
+        <div class=body style="font-size:{30 if tall else 27}px;color:#AFA198;margin-top:10px">12 at the Table · 3 Forsworn · poison tonight</div></div>
       <div style="flex:1"></div>
+      <div class=body style="font-size:{32 if tall else 29}px;margin-bottom:{44 if tall else 30}px;color:#E8D0C8">Rather play? Hand the phone to a friend to keep.</div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">{FOOT}</div></div>"""
 
@@ -118,12 +130,12 @@ def price(w, h):
       {'<div style="flex:1"></div>' if tall else ''}
       <div class=svgbox style="width:96px">{MARK}</div>
       <div class=h style="font-size:{124 if tall else 118}px;margin-top:26px;white-space:nowrap">Under £2 a guest.</div>
-      <div class=say style="font-size:{40 if tall else 36}px;margin-top:22px">One £15 Invitation. Up to 24 players. One long night.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;margin-top:22px">£15 books a Table for a party of eight or more.</div>
       <div class=eyebrow style="font-size:26px;margin-top:{80 if tall else 56}px">what you need</div>
-      <ul class=need style="font-size:{46 if tall else 40}px;margin-top:18px;width:820px">
-        <li>A TV and a laptop</li><li>The host's phone</li>
+      <ul class=need style="font-size:{42 if tall else 37}px;margin-top:18px;width:820px">
+        <li>A TV and a laptop</li><li>The host’s phone</li>
         <li>A blindfold and a chalkboard each</li>
-        <li><i>A prize worth betraying a friend for</i></li></ul>
+        <li>A prize worth betraying a friend for</li></ul>
       <div style="flex:1"></div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">No app &nbsp;·&nbsp; no accounts &nbsp;·&nbsp; <b>{SITE}</b></div></div>"""
@@ -139,7 +151,7 @@ def exile(w, h):
       <div style="flex:1"></div>
       <div style="display:grid;grid-template-columns:repeat(5,{s}px);gap:{56 if tall else 40}px {40 if tall else 34}px">{ring}</div>
       <div style="flex:1"></div>
-      <div class=say style="font-size:{40 if tall else 36}px;max-width:920px">Chalk a name. Turn the boards one by one.<br>Watch your friends' faces as the count climbs.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;max-width:920px">Chalk a name. Turn the boards one by one.<br>Watch your friends’ faces as the count climbs.</div>
       <div style="height:{60 if tall else 40}px"></div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">{FOOT}</div></div>"""
@@ -150,12 +162,12 @@ def card(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;padding:130px 110px 110px">
       <div class=svgbox style="width:120px">{MARK}</div>
       <div class=h style="font-size:118px;margin-top:40px">You survived.</div>
-      <div class=say style="font-size:50px;margin-top:30px">Or you didn't.<br>Either way, it's your turn to host.</div>
+      <div class=say style="font-size:50px;margin-top:30px">Or you didn’t.<br>Either way, it’s your turn to host.</div>
       <div style="width:470px;height:470px;margin-top:80px;padding:34px;border:2px solid rgba(230,165,140,.7);border-radius:18px;background:#E8D0C8">
         <div style="width:100%;height:100%">{svg.replace('<svg ', '<svg style="width:100%;height:100%" ')}</div></div>
       <div class=foot style="font-size:40px;margin-top:44px;color:#E8D0C8">{SITE}</div>
       <div style="flex:1"></div>
-      <div class=foot style="font-size:34px">8–24 players &nbsp;·&nbsp; <b>£15 an Invitation</b> &nbsp;·&nbsp; no app, no accounts</div></div>"""
+      <div class=foot style="font-size:34px"><b>Book a Table, £15</b> &nbsp;·&nbsp; best with 8–16 &nbsp;·&nbsp; no app</div></div>"""
 
 def og(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;padding:70px 80px;justify-content:center">
@@ -180,29 +192,35 @@ def story(w, h):
       <div style="margin-bottom:-6px">{candles(8, (5,), 180, 30)}</div>
       <div style="width:calc(100% + 160px);height:60px;background:linear-gradient(#251428,#130D14);border-top:2px solid #763C29"></div></div>"""
 
-tmp = PACK / 'tools' / '_render.html'
+def avatar(w, h):
+    # the secondary mark for profile pictures: sized to sit inside the circle every platform crops to
+    return f"""<div class=c style="width:{w}px;height:{h}px;justify-content:center;
+      background:radial-gradient(circle at 50% 46%,#341B37 0%,#251428 34%,#130D14 62%,#09070A 100%)">
+      <img src="{SEAL}" style="width:{w * .66:.0f}px;height:{w * .66:.0f}px;display:block;margin-left:{w * .02:.0f}px"></div>"""
 
-def shoot(page, html, path, **kw):
-    tmp.write_text(f'<!doctype html><meta charset=utf-8><style>{CSS}</style>{html}')
-    page.goto(tmp.as_uri(), wait_until='networkidle')
-    page.evaluate('document.fonts.ready')
-    page.screenshot(path=str(path), **kw)
+with tempfile.TemporaryDirectory() as td:
+    tmp = pathlib.Path(td) / 'render.html'
 
-with sync_playwright() as p:
-    b = p.chromium.launch()
-    for name, fn in [('01-everyone-swore-an-oath', oath), ('02-your-phone-runs-the-game', keeper),
-                     ('03-under-2-a-guest', price), ('04-who-do-you-exile', exile)]:
-        for label, (w, h) in {'feed-1080x1350': (1080, 1350), 'story-1080x1920': (1080, 1920)}.items():
+    def shoot(page, html, path, **kw):
+        tmp.write_text(f'<!doctype html><meta charset=utf-8><style>{CSS}</style>{html}', encoding='utf-8')
+        page.goto(tmp.as_uri(), wait_until='networkidle')
+        page.evaluate('document.fonts.ready')
+        page.screenshot(path=str(path), **kw)
+
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        for name, fn in [('01-everyone-swore-an-oath', oath), ('02-your-phone-runs-the-game', keeper),
+                         ('03-under-2-a-guest', price), ('04-who-do-you-exile', exile)]:
+            for label, (w, h) in {'feed-1080x1350': (1080, 1350), 'story-1080x1920': (1080, 1920)}.items():
+                pg = b.new_page(viewport={'width': w, 'height': h})
+                shoot(pg, fn(w, h), ADS / f'{name}-{label}.png'); pg.close()
+        for name, fn, (w, h) in [('og-card', og, (1200, 630)), ('square', square, (1080, 1080)),
+                                 ('story', story, (1080, 1920)), ('avatar', avatar, (1080, 1080))]:
             pg = b.new_page(viewport={'width': w, 'height': h})
-            shoot(pg, fn(w, h), ADS / f'{name}-{label}.png'); pg.close()
-    for name, fn, (w, h) in [('og-card-1200x630', og, (1200, 630)), ('square-1080x1080', square, (1080, 1080)),
-                             ('story-1080x1920', story, (1080, 1920))]:
-        pg = b.new_page(viewport={'width': w, 'height': h})
-        shoot(pg, fn(w, h), SOCIAL / f'{name}.png'); pg.close()
-    pg = b.new_page(viewport={'width': 1240, 'height': 1748})
-    shoot(pg, card(1240, 1748), PRINT / 'host-your-own-card-A6.png')
-    pg.pdf(path=str(PRINT / 'host-your-own-card-A6.pdf'), width='105mm', height='148mm',
-           print_background=True, page_ranges='1', scale=105 / 1240 * 96 / 25.4)
-    pg.close(); b.close()
-tmp.unlink(missing_ok=True)
+            shoot(pg, fn(w, h), SOCIAL / f'{name}.png'); pg.close()
+        pg = b.new_page(viewport={'width': 1240, 'height': 1748})
+        shoot(pg, card(1240, 1748), PRINT / 'host-your-own-card-A6.png')
+        pg.pdf(path=str(PRINT / 'host-your-own-card-A6.pdf'), width='105mm', height='148mm',
+               print_background=True, page_ranges='1', scale=105 / 1240 * 96 / 25.4)
+        pg.close(); b.close()
 print('done')

@@ -1,6 +1,6 @@
 import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
-import { newRoom, newPass, isRoom, isPass, passKey } from "./codes.js";
+import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
 
 // The Betrayal's server (formerly Cloak & Candle). Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a party pass, which lives in the Registry (one Durable
@@ -135,7 +135,7 @@ export class GameState {
     // a page still running the previous build must reload before it writes (reads are fine)
     const clientBuild = req.headers.get("X-Build");
     const oldBuild = this.env.BUILD && clientBuild && clientBuild !== this.env.BUILD;
-    const readOnly = () => json({ error: "This Invitation has expired — the game is now read-only.", expired: true, room }, 423);
+    const readOnly = () => json({ error: "This Table has closed — the game is now read-only.", expired: true, room }, 423);
 
     // The question bank's on/off switches outlive any one game in this room (a wipe keeps them).
     if (path === "/api/settings") {
@@ -229,7 +229,7 @@ export class Registry {
   async fetch(req) {
     const url = new URL(req.url), env = this.env, b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const ip = req.headers.get("CF-Connecting-IP") || "?";
-    if (url.pathname === "/mint") return json({ passes: await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind) });
+    if (url.pathname === "/mint") return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind)).map(shownPass) });
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
     if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts — try again in an hour." }, 429) : json({ ok: true });
     if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
@@ -267,7 +267,7 @@ export class Registry {
     // every room ever opened, with the pass that opened it
     if (url.pathname === "/rooms") {
       const passes = new Map(); for (const [k, v] of await this.storage.list({ prefix: "pass:" })) passes.set(k.slice(5), v);
-      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, note: pv ? pv.note || "" : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
+      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, pass: v.pass && v.pass !== "MASTER" ? shownPass(v.pass) : v.pass, note: pv ? pv.note || "" : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
       return json({ rooms: rows.sort((a, c) => (c.expires || 0) - (a.expires || 0)) });
     }
     // a checkout nobody paid for or tried to pay for isn't a pass yet: it's left out (and cleared after two days)
@@ -275,7 +275,7 @@ export class Registry {
       const rows = [], old = [], t = Date.now();
       for (const [k, v] of await this.storage.list({ prefix: "pass:" })) {
         if (v.source === "stripe" && !v.paid && !v.failed) { if (t - v.created > 48 * 3600000) old.push(k); continue; }
-        rows.push({ pass: k.slice(5), ...v });
+        rows.push({ pass: shownPass(k.slice(5)), ...v });
       }
       for (let i = 0; i < old.length; i += 128) await this.storage.delete(old.slice(i, i + 128));
       return json({ passes: rows.sort((a, c) => c.created - a.created) });
@@ -293,7 +293,7 @@ export class Registry {
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
       await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one" });
-      return json({ pass: p });
+      return json({ pass: shownPass(p) });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k); if (!v) return json({ error: "No such pass" }, 404);
@@ -303,13 +303,13 @@ export class Registry {
     // of its own, gets one minted). One pass per checkout session, however often it's claimed.
     if (url.pathname === "/claim") {
       const k = "claim:" + b.session, have = await this.storage.get(k);
-      if (have) return json({ pass: have, sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub" });
+      if (have) return json({ pass: shownPass(have), sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub" });
       let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
       if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null,
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
-      return json({ pass: p, sub: !!(v && v.kind === "sub") });
+      return json({ pass: shownPass(p), sub: !!(v && v.kind === "sub") });
     }
     // a payment that was tried and refused: noted on its pass (a checkout's, or a subscription's renewal)
     if (url.pathname === "/fail") {
@@ -318,7 +318,7 @@ export class Registry {
       const k = p && "pass:" + p, v = k && (await this.storage.get(k));
       if (!v) return json({ ok: true, pass: null });
       await this.storage.put(k, { ...v, failed: Date.now(), failWhy: clip(b.why, 200) || "payment refused", fails: (v.fails || 0) + 1 });
-      return json({ ok: true, pass: p, failed: true });
+      return json({ ok: true, pass: shownPass(p), failed: true });
     }
     // a checkout that ended unpaid: if a payment was tried and refused, its pass stays (cancelled) so the admin sees it;
     // if nobody tried to pay, it's forgotten
@@ -341,7 +341,7 @@ export class Registry {
       if (b.pi) await this.storage.put("pi:" + b.pi, p);
       const cancel = v.kind !== "sub" && !v.room && !v.revoked;
       await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: Date.now(), refundedAmount: +b.amount || v.refundedAmount || null });
-      return json({ ok: true, pass: p, cancelled: cancel });
+      return json({ ok: true, pass: shownPass(p), cancelled: cancel });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
@@ -353,22 +353,22 @@ export class Registry {
       if (!v || v.kind !== "sub") return json({ ok: true, pass: null });
       const on = ["active", "trialing"].includes(b.status);
       await this.storage.put(k, { ...v, subId: b.sub || v.subId, customer: b.customer || v.customer, subActive: on && !v.pending, subStatus: b.status });
-      return json({ ok: true, pass: v && passKey(b.pass), active: on });
+      return json({ ok: true, pass: v && shownPass(b.pass), active: on });
     }
     // the Stripe customer behind a subscription code, for the billing portal (wrong codes count as failed guesses)
     if (url.pathname === "/customer") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
       const v = isPass(b.pass) && (await this.storage.get("pass:" + passKey(b.pass)));
-      if (!v || v.kind !== "sub" || !v.customer) { this.failed(ip); return json({ error: "That isn’t a subscription code we recognise." }, 404); }
+      if (!v || v.kind !== "sub" || !v.customer) { this.failed(ip); return json({ error: "That isn’t a Regular’s booking code we recognise." }, 404); }
       return json({ customer: v.customer });
     }
     if (url.pathname === "/redeem") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
-      if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t an Invitation code. It looks like CNDL-XXXX-XXXX." }, 400); }
+      if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a booking code. It looks like OATH-XXXX-XXXX." }, 400); }
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
-      if (!v) { this.failed(ip); return json({ error: "We don’t recognise that pass. Check it against your receipt." }, 404); }
-      if (v.revoked) return json({ error: "That pass has been cancelled." }, 410);
-      if (v.pending) return json({ error: "That pass is waiting for its payment to clear. Try again in a minute." }, 402);
+      if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
+      if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
+      if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
       // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
       // back; asking for a fresh one closes that room and opens another.
       if (v.kind === "sub") {
@@ -381,7 +381,7 @@ export class Registry {
         return json({ room, expires, sub: true });
       }
       // redeemed already: the same room comes back (a host who lost the link), until it runs out
-      if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That pass has been used, and its game has ended." }, 410);
+      if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That booking has been used, and its game has ended." }, 410);
       const expires = Date.now() + hours(env) * 3600000;
       const room = await this.room(env, expires, passKey(b.pass));
       await this.storage.put(k, { ...v, room, expires, redeemed: Date.now() });
@@ -563,7 +563,7 @@ async function route(req, env) {
     // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
     if (p === "/api/checkout" && req.method === "POST") {
       const b = await req.json().catch(() => ({})), sub = b.plan === "sub", price = sub ? env.STRIPE_SUB_PRICE_ID : env.STRIPE_PRICE_ID;
-      if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Party passes go on sale soon. Payments aren’t open yet." }, 503);
+      if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Tables go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one" }) }), pj = await pr.json();

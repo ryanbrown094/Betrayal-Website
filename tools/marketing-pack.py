@@ -31,7 +31,7 @@ try:
             const b = blades(d);
             table.push({ players: n, forsworn: defaults(n).t, most_forsworn: maxCloaks(n), fewest_rounds: lo, most_rounds: hi, recommended_rounds: d.rounds,
               players_left_each_round_fewest: shape(lo), players_left_each_round_most: shape(hi), recommended_hours: d.hours, estimated_length: aboutH(estMins(d, n)),
-              casting_vote_round: d.blade ? b.blade : '', crown_round: d.champion ? b.champion : '', max_sanctuaries_at_once: Math.max(1, Math.floor(n / 4)) });
+              casting_vote_round_when_on: b.blade, crown_round_when_on: b.champion, max_sanctuaries_at_once: Math.max(1, Math.floor(n / 4)) });
           }
           const missions = MISSIONS.filter(m => m.key !== 'custom').map(m => ({ key: m.key, title: m.title, kind: m.addon ? 'add-on' : m.kind === 'screen' ? 'at the table' : 'up on your feet', needs: NEEDS[m.key] || 'nothing', when: m.when, carries_a_prize: m.hasShield ? 'yes' : 'no', hidden_rounds: ROUNDED.includes(m.key) ? 'yes' : 'no', rules: m.addon ? m.rules : defRules(m) }));
           const banks = BANKDEFS.map(d => ({ bank: d.label, key: d.key, items: d.items().length }));
@@ -47,16 +47,16 @@ def wcsv(path, rows):
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
 wcsv(P("01-game", "table-sizes.csv"), data["table"])
-wcsv(P("01-game", "missions.csv"), data["missions"])
+wcsv(P("01-game", "trials.csv"), data["missions"])
 with open(P("01-game", "question-banks.md"), "w", encoding="utf-8") as f:
     total = sum(x["items"] for x in data["banks"])
-    f.write("# Question banks\n\nEvery game draws from these, and nothing repeats within a game. Hosts can switch off any item that won't suit their group.\n\n| bank | items |\n|---|---|\n")
+    f.write("# Question banks\n\nEvery game draws from these, and nothing repeats within a game. Hosts can switch off any item that won’t suit their group.\n\n| bank | items |\n|---|---|\n")
     for x in data["banks"]: f.write(f"| {x['bank']} | {x['items']:,} |\n")
-    f.write(f"| **total** | **{total:,}** |\n\n## Samples\n\nSpread evenly through each bank. Quiz and Closest Guess answers are included: don't print them where players will see them.\n")
+    f.write(f"| **total** | **{total:,}** |\n\n## Samples\n\nSpread evenly through each bank. Quiz and Closest Guess answers are included: don’t print them where players will see them.\n")
     s = data["samples"]
     for k, label in [("quiz_easy", "Rapid Quiz, easy"), ("quiz_medium", "Rapid Quiz, medium"), ("quiz_brutal", "Rapid Quiz, brutal"), ("closest_guess", "Closest Guess / Higher or Lower")]:
         f.write(f"\n### {label}\n\n" + "".join(f"- {q} — *{a}*\n" for q, a in s[k]))
-    for k, label in [("most_likely_to", "Most Likely To"), ("charades", "Screen Charades"), ("hum_it", "Hum It"), ("pictionary", "Chalkboard Pictionary"), ("side_quests", "Cloak side-quests ({F} is a Candle's name)")]:
+    for k, label in [("most_likely_to", "Most Likely To"), ("charades", "Screen Charades"), ("hum_it", "Hum It"), ("pictionary", "Chalkboard Pictionary"), ("side_quests", "Forsworn Errands ({F} is a Loyal player’s name)")]:
         f.write(f"\n### {label}\n\n" + "".join(f"- {q}\n" for q in s[k]))
     f.write("\n### Memory Wall (three of the sets)\n\n" + "".join("- " + ", ".join(m) + "\n" for m in s["memory_wall"]))
 

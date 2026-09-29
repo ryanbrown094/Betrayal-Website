@@ -5,9 +5,9 @@ Everything you need to write about, sell or show The Betrayal.
 | folder | what's in it |
 |---|---|
 | `The-Betrayal-Brand-Guidelines.pdf` | the mark, lockups, clear space, colour, type, voice — read this first |
-| `logos/` | the mark, the wordmark, horizontal and stacked lockups, each in rose-gold, rose, ivory, ink, black and white — SVG (outlined, no fonts needed) and transparent PNG (2400 px) |
+| `logos/` | the mark, the wordmark, horizontal and stacked lockups, each in rose-gold, rose, ivory, ink, black and white — SVG (outlined, no fonts needed) and transparent PNG (2400 px). Plus the secondary mark, the cracked wax seal (“the broken oath”): `the-betrayal-seal.svg/.png` in colour and one-colour `-mono-` versions, made by `tools/brand/make_seal.py` |
 | `screenshots/` | the TV at 1920 × 1080 (JPEG) and the Keeper phone at 1170 × 2532 (PNG), from a real game |
-| `social/` | link preview (1200 × 630), square post (1080 × 1080), story (1080 × 1920) |
+| `social/` | link preview (1200 × 630), square post (1080 × 1080), story (1080 × 1920), and an avatar (the seal) for profile pictures |
 | `palette/` | swatch image, CSS variables, JSON and a GIMP/Inkscape palette |
 | `copy/press-kit.md` | name, taglines, descriptions (one line, short, long), key facts, feature bullets, boilerplate |
 | fonts | not stored here: `python3 tools/marketing-pack.py` builds the full marketing pack (fonts with their licence, the game guide, data sheets and everything in this folder) into `dist/The-Betrayal-Marketing-Pack.zip` |

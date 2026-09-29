@@ -1,35 +1,50 @@
 # Setting up a game: every choice the Keeper makes
 
-The Keeper sets the game up on their phone before guests arrive: one question a page, each page explaining what the choice means, each with a **recommended** answer worked out from the choices before it. After the first five pages the Keeper can take the recommendations for everything else and check them on one summary page. Nothing reaches the TV until they press **Start game**. Screenshots: `04-screenshots/phone/phone-0*-setup-*.png`.
+The Keeper sets the game up on their phone before guests arrive: **five questions and a PIN**, then a summary that’s ready to start. Every other choice is pre-set, worked out from those answers, and can be changed under **Customise**. Nothing reaches the TV until someone presses **Start**. Screenshots: `04-screenshots/phone/phone-0*-setup-*.png`.
 
-| # | page | choices | recommended | how the recommendation adapts |
-|---|---|---|---|---|
-| 1 | Welcome | — | — | a checklist: TV and laptop, charged phone, a chalkboard and blindfold per guest, a prize |
-| 2 | Who's playing? | 8–24 names in seating order | — | seat order is the TV's candle order and the order boards are turned |
-| 3 | Your name | optional | — | the TV and script use it ("ask Sam to skip") |
-| 4 | Keeper PIN | any | — | opens the Keeper screen on another phone if this one dies |
-| 5 | How many Forsworn? | recommended ±1 | 2 for 8–10, 3 for 11–15, 4 for 16–22, 5 for 23–24 | by table size |
-| 6 | How long is your evening? | 2½–7 hours | the option nearest the estimated length for the table | 3 h for 8–9, 3½ for 10–11, 4 for 12–14, 5 for 15–19, 6 for 20+ |
-| 7 | Choose everything, or use our recommendations? | two paths | — | the quick path jumps to the summary |
-| 8 | How many rounds? | the range the table allows (e.g. 5 for 12, 8–11 for 24), each shown with who's left after each round and an estimated length | the count whose length best fits the evening | table size and hours |
-| 9 | Trials each round | by the clock / one / two, each with an estimated length | by the clock | — |
-| 10 | When do you eat? | no dinner, or after any round | mid-game; none for evenings under 3 hours | rounds and hours |
-| 11 | An Interval before each vote? | yes / no | yes, unless the evening is under 3 hours | hours |
-| 12 | How do the Forsworn kill? | poison / murder | poison | — |
-| 13 | Do the dead stay in the game? | Ghosts / out for good | Ghosts | turning Ghosts off switches off the Statue |
-| 14 | Which Trials can your room play? | any of 15 | all | presets: all, or only games at the table |
-| 15 | Sanctuaries | mixed / always public / hidden where possible / none | mixed | none removes pages 17–18 |
-| 16 | The Casting Vote | once / none | once | shows the round it'll appear in |
-| 17 | The Crown | once / none | once (if Sanctuaries are on) | shows its round |
-| 18 | The Temptation | once / none | once (if Sanctuaries are on) | — |
-| 19 | The Confessor (the Keeper is told what it is) | on / off | on | — |
-| 20 | Whisper | once / never | once | — |
-| 21 | The Last Offer | once / never | once | wording changes with Whisper on or off |
-| 22 | Forsworn Errands | on / off | on with an Interval, off without | Interval |
-| 23 | The Purse | unit (pts, £…) and target | 2,000 pts | — |
-| 24 | Who pays for wrong answers? | Forsworn only / everyone (Forsworn double) | Forsworn only | — |
-| 25 | What's the prize? | free text | "a bottle of champagne" if blank | kept secret until the game is won |
-| 26 | A name for your night | the TV title | "The Betrayal" | e.g. "Sophie's 40th"; also links to the question bank switches |
-| 27 | Check your game, then start | a summary with Change on every line and a round-by-round timeline | — | — |
+## The five questions
 
-Estimated lengths assume an Interval each round, one Trial a round (two at very small tables) and a 25-minute dinner; the full table is in `table-sizes.csv`.
+| # | question | choices | notes |
+|---|---|---|---|
+| 1 | Who’s playing? | 8 to 24 names, in seating order | seat order is the TV’s candle order and the order boards are turned. Best with 8 to 16 |
+| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 4 hours with dinner for 8 to 12 players, longer for bigger tables (about 6 hours for 20 or more); the phone estimates it for the table |
+| 3 | Murder or poison? | poison / murder | how the Forsworn kill. Poison: the victim is told in the night and announces it at dawn. Murder: the victim is led away under blindfold |
+| 4 | The prize | up to three prizes | the prize; a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
+| 5 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |
+| — | Keeper PIN | 4 to 8 digits | opens the Keeper screen on another phone if this one dies. A friend who keeps can change it when the phone is handed over |
+
+Then **Ready to start**: a summary of the game, with every pre-set choice listed and **Customise** to change any of them.
+
+## The first game, and the second
+
+- **Classic** (the first game played on this phone): Sanctuary won openly, Ghosts, an Interval, dinner. The twists are off: the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer and Errands.
+- **Your second night:** once a game has been played on the phone, setup recommends the twists.
+
+## Under Customise
+
+Each choice is pre-set; this is what can be changed and how it relates to the rest.
+
+| choice | options | pre-set / notes |
+|---|---|---|
+| How many Forsworn? | recommended ±1 | 2 for 8–10, 3 for 11–15, 4 for 16–22, 5 for 23–24 |
+| How many rounds? | the range the table allows (e.g. 5 for 12, 8–11 for 24), each with who’s left after each round and an estimated length | the count that best fits the length chosen |
+| Trials each round | by the clock / one / two | one in the Short game |
+| Dinner | three courses, one break, or none | three courses need four or more rounds: a starter after round one (15 minutes), the main course mid-game (25), dessert before the final (15). Otherwise one dinner break, or none. None in the Short game |
+| An Interval before each vote? | yes / no | yes, except in the Short game |
+| Should the TV read your lines? | the Keeper reads / the TV reads | the Keeper reads. With the TV reading, each line gets a ▶ TV button, and the Menu switches it on or off during the game |
+| Do the dead stay in the game? | Ghosts / out for good | Ghosts. Turning Ghosts off switches off the Statue and the Ghosts’ call |
+| Which Trials can your room play? | any of 15 | all; presets: all, or only games at the table |
+| Sanctuaries | mixed / always public / hidden where possible / none | always public in Classic; none also removes the Crown and the Temptation |
+| The Casting Vote | once / none | off in Classic; breaks a tie at one Reckoning. Shows the round it’ll appear in |
+| The Crown | once / none | off in Classic; needs Sanctuaries. Shows its round |
+| The Temptation | once / none | off in Classic; needs Sanctuaries. PURSE or SELF |
+| The Confessor (the Keeper is told what it is) | on / off | off in Classic |
+| Whisper | once / never | off in Classic |
+| The Last Offer | once / never | off in Classic; wording changes with the Whisper on or off |
+| Forsworn Errands | on / off | off in Classic; only with an Interval |
+| The Purse | unit (pts, £…) and target | 2,000 pts; the target also sets the prize thresholds (half, and full) |
+| Who pays for wrong answers? | Forsworn only / everyone (Forsworn double) | Forsworn only |
+| A name for your night | the TV title | “The Betrayal”; e.g. “Sophie’s 40th”. Also links to the question bank switches |
+
+
+Estimated lengths for every table size, and the rounds the Casting Vote and the Crown appear in, are in `table-sizes.csv`.
