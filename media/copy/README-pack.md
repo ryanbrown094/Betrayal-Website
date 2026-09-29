@@ -31,7 +31,7 @@ Everything about the game and the brand, in one place, for building ads, social 
 - **Everyone plays on their own phone (Modern).** Guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. The host plays too; their phone only moves the evening on.
 - **Best with 8 to 16 players**; the game takes 8 to 24.
 - **About 3 to 4 hours** with dinner for 8 to 12 players. Bigger tables run longer (about 6 hours for 20 or more).
-- **Book a Table:** £15, one party. **Become a Regular:** £20 a month, a new Table whenever you like, one at a time.
+- **Book a Table:** £10, one party. **Become a Regular:** £20 a month, a new Table whenever you like, one at a time.
 - **You need** a phone each and a prize (a box of chocolates, unless the host sets their own). A TV is optional. No app, no accounts, no props.
 - **Setup:** open your Table, choose Modern, type your name, share the code, Start. The game plans its own Trials, courses and Reckonings.
 - **Classic**, for anyone who’d prefer it the old-fashioned way: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 hours for 8 to 10.

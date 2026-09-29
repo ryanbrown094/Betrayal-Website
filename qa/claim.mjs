@@ -139,7 +139,7 @@ check("a checkout without a pending pass mints one when paid", pl[0] === 200 && 
 check("subscription not on sale: 503", (await checkout({ plan: "sub", terms: true, supply: true }, { ...base, STRIPE_SUB_PRICE_ID: "" }, "203.0.113.20"))[0] === 503);
 const [ss, sc] = await checkout({ plan: "sub", terms: true, supply: true }, base, "203.0.113.21"), sid = sc.url.split("/").pop(), sq = made[made.length - 1].q, spass = sessions[sid].metadata.pass;
 check("subscription checkout: subscription mode, the monthly price, the code in the subscription's metadata, nothing else extra", ss === 200 && sq.get("mode") === "subscription" && sq.get("line_items[0][price]") === "price_sub" && sq.get("subscription_data[metadata][pass]") === spass && ![...sq.keys()].some(k => /^(invoice_creation|payment_intent_data|subscription_data\[description)/.test(k)));
-check("the one-off checkout is still payment mode at £15's price", made[0].q.get("mode") === "payment" && made[0].q.get("line_items[0][price]") === "price_123");
+check("the one-off checkout is still payment mode at £10's price", made[0].q.get("mode") === "payment" && made[0].q.get("line_items[0][price]") === "price_123");
 check("a pending subscription code opens nothing", (await redeem(spass))[0] === 402);
 await hook({ type: "checkout.session.completed", data: { object: { ...sessions[sid], payment_status: "paid" } } });
 const sp = await passOf(spass);

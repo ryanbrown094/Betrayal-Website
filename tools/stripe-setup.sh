@@ -3,10 +3,10 @@
 # Worker listens on. (The monthly subscription's price is made by hand in the Dashboard: recurring, monthly.) Prints the Price ID (for STRIPE_PRICE_ID in wrangler*.toml) and the webhook signing secret (for
 # `npx wrangler secret put STRIPE_WEBHOOK_SECRET`). The key comes from the environment and is never written anywhere.
 #
-#   STRIPE_SECRET_KEY=sk_test_… tools/stripe-setup.sh https://staging.thebetrayal.co.uk 1500
-#   STRIPE_SECRET_KEY=sk_live_… tools/stripe-setup.sh https://thebetrayal.co.uk 1500
+#   STRIPE_SECRET_KEY=sk_test_… tools/stripe-setup.sh https://staging.thebetrayal.co.uk 1000
+#   STRIPE_SECRET_KEY=sk_live_… tools/stripe-setup.sh https://thebetrayal.co.uk 1000
 #
-# The price is in pence (1500 = £15.00). Run it once per key (test mode and live mode are separate in Stripe).
+# The price is in pence (1000 = £10.00). Run it once per key (test mode and live mode are separate in Stripe).
 set -e
 BASE=${1:?usage: STRIPE_SECRET_KEY=… $0 <site-url> <price-in-pence>}
 PENCE=${2:?usage: STRIPE_SECRET_KEY=… $0 <site-url> <price-in-pence>}

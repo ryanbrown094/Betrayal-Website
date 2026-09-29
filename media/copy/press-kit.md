@@ -16,7 +16,7 @@ Public copy. It uses only the public words in `01-game/glossary-and-naming.md`. 
 - Served in three courses. Betrayed in between.
 
 ## Calls to action
-- **Book a Table:** £15, one party.
+- **Book a Table:** £10, one party.
 - **Become a Regular:** £20 a month, a new Table whenever you like.
 
 ## One line (under 140 characters)
@@ -38,7 +38,7 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 | You need | a phone each and a prize. A TV is optional (any laptop cast to it) |
 | Joining | scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and your name |
 | Format | web app; no download, no accounts |
-| Price | £15 a Table (one party) · £20 a month as a Regular (a new Table whenever you like, one at a time; cancel any time) |
+| Price | £10 a Table (one party) · £20 a month as a Regular (a new Table whenever you like, one at a time; cancel any time) |
 | A Table | one party of 8 to 24, open for 48 hours from the first use of its booking code |
 | Setup | open your Table, choose Modern, type your name, share the code, press Start. A handful of choices (murder or poison, public or secret Sanctuary, the prize, twists, dinner in courses); the game plans its own Trials, courses and Reckonings |
 | Trials | 15 party games played on phones (typed quizzes, votes, word games, rock-paper-scissors, charades, humming, drawing, bluffing, standing); about 3,700 questions and prompts, nothing repeated in a game |

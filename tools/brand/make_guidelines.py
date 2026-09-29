@@ -182,7 +182,7 @@ public = [('The Betrayal', 'the product'), ('the Forsworn', 'the hidden killers'
           ('Ghosts', 'players who are out'), ('the host', 'opens the Table and plays too'), ('the Keeper', 'runs a Classic game and doesn’t play'), ('the Oath', 'the opening promise'),
           ('Trials', 'the party games'), ('the Reckoning', 'the vote; the loser is exiled'), ('Sanctuary', 'safe from tonight’s kill'),
           ('the Purse', 'the shared winnings; it decides the prize'), ('the Unmasking', 'the final reveal'),
-          ('a Table', '£15, one party · Book a Table'), ('a booking code', 'what the buyer is sent: OATH-XXXX-XXXX'),
+          ('a Table', '£10, one party · Book a Table'), ('a booking code', 'what the buyer is sent: OATH-XXXX-XXXX'),
           ('a Regular', '£20 a month · Become a Regular'), ('the Table code', 'six characters the TV joins with')]
 ingame = [('the Casting Vote', 'breaks a tie at one Reckoning'), ('the Crown', 'Sanctuary and the Casting Vote together'),
           ('the Temptation', 'everyone chalks PURSE or SELF'), ('the Whisper', 'a lone Forsworn invites a Loyal to join'),

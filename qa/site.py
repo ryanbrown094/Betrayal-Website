@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("rules: the Oath is described once", pg.inner_text("main").count("The night begins with the Oath") == 1)
     check("nav: the page you're on is marked", pg.locator("nav.top a[aria-current=page]").inner_text() == "How to play")
     pg.goto(URL + "/buy"); pg.wait_for_timeout(300)
-    check("buy: the Pay button names the price", "£15" in pg.inner_text("#pay"))
+    check("buy: the Pay button names the price", "£10" in pg.inner_text("#pay"))
     pg.click("#pay"); pg.wait_for_timeout(200)
     check("buy: Pay without the ticks says why and goes to the first box", "Tick both boxes" in pg.inner_text("#paymsg") and pg.evaluate("document.activeElement.id") == "c1" and pg.get_attribute("#c1", "aria-invalid") == "true")
     pg.check("#c1"); pg.click("#pay"); pg.wait_for_timeout(200)

@@ -116,7 +116,7 @@ The question banks hold about 3,700 questions and prompts (`question-banks.md`),
 ## 9. How it works (the product)
 
 - **No app, no accounts, no downloads.** Web pages: one on each guest’s phone, one on the TV if you want it.
-- **A Table, £15 (Book a Table).** One party. The buyer gets a **booking code** (OATH-XXXX-XXXX; older CNDL- codes still work). It opens one Table for one party of 8 to 24, open for 48 hours from first use. The host chooses Modern or Classic when they open it.
+- **A Table, £10 (Book a Table).** One party. The buyer gets a **booking code** (OATH-XXXX-XXXX; older CNDL- codes still work). It opens one Table for one party of 8 to 24, open for 48 hours from first use. The host chooses Modern or Classic when they open it.
 - **A Regular, £20 a month (Become a Regular).** A Regular’s booking code opens a new Table whenever they like, one at a time. Cancel any time.
 - **Joining (Modern):** guests scan the QR code on the TV, or go to **thebetrayal.co.uk/join** and type the **Table code** (six letters and numbers) and their name.
 - **Resilient:** the game lives on the server, so a phone that drops picks up where it was. A phone that loses its place asks to be let back in, and the host lets them in.
