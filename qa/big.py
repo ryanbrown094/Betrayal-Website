@@ -28,14 +28,14 @@ try:
         E = h.evaluate
         def setup(n):
             E("()=>{try{localStorage.clear();sessionStorage.clear()}catch(e){};state=null;hist=[];setupDraft=null;renderHost()}"); h.wait_for_timeout(100)
-            h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(FIRST[:n]), "1"]); h.wait_for_timeout(250)
+            h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(FIRST[:n]), "1111"]); h.wait_for_timeout(250)
             return E("()=>state?state.players.length:0")
         check("7 players are refused", setup(7) == 0 and "at least 8" in h.inner_text("#host"))
         check("25 players are refused", setup(25) == 0 and "24 players at most" in h.inner_text("#host"))
         check("8 players start", setup(8) == 8)
         check("24 players start, with 5 Cloaks by default", setup(24) == 24 and E("()=>defaults(24).t") == 5)
         E("()=>{try{localStorage.clear();sessionStorage.clear()}catch(e){};state=null;hist=[];setupDraft=null;renderHost()}"); h.wait_for_timeout(100)
-        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1',step:'rounds'});renderHost()}", "\n".join(FIRST[:24])); h.wait_for_timeout(150)
+        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111',step:'rounds'});renderHost()}", "\n".join(FIRST[:24])); h.wait_for_timeout(150)
         lo, hi = E("()=>roundsRange(24)")
         check("24 players: the rounds page offers the fewest to the most", f"can play {lo} to {hi} rounds" in h.inner_text("#host") and (lo, hi) == (8, 11) and h.locator(".wopt").count() == hi - lo + 1, (lo, hi))
         E("()=>wSet('rounds',11)"); check("picking the most sticks", E("()=>setupDraft.rounds") == hi)

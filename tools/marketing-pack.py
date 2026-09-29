@@ -101,7 +101,7 @@ cp("media/social", P("05-social"))
 cp("media/web/tv-table.jpg", P("05-social", "hero-tv-table.jpg"))
 cp("media/launch", P("06-launch")); cp("media/copy/NEXT-STEPS.md", P("NEXT-STEPS.md"))
 
-with open(P("VERSION.txt"), "w") as f: f.write(f"Cloak & Candle {data['version']} · build {data['build']} · made {time.strftime('%d %B %Y')}\n")
+with open(P("VERSION.txt"), "w") as f: f.write(f"The Betrayal {data['version']} · build {data['build']} · made {time.strftime('%d %B %Y')}\n")
 zp = os.path.join("dist", NAME + ".zip")
 if os.path.exists(zp): os.remove(zp)
 with zipfile.ZipFile(zp, "w", zipfile.ZIP_DEFLATED) as z:

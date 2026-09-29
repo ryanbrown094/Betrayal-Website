@@ -6,7 +6,7 @@
 .tag { display: inline-block; font: 700 11px/1 var(--sc); letter-spacing: .16em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; margin-right: 6px; vertical-align: 2px }
 .tag.tv { background: rgba(230,165,140,.16); color: var(--rose) } .tag.ph { background: rgba(143,163,184,.16); color: #b9c8d6 }
 .phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 18px 0 30px } .phones .shot { margin: 0 } .phones img { border-radius: 18px }
-@media (max-width: 700px) { .phones { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 700px) { .phones { grid-template-columns: 1fr; gap: 26px; max-width: 340px; margin-left: auto; margin-right: auto } }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px } @media (max-width: 700px) { .pair { grid-template-columns: 1fr } }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 30px 0 } .btn.ghost { background: transparent; color: var(--ivory) }
 </style>

@@ -5,16 +5,16 @@
 <p>Questions about an Invitation, a problem on the night, or a refund: send us a message here and we’ll reply to your email within 1–2 working days. On a Friday or Saturday evening we aim to reply within an hour. If something goes wrong mid-game, “Report a problem” on the Keeper’s phone or the TV is quickest: it sends us a snapshot of the screen too.</p>
 <div class="panel">
 <form id="cf">
-<label class="fl" for="cf-mail">Your email (so we can reply)</label><input id="cf-mail" type="email" autocomplete="email" required>
-<label class="fl" for="cf-code">Invitation or Table code <small>(if you have one)</small></label><input id="cf-code" autocomplete="off" autocapitalize="characters" spellcheck="false">
-<label class="fl" for="cf-msg">Your message</label><textarea id="cf-msg" rows="6" required></textarea>
+<label class="fl" for="cf-mail">Your email (so we can reply)</label><input id="cf-mail" name="email" type="email" autocomplete="email" spellcheck="false" required>
+<label class="fl" for="cf-code">Invitation or Table code <small>(if you have one)</small></label><input id="cf-code" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<label class="fl" for="cf-msg">Your message</label><textarea id="cf-msg" name="message" rows="6" required></textarea>
 <p style="margin:10px 0 0;font-size:15px">Never send us your Keeper PIN.</p>
 <div style="margin-top:14px"><button class="btn" id="cf-send">Send message</button></div>
 <p class="cf-msg" id="cf-out" role="status"></p>
 </form>
 </div>
 <style>.fl { display: block; margin: 14px 0 6px; font-weight: 700; color: var(--ivory) } .fl small { font-weight: 400; color: var(--ivory2) }
-#cf input, #cf textarea { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui) }
+#cf input, #cf textarea { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui); transition: border-color .15s ease } #cf input:focus, #cf textarea:focus { border-color: var(--rose) }
 .cf-msg { min-height: 1.4em; margin: 12px 0 0 } .cf-msg.err { color: #ff9dbf }</style>
 <script>
 document.getElementById("cf").onsubmit = async e => {

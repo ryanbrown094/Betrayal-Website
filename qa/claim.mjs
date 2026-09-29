@@ -11,7 +11,7 @@ const reg = new Registry({ storage: store() }, { GAME });
 const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_SUB_PRICE_ID: "price_sub", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
 
 // the stubbed Stripe: sessions made, sessions read back
-const made = [], sessions = {}, invoices = {}; let failCreate = false;
+const made = [], sessions = {}, invoices = {}, pis = {}; let failCreate = false;
 globalThis.fetch = async (u, init) => {
   u = String(u);
   if (u === "https://api.stripe.com/v1/checkout/sessions" && init && init.method === "POST") {
@@ -27,6 +27,8 @@ globalThis.fetch = async (u, init) => {
   if (m) return sessions[m[1]] ? new Response(JSON.stringify(sessions[m[1]])) : new Response("{}", { status: 404 });
   const bypi = u.match(/^https:\/\/api\.stripe\.com\/v1\/checkout\/sessions\?limit=1&payment_intent=(\w+)$/);
   if (bypi) return new Response(JSON.stringify({ data: Object.values(sessions).filter(x => x.payment_intent === bypi[1]) }));
+  const pim = u.match(/^https:\/\/api\.stripe\.com\/v1\/payment_intents\/(\w+)$/);
+  if (pim) return new Response(JSON.stringify(pis[pim[1]] || { id: pim[1], status: "canceled", last_payment_error: null }));
   const inv = u.match(/^https:\/\/api\.stripe\.com\/v1\/invoices\/(\w+)$/);
   if (inv && invoices[inv[1]]) return new Response(JSON.stringify(invoices[inv[1]]));
   return new Response("{}", { status: 404 });
@@ -57,7 +59,8 @@ check("the session: the pass and the consent timestamps in its metadata, and not
 check("the pass exists, pending, linked to its session", (await passOf(pass1)).pending === true && (await passOf(pass1)).session === "cs_test_000000000000");
 check("a pending pass can't open a room", (await redeem(pass1))[0] === 402);
 failCreate = true; const bad = await checkout({ terms: true, supply: true }, base, "203.0.113.9"); failCreate = false;
-check("Stripe refuses: 502 with Stripe's reason, and that pending pass is cancelled", bad[0] === 502 && bad[1].detail === "Stripe said: nope" && [...(await reg.storage.list({ prefix: "pass:" })).values()].filter(v => v.note === "checkout could not start" && v.revoked).length === 1);
+const allPasses = async () => [...(await reg.storage.list({ prefix: "pass:" })).values()];
+check("Stripe refuses: 502 with Stripe's reason, and that pending pass is dropped", bad[0] === 502 && bad[1].detail === "Stripe said: nope" && (await allPasses()).length === 1, (await allPasses()).length);
 const flood = []; for (let i = 0; i < 12; i++) flood.push((await checkout({ terms: true, supply: true }, base, "198.51.100.7"))[0]);
 check("ten checkouts an hour per address", flood.slice(0, 10).every(x => x === 200) && flood.slice(10).every(x => x === 429), flood);
 
@@ -80,7 +83,25 @@ check("webhook: the payment clears → the pass is active, before anyone visits 
 sessions[id2].payment_status = "paid"; check("the thank-you page then gets the same pass", (await claim(id2))[1].pass === pass2);
 const [, c3] = await checkout({ terms: true, supply: true }, base, "203.0.113.3"), id3 = c3.url.split("/").pop(), pass3 = sessions[id3].metadata.pass;
 await hook({ type: "checkout.session.expired", data: { object: sessions[id3] } });
-check("webhook: an expired checkout cancels its pending pass", !!(await passOf(pass3)).revoked && (await redeem(pass3))[0] === 410);
+check("webhook: an expired checkout nobody tried to pay is forgotten", !(await passOf(pass3)) && (await redeem(pass3))[0] === 404);
+const listed = async () => (await W("/api/admin/passes", { headers: { Authorization: "Bearer adm" } }).then(J))[1].passes.map(x => x.pass);
+const [, c6] = await checkout({ terms: true, supply: true }, base, "203.0.113.6"), id6 = c6.url.split("/").pop(), pass6 = sessions[id6].metadata.pass;
+check("admin: a checkout in progress isn't listed", !(await listed()).includes(pass6) && (await listed()).includes(pass1));
+check("webhook: a refused card at checkout is noted on its pass (found through its session)", (await hook({ type: "payment_intent.payment_failed", data: { object: { id: sessions[id6].payment_intent, object: "payment_intent", metadata: {}, last_payment_error: { message: "Your card was declined.", decline_code: "insufficient_funds" } } } }))[0] === 200 && (await passOf(pass6)).failWhy === "Your card was declined.");
+check("admin: …and now it is listed, still unusable", (await listed()).includes(pass6) && (await redeem(pass6))[0] === 402);
+await hook({ type: "checkout.session.expired", data: { object: sessions[id6] } });
+check("webhook: when that checkout expires, the failed attempt stays listed, cancelled", (await listed()).includes(pass6) && !!(await passOf(pass6)).revoked && (await redeem(pass6))[0] === 410);
+const [, c7] = await checkout({ terms: true, supply: true }, base, "203.0.113.7"), id7 = c7.url.split("/").pop(), pass7 = sessions[id7].metadata.pass;
+pis[sessions[id7].payment_intent] = { id: sessions[id7].payment_intent, status: "canceled", last_payment_error: { message: "Your card has expired." } };
+await hook({ type: "checkout.session.expired", data: { object: sessions[id7] } });
+check("webhook: an expiry after a refusal we never heard about is still kept, with Stripe's reason", (await listed()).includes(pass7) && (await passOf(pass7)).failWhy === "Your card has expired.");
+const [, c8] = await checkout({ terms: true, supply: true }, base, "203.0.113.8"), id8 = c8.url.split("/").pop(), pass8 = sessions[id8].metadata.pass;
+await hook({ type: "checkout.session.async_payment_failed", data: { object: sessions[id8] } });
+check("webhook: a bank payment that fails is kept and cancelled", (await listed()).includes(pass8) && !!(await passOf(pass8)).revoked && /bank/.test((await passOf(pass8)).failWhy));
+check("webhook: a refused payment that isn't ours changes nothing", (await hook({ type: "payment_intent.payment_failed", data: { object: { id: "pi_other", metadata: {}, last_payment_error: { message: "x" } } } }))[0] === 200);
+const [, c9] = await checkout({ terms: true, supply: true }, base, "203.0.113.10"), pass9 = sessions[c9.url.split("/").pop()].metadata.pass;
+await reg.storage.put("pass:" + pass9, { ...(await passOf(pass9)), created: Date.now() - 49 * 3600000 }); await listed();
+check("admin: an abandoned checkout the webhook never closed is cleared after two days", !(await passOf(pass9)));
 await hook({ type: "charge.refunded", data: { object: { id: "ch_2", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions[id2].payment_intent } } });
 check("webhook: refunded before use → the pass is cancelled", !!(await passOf(pass2)).revoked && (await redeem(pass2))[0] === 410);
 await hook({ type: "charge.refunded", data: { object: { id: "ch_1", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions.cs_test_000000000000.payment_intent } } });
@@ -127,6 +148,8 @@ check("entering it again brings the current game back", g1[0] === 200 && g1b[1].
 check("a fresh game: a new room, and the old one is closed", g2[0] === 200 && g2[1].room !== g1[1].room && closed.includes("room:" + g1[1].room) && g2b[1].room === g2[1].room);
 check("…and it counts the games", (await passOf(spass)).games === 2);
 await hook({ type: "customer.subscription.updated", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "past_due", metadata: { pass: spass } } } });
+await hook({ type: "invoice.payment_failed", data: { object: { id: "in_f", attempt_count: 2, parent: { subscription_details: { subscription: sessions[sid].subscription, metadata: { pass: spass } } } } } });
+check("webhook: a renewal refused is noted on the code, which stays listed as a subscription", (await passOf(spass)).failWhy === "subscription payment failed (attempt 2)" && (await passOf(spass)).paid && (await listed()).includes(spass));
 const lapsed = await redeem(spass);
 check("payment failed (past_due): no games, and the message says why", lapsed[0] === 402 && /didn’t go through/.test(lapsed[1].error), lapsed);
 await hook({ type: "customer.subscription.updated", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "active", metadata: { pass: spass } } } });

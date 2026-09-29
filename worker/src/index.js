@@ -270,9 +270,14 @@ export class Registry {
       const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, note: pv ? pv.note || "" : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
       return json({ rooms: rows.sort((a, c) => (c.expires || 0) - (a.expires || 0)) });
     }
+    // a checkout nobody paid for or tried to pay for isn't a pass yet: it's left out (and cleared after two days)
     if (url.pathname === "/list") {
-      const rows = [];
-      for (const [k, v] of await this.storage.list({ prefix: "pass:" })) rows.push({ pass: k.slice(5), ...v });
+      const rows = [], old = [], t = Date.now();
+      for (const [k, v] of await this.storage.list({ prefix: "pass:" })) {
+        if (v.source === "stripe" && !v.paid && !v.failed) { if (t - v.created > 48 * 3600000) old.push(k); continue; }
+        rows.push({ pass: k.slice(5), ...v });
+      }
+      for (let i = 0; i < old.length; i += 128) await this.storage.delete(old.slice(i, i + 128));
       return json({ passes: rows.sort((a, c) => c.created - a.created) });
     }
     if (url.pathname === "/revoke") {
@@ -306,11 +311,24 @@ export class Registry {
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
       return json({ pass: p, sub: !!(v && v.kind === "sub") });
     }
-    // a checkout that expired or failed: its pending pass is cancelled
+    // a payment that was tried and refused: noted on its pass (a checkout's, or a subscription's renewal)
+    if (url.pathname === "/fail") {
+      let p = b.pass && isPass(b.pass) && passKey(b.pass);
+      if (!p && b.sub) for (const [k, v] of await this.storage.list({ prefix: "pass:" })) if (v.subId === b.sub) { p = k.slice(5); break; }
+      const k = p && "pass:" + p, v = k && (await this.storage.get(k));
+      if (!v) return json({ ok: true, pass: null });
+      await this.storage.put(k, { ...v, failed: Date.now(), failWhy: clip(b.why, 200) || "payment refused", fails: (v.fails || 0) + 1 });
+      return json({ ok: true, pass: p, failed: true });
+    }
+    // a checkout that ended unpaid: if a payment was tried and refused, its pass stays (cancelled) so the admin sees it;
+    // if nobody tried to pay, it's forgotten
     if (url.pathname === "/cancel") {
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
-      if (v && v.pending && !v.revoked) await this.storage.put(k, { ...v, revoked: Date.now(), note: "checkout " + (b.why || "ended") });
-      return json({ ok: true });
+      if (!v || !v.pending || v.revoked) return json({ ok: true });
+      if (b.tried && !v.failed) v.failed = Date.now(), v.failWhy = clip(b.tried, 200), v.fails = 1;
+      if (v.failed) await this.storage.put(k, { ...v, revoked: Date.now(), note: "checkout " + (b.why || "ended") });
+      else await this.storage.delete(k);
+      return json({ ok: true, kept: !!v.failed });
     }
     // a refund: the pass is cancelled if it hasn't opened a room yet (a party already played keeps its room)
     // (found by its payment, or by the pass or subscription Stripe says it paid for). A subscription's refund is only
@@ -443,6 +461,25 @@ async function refundFor(env, x) {
   return { pass: null, error: "No pass found for this payment" + (tries.length ? " (" + tries.join("; ") + ")" : "") };
 }
 
+// A card refused at checkout. Its pass is found through the checkout session that made the payment (a subscription's
+// first payment arrives as invoice.payment_failed instead).
+const declined = (e) => (e && (e.message || e.decline_code || e.code)) || "payment refused";
+async function failFor(env, o) {
+  let pass = o.metadata && o.metadata.pass;
+  if (!pass && o.id && env.STRIPE_SECRET_KEY) {
+    const ss = await stripeGet(env, "checkout/sessions?limit=1&payment_intent=" + encodeURIComponent(o.id)).catch(() => null), cs = ss && ss.data && ss.data[0];
+    pass = cs && cs.metadata && cs.metadata.pass;
+  }
+  if (!pass) return { pass: null, note: "not a checkout of ours" };
+  return (await call(env, "/fail", { pass, why: declined(o.last_payment_error) })).json();
+}
+// When a checkout expires, was a payment tried? Its payment (if it got that far) remembers the last refusal.
+async function triedFor(env, pi) {
+  if (!pi || !env.STRIPE_SECRET_KEY) return null;
+  const x = await stripeGet(env, "payment_intents/" + encodeURIComponent(pi)).catch(() => null);
+  return x && x.last_payment_error ? declined(x.last_payment_error) : null;
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Pre-launch password gate. With SITE_PASSWORD set, every request — pages, assets, API — needs the gate cookie; without
 // it the visitor gets a small password page. Remove SITE_PASSWORD (wrangler.toml [vars]) to open the site to the public.
@@ -545,7 +582,8 @@ async function route(req, env) {
         return json({ url: cs.url });
       } catch (e) {
         await call(env, "/cancel", { pass, why: "could not start" });
-        console.error("Stripe checkout refused:", e.message); // Workers → Logs; also shown under the Pay button
+        console.error("Stripe checkout refused:", e.message); // Workers → Logs, the admin's error log, and under the Pay button
+        logErr(env, { src: "stripe", where: "checkout", msg: "Stripe wouldn’t start a checkout: " + e.message });
         return json({ error: "We couldn’t start the checkout. Try again in a moment.", detail: "Stripe said: " + e.message }, 502);
       }
     }
@@ -561,7 +599,15 @@ async function route(req, env) {
         result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer) })).json();
       else if ((ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.created" || ev.type === "customer.subscription.deleted") && pass)
         result = await (await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status })).json();
-      else if ((ev.type === "checkout.session.expired" || ev.type === "checkout.session.async_payment_failed") && pass) result = await (await call(env, "/cancel", { pass, why: ev.type.split(".").pop() })).json();
+      else if (ev.type === "checkout.session.async_payment_failed" && pass) {
+        await call(env, "/fail", { pass, why: "the bank payment didn’t go through" });
+        result = await (await call(env, "/cancel", { pass, why: "payment failed" })).json();
+      } else if (ev.type === "checkout.session.expired" && pass) result = await (await call(env, "/cancel", { pass, why: "expired", tried: await triedFor(env, piOf(o.payment_intent)) })).json();
+      else if (ev.type === "payment_intent.payment_failed") result = await failFor(env, o);
+      else if (ev.type === "invoice.payment_failed") {
+        const sd = (o.parent && o.parent.subscription_details) || o.subscription_details || {};
+        result = await (await call(env, "/fail", { pass: sd.metadata && sd.metadata.pass, sub: piOf(sd.subscription) || piOf(o.subscription), why: "subscription payment failed" + (o.attempt_count > 1 ? " (attempt " + o.attempt_count + ")" : "") })).json();
+      }
       else if (ev.type === "charge.refunded" && o.amount_refunded > 0) result = await refundFor(env, { pi: piOf(o.payment_intent), charge: o.id, invoice: piOf(o.invoice), amount: o.amount_refunded });
       else if ((ev.type === "refund.created" || ev.type === "refund.updated" || ev.type === "charge.refund.updated") && ["succeeded", "pending"].includes(o.status))
         result = await refundFor(env, { pi: piOf(o.payment_intent), charge: piOf(o.charge), amount: o.amount });

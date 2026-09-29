@@ -8,7 +8,7 @@ srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "--direc
 time.sleep(1)
 FREEZE = "*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition:none!important}"
 SETUP = r"""() => { window.__noCards = true; try { localStorage.clear() } catch (e) {}
-  startGame({names:["Annie","Bartholomew","Claire-Louise","Dev","Hannah","Jess","Marcus","Oliver","Priya","Ryan","Sophie","Wilhelmina"],cloaks:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4,pin:'1'});
+  startGame({names:["Annie","Bartholomew","Claire-Louise","Dev","Hannah","Jess","Marcus","Oliver","Priya","Ryan","Sophie","Wilhelmina"],cloaks:3,title:'The Betrayal',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4,pin:'1'});
   act(s=>{s.phase='day'}); }"""
 SHEET = r"""() => {
   const norm = t => String(t).toLowerCase().replace(/[^a-z0-9]/g, ""), out = [];

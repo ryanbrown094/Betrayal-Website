@@ -471,5 +471,5 @@ const MISSIONS=[
 
 const MODES={
   murder:{label:"Poison",desc:"The Forsworn choose a Loyal player to poison. They find out at night, keep it to themselves, and announce it at dawn. Sanctuary blocks it (nobody dies, TV says Sanctuary held). The normal night."},
-  convert:{label:"Whisper",desc:"No poison. The Forsworn invite one Loyal player to join them. That person can accept (becomes a Forsworn, meets the others) or refuse (stays Loyal; Forsworn know they refused). the the Loyal only see ‘nobody died’. Use when Forsworn are down to one."},
+  convert:{label:"Whisper",desc:"No poison. The Forsworn invite one Loyal player to join them. That person can accept (becomes a Forsworn, meets the others) or refuse (stays Loyal; Forsworn know they refused). The Loyal only see ‘nobody died’. Use when Forsworn are down to one."},
   bargain:{label:"Last Offer",desc:"Join or die. The Forsworn pick a Loyal player: accept and they become a Forsworn; refuse and they are poisoned on the spot (Sanctuary still saves them). Harsher Whisper — use when Forsworn are down to one and the pool is big."}};

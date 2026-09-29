@@ -10,7 +10,7 @@ NAMES14 = ["Annie", "Ryan", "Bartholomew", "Sophie", "Marcus", "Priya", "Jess", 
 # host screens to visit (state builders run on the host page)
 HOST_STATES = [
   ("setup", "newGame()"),
-  ("lobby", "startGame({names:NAMES,cloaks:3,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})"),
+  ("lobby", "startGame({names:NAMES,cloaks:3,title:'The Betrayal',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})"),
   ("day", "act(s=>{s.phase='day';s.startedAt=now()})"),
   ("quiz_rules", "pickMission('quiz');mWin('public')"),
   ("quiz_play", "startMission();startMission()"),
@@ -119,7 +119,7 @@ with sync_playwright() as p:
         for (W, H) in TV_SIZES:
             ctx = b.new_context(viewport={"width": W, "height": H}); pg = ctx.new_page(); pg.on("pageerror", lambda e: errs.append("TV " + str(e))); pg.on("dialog", lambda d: d.accept())
             pg.goto(URL + "#host"); pg.wait_for_timeout(600)
-            pg.evaluate("(n)=>{try{localStorage.clear()}catch(e){};startGame({names:n,cloaks:n.length>=11?3:n.length<=5?1:2,title:'Cloak & Candle',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})}", NAMES14[:n])
+            pg.evaluate("(n)=>{try{localStorage.clear()}catch(e){};startGame({names:n,cloaks:n.length>=11?3:n.length<=5?1:2,title:'The Betrayal',host:'Sam',potUnit:'pts',potPer:100,prize:'a bottle of wine',hours:4.5,pin:'1'})}", NAMES14[:n])
             tv = ctx.new_page(); tv.on("pageerror", lambda e: errs.append("TV " + str(e))); tv.goto(URL); tv.wait_for_timeout(700); tv.add_style_tag(content=FREEZE); tv.evaluate("()=>{window.__noCards=true}")
             for name, js in TV_STATES:
                 pg.evaluate("()=>{" + js + "}"); tv.evaluate("()=>{state=JSON.parse(localStorage.getItem(KEY));renderTV()}"); tv.wait_for_timeout(40)

@@ -1,5 +1,6 @@
 <!-- title: Admin -->
 <style>
+nav.top .links { display: none }
 .wrap { max-width: 1100px }
 .adm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end }
 .adm-row > label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose) }
@@ -24,7 +25,7 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 .tl { max-height: 360px; overflow: auto; border: 1px solid rgba(230,165,140,.2); border-radius: 8px } .tl div { padding: 4px 10px; font-size: 13.5px; color: var(--ivory2); cursor: pointer; border-bottom: 1px solid rgba(230,165,140,.08) } .tl div.on { background: rgba(230,165,140,.18); color: var(--ivory) }
 .snapbox { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
 .ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
-.t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
+.t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-failed { color: #ffb38a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
 @media (max-width: 700px) {
   table.passes thead { display: none } table.passes tr { display: block; padding: 10px 0; border-bottom: 1px solid rgba(230,165,140,.18) }
   table.passes td { display: block; border: 0; padding: 2px 0; white-space: normal } table.passes td[data-l]::before { content: attr(data-l) ": "; color: #877e78 }
@@ -73,7 +74,7 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
     <label style="flex:1;min-width:200px">Search <input id="q" placeholder="Code, note, email, room" style="width:100%"></label>
     <label>Show <select id="f">
       <option value="all">All</option><option value="unused">Unused</option><option value="play">In play</option><option value="used">Used</option>
-      <option value="sub">Subscriptions</option><option value="refunded">Refunded</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
+      <option value="sub">Subscriptions</option><option value="refunded">Refunded</option><option value="failed">Payment failed</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
     </select></label>
     <button class="btn ghost small" id="reload">Refresh</button>
   </div>
@@ -120,6 +121,7 @@ const api = async (path, body) => {
 const when = t => t ? new Date(t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
 function statusOf(p) {
   const now = Date.now();
+  if (p.failed && !p.paid) return ["failed", "Payment failed" + (p.fails > 1 ? " ×" + p.fails : "") + (p.revoked ? " · checkout closed" : "")];
   if (p.revoked) return ["cancel", p.refunded ? "Refunded" : "Cancelled"];
   if (p.pending) return ["pending", "Awaiting payment"];
   if (p.kind === "sub") return p.subActive ? ["sub", (p.subStatus === "free" ? "Free unlimited" : "Subscribed") + (p.refunded ? " · a payment refunded" : "")] : ["cancel", "Subscription " + (p.subStatus || "inactive").replace("_", " ")];
@@ -140,7 +142,7 @@ function render() {
     const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; cell("Status", tag);
     cell("Created", when(p.created) + (p.source && p.source !== "admin" ? " · " + (p.source.startsWith("stripe") ? "Stripe" : p.source) : ""));
     cell("Room", p.room ? p.room + (p.games > 1 ? " · " + p.games + " games" : "") : "");
-    cell("Note", p.note || "", "notecol");
+    cell("Note", [p.note, p.failed && (p.paid ? "last payment failed: " : "") + p.failWhy].filter(Boolean).join(" · "), "notecol");
     const td = cell("", ""), cp = document.createElement("button"); cp.className = "btn ghost tiny"; cp.textContent = "Copy"; cp.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); cp.textContent = "Copied" }; td.append(cp);
     if (!p.revoked) { const x = document.createElement("button"); x.className = "btn danger tiny"; x.style.marginLeft = "6px"; x.textContent = "Cancel"; x.onclick = () => cancel(p.pass); td.append(x) }
     rows.append(tr);
@@ -149,7 +151,7 @@ function render() {
 }
 function stats() {
   const c = k => all.filter(p => statusOf(p)[0] === k).length, subs = all.filter(p => p.kind === "sub" && p.subActive && !p.revoked);
-  const box = [["Passes", all.length], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length]];
+  const box = [["Passes", all.length - c("failed")], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length], ...(c("failed") ? [["Failed payments", c("failed")]] : [])];
   $("#stats").textContent = ""; for (const [l, n] of box) { const d = document.createElement("div"); d.className = "stat"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("#stats").append(d) }
 }
 async function load() { try { all = (await api("passes")).passes || []; stats(); render() } catch (e) { say($("#tmsg"), e.message, true) } }

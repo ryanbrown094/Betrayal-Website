@@ -386,7 +386,7 @@ def part2(b):
         A = Phone(b); A.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "12€4"]); A.pg.wait_for_timeout(800)
         f = []
         if A.st(): f.append("game started with an unsendable PIN")
-        if not A.ev("()=>/plain keyboard symbols/.test(document.body.innerText)"): f.append("no inline message")
+        if not A.ev("()=>/4 to 8 digits/.test(document.body.innerText)"): f.append("no inline message")
         A.pg.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "🔑42"]); A.pg.wait_for_timeout(600)
         if A.st(): f.append("game started with an emoji PIN")
         f += A.errs; A.close(); return f
