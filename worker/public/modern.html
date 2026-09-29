@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929165232">
+<meta name="build" content="20260929173032">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -809,7 +809,7 @@ function createScreen() {
   if (TESTGAME) return `${brand("test game")}<div class="card fade"><div class="eyebrow">test table · ${CODE}</div><h2>A test game against bots</h2>
   <p class="sub">You host and play; the bots swear, vote, choose at night and trust by themselves. Trials give everyone a random score, and every countdown is ten seconds.</p>
   <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
-  <div style="height:10px"></div><label class="l" for="nbots">Players, you included</label><select class="f" id="nbots">${[6, 8, 10, 12, 16, 20, 24].map((n) => `<option${n === 8 ? " selected" : ""}>${n}</option>`).join("")}</select>
+  <div style="height:10px"></div><label class="l" for="nbots">Players, you included</label><select class="f" id="nbots">${Array.from({ length: 17 }, (_, i) => i + 8).map((n) => `<option${n === 8 ? " selected" : ""}>${n}</option>`).join("")}</select>
   <div style="height:12px"></div>${btn("Start the test game", "create", null, "big")}${msg()}</div>`;
   return `${brand()}<div class="card fade"><div class="eyebrow">your table · ${CODE}</div><h2>You’re the host, and you play too</h2>
   <p class="sub">Your phone runs the evening: you start each Trial, call the breaks and the Reckoning. Everything else runs itself, and you never see anyone’s role.</p>
@@ -888,7 +888,7 @@ function phase(me) {
 }
 function lobby(me) {
   const n = V.players.length, url = SITE + "/join";
-  let h = `<div class="eyebrow">the lobby</div><h2>You’re in</h2><p class="sub">Friends join at <b>${esc(url)}</b> with the code <b class="num">${CODE}</b>.</p>${people(V.players)}<p class="small" style="margin-top:10px">${plural(n, "player")} · 6 to 24 can play</p>`;
+  let h = `<div class="eyebrow">the lobby</div><h2>You’re in</h2><p class="sub">Friends join at <b>${esc(url)}</b> with the code <b class="num">${CODE}</b>.</p>${people(V.players)}<p class="small" style="margin-top:10px">${plural(n, "player")} · 8 to 24 can play</p>`;
   if (!me.director) return h + waitHost();
   const o = V.opts || {};
   if (V.test) h += `<div class="banner">Test game: the bots play themselves, Trials score at random, and every countdown is ten seconds.</div><div class="row" style="margin-bottom:14px">${btn("Add a bot", "bots", String(n + 1), "dark sm")}</div>`;
@@ -906,7 +906,7 @@ function lobby(me) {
   <p class="small">${o.twists ? "Once each: the Casting Vote, the Crown, and the Confessor in the final." : "No twists: Sanctuary and the Temptation only."}</p>
   <label class="l">Dinner in courses</label>${two("courses", [true, "On"], [false, "Off"])}
   <p class="small">${o.courses ? "A starter, a main and dessert are served between the rounds." : "No set courses. You can still call a short break."}</p>
-  <div style="height:12px"></div>${btn(n < 6 ? `Waiting for ${6 - n} more` : `Start with ${n} players`, "start", null, "big", n < 6 ? " disabled" : "")}
+  <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
   <p class="small center">Want it on the TV? Open <b>${esc(SITE)}/t/${CODE}</b> on a laptop and cast it. It’s optional.</p></div>`;
   return h;
 }
@@ -1146,7 +1146,7 @@ function tvPeople(mark, roles, cls) { return `<div class="tvpeople ${V.players.l
 const purse = (pot) => `<div class="meter" role="img" aria-label="Purse ${pot} of ${V.potCap}"><i style="width:${Math.min(100, (100 * pot) / Math.max(1, V.potCap))}%"></i>${V.tiers ? `<b style="left:50%"></b>` : ""}<span>${pot} / ${V.potCap}</span></div>`;
 function tvBody(url) {
   switch (V.phase) {
-    case "lobby": return `<div class="eyebrow">join on your phone</div><div class="tvcode">${qr()}<div><div class="c num">${CODE}</div><div class="u">Scan, or go to <b>${url}</b></div></div></div>${tvPeople()}<p class="tvcount">${plural(V.players.length, "player")} · 6 to 24</p>`;
+    case "lobby": return `<div class="eyebrow">join on your phone</div><div class="tvcode">${qr()}<div><div class="c num">${CODE}</div><div class="u">Scan, or go to <b>${url}</b></div></div></div>${tvPeople()}<p class="tvcount">${plural(V.players.length, "player")} · 8 to 24</p>`;
     case "oath": return `<div class="eyebrow">the oath</div><h1>Swear on your phones</h1><p class="sub">Would you like to be Forsworn? Nobody sees your answer.</p>${tvPeople((p) => p.optedIn)}`;
     case "roles": return `<div class="eyebrow">the deal</div><h1>Look at your role</h1><p class="sub">Hold your phone close. Tell no one.</p>${tvPeople((p) => p.acked)}`;
     case "day": return `<div class="eyebrow">${V.final ? "the final" : "round " + V.round}</div><h1>${V.final ? "The final" : "Day " + V.round}</h1>${purse(V.pot)}${tvPeople(null, true)}<p class="tvcount">next: ${esc(V.next || "")}${V.tiers ? " · the Purse decides the prize" : ""}</p>`;

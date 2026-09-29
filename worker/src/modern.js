@@ -7,7 +7,7 @@
 // on every request so clocks move on, and answers each phone with viewFor().
 import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, MEMSETS, CHARADES, SONGS, SNAPSYM, PICTIONARY, COLORS } from "./content.gen.js";
 
-export const MINP = 6, MAXP = 24, NAMEMAX = 14;
+export const MINP = 8, MAXP = 24, NAMEMAX = 14;
 const CHSYM = ["moon", "sun", "blade", "crown", "shield", "table", "chalice", "scroll", "hourglass", "scales", "raven", "ghost", "key", "skull", "candle", "eye", "handshake"];
 const TOKCH = "abcdefghjkmnpqrstuvwxyz23456789";
 export const newTok = () => { const b = new Uint8Array(24); if (globalThis.crypto && crypto.getRandomValues) crypto.getRandomValues(b); else for (let i = 0; i < 24; i++) b[i] = Math.floor(Math.random() * 256); return Array.from(b, (x) => TOKCH[x % 31]).join(""); };

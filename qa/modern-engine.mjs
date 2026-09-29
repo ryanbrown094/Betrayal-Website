@@ -61,15 +61,15 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
 
 // 1. the lobby, the Oath, the deal
 {
-  const g = setup(5); check("five players can't start", !!A(g, g.dir, { a: "start" }).error);
-  join(g.s, "Priya", g.now, rnd); check("a duplicate name is refused", !!join(g.s, "priya", g.now, rnd).error);
+  const g = setup(7); check("seven players can't start", !!A(g, g.dir, { a: "start" }).error);
+  join(g.s, "Oliver", g.now, rnd); check("a duplicate name is refused", !!join(g.s, "oliver", g.now, rnd).error);
   check("only the director starts", !!A(g, g.ids[1], { a: "start" }).error && A(g, g.dir, { a: "start" }) === null && g.s.phase === "oath");
   check("nobody can join once started", !!join(g.s, "Late", g.now, rnd).error);
   const ids = g.s.players.map((p) => p.id);
   A(g, ids[0], { a: "optin", v: "no" }); A(g, ids[1], { a: "optin", v: "yes" }); A(g, ids[2], { a: "optin", v: "no" }); A(g, ids[3], { a: "optin", v: "no" }); A(g, ids[4], { a: "optin", v: "no" });
   check("the Oath waits for everyone", g.s.phase === "oath" && viewFor(g.s, null, g.now).players.filter((p) => p.optedIn).length === 5);
-  A(g, ids[5], { a: "optin", v: "any" });
-  check("…then deals: the volunteer is Forsworn", g.s.phase === "roles" && g.s.players[1].role === "f" && g.s.players.filter((p) => p.role === "f").length === forswornFor(6));
+  A(g, ids[5], { a: "optin", v: "no" }); A(g, ids[6], { a: "optin", v: "no" }); A(g, ids[7], { a: "optin", v: "any" });
+  check("…then deals: the volunteer is Forsworn", g.s.phase === "roles" && g.s.players[1].role === "f" && g.s.players.filter((p) => p.role === "f").length === forswornFor(8));
   const v0 = viewFor(g.s, ids[0], g.now), v1 = viewFor(g.s, ids[1], g.now), tv = viewFor(g.s, null, g.now);
   check("each phone sees only its own role (the host's included)", v0.me.role === "l" && v1.me.role === "f" && v0.players.every((p) => p.role === null) && tv.players.every((p) => p.role === null) && !tv.me);
   check("no token leaks into any view", !JSON.stringify(tv).includes(g.s.players[0].tok) && !JSON.stringify(v1).includes(g.s.players[0].tok));
@@ -168,7 +168,7 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
   check("end a Trial early", A(g, g.dir, { a: "tool", v: "endTrial" }) === null && g.s.trial.stage === "done");
 }
 // 6. whole games: until someone wins
-for (const [n, fw] of [[6, 0], [8, 1], [12, 0], [17, 1], [24, 0], [10, 1]]) {
+for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
   const g = setup(n); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
   let guard = 0, sawNight = false; const target = (p) => alive(g.s).find((q) => q.id !== p.id && q.role === (fw ? "l" : "f")) || alive(g.s).find((q) => q.id !== p.id);
   while (g.s.phase !== "end" && guard++ < 200) {
@@ -192,7 +192,7 @@ for (const [n, fw] of [[6, 0], [8, 1], [12, 0], [17, 1], [24, 0], [10, 1]]) {
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
 }
 // 7. a test game: one person against bots; Trials score at random, every clock is ten seconds at most
-for (const n of [8, 16]) {
+for (const n of [9, 16]) {
   let now = 1e12; const s = newGame(now, rnd, {}); s.test = true; const me = join(s, "Ryan", now, rnd).id; addBots(s, n, now, rnd);
   const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
   check(`test game: ${n - 1} bots join`, s.players.length === n && s.players.filter((p) => p.bot).length === n - 1);

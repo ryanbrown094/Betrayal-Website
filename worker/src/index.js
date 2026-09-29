@@ -233,7 +233,7 @@ export class GameState {
       }
       if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
       const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
-      if (s.test) M.addBots(s, Math.max(6, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
+      if (s.test) M.addBots(s, Math.max(M.MINP, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
     if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });

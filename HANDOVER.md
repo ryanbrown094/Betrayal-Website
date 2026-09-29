@@ -34,6 +34,8 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.4 (29 Sep 2026):** the Table is £10 (new `STRIPE_PRICE_ID`). Modern takes any number from 8 to 24, the same as Classic; its minimum was 6. The test game against bots offers every count from 8 to 24, and the engine tests now play odd-sized tables.
+
 **1.6.3 (29 Sep 2026), Modern first:** everything we publish now sells Modern, with Classic as the alternative.
 - **Home page:** the pitch is phones-first. The hero is `media/hero-modern.jpg` (made by `tools/hero-modern.py` from the tour screenshots). "How it works" covers open, join and play. A short "There's Classic, too" section follows, and the FAQ covers phones, the host playing, and Wi-Fi. After a booking, the Modern card comes first, marked recommended.
 - **Rules page:** explains Modern, with a `#classic` section listing what changes. **Tour page:** shows Modern screens first, then the Classic walk-through under `#classic`. **Buy page:** the copy is phones-first.
