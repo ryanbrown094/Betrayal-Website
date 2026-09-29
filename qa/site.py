@@ -1,6 +1,6 @@
 # The public site on the real Worker: every page at four widths without sideways scrolling or console errors, the nav,
 # the home page's code boxes on a phone, the buy page's consent and Pay button, and the rules page read once.
-#   npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var SITE_PASSWORD: [--var STRIPE_EGG_PRICE_ID:price_x] &
+#   npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var SITE_PASSWORD: [--var STRIPE_EGG_PROMO:promo_x] &
 #   python3 qa/site.py http://127.0.0.1:8790/
 import sys
 from playwright.sync_api import sync_playwright
