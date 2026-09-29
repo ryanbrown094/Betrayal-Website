@@ -6,6 +6,14 @@ Locked in 28 September 2026, updated 29 September 2026 (the Table, the Oath, the
 
 **The Betrayal.** Always with “The”, and both words capitalised: “The Betrayal”, never “Betrayal” alone. Where a space can’t go (URLs, file names, handles), write `thebetrayal`. The site is **thebetrayal.co.uk**. Never pair the name with another game’s or show’s name.
 
+## The tagline
+
+**The party game of loyalty and lies.** This is the one descriptor line, everywhere: the press kit, the ads, the site and the brand guidelines. Where only a couple of words fit (an eyebrow above the name), write **a party game**. The Betrayal is a party game, not a dinner-party game: it suits a dinner, drinks and snacks, a birthday, a games night or an office do. Dinner is an option, never the point, so don’t call it “a dinner-party game” and don’t lead with food.
+
+## Dinner is optional
+
+Play it over dinner if you like: the game can serve dinner in courses between the rounds (a starter, the main course and dessert). It’s a switch the host turns on, and it’s **off by default**. In Modern it’s **Dinner in courses** in the lobby; in Classic it’s **Dinner** under Customise (three courses, one dinner break, or none, and none is pre-set). With it off, the host can still call a short break. Mention it as a choice (“if you’re eating together”), not as the shape of the evening.
+
 ## The idea in one line
 
 Everyone at the table swears an oath. A few of them are lying. They are the **Forsworn**, and the **Loyal** have one evening to find them.
@@ -98,9 +106,9 @@ What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 ## Length: say it honestly
 
 - **Best at 8 to 16 players.** The game takes 8 to 24.
-- **8 to 12 players:** about 3 to 4 hours with dinner.
+- **8 to 12 players:** about 3 to 3½ hours. Stopping for dinner adds half an hour (one break) to an hour (three courses).
 - **The Short game** (Classic): about 2 hours for 8 to 10 players (one Trial a round, no Interval, no dinner break).
-- **Bigger tables run longer:** 20 or more, about 6 hours.
+- **Bigger tables run longer:** 20 or more, about 5 hours, or 6 with dinner.
 - State the capacity as a fact; never sell it as a benefit. No “up to 24 players, one very long night”.
 
 ## Marks and type
@@ -134,3 +142,4 @@ The Oath is the opening scene and the brand’s most theatrical moment. Keep it 
 - Call the Modern host a Keeper, or lead any public piece with Classic.
 - Sell the table size or the length of the night as a benefit.
 - Show a face under the hood.
+- Call it “a dinner-party game”, or sell dinner as the point of the evening. Dinner is an option.

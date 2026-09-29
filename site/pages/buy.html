@@ -5,7 +5,7 @@
 <p class="lede">Everything for the evening, in one booking: fifteen Trials, thousands of questions and prompts, played on everyone’s own phones, with a full show on your TV if you want one. Prefer phones away? Classic, with a Keeper reading every line, is included too. Play once, or as often as you like.</p>
 
 <fieldset class="plans"><legend class="vh">Choose how to play</legend>
-<label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price">£10</span><small>One Table for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
+<label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price" id="p1">£10</span><small>One Table for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
 <label class="plan"><input type="radio" name="plan" value="sub"><span><b>Regular</b><span class="price">£20<em> a month</em></span><small>Become a Regular: one booking code that starts a new game whenever you like, one at a time, for as long as you’re subscribed. Cancel any time.</small></span></label>
 </fieldset>
 
@@ -19,6 +19,7 @@
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
 <label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
 
+<p id="eggnote" class="formmsg" hidden>The broken seal: 10% off one party, applied at checkout.</p>
 <button class="btn" id="pay">Pay £10 securely with Stripe</button>
 <p id="paymsg" class="formmsg" role="status"></p>
 </div>
@@ -35,6 +36,10 @@ const TEXT = {
   sub: { c2: "I understand my subscription renews every month at £20 until I cancel, which I can do at any time from “Manage subscription”. I want it to start straight away, and I lose my 14-day right to cancel the first month once I use my code to open a Table (<a href=\"/refunds\">refunds</a>).",
     li1: "Your code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.", li2: "Each Table stays open for 48 hours; start a new one whenever you like." }
 };
+// the broken seal (/seal): 10% off one party, if this browser found it and the discount is on sale
+let egg = false; try { egg = localStorage.getItem("bt-egg") === "1" } catch (e) {}
+const ONE = () => (egg ? "£9" : "£10");
+if (egg) fetch("/api/egg").then(r => r.json()).then(j => { egg = !!j.on; if (egg) { $("#p1").innerHTML = "<s style=\"opacity:.5;font-size:.7em\">£10</s> £9"; $("#eggnote").hidden = false } choose() }).catch(() => { egg = false; choose() });
 const ready = () => $("#c1").checked && $("#c2").checked;
 let busy = false;
 function update(msg, err) {
@@ -42,7 +47,7 @@ function update(msg, err) {
   $("#paymsg").textContent = msg || ""; $("#paymsg").className = "formmsg" + (err ? " err" : "");
   for (const c of ["#c1", "#c2"]) if ($(c).checked) $(c).removeAttribute("aria-invalid");
 }
-function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; $("#pay").textContent = plan() === "sub" ? "Subscribe for £20 a month with Stripe" : "Pay £10 securely with Stripe"; update() }
+function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; $("#pay").textContent = plan() === "sub" ? "Subscribe for £20 a month with Stripe" : "Pay " + ONE() + " securely with Stripe"; $("#eggnote").hidden = !egg || plan() !== "one"; update() }
 document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#pay").onclick = async () => {
@@ -50,7 +55,7 @@ $("#pay").onclick = async () => {
   if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one" }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update((j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);

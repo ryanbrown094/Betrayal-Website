@@ -1,0 +1,23 @@
+<!-- title: The broken seal -->
+<!-- desc: You looked closely. That’s exactly what the Forsworn are afraid of. -->
+<div class="eyebrow">you found it</div>
+<h1>The broken seal</h1>
+<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead. A suspicious mind that checks everything twice: exactly what the Forsworn are afraid of.</p>
+
+<div class="panel">
+<p id="offer">For that, <b>10% off</b> one party. We’ll remember it on this browser for when you book.</p>
+<button class="btn" id="claim">Claim 10% off</button>
+<p id="msg" class="formmsg" role="status"></p>
+</div>
+
+<p style="font-size:15.5px">Keep it to yourself, or don’t. Every good secret gets out in the end.</p>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+fetch("/api/egg").then(r => r.json()).then(j => { if (!j.on) { $("#offer").textContent = "The discount isn’t open yet. Check back soon: the seal will still be broken."; $("#claim").hidden = true } }).catch(() => {});
+$("#claim").onclick = () => {
+  try { localStorage.setItem("bt-egg", "1") } catch (e) { $("#msg").textContent = "Your browser won’t let us remember it. Try again outside private browsing."; $("#msg").className = "formmsg err"; return }
+  location.href = "/buy";
+};
+</script>

@@ -19,7 +19,7 @@ Rules that carry over from the brand: never picture a face under the hood, never
 - **0–3s:** candles, the night music, a ring of faces lit by phones. Text: *“At night, everyone taps their phone.”*
 - **3–8s:** close on three thumbs tapping names. Text: *“Only the Forsworn’s taps count.”*
 - **8–15s:** one guest’s phone: *You were poisoned. Say nothing yet.* They lock it and smile at the table. Text: *“Nobody can tell who’s choosing.”*
-- **Caption:** Dinner party rule one: never trust whoever poured the wine.
+- **Caption:** Party rule one: never trust whoever poured the wine.
 
 ### 3 · Host POV: I played too
 - A phone screen recording at speed, with a voiceover: *“Booking code. Modern. My name. Open the Table.”* Cut to the TV: the QR code, and names popping into the lobby as friends scan it.
@@ -29,8 +29,8 @@ Rules that carry over from the brand: never picture a face under the hood, never
 - **Caption:** The easiest big party I’ve ever hosted.
 
 ### 4 · What you need (flat lay, no faces needed)
-- Overhead shot of a set table. On the beat, phones land by every plate, one after another, then a box of chocolates with a label reading “the prize”.
-- **Text:** *“Everything you need for the best dinner party of your life:”* then *“your friends’ phones. That’s it.”*
+- Overhead shot of a coffee table with drinks and snacks. On the beat, phones land by every glass, one after another, then a box of chocolates with a label reading “the prize”.
+- **Text:** *“Everything you need for the best party of your life:”* then *“your friends’ phones. That’s it.”*
 - **End:** *“Under £2 a guest.”*
 - **Caption:** Best with 8 to 16. Book a Table for £10. No app, no accounts, no props.
 

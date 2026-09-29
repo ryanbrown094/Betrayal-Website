@@ -59,6 +59,7 @@ function night(g) {
 }
 function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" }); A(g, g.dir, { a: "tool", v: "deal" }); A(g, g.dir, { a: "tool", v: "begin" }); tick(g.s, g.now, ctx); return g; }
 
+check("dinner is optional: courses are off unless the host switches them on", newGame(1, rnd, {}).opts.courses === false && !begin(8).s.steps.some((x) => x.k === "break"));
 // 1. the lobby, the Oath, the deal
 {
   const g = setup(7); check("seven players can't start", !!A(g, g.dir, { a: "start" }).error);
@@ -90,7 +91,7 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
   check("a short break is still the host's to call", (() => { const h = begin(8); return A(h, h.dir, { a: "break", v: "interval" }) === null && h.s.phase === "break" && A(h, h.dir, { a: "brkEnd" }) === null && h.s.phase === "day"; })());
   // the plans for tables of every size, with courses and twists
   for (const n of [8, 12, 16, 24]) {
-    const h = begin(n), days = []; let r = 0;
+    const h = begin(n, { courses: true }), days = []; let r = 0;
     while (r++ < 12 && !h.s.final) { days.push(h.s.steps.map((x) => x.k === "break" ? x.v : x.k === "trial" ? (x.key || "T") + (x.special ? "+" + x.special : "") : x.k).join(",")); h.s.round++; if (h.s.round >= h.s.total) h.s.final = true; h.s.steps = []; h.s.stepAt = 0; for (const p of h.s.players) p.shield = null; tick(h.s, h.now, ctx); act(h.s, h.dir, { a: "next" }, h.now, ctx); h.s.phase = "day"; h.s.trial = null; h.s.brk = null; }
     const all = days.join(" | ");
     check(`${n} players: the evening's plan has the courses, the Temptation, the Casting Vote and the Crown (${all})`, /starter/.test(all) && /tempt/.test(all) && /\+cast/.test(all) && (n < 10 || /\+crown/.test(all)), all);
@@ -169,7 +170,7 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
 }
 // 6. whole games: until someone wins
 for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
-  const g = setup(n); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
+  const g = setup(n, { courses: n % 2 === 1 }); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
   let guard = 0, sawNight = false; const target = (p) => alive(g.s).find((q) => q.id !== p.id && q.role === (fw ? "l" : "f")) || alive(g.s).find((q) => q.id !== p.id);
   while (g.s.phase !== "end" && guard++ < 200) {
     const s = g.s;
@@ -187,7 +188,7 @@ for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
   const r = g.s.result;
   if (fw) check(`${n} players: the Forsworn can win, and Honour or Betray settles it (${r && r.how})`, r && r.winner === "forsworn" && (g.s.players.filter((p) => p.role === "f" && p.alive).length < 2 || r.how === "betrayed" || r.how === "nobody"));
   check(`${n} players: a whole game ends (${r && r.winner}, ${g.s.round} rounds, ${r && r.awards.length} awards, Purse ${g.s.pot})`, g.s.phase === "end" && r && r.awards.length <= 6 && (n < 8 || sawNight), { phase: g.s.phase, guard });
-  check(`${n} players: the courses were served`, n < 8 || (g.s.done.starter && g.s.done.dessert));
+  check(`${n} players: ${g.s.opts.courses ? "dinner in courses was served" : "no courses, as chosen"}`, g.s.opts.courses ? g.s.done.starter && g.s.done.dessert : !g.s.done.starter && !g.s.done.main && !g.s.done.dessert);
   const v = viewFor(g.s, g.ids[2], g.now); check(`${n} players: at the end every role is shown`, v.players.every((p) => p.role));
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
 }

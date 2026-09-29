@@ -657,8 +657,12 @@ async function route(req, env) {
     }
     // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
     // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
+    // the broken seal: the QR code in the home page's picture leads to /seal, which gives 10% off one party. It's a second
+    // Stripe Price (STRIPE_EGG_PRICE_ID), since Managed Payments takes no promotion codes. Unset, the seal offers nothing.
+    if (p === "/api/egg") return json({ on: !!env.STRIPE_EGG_PRICE_ID });
     if (p === "/api/checkout" && req.method === "POST") {
-      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", price = sub ? env.STRIPE_SUB_PRICE_ID : env.STRIPE_PRICE_ID;
+      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", egg = !sub && b.egg === true && !!env.STRIPE_EGG_PRICE_ID;
+      const price = sub ? env.STRIPE_SUB_PRICE_ID : egg ? env.STRIPE_EGG_PRICE_ID : env.STRIPE_PRICE_ID;
       if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Tables go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
       const ip = req.headers.get("CF-Connecting-IP") || "?";
@@ -668,7 +672,7 @@ async function route(req, env) {
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), consent_terms: at, consent_supply: at },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
         // API version, and nothing it refuses (invoice details, extra descriptions, promotion codes) — just what the game
@@ -775,11 +779,11 @@ async function route(req, env) {
     if (p === "/join" || p === "/join/") return env.ASSETS.fetch(new Request(url.origin + "/modern.html", req));
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
-    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour)\/?$/);
+    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour|seal)\/?$/);
     if (page) {
       const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
-      if (page[1] !== "admin") return r;
-      const h = new Headers(r.headers); h.set("X-Robots-Tag", "noindex, nofollow"); h.set("Cache-Control", "no-store"); h.set("X-Frame-Options", "DENY");
+      if (page[1] !== "admin" && page[1] !== "seal") return r;
+      const h = new Headers(r.headers); h.set("X-Robots-Tag", "noindex, nofollow"); h.set("Cache-Control", "no-store"); if (page[1] === "admin") h.set("X-Frame-Options", "DENY");
       return new Response(r.body, { status: r.status, headers: h });
     }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).

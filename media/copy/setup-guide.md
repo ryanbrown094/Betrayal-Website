@@ -20,9 +20,9 @@ Every Table can be played two ways, and the host chooses when they open it. **Mo
 | The prize | any words | the default is a box of chocolates; hosts set their own |
 | Better prizes for a fuller Purse | optional: one at a half-full Purse, one at a full Purse | if the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end |
 | Twists | On / Off | on. On: once each, the Casting Vote, the Crown, and the Confessor in the final. Off: Sanctuary and the Temptation only |
-| Dinner in courses | On / Off | on. On: a starter, a main and dessert are served between the rounds. Off: no set courses, and the host can still call a short break |
+| Dinner in courses | On / Off | off. For a Table that’s eating together: On serves a starter, a main and dessert between the rounds. Off: no set courses, and the host can still call a short break |
 
-The Purse target is 2,000 points. Everything else the game plans for itself: how many Forsworn (2 for 8–10 players, 3 for 11–15, 4 for 16–22, 5 for 23–24, dealt with the Oath answers in mind), how many rounds, which Trials and when, how many leave each round so the final starts with five, and when the courses come.
+The Purse target is 2,000 points. Everything else the game plans for itself: how many Forsworn (2 for 8–10 players, 3 for 11–15, 4 for 16–22, 5 for 23–24, dealt with the Oath answers in mind), how many rounds, which Trials and when, how many leave each round so the final starts with five, and, if dinner in courses is on, when each course comes.
 
 ### During the game
 
@@ -41,7 +41,7 @@ Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s
 | # | question | choices | notes |
 |---|---|---|---|
 | 1 | Who’s playing? | 8 to 24 names, in seating order | seat order is the TV’s candle order and the order boards are turned. Best with 8 to 16 |
-| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 4 hours with dinner for 8 to 12 players, longer for bigger tables (about 6 hours for 20 or more); the phone estimates it for the table |
+| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 5 hours for 20 or more), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
 | 3 | Murder or poison? | poison / murder | how the Forsworn kill. Poison: the victim is told in the night and announces it at dawn. Murder: the victim is led away under blindfold |
 | 4 | The prize | up to three prizes | the prize; a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
 | 5 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |
@@ -51,7 +51,7 @@ Then **Ready to start**: a summary of the game, with every pre-set choice listed
 
 ### The first game, and the second
 
-- **The first game** played on this phone: Sanctuary won openly, Ghosts, an Interval, dinner. The twists are off: the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer and Errands.
+- **The first game** played on this phone: Sanctuary won openly, Ghosts, an Interval. The twists are off: the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer and Errands.
 - **Your second night:** once a game has been played on the phone, setup recommends the twists.
 
 ### Under Customise
@@ -63,7 +63,7 @@ Each choice is pre-set; this is what can be changed and how it relates to the re
 | How many Forsworn? | recommended ±1 | 2 for 8–10, 3 for 11–15, 4 for 16–22, 5 for 23–24 |
 | How many rounds? | the range the table allows (e.g. 5 for 12, 8–11 for 24), each with who’s left after each round and an estimated length | the count that best fits the length chosen |
 | Trials each round | by the clock / one / two | one in the Short game |
-| Dinner | three courses, one break, or none | three courses need four or more rounds: a starter after round one (15 minutes), the main course mid-game (25), dessert before the final (15). Otherwise one dinner break, or none. None in the Short game |
+| Dinner | none, one break, or three courses | none. For a Table that’s eating together: one 25-minute dinner break after the round you choose, or three courses, which need four or more rounds: a starter after round one (15 minutes), the main course mid-game (25), dessert before the final (15). None in the Short game |
 | An Interval before each vote? | yes / no | yes, except in the Short game |
 | Should the TV read your lines? | the Keeper reads / the TV reads | the Keeper reads. With the TV reading, each line gets a ▶ TV button, and the Menu switches it on or off during the game |
 | Do the dead stay in the game? | Ghosts / out for good | Ghosts. Turning Ghosts off switches off the Statue and the Ghosts’ call |

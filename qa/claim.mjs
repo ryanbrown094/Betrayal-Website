@@ -167,4 +167,17 @@ check("Manage subscription: the billing portal for that code's customer", portal
 check("…a one-off pass has no portal", (await W("/api/portal", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.23" }, body: JSON.stringify({ pass: pass1 }) }).then(J))[0] === 404);
 check("a one-off pass still opens only its one game", (await redeem(pass1, true))[1].room === (await redeem(pass1))[1].room);
 
+// the broken seal: 10% off one party, as a second Price (Managed Payments takes no promotion codes)
+{
+  const EGG = { ...base, STRIPE_EGG_PRICE_ID: "price_egg" }, at = made.length;
+  check("the seal: /api/egg says whether the discount is on", (await W("/api/egg", {}, EGG).then(J))[1].on === true && (await W("/api/egg", {}).then(J))[1].on === false);
+  await checkout({ terms: true, supply: true, egg: true }, EGG, "203.0.113.91");
+  check("…a buyer who found it pays the seal's Price, and the session says so", made[at] && made[at].q.get("line_items[0][price]") === "price_egg" && made[at].q.get("metadata[egg]") === "10% off" && !made[at].q.has("allow_promotion_codes"));
+  await checkout({ terms: true, supply: true, egg: true }, base, "203.0.113.92");
+  check("…with no seal Price set, the usual price", made[at + 1] && made[at + 1].q.get("line_items[0][price]") === "price_123" && !made[at + 1].q.has("metadata[egg]"));
+  await checkout({ plan: "sub", terms: true, supply: true, egg: true }, EGG, "203.0.113.93");
+  check("…and it's for one party only: a Regular pays the usual subscription", made[at + 2] && made[at + 2].q.get("line_items[0][price]") === "price_sub");
+  const pg = await W("/seal", {}, { ...EGG, ASSETS: { fetch: (r) => new Response("<h1>The broken seal</h1>", { headers: { "Content-Type": "text/html" } }) } });
+  check("…the /seal page is served, and kept out of search engines", pg.status === 200 && /noindex/.test(pg.headers.get("X-Robots-Tag") || ""));
+}
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

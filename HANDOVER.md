@@ -34,6 +34,15 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.6 (29 Sep 2026), the broken seal, and dinner made optional:**
+- **The broken seal:** the QR code in the marketing pictures (the home page's hero and the tour's TV lobby) now leads to `/seal`. `tools/modern-shots.mjs` passes `qr`, and `replayShow` draws it. The page gives 10% off one party. It's remembered in `localStorage` (`bt-egg`), and the buy page shows £9. Checkout then uses `STRIPE_EGG_PRICE_ID`, a second £9 Price on the same product, because Managed Payments takes no promotion codes (unverified against Stripe's docs from here; the old code comment says so). **Until that Price is created and its ID set in `wrangler.toml`, the seal says the discount isn't open yet.** The seal is for one party only, never the subscription. `/api/egg` says whether it's on, and `/seal` is sent `noindex`.
+- **Dinner is optional:**
+  - Modern's "Dinner in courses" is off by default; the lobby asks "Eating as you play?".
+  - Classic's wizard no longer recommends a dinner break or courses; both are still options.
+  - The site says "a party game" and describes dinner as something the game can fit in.
+  - The marketing pack uses the tagline "the party game of loyalty and lies" (see `glossary.md`).
+  - `table-sizes.csv` in the marketing pack still includes dinner in its lengths until it's regenerated.
+
 **1.6.5 (29 Sep 2026), ease of use and atmosphere (Modern):**
 - **Pause:** the host's top bar has Pause, which stops every clock (`s.paused`; `tick` does nothing, and every other action is refused). Carry on moves each deadline, and each answer's time, on by the length of the pause (`shiftClocks`). Host tools stay open while paused.
 - **Phones:** they stay awake (Wake Lock, and the TV too). They buzz (`navigator.vibrate`, Android only; iPhones can't) when something needs that player: their role, a Trial starting, their turn, the vote, the night, being killed, Trust, Honour. They buzz again 10 seconds before a clock closes while they still owe an answer.
