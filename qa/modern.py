@@ -154,7 +154,7 @@ with sync_playwright() as p:
     # the night
     check("night: the Forsworn choose on their phones", until(lambda: "Choose who is murdered tonight" in phones[F[0]].inner_text("#app")))
     check("…the host has no dawn button (it's in Tools)", host.locator("[data-a=dawnNow]").count() == 0)
-    phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
+    phones[F[0]].click("details.whisp summary"); phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
     check("…and whisper to each other, which nobody else sees", until(lambda: "Vote with me tomorrow" in phones[F[1]].inner_text("#app")) and "Vote with me" not in phones[L[0]].inner_text("#app") and "Vote with me" not in tv.inner_text("#tvapp"))
     vi = L[0]; victim = NAMES[vi]
     for f in F: until(lambda: phones[f].locator(f"[data-a=pick]:has-text('{victim}')").count(), 10); phones[f].click(f"[data-a=pick]:has-text('{victim}')")
