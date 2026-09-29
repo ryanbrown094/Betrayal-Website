@@ -57,7 +57,7 @@ const say = (s, line, now) => { s.log = [{ t: now, m: clip(line, 300) }, ...(s.l
 export function newGame(now, rnd, opts) {
   return {
     mode: "modern", v: 1, gid: Math.floor(rnd() * 1e9).toString(36), ver: 1, created: now, phase: "lobby", round: 0, final: false,
-    opts: { kill: "poison", shield: "secret", prize: "a box of chocolates", prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: true, ...(opts || {}) },
+    opts: { kill: "poison", shield: "secret", prize: "a box of chocolates", prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: false, ...(opts || {}) },
     director: null, players: [], pot: 0, plan: [], planAt: 0, steps: [], stepAt: 0, total: 0, cast: null, crown: null, confess: null, peeked: [], done: {}, trial: null, brk: null, vote: null, reveal: null, night: null, dawn: null,
     trust: null, unmask: null, honour: null, result: null, stats: { wins: {}, against: {}, calls: {}, firstBlood: null, votes: [] }, log: [],
   };

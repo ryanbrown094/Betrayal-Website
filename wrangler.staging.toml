@@ -14,6 +14,7 @@ PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this lo
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 STRIPE_PRICE_ID = ""     # the party pass's Stripe Price (price_…), printed by tools/stripe-setup.sh; empty = checkout closed
+STRIPE_EGG_PRICE_ID = ""     # the broken seal’s 10%-off one-party Price; empty = the seal offers no discount
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
 

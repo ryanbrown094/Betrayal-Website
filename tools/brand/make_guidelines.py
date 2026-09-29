@@ -69,7 +69,7 @@ def foot(n):
 pages = []
 pages.append(f"""<div class=page style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
   <div style="width:150mm">{svg('the-betrayal-lockup-stacked-rosegold.svg').replace('<svg ', '<svg style="width:100%;height:auto" ')}</div>
-  <div class=lead style="margin-top:12mm;max-width:190mm">Brand guidelines: the name, the marks, the colours, the type and the voice of a dinner-party game of loyalty and lies.</div>
+  <div class=lead style="margin-top:12mm;max-width:190mm">Brand guidelines: the name, the marks, the colours, the type and the voice of the party game of loyalty and lies.</div>
   <div class=foot><span>the betrayal · brand guidelines</span><span>version 2.1 · september 2026</span></div></div>""")
 
 pages.append(f"""<div class=page><div class=eb>01 · the brand</div><h1>Candlelit. Theatrical. Mischievous.</h1>

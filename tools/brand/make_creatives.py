@@ -99,7 +99,7 @@ def oath(w, h):
     tall = h > 1500
     return f"""<div class=c style="width:{w}px;height:{h}px;{pad(tall)}">
       <div class=svgbox style="width:{110 if tall else 96}px">{MARK}</div>
-      <div class=eyebrow style="font-size:26px;margin-top:28px">a dinner-party game</div>
+      <div class=eyebrow style="font-size:26px;margin-top:28px">a party game</div>
       <div class=h style="font-size:{124 if tall else 112}px;margin-top:{40 if tall else 26}px">Everyone swore<br>an oath.</div>
       <div class=say style="font-size:{64 if tall else 56}px;margin-top:{34 if tall else 20}px;color:#F4C9B7">Not everyone meant it.</div>
       <div class=body style="font-size:{36 if tall else 32}px;margin-top:{40 if tall else 24}px;max-width:900px">Everyone plays on their own phone. The host plays too.</div>
@@ -186,7 +186,7 @@ def square(w, h):
 def story(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;padding:300px 80px 0">
       <div class=svgbox style="width:760px">{STACK}</div>
-      <div class=eyebrow style="font-size:28px;margin-top:60px">the dinner-party game of loyalty and lies</div>
+      <div class=eyebrow style="font-size:28px;margin-top:60px">the party game of loyalty and lies</div>
       <div class=say style="font-size:56px;margin-top:50px">Everyone swore an oath.<br>Not everyone meant it.</div>
       <div class=foot style="font-size:34px;margin-top:60px">{FOOT}</div>
       <div style="flex:1"></div>

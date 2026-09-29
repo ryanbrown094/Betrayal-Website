@@ -1,6 +1,6 @@
 # The Betrayal
 
-A hosted dinner-party game for 8–24 players. The TV (a laptop cast to it) runs the show; the Keeper's phone runs the game.
+A hosted party game for 8–24 players. The TV (a laptop cast to it) runs the show; the Keeper's phone runs the game.
 Sold as a **Invitation**: one pass opens one room for 48 hours. Many parties play at once, each in its own room.
 
 - Home page: `https://cloakandcandle.co.uk/` — buy a pass, open a room, join a room on the TV

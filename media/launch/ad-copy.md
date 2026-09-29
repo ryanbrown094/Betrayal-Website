@@ -10,17 +10,17 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 **Primary text**
 - A: Everyone at your table swore an oath. Not everyone meant it. By the end of the night, you’ll know who.
-- B: Invite your friends to dinner. Send a few of them a secret, straight to their phone. Watch what happens to the conversation.
-- C: A dinner-party game for 8 to 16 friends, played on everyone’s phone. A few are secretly Forsworn. The rest have one evening to find them.
+- B: Invite your friends round. Send a few of them a secret, straight to their phone. Watch what happens to the conversation.
+- C: A party game for 8 to 16 friends, played on everyone’s phone. A few are secretly Forsworn. The rest have one evening to find them.
 
-**Headline:** A dinner-party game of loyalty and lies · or · Not everyone meant it
+**Headline:** The party game of loyalty and lies · or · Not everyone meant it
 **Description:** Book a Table · £10 a party
 
 ## 2 · Your phone runs the game (`02-your-phone-runs-the-game`)
 
 **Primary text**
 - A: Scan the code, type your name, and you’re in. Your role arrives on your phone, and nobody else sees it.
-- B: Hosting? You play too. The game plans its own Trials, courses and votes. Your phone just says when to begin.
+- B: Hosting? You play too. The game plans its own Trials and votes. Your phone just says when to begin.
 - C: Would you like to be Forsworn? The question arrives on every phone at once. Nobody sees your answer.
 
 **Headline:** Everyone plays on their phone · or · The host plays too
@@ -49,7 +49,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - At night, everyone taps their phone. Only the Forsworn’s taps count. Nobody can tell who’s choosing.
 - Poisoned? You’ll find out on your phone. Say nothing until dawn.
 - Charades, but only the actor’s phone knows the word.
-- Dinner, served in three courses. Betrayal, served in between.
+- Eating together? The game can serve dinner in three courses. Betrayal comes in between.
 - The Loyal build the Purse. The Forsworn take what it falls short. Sabotage, quietly.
 - Prefer it the old-fashioned way? Classic has a Keeper, blindfolds and chalk.
 
@@ -57,7 +57,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 - Halloween: This Halloween, skip the costumes. Candles lit, phones out, and somebody at the table is lying.
 - Christmas: The office party that ends with your manager exiled. Book a Table for £10.
-- Christmas: Book a Table for the big family night. Three courses, a few lies, and a grudge that lasts until Boxing Day.
+- Christmas: Book a Table for the big family night. A full house, a few lies, and a grudge that lasts until Boxing Day.
 - Christmas: Hosting more than once this season? Become a Regular: £20 a month, a new Table whenever you like.
 
 ---
@@ -65,7 +65,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## Set-up notes
 
 - **Objective:** start with **Traffic (link clicks)**. The Sales objective needs a Meta pixel and a purchase event on the site, and a pixel needs cookie consent. Switch objectives once the pixel is set up and consent is handled.
-- **Audience:** UK, 25–45, all genders. Either Advantage+ audience, or interests in dinner parties, murder mystery games, party games, pub quizzes, board games, hen parties and party planning. Leave it broad and let the creative do the filtering.
+- **Audience:** UK, 25–45, all genders. Either Advantage+ audience, or interests in party games, murder mystery games, games nights, dinner parties, pub quizzes, board games, hen parties and party planning. Leave it broad and let the creative do the filtering.
 - **Placements:** Advantage+ placements, with the story images assigned to Stories and Reels.
 - **Link:** `https://thebetrayal.co.uk/?utm_source=meta&utm_medium=paid&utm_campaign=launch&utm_content=01-everyone-swore-an-oath`, with `utm_content` changed for each ad.
 - **Attribution:** a “How did you hear about us?” question (Instagram, Facebook, TikTok, a friend’s party, a friend told me, other) is more reliable than a pixel at this volume. Checkout can’t carry extra fields with Managed Payments on, so see `NEXT-STEPS.md` step 4 for where to ask it.

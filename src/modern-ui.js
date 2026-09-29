@@ -87,7 +87,7 @@ function draw() {
   clocks(); buzzNew();
 }
 // ---------------------------------------------------------------------------------------------------------------
-// a phone put down at dinner: it stays awake, and buzzes (where the phone can) when something needs its player
+// a phone put down on the table: it stays awake, and buzzes (where the phone can) when something needs its player
 let wake = null, buzzed = "", buzzEnd = "";
 async function keepAwake() { try { if (navigator.wakeLock && !wake && !document.hidden) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => { wake = null; }); } } catch (e) {} }
 document.addEventListener("pointerdown", keepAwake);
@@ -236,8 +236,8 @@ function lobby(me) {
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
   <label class="l" style="margin-top:12px">Twists</label>${two("twists", [true, "On"], [false, "Off"])}
   <p class="small">${o.twists ? "Once each: the Casting Vote, the Crown, and the Confessor in the final." : "No twists: Sanctuary and the Temptation only."}</p>
-  <label class="l">Dinner in courses</label>${two("courses", [true, "On"], [false, "Off"])}
-  <p class="small">${o.courses ? "A starter, a main and dessert are served between the rounds." : "No set courses. You can still call a short break."}</p>
+  <label class="l">Eating as you play?</label>${two("courses", [true, "On"], [false, "Off"])}
+  <p class="small">${o.courses ? "Dinner in courses: a starter, a main and dessert are served between the rounds." : "No meal breaks. Turn this on to serve dinner in courses between the rounds. You can always call a short break."}</p>
   <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
   <p class="small center">Want it on the TV? Open <b>${esc(SITE)}/t/${CODE}</b> on a laptop and cast it. It’s optional.</p></div>`;
   return h;
@@ -508,7 +508,8 @@ function tvBody(url) {
   }
   return "";
 }
-const joinURL = () => (SITE === location.host ? location.origin : "https://" + SITE) + "/m/" + CODE;
+let QRTO = ""; // a replay may point the QR code elsewhere: the marketing pictures' leads to the broken seal (/seal)
+const joinURL = () => QRTO || (SITE === location.host ? location.origin : "https://" + SITE) + "/m/" + CODE;
 function qr() { try { return `<div class="qrbox">${QR.svg(joinURL(), "#150b17", "#efe0d4")}</div>`; } catch (e) { return ""; } }
 // the narrator: the TV reads each new screen's heading aloud (the browser's own voice; the button is the tap it needs)
 function speak() {
@@ -658,7 +659,7 @@ async function doCreate() {
   } catch (e) { say("Can’t reach the server. Check you’re online.", true); }
 }
 // the admin's replay: the page is shown a recorded moment instead of polling
-window.replayShow = (rec) => { if (rec && rec.code) CODE = rec.code; if (rec && rec.site) SITE = rec.site; V = rec ? (location.hash === "#replay-tv" ? rec.tv : rec.host) : null; if (V && V.now) off = V.now - Date.now(); last = ""; draw(); };
+window.replayShow = (rec) => { if (rec && rec.code) CODE = rec.code; if (rec && rec.site) SITE = rec.site; QRTO = (rec && rec.qr) || ""; V = rec ? (location.hash === "#replay-tv" ? rec.tv : rec.host) : null; if (V && V.now) off = V.now - Date.now(); last = ""; draw(); };
 function boot() {
   document.body.innerHTML = (isTV() ? `<div id="tvapp"></div>` : `<div id="app"></div>`) + ART.defs();
   document.body.classList.toggle("tv", isTV());

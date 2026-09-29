@@ -1,11 +1,11 @@
 # The public site on the real Worker: every page at four widths without sideways scrolling or console errors, the nav,
 # the home page's code boxes on a phone, the buy page's consent and Pay button, and the rules page read once.
-#   npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var SITE_PASSWORD: &
+#   npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var SITE_PASSWORD: [--var STRIPE_EGG_PRICE_ID:price_x] &
 #   python3 qa/site.py http://127.0.0.1:8790/
 import sys
 from playwright.sync_api import sync_playwright
 URL = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8790/").rstrip("/")
-PAGES = ["/", "/buy", "/rules", "/tour", "/contact", "/terms", "/privacy", "/refunds", "/cookies"]
+PAGES = ["/", "/buy", "/rules", "/tour", "/contact", "/terms", "/privacy", "/refunds", "/cookies", "/seal"]
 fails = []
 def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + (" — " + str(extra)[:300] if extra and not cond else ""))
@@ -44,6 +44,15 @@ with sync_playwright() as p:
     check("buy: no leftover 'pass' or 'room' in the customer's words", not any(w in pg.inner_text("main").lower() for w in (" pass ", " room")), pg.inner_text("main")[:200])
     pg.check("#c2"); pg.click("#pay"); pg.wait_for_timeout(1500)
     check("buy: with both ticks it asks the server (payments are off locally, so it explains)", pg.inner_text("#paymsg") != "" and "Tick" not in pg.inner_text("#paymsg"), pg.inner_text("#paymsg"))
+    # the broken seal: the QR code in the home page's picture leads to /seal, which remembers 10% off for the buy page
+    sp = b.new_context(viewport={"width": 390, "height": 844}).new_page(); sp.goto(URL + "/seal"); sp.wait_for_timeout(700)
+    on = sp.evaluate("fetch('/api/egg').then(r=>r.json()).then(j=>j.on)")
+    check("seal: the page names the reward, or says it isn't open", ("10% off" in sp.inner_text("main")) if on else ("isn’t open yet" in sp.inner_text("main")))
+    if on:
+        sp.click("#claim"); sp.wait_for_url("**/buy"); sp.wait_for_timeout(900)
+        check("seal → buy: one party at £9, crossed out from £10, with the seal named", "£9" in sp.inner_text("#p1") and "£9" in sp.inner_text("#pay") and sp.is_visible("#eggnote"))
+        sp.check("input[value=sub]"); sp.wait_for_timeout(100)
+        check("…a Regular pays the usual £20", "£20 a month" in sp.inner_text("#pay") and not sp.is_visible("#eggnote"))
     b.close()
 print("RESULT: " + ("CLEAN" if not fails else "FAILED " + str(len(fails))))
 sys.exit(1 if fails else 0)

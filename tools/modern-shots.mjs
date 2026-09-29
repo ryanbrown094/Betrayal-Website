@@ -3,7 +3,7 @@ import { newGame, join, act, tick, viewFor } from "../worker/src/modern.js";
 let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, ctx = { rnd, dict: null };
 let now = 1e12; const s = newGame(now, rnd, { courses: false }), ids = [];
 for (const n of ["Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess", "Oliver"]) ids.push(join(s, n, now, rnd).id);
-const out = {}, code = "K7Q2XM", v = (k, pid) => (out[k] = { code, site: "thebetrayal.co.uk", host: viewFor(s, pid, now), tv: viewFor(s, null, now) });
+const out = {}, code = "K7Q2XM", v = (k, pid) => (out[k] = { code, site: "thebetrayal.co.uk", qr: "https://thebetrayal.co.uk/seal", host: viewFor(s, pid, now), tv: viewFor(s, null, now) });
 v("lobby", ids[0]);
 act(s, ids[0], { a: "start" }, now, ctx); v("oath", ids[1]);
 for (const id of ids) act(s, id, { a: "optin", v: id === ids[3] ? "yes" : "any" }, now, ctx);
