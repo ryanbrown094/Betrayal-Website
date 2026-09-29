@@ -39,7 +39,7 @@ done
   cat src/fonts.css src/modern.css
   printf '</style>\n</head>\n<body>\n<div id="app"></div>\n<script>\n"use strict";\n'
   sed -n '/^const esc = /p' src/core.js
-  cat src/art.js src/modern-ui.js
+  cat src/art.js src/qr.js src/audio.js src/modern-ui.js
   printf '</script>\n</body>\n</html>\n'
 } > worker/public/modern.html
 mkdir -p worker/public/media && if [ -d media/web ]; then cp media/web/* worker/public/media/; fi

@@ -27,7 +27,7 @@ svg { display: block }
 .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--sc); font-size: 14px; letter-spacing: .08em; color: var(--tallow2); padding-bottom: 10px; border-bottom: 1px solid #2a1a2c; margin-bottom: 18px }
 .top .me { display: flex; align-items: center; gap: 8px; color: var(--tallow); text-transform: none; letter-spacing: 0; font-family: var(--ui); font-size: 16px }
 .top .me .seal { width: 28px; height: 28px }
-.top .pot { color: var(--brass2) }
+.top .pot { color: var(--brass2); white-space: nowrap }
 .eyebrow { font-family: var(--sc); font-size: 14px; letter-spacing: .16em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
 h1, h2 { font-family: var(--book); font-weight: 400; margin: 0 0 10px; line-height: 1.12 }
 h1 { font-size: 34px } h2 { font-size: 27px }
@@ -134,3 +134,11 @@ body.tv.night { background: #030204 }
 .tvsnap .ico { width: 40vh; height: 40vh; color: var(--brass2) }
 .tvcount { font-family: var(--sc); letter-spacing: .1em; color: var(--tallow2); font-size: 2.8vh }
 .tvlog { position: fixed; right: 2vw; bottom: 2vh; font-size: 1.8vh; color: var(--mist) }
+
+/* ---------- the host's tools, the TV's buttons, the QR code ---------- */
+.tool { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #25172a } .tool > div { flex: 1 } .tool .btn { flex: none }
+.tbtn { min-height: 34px; padding: 4px 10px; font-size: 14px; font-weight: 600 }
+.tvbtns { position: fixed; left: 2vw; bottom: 2vh; display: flex; gap: 8px; z-index: 3; opacity: .55 } .tvbtns:hover { opacity: 1 }
+.tvbtns .btn { width: auto; min-height: 36px; font-size: 14px }
+.qrbox { width: 30vh; height: 30vh; padding: 0; border-radius: 1.4vh; overflow: hidden; box-shadow: 0 0 6vh rgba(230,165,140,.18) } .qrbox svg { width: 100%; height: 100% }
+.tvcode .c { margin-bottom: 1.5vh }

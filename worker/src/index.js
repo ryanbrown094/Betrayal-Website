@@ -96,8 +96,8 @@ export class GameState {
     }
     // the admin page's views of a room (the router only forwards these from /api/admin/…)
     if (path === "/_admin/room") {
-      const [st, settings, recN, evN] = await Promise.all(["state", "settings", "recN", "evN"].map((k) => this.storage.get(k)));
-      return json({ meta, state: st ?? null, settings: settings ?? null, recN: recN || 0, evN: evN || 0 });
+      const [st, settings, recN, evN, modern] = await Promise.all(["state", "settings", "recN", "evN", "modern"].map((k) => this.storage.get(k)));
+      return json({ meta, state: st ?? null, modern: modern ?? null, settings: settings ?? null, recN: recN || 0, evN: evN || 0 });
     }
     if (path === "/_admin/recs") {
       const rows = []; for (const [k, v] of await this.storage.list({ prefix: "recl:" })) rows.push({ n: +k.slice(5), ...v });
@@ -198,7 +198,15 @@ export class GameState {
       s = this.mstate = (await this.storage.get("modern")) ?? null;
     }
     ctx.dict = this.dict;
-    const now = Date.now(), save = async () => { this.mstate = s; await this.storage.put("modern", s); };
+    const now = Date.now(), save = async () => {
+      this.mstate = s; await this.storage.put("modern", s);
+      // recorded for the admin replay: a new screen at once, and otherwise at most every 15 seconds
+      const it = s.trial && s.trial.item, key = [s.phase, s.round, s.trial && s.trial.stage, s.trial && s.trial.i, it && it.stage, s.log[0] && s.log[0].t].join("|");
+      if (key !== this.mkey || now - (this.mrecAt || 0) > 15000) {
+        this.mkey = key; this.mrecAt = now;
+        await this.record({ mode: "modern", code: meta.room, log: s.log.slice(0, 1).map((x) => x.m), phase: s.phase, round: s.round, ver: s.ver, gid: s.gid, state: s, tv: M.viewFor(s, null, now), host: s.director ? M.viewFor(s, s.director, now) : null }, "modern");
+      }
+    };
     const tok = req.headers.get("X-Tok") || "", me = s && tok ? s.players.find((p) => p.tok === tok) : null;
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...(extra || {}) });
@@ -209,7 +217,12 @@ export class GameState {
       const booked = meta.pass && meta.pass !== "MASTER"; // a room from the master code or open access has no booking to prove
       if (booked && passKey(String(body.pass || "")) !== meta.pass) return json({ error: "Only the person who booked this Table can set it up." }, 403);
       if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
-      if (!s) { s = M.newGame(now, Math.random, {}); await save(); }
+      if (!s) {
+        s = M.newGame(now, Math.random, {});
+        // testing rooms (the master code) may fix the order of the Trials, so a test can play a known one
+        if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
+        await save();
+      }
       if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
       const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
@@ -242,7 +255,7 @@ export class GameState {
       }
       const r = M.act(s, me.id, body, now, ctx);
       if (r && r.error) return json({ ...r, view: viewOf(s, me, now) }, 409);
-      M.tick(s, now, ctx); await save(); return view();
+      M.tick(s, now, ctx); await save(); return view(r && r.peek ? { peek: r.peek } : null);
     }
     if (path === "/api/m" && req.method === "GET") {
       const it = s.trial && s.trial.item, live = it && it.k === "snap" && it.stage === "open";
