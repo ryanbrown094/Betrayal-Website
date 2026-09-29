@@ -23,7 +23,7 @@ KEEP_DAYS = "7"          # then the room is read-only for this many days, then d
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 STRIPE_PRICE_ID = "price_1UL4Ds9eT91BoTqdAel9htGQ"  # the £10 party pass's Stripe Price — LIVE MODE. Empty = checkout closed
 STRIPE_SUB_PRICE_ID = "price_1UKk9M9eT91BoTqd9P9iSm1I"  # the £20/month unlimited subscription's Price — LIVE MODE; empty = subscription not on sale
-STRIPE_EGG_PRICE_ID = ""  # the broken seal's £9 Price (10% off one party, same product) — LIVE MODE; empty = the seal offers no discount
+STRIPE_EGG_PROMO = "promo_1UL5tM9eT91BoTqdS0J7RLMs"  # the broken seal's promotion code (QR10, 10% off one party), applied for buyers who found /seal — LIVE MODE; empty = the seal offers no discount
 ADMIN_USER = "ryanab94.admin"  # the /admin page's username; its password is the ADMIN_PASSWORD secret
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_PASSWORD, ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
@@ -37,7 +37,7 @@ KEEP_DAYS = "1"
 SITE_PASSWORD = "candlelight"
 STRIPE_PRICE_ID = ""
 STRIPE_SUB_PRICE_ID = ""
-STRIPE_EGG_PRICE_ID = ""
+STRIPE_EGG_PROMO = ""
 
 [[previews.durable_objects.bindings]]
 name = "GAME"

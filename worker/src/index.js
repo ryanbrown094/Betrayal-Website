@@ -657,12 +657,12 @@ async function route(req, env) {
     }
     // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
     // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
-    // the broken seal: the QR code in the home page's picture leads to /seal, which gives 10% off one party. It's a second
-    // Stripe Price (STRIPE_EGG_PRICE_ID), since Managed Payments takes no promotion codes. Unset, the seal offers nothing.
-    if (p === "/api/egg") return json({ on: !!env.STRIPE_EGG_PRICE_ID });
+    // the broken seal: the QR code in the home page's picture leads to /seal, which gives 10% off one party: Stripe's
+    // promotion code STRIPE_EGG_PROMO (promo_…, the code QR10), applied for the buyer. Unset, the seal offers nothing.
+    if (p === "/api/egg") return json({ on: !!env.STRIPE_EGG_PROMO });
     if (p === "/api/checkout" && req.method === "POST") {
-      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", egg = !sub && b.egg === true && !!env.STRIPE_EGG_PRICE_ID;
-      const price = sub ? env.STRIPE_SUB_PRICE_ID : egg ? env.STRIPE_EGG_PRICE_ID : env.STRIPE_PRICE_ID;
+      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", egg = !sub && b.egg === true && !!env.STRIPE_EGG_PROMO;
+      const price = sub ? env.STRIPE_SUB_PRICE_ID : env.STRIPE_PRICE_ID;
       if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Tables go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
       const ip = req.headers.get("CF-Connecting-IP") || "?";
@@ -675,9 +675,17 @@ async function route(req, env) {
           client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), consent_terms: at, consent_supply: at },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
-        // API version, and nothing it refuses (invoice details, extra descriptions, promotion codes) — just what the game
-        // needs: the pass in the metadata (and, for a subscription, the subscription's metadata, which its webhooks bring back).
-        const cs = await stripePost(env, "checkout/sessions", sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" }, MANAGED_PAYMENTS_VERSION);
+        // API version, and nothing it refuses (invoice details, extra descriptions) — just what the game needs: the pass in
+        // the metadata (and, for a subscription, the subscription's metadata, which its webhooks bring back).
+        const params = sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" };
+        let cs;
+        if (egg) {
+          // the seal's discount; if Stripe won't take it, the sale still goes ahead at the full price (shown on Stripe's page
+          // before paying), and the admin's error log says why
+          try { cs = await stripePost(env, "checkout/sessions", { ...params, discounts: [{ promotion_code: env.STRIPE_EGG_PROMO }] }, MANAGED_PAYMENTS_VERSION); }
+          catch (e) { logErr(env, { src: "stripe", where: "checkout", msg: "Stripe refused the broken seal's promotion code, so this buyer was charged full price: " + e.message }); delete params.metadata.egg; }
+        }
+        if (!cs) cs = await stripePost(env, "checkout/sessions", params, MANAGED_PAYMENTS_VERSION);
         await call(env, "/pending-session", { pass, session: cs.id });
         return json({ url: cs.url });
       } catch (e) {
