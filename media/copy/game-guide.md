@@ -46,7 +46,7 @@ Nobody is told how many Forsworn there are.
 ### 4.1 The Trial
 - The phone shows the next Trial in a pre-dealt running order (Most Likely To first, blindfold games later when Ghosts exist, no repeats until the pool is used). The Keeper can swap it.
 - The Keeper reads the brief; the TV shows the rules, then **the prize**, then the game.
-- **Points** go into the Purse: each Trial offers a share of what’s left to the Purse target, so the Purse fills steadily over the evening.
+- **Points** go into the Purse: each Trial offers a share of what’s left to the Purse target, so the Purse fills steadily over the evening. The Loyal, if they win, take what they built; the Forsworn, if they win, take what it **fell short** of the target, so every point they sabotage is theirs. The prize tiers follow the same amount.
 - **Wrong shouts** (Rapid Quiz, Snap, What Changed?) cost the Purse 50 each. By default only a Forsworn’s wrong shout costs anything, so a shrinking Purse is a clue. The room hears the total, never whose.
 - Some rounds have two Trials (fixed at setup, or “by the clock”: a second one when the evening is running ahead of time). The Short game plays one Trial a round.
 
@@ -109,7 +109,7 @@ An unclaimed Casting Vote or Crown comes round again on the next Trial. The Keep
 - **The prize:** the Keeper can set up to three at setup, and the Purse decides which is won: the prize, a better one if the Purse reaches half its target, the best if it’s full. They stay secret until the end.
 - **The Unmasking:** seals turn one by one (the Keeper holds a button for the drumroll).
   - **Only Loyal left:** the Loyal win, split the Purse, and play rock, paper, scissors for the prize if there are two or more.
-  - **A Forsworn left:** the Forsworn win.
+  - **A Forsworn left:** the Forsworn win, and take what the Purse fell short.
   - **Two or more Forsworn left: Honour or Betray.** Each chooses in secret. All honour: split the Purse, rock, paper, scissors for the prize. One betrays: they take everything. Two or more betray: it passes to the Ghosts who named a Forsworn (who then face the same question), or to nobody.
 - **The roll:** every player’s true role on the TV, converted Forsworn marked.
 

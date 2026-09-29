@@ -10,7 +10,8 @@ function morph(from, to) {
   for (let i = 0; i < tc.length; i++) {
     const t = tc[i], f = from.childNodes[i];
     if (!f) { from.appendChild(t); continue }
-    if (f.nodeType !== t.nodeType || f.nodeName !== t.nodeName || (f.nodeType === 1 && f.getAttribute("data-k") !== t.getAttribute("data-k"))) { from.replaceChild(t, f); continue }
+    // a different id is a different element: reusing it would carry over what was typed in it (a prize into a name box)
+    if (f.nodeType !== t.nodeType || f.nodeName !== t.nodeName || (f.nodeType === 1 && (f.getAttribute("data-k") !== t.getAttribute("data-k") || f.id !== t.id))) { from.replaceChild(t, f); continue }
     if (f.nodeType !== 1) { if (f.nodeValue !== t.nodeValue) f.nodeValue = t.nodeValue; continue }
     morph(f, t);
   }
@@ -42,7 +43,7 @@ const RULES_TV = h => [
   ["The Loyal", "must find them. Each Reckoning, chalk a name — whoever gets the most votes is exiled and reveals their role." + (state && aliveOf(state).length > 16 ? " While more than sixteen sit at the table, every Reckoning exiles two." : "")],
   ["Trials", "grow the Purse. Some hide Sanctuary: whoever holds it cannot be poisoned that night."],
   ["Blindfolds", "on when " + h + " says. If you feel a tap, do what the screen says. Never speak."],
-  ["The end:", "a Forsworn still standing takes the prize. Exile them all and the Loyal win it. What it is stays secret until it’s won."],
+  ["The end:", "a Forsworn still standing takes the prize, and every point the Purse fell short. Exile them all and the Loyal win it, and the Purse."],
   ghostsOn() ? ["The dead", "— their candles out — become Ghosts. They watch, judge and perform; never vote. Blindfolds on when yours are."] : ["The dead", "— their candles out — leave the table. No voting, no whispering, no hints from the side."],
   ["The Interval", "comes between the Trials and the vote. The Forsworn may be carrying a secret task. Watch who is trying too hard."],
   ["At the end", "with four left, you vote TRUST or DOUBT. Only a unanimous TRUST stops the game."]
@@ -211,7 +212,7 @@ function tvView(s) {
     }
     case "night0": { const sc = NIGHT0_(hostOf(s)), st = s.night ? s.night.step : 0; v.night = true; v.scene = "night"; v.key += st; v.sfx = st === sc.length - 1 ? "chime" : null; v.html = nightSlide(sc, st); break }
     case "day":
-      v.html = `<div class="eyebrow fx-fade">round ${s.round}${isFinal(s) ? " — the final" : ""}</div><h1 class="fx-title">${isFinal(s) ? "The last day at the house" : "A new day at the house"}</h1><div class="rule"></div><div class="sub fx-rise" style="--d:.7s">${(s.roundMissions || 0) ? "Another Trial. Nobody sits down yet." : (s.tiers || (s.prizes || []).map(x => x.at)).length ? "Chalkboards ready. The fuller the Purse, the better the prize." : "Chalkboards ready. The Purse only grows if you work together."}</div>`; break;
+      v.html = `<div class="eyebrow fx-fade">round ${s.round}${isFinal(s) ? " — the final" : ""}</div><h1 class="fx-title">${isFinal(s) ? "The last day at the house" : "A new day at the house"}</h1><div class="rule"></div><div class="sub fx-rise" style="--d:.7s">${(s.roundMissions || 0) ? "Another Trial. Nobody sits down yet." : (s.tiers || (s.prizes || []).map(x => x.at)).length ? "Chalkboards ready. The fuller the Purse, the better the Loyal’s prize; the emptier, the better the Forsworn’s." : "Chalkboards ready. The Purse only grows if you work together."}</div>`; break;
     case "mission": v.scene = "mission"; missionTV(s, v); if (v.night) v.scene = "night"; break;
     case "shield": {
       const c = s.shieldCard, g = ghostsOf(s).length > 0, cer = c.mode === "witness" ? WITNESSNOW_(hostOf(s), g, c) : CEREMONY_(hostOf(s), g, c);
@@ -307,7 +308,7 @@ function tvView(s) {
     }
     case "final": {
       // the pot rides on the prize line's last sentence, so the 14-player roll still fits
-      const potSplitTV = s => { const ids = (s.prizeIds || []).map(id => P2(s, id)).filter(Boolean); return ids.length && s.pot ? (ids.length > 1 ? " The Purse splits " + numWord(ids.length) + " ways: " + moneyOf(s, s.potEach || 0) + " each." : " With the Purse: " + moneyOf(s, s.pot) + ".") : "" };
+      const potSplitTV = s => { const ids = (s.prizeIds || []).map(id => P2(s, id)).filter(Boolean); return ids.length && wonPot(s) ? (ids.length > 1 ? " The Purse splits " + numWord(ids.length) + " ways: " + moneyOf(s, s.potEach || 0) + " each." : " With the Purse: " + moneyOf(s, wonPot(s)) + ".") : "" };
       const w = s.winner, tr = w === "cloaks", ps = s.players, cols = ps.length <= 4 ? ps.length : 4; // four across even for 14, so long names get room
       // the awards, once the host calls them
       if (s.finalStep === 1) {
@@ -318,11 +319,11 @@ function tvView(s) {
       const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer" : "Forsworn · by the Last Offer, round " + p.converted.round) : (many ? "Forsworn · Whisper" : "Forsworn · by a Whisper, round " + p.converted.round)) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
       v.scene = "final"; v.norail = true; v.tight = true; v.sfx = tr ? "sting" : "win"; v.flash = tr ? "red" : "gold"; v.waves = tr ? "red" : "gold";
       const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
-      const plabel = pt === undefined ? "the prize" : !pt ? "the Purse didn’t reach half: the prize" : pt.at >= 1 ? "a full Purse: the best prize" : "a half-full Purse: the better prize";
+      const plabel = pt === undefined ? "the prize" : tr ? (!pt ? "the Purse fell short by less than half: the prize" : pt.at >= 1 ? "an empty Purse: the best prize" : "a Purse short by half: the better prize") : !pt ? "the Purse didn’t reach half: the prize" : pt.at >= 1 ? "a full Purse: the best prize" : "a half-full Purse: the better prize";
       if (rw) { v.key += "·" + rw.id; v.sfx = "win"; v.flash = "gold"; v.waves = "gold" }
       const prizeLine = rw ? `<div class="prizeline fx-rise" style="--d:.6s"><span>takes home</span><b>${prz}</b></div>`
         : `<div class="prizeline fx-rise" style="--d:1.4s"><span>${plabel}</span><b>${prz}</b>${r ? `<em>Only one of it. ${r.ids.length <= 3 ? esc(andList(r.ids.map(id => P2(s, id)).filter(Boolean).map(p => p.name))) : cap1(numWord(r.ids.length)) + " winners"} — rock, paper, scissors for it.${esc(potSplitTV(s))}</em>` : s.prizeTo ? `<em>It goes to ${esc(s.prizeTo)}.${esc(potSplitTV(s))}</em>` : ""}</div>`;
-      v.html = rw ? `<div class="eyebrow fx-fade">the prize</div><h1 class="gold fx-slam ${hsize(rw.name, 10, 16)}">${esc(rw.name)}</h1>${prizeLine}` : `<div class="eyebrow fx-fade">the end</div><h1 class="${tr ? "blood" : "gold"} fx-slam">${tr ? "The Forsworn win" : "The Loyal win"}</h1>${many ? "" : `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Loyal built a Purse of " + moneyOf(s, s.pot) + " — and the Forsworn take it." : "Every Forsworn is gone. Purse: " + moneyOf(s, s.pot) + "."}</div>`}${prizeLine}${rw || many ? "" : ghostVerdictTV(s)}${!rw && ps.length <= 12 && (s.cloakMisses || (s.questTally && (s.questTally.done || s.questTally.failed))) ? `<div class="sub small">${[s.cloakMisses ? `Forsworn shouted <b>${s.cloakMisses}</b> wrong answer${s.cloakMisses === 1 ? "" : "s"} all night.` : "", s.questTally && (s.questTally.done || s.questTally.failed) ? `Errands: ${s.questTally.done} completed, ${s.questTally.failed} failed — in plain sight.` : ""].filter(Boolean).join(" ")}</div>` : ""}<div class="rolls ${huge ? "huge" : ps.length > 10 ? "many" : ""}" style="grid-template-columns:repeat(${huge ? 6 : cols},minmax(0,1fr))">${ps.map((p, i) => `<div class="${p.role === "cloak" ? "t" : "f"}" style="--d:${(1.5 + i * Math.min(0.7, 20 / ps.length)).toFixed(1)}s">${ART.seal(p)}<span><b>${esc(p.name)}</b><small>${how(p)}${p.left ? " · left" : p.alive ? "" : " · out"}</small></span></div>`).join("")}</div>`; break;
+      v.html = rw ? `<div class="eyebrow fx-fade">the prize</div><h1 class="gold fx-slam ${hsize(rw.name, 10, 16)}">${esc(rw.name)}</h1>${prizeLine}` : `<div class="eyebrow fx-fade">the end</div><h1 class="${tr ? "blood" : "gold"} fx-slam">${tr ? "The Forsworn win" : "The Loyal win"}</h1>${many ? "" : `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Loyal built a Purse of " + moneyOf(s, s.pot) + " of " + moneyOf(s, s.potCap || 2000) + " — and the Forsworn take the " + moneyOf(s, wonPot(s)) + " it fell short." : "Every Forsworn is gone. Purse: " + moneyOf(s, s.pot) + "."}</div>`}${prizeLine}${rw || many ? "" : ghostVerdictTV(s)}${!rw && ps.length <= 12 && (s.cloakMisses || (s.questTally && (s.questTally.done || s.questTally.failed))) ? `<div class="sub small">${[s.cloakMisses ? `Forsworn shouted <b>${s.cloakMisses}</b> wrong answer${s.cloakMisses === 1 ? "" : "s"} all night.` : "", s.questTally && (s.questTally.done || s.questTally.failed) ? `Errands: ${s.questTally.done} completed, ${s.questTally.failed} failed — in plain sight.` : ""].filter(Boolean).join(" ")}</div>` : ""}<div class="rolls ${huge ? "huge" : ps.length > 10 ? "many" : ""}" style="grid-template-columns:repeat(${huge ? 6 : cols},minmax(0,1fr))">${ps.map((p, i) => `<div class="${p.role === "cloak" ? "t" : "f"}" style="--d:${(1.5 + i * Math.min(0.7, 20 / ps.length)).toFixed(1)}s">${ART.seal(p)}<span><b>${esc(p.name)}</b><small>${how(p)}${p.left ? " · left" : p.alive ? "" : " · out"}</small></span></div>`).join("")}</div>`; break;
     }
   }
   if (v.html) v.html = kw(v.html, s); // murder or poison, as the host chose

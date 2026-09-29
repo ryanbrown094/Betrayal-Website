@@ -185,7 +185,7 @@ function lobby(me) {
   <label class="l">Sanctuary</label>${two("shield", ["secret", "Secret"], ["public", "Public"])}
   <p class="small">${o.shield === "public" ? "Everyone sees who won Sanctuary." : "Only the winner knows they hold Sanctuary. (A Forsworn winner gets nothing, and learns so.)"}</p>
   <label class="l" for="prize">The prize</label><input class="f" id="prize" maxlength="80" value="${esc(o.prize || "")}" data-opt="prize">
-  <details class="more"${(o.prizes || []).length ? " open" : ""}><summary>Better prizes for a fuller Purse</summary><p class="small">Optional. Nobody sees these until the end: the TV only says a fuller Purse wins a better prize.</p>
+  <details class="more"${(o.prizes || []).length ? " open" : ""}><summary>Better prizes for a fuller Purse</summary><p class="small">Optional. If the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end.</p>
   <label class="l" for="tier1">At a half-full Purse</label><input class="f" id="tier1" maxlength="80" placeholder="e.g. champagne" value="${esc(((o.prizes || []).find((x) => x.at === 0.5) || {}).what || "")}" data-tier="1">
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
   <label class="l" style="margin-top:12px">Twists</label>${two("twists", [true, "On"], [false, "Off"])}
@@ -202,14 +202,14 @@ function roleCard(me) {
   if (!peek) return `<div class="veil" data-a="peek"><div><div class="eyebrow">your role</div><h2>Hold your phone close</h2><p class="sub">Tap here when nobody can see your screen.</p></div></div>`;
   const f = me.role === "f";
   return `<div class="card role ${f ? "f" : "l"}"><div class="sigil">${ART.bigSeal(f ? "t" : "good", f ? "blade" : "candle")}</div><div class="eyebrow">you are</div><h1>${f ? "Forsworn" : "Loyal"}</h1>
-  <p class="sub">${f ? "You took the Oath and never meant it. Each night, choose who dies on your phone. Blend in, vote with the table, and reach the end unmasked to steal the prize." : "You are true to the table. Win Trials to fill the Purse, find the Forsworn, and exile them at the Reckoning before they pick you off."}</p>
+  <p class="sub">${f ? "You took the Oath and never meant it. Each night, choose who dies on your phone. Blend in, vote with the table, and reach the end unmasked to steal the prize, and every point the Purse falls short of its target. So sabotage the Trials, quietly." : "You are true to the table. Win Trials to fill the Purse (if you win, it’s yours; if the Forsworn win, they take whatever it falls short), find the Forsworn, and exile them at the Reckoning before they pick you off."}</p>
   ${f ? (me.allies && me.allies.length ? `<p>Your fellow Forsworn: <b>${me.allies.map((a) => esc(a.name)).join(", ")}</b></p>` : `<p>You are the only Forsworn. Trust nobody.</p>`) : ""}
   ${btn("Got it — hide my role", "ack")}</div>`;
 }
 function day(me) {
   let h = `<div class="eyebrow">${V.final ? "the final" : "round " + V.round}</div><h1>${V.final ? "The final" : V.roundTrials ? "Back at the table" : "A new day"}</h1>
   <p class="sub">${V.final ? "Five or fewer remain. Exiles are no longer revealed. When the table trusts everyone left, it ends." : "Talk, plot, and watch each other."}</p>${people(V.players)}`;
-  h += `<p class="small" style="margin-top:12px">Next: <b>${esc(V.next || "")}</b>${V.tiers ? " · the fuller the Purse, the better the prize" : ""}</p>`;
+  h += `<p class="small" style="margin-top:12px">Next: <b>${esc(V.next || "")}</b>${V.tiers ? " · the Purse decides the prize" : ""}</p>`;
   if (!me.director) return h + waitHost();
   return h + `<div class="card dir"><div class="eyebrow">host</div><div class="stack">${btn("Begin: " + esc(V.next || "next"), "next", null, "big")}${btn("A short break first · 10 min", "break", "interval", "ghost sm")}</div></div>`;
 }
@@ -245,7 +245,7 @@ function peekScreen() {
 function trial(me) {
   const t = V.trial, it = t.item;
   if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1>${esc(t.title)}</h1><p>${esc(t.rules)}</p>
-    ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer you give costs the Purse 50. Sabotage, quietly.</div>` : ""}
+    ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer costs the Purse 50, and if you win, you take every point it falls short. Sabotage, quietly.</div>` : ""}
     <p class="sub">Starts in ${clock(t.introEnd)}</p>`;
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
@@ -401,7 +401,7 @@ function end(me) {
   const r = V.result, fw = r.winner === "forsworn";
   return `<div class="eyebrow">the end</div><h1 class="disp">${fw ? "The Forsworn win" : "The Loyal win"}</h1>
   <p class="sub">${r.how === "betrayed" ? "Betrayed at the last: " + r.to.map(esc).join("") + " takes it all." : r.how === "nobody" ? "Too many betrayers: nobody takes the prize." : r.to.length ? "The prize goes to " + r.to.map(esc).join(", ") + "." : ""}</p>
-  <div class="card center"><div class="eyebrow">the prize${r.tier ? " · a " + (r.tier >= 1 ? "full" : "half-full") + " Purse" : ""}</div><p class="ans">${esc(r.prize)}</p><p class="small">Purse ${r.pot}</p></div>
+  <div class="card center"><div class="eyebrow">the prize${r.tier ? " · a " + (r.tier >= 1 ? "full" : "half-full") + " Purse" : ""}</div><p class="ans">${esc(r.prize)}</p><p class="small">${fw ? "The Loyal built " + r.pot + " of " + r.cap + ": the Forsworn take the " + r.won + " it fell short." : "The Purse: " + r.pot + " of " + r.cap + "."}</p></div>
   ${me.won ? `<div class="banner sanct">You won.</div>` : ""}
   ${r.peeked && r.peeked.length ? `<p class="small">The host opened the roles in round ${r.peeked.join(", ")} (Tools, for when something went wrong).</p>` : ""}
   ${people(V.players.map((p) => ({ ...p, name: p.name + " · " + (p.role === "f" ? "Forsworn" : "Loyal") })))}
@@ -424,7 +424,7 @@ function tvBody(url) {
     case "lobby": return `<div class="eyebrow">join on your phone</div><div class="tvcode">${qr()}<div><div class="c num">${CODE}</div><div class="u">Scan, or go to <b>${url}</b></div></div></div>${tvPeople()}<p class="tvcount">${plural(V.players.length, "player")} · 6 to 24</p>`;
     case "oath": return `<div class="eyebrow">the oath</div><h1>Swear on your phones</h1><p class="sub">Would you like to be Forsworn? Nobody sees your answer.</p>${tvPeople((p) => p.optedIn)}`;
     case "roles": return `<div class="eyebrow">the deal</div><h1>Look at your role</h1><p class="sub">Hold your phone close. Tell no one.</p>${tvPeople((p) => p.acked)}`;
-    case "day": return `<div class="eyebrow">${V.final ? "the final" : "round " + V.round}</div><h1>${V.final ? "The final" : "Day " + V.round}</h1>${tvPeople(null, true)}<p class="tvcount">next: ${esc(V.next || "")}${V.tiers ? " · the fuller the Purse, the better the prize" : ""}</p>`;
+    case "day": return `<div class="eyebrow">${V.final ? "the final" : "round " + V.round}</div><h1>${V.final ? "The final" : "Day " + V.round}</h1>${tvPeople(null, true)}<p class="tvcount">next: ${esc(V.next || "")}${V.tiers ? " · the Purse decides the prize" : ""}</p>`;
     case "break": return `<div class="eyebrow">a break</div><h1>${esc(V.brk.name)}</h1><p>${clock(V.brk.end)}</p>`;
     case "trial": {
       const t = V.trial, x = t.item;
@@ -440,7 +440,7 @@ function tvBody(url) {
     case "trust": return `<div class="eyebrow">trust or doubt</div><h1>${V.trust.result ? (V.trust.result === "trust" ? "The table trusts" : "Doubt") : "Do you trust everyone left?"}</h1><p class="tvcount">${V.trust.result ? "" : V.trust.voted + " of " + V.trust.of + " chosen"}</p>`;
     case "unmask": return `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`;
     case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p>`;
-    case "end": { const r = V.result; return `<div class="eyebrow">the end</div><h1 class="disp">${r.winner === "forsworn" ? "The Forsworn win" : "The Loyal win"}</h1><h2>${esc(r.prize)}</h2><p class="sub">${r.to.length ? "to " + r.to.map(esc).join(", ") : "nobody takes it"}</p>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}${tvPeople(null, true)}${r.awards && r.awards.length ? `<ul class="tvscore">${r.awards.map((a) => `<li>${seal(a.id)}<span><b style="color:var(--brass2)">${esc(a.title)}</b> ${esc(a.name)}</span></li>`).join("")}</ul>` : ""}`; }
+    case "end": { const r = V.result; return `<div class="eyebrow">the end</div><h1 class="disp">${r.winner === "forsworn" ? "The Forsworn win" : "The Loyal win"}</h1><h2>${esc(r.prize)}</h2><p class="sub">${r.to.length ? "to " + r.to.map(esc).join(", ") : "nobody takes it"}${r.winner === "forsworn" ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}${tvPeople(null, true)}${r.awards && r.awards.length ? `<ul class="tvscore">${r.awards.map((a) => `<li>${seal(a.id)}<span><b style="color:var(--brass2)">${esc(a.title)}</b> ${esc(a.name)}</span></li>`).join("")}</ul>` : ""}`; }
   }
   return "";
 }

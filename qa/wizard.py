@@ -45,6 +45,7 @@ try:
         h.fill("#prize", "a bottle of wine"); h.fill("#prize3", "a night out"); nxt(); h.wait_for_timeout(60)
         check("→ who keeps: you, by default", step() == "keeper" and E("()=>setupDraft.keeper") == "me")
         h.click("text=A friend will keep"); h.wait_for_timeout(60); nxt(); h.wait_for_timeout(60)
+        check("what was typed on one page never lands in a box on the next (the prize isn't the Keeper's name)", E("()=>setupDraft.host") == "")
         check("a friend keeps, with no names: stays put", step() == "keeper" and "Keeper’s name" in E("()=>setupMsg"))
         h.fill("#hostn", "Sam"); h.fill("#mename", "Rory"); nxt(); h.wait_for_timeout(60)
         check("the host isn't in the players: says so", step() == "keeper" and "isn’t in the players" in E("()=>setupMsg"))

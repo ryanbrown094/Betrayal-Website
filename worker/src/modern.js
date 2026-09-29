@@ -52,7 +52,7 @@ const say = (s, line, now) => { s.log = [{ t: now, m: clip(line, 300) }, ...(s.l
 export function newGame(now, rnd, opts) {
   return {
     mode: "modern", v: 1, gid: Math.floor(rnd() * 1e9).toString(36), ver: 1, created: now, phase: "lobby", round: 0, final: false,
-    opts: { kill: "poison", shield: "secret", prize: "a bottle of champagne", prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: true, ...(opts || {}) },
+    opts: { kill: "poison", shield: "secret", prize: "a box of chocolates", prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: true, ...(opts || {}) },
     director: null, players: [], pot: 0, plan: [], planAt: 0, steps: [], stepAt: 0, total: 0, cast: null, crown: null, confess: null, peeked: [], done: {}, trial: null, brk: null, vote: null, reveal: null, night: null, dawn: null,
     trust: null, unmask: null, honour: null, result: null, stats: { wins: {}, against: {}, calls: {}, firstBlood: null, votes: [] }, log: [],
   };
@@ -378,13 +378,15 @@ function startUnmask(s, now) { s.phase = "unmask"; s.unmask = { order: alive(s).
 function finishGame(s, now) {
   const F = forsworn(s), win = F.length ? "forsworn" : "loyal";
   if (F.length >= 2 && !s.honour) { s.phase = "honour"; s.honour = { choices: {}, end: now + T(s, 90000) }; return; }
-  const tiers = (s.opts.prizes || []).filter((x) => x.what && s.pot >= x.at * s.opts.potCap), prize = tiers.length ? tiers[tiers.length - 1].what : s.opts.prize;
+  // the Loyal take the Purse they built; the Forsworn take what it fell short, so every point they sabotaged is theirs
+  const won = win === "forsworn" ? Math.max(0, s.opts.potCap - s.pot) : s.pot;
+  const tiers = (s.opts.prizes || []).filter((x) => x.what && won >= x.at * s.opts.potCap), prize = tiers.length ? tiers[tiers.length - 1].what : s.opts.prize;
   let to = win === "forsworn" ? F.map((p) => p.id) : alive(s).map((p) => p.id), how = null;
   if (s.honour) {
     const b = Object.entries(s.honour.choices).filter(([, v]) => v === "betray").map(([id]) => id);
     if (b.length === 1) { to = b; how = "betrayed"; } else if (b.length > 1) { to = []; how = "nobody"; } else how = "honoured";
   }
-  s.phase = "end"; s.result = { winner: win, prize, tier: tiers.length ? tiers[tiers.length - 1].at : 0, to, how, pot: s.pot, awards: awardsOf(s), peeked: (s.peeked || []).map((x) => x.round) };
+  s.phase = "end"; s.result = { winner: win, prize, tier: tiers.length ? tiers[tiers.length - 1].at : 0, to, how, pot: s.pot, won, cap: s.opts.potCap, awards: awardsOf(s), peeked: (s.peeked || []).map((x) => x.round) };
   say(s, (win === "forsworn" ? "The Forsworn win" : "The Loyal win") + " · prize: " + prize, now);
 }
 function awardsOf(s) {
@@ -458,7 +460,7 @@ export function act(s, pid, a, now, ctx) {
   const need = (ok, msg) => (ok ? null : { error: msg || "That can’t be done right now." });
   switch (a && a.a) {
     // --- the lobby and the oath
-    case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["poison", "murder"].includes(o.kill)) s.opts.kill = o.kill; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || "a bottle of champagne"; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
+    case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["poison", "murder"].includes(o.kill)) s.opts.kill = o.kill; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || "a box of chocolates"; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
     case "bots": { if (!dir || !s.test || s.phase !== "lobby") return need(false); addBots(s, Math.max(s.players.length + 1, +v || 8), now, rnd); return done(); }
     case "kick": { if (!dir || s.phase !== "lobby" || v === pid) return need(false); s.players = s.players.filter((p) => p.id !== v); return done(); }
     case "start": {
