@@ -1,6 +1,7 @@
 import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
+import * as M from "./modern.js";
 
 // The Betrayal's server (formerly Cloak & Candle). Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a party pass, which lives in the Registry (one Durable
@@ -126,6 +127,9 @@ export class GameState {
       return json({ ok: true });
     }
 
+    if (path === "/_mode") return json({ mode: (await this.storage.get("modern")) ? "modern" : (await this.storage.get("state")) ? "classic" : null });
+    if (path.startsWith("/api/m")) return this.modern(req, url, path, meta, room, expired);
+
     const current = (await this.storage.get("state")) ?? null;
     const pin = req.headers.get("X-Pin") || "";
     const ip = req.headers.get("CF-Connecting-IP") || "?";
@@ -175,12 +179,78 @@ export class GameState {
       if (!body || typeof body.state !== "object" || body.state === null) return text("Expected {state}", 400);
       if (JSON.stringify(body.state).length > 900000) return text("Game too large", 413);
       // two host phones, a stale phone, a wiped game: see rules.js
+      if (!current && (await this.storage.get("modern"))) return text("This Table is playing Modern", 409);
       const no = writeVerdict(current, body.state, current ? null : await this.storage.get("wiped"));
       if (no) return no.body ? json(no.body, no.status) : text(no.text, no.status);
       await this.storage.put("state", body.state); await this.record(body.state, current ? "save" : "start");
       return json({ state: body.state, auth: true });
     }
     return text("Method not allowed", 405);
+  }
+  // Modern (see modern.js): the game runs here. Every request first moves the clocks on (tick), then answers with what
+  // that phone may see. A phone proves who it is with the token it was given when it joined (X-Tok).
+  async modern(req, url, path, meta, room, expired) {
+    const ctx = { rnd: Math.random, dict: null };
+    let s = this.mstate || (this.mstate = (await this.storage.get("modern")) ?? null);
+    // the Longest Word dictionary, loaded the first time a word round is open (before any read-modify-write below)
+    if (s && s.trial && s.trial.item && s.trial.item.k === "word" && !this.dict && this.env.ASSETS) {
+      try { const t = await (await this.env.ASSETS.fetch("https://assets/words.txt")).text(); this.dict = { t: "\n" + t.replace(/\r/g, "") + "\n", has(w) { return this.t.includes("\n" + w + "\n"); } }; } catch { this.dict = null; }
+      s = this.mstate = (await this.storage.get("modern")) ?? null;
+    }
+    ctx.dict = this.dict;
+    const now = Date.now(), save = async () => { this.mstate = s; await this.storage.put("modern", s); };
+    const tok = req.headers.get("X-Tok") || "", me = s && tok ? s.players.find((p) => p.tok === tok) : null;
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const view = (extra) => json({ view: viewOf(s, me, now), room, ...(extra || {}) });
+    const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
+
+    if (path === "/api/m/create" && req.method === "POST") {
+      if (expired) return json({ error: "This Table has closed.", room }, 423);
+      const booked = meta.pass && meta.pass !== "MASTER"; // a room from the master code or open access has no booking to prove
+      if (booked && passKey(String(body.pass || "")) !== meta.pass) return json({ error: "Only the person who booked this Table can set it up." }, 403);
+      if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
+      if (!s) { s = M.newGame(now, Math.random, {}); await save(); }
+      if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
+      const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
+      s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
+    }
+    if (!s) return json({ none: true, classic: !!(await this.storage.get("state")), room });
+    if (M.tick(s, now, ctx)) await save();
+
+    if (path === "/api/m/join" && req.method === "POST") {
+      if (expired) return json({ error: "This Table has closed.", room }, 423);
+      // a phone that lost its place asks by name; the director lets it back in, and it collects a fresh token
+      if (body.req) { const r = (s.rejoin || []).find((x) => x.id === body.req); if (!r) return json({ error: "The host turned that request down.", gone: true }, 404); if (!r.tok) return json({ waiting: true }); s.rejoin = s.rejoin.filter((x) => x !== r); await save(); return json({ tok: r.tok }); }
+      if (s.phase !== "lobby") {
+        const name = String(body.name || "").trim().toLowerCase(), p = s.players.find((x) => x.name.toLowerCase() === name);
+        if (!p) return json({ error: "This game has already started, and nobody here is called that." }, 409);
+        s.rejoin = (s.rejoin || []).filter((x) => x.pid !== p.id).concat([{ id: Math.random().toString(36).slice(2, 10), pid: p.id, t: now }]).slice(-10); s.ver++; await save();
+        return json({ req: s.rejoin[s.rejoin.length - 1].id, waiting: true });
+      }
+      const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
+      s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
+    }
+    if (path === "/api/m/act" && req.method === "POST") {
+      if (expired) return json({ error: "This Table has closed.", room }, 423);
+      if (!me) return json({ error: "This phone isn’t in the game.", lost: true }, 403);
+      if (body.a === "letin" || body.a === "keepout") {
+        if (s.director !== me.id) return json({ error: "Only the host can do that." }, 403);
+        const r = (s.rejoin || []).find((x) => x.id === body.v); if (!r) return view();
+        if (body.a === "letin") { const p = s.players.find((x) => x.id === r.pid); p.tok = Array.from({ length: 24 }, () => "abcdefghjkmnpqrstuvwxyz23456789"[Math.floor(Math.random() * 31)]).join(""); r.tok = p.tok; }
+        else s.rejoin = s.rejoin.filter((x) => x !== r);
+        s.ver++; await save(); return view();
+      }
+      const r = M.act(s, me.id, body, now, ctx);
+      if (r && r.error) return json({ ...r, view: viewOf(s, me, now) }, 409);
+      M.tick(s, now, ctx); await save(); return view();
+    }
+    if (path === "/api/m" && req.method === "GET") {
+      const it = s.trial && s.trial.item, live = it && it.k === "snap" && it.stage === "open";
+      if (!live && url.searchParams.get("v") === String(s.ver) && url.searchParams.get("me") === (me ? me.id : "")) return json({ same: true, now });
+      const extra = me && s.director === me.id && s.rejoin && s.rejoin.length ? { rejoin: s.rejoin.filter((x) => !x.tok).map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {};
+      return view(extra);
+    }
+    return text("Not found", 404);
   }
 }
 
@@ -531,7 +601,7 @@ async function route(req, env) {
     }
     const locked = await gate(req, env); if (locked) return locked;
     const url = new URL(req.url), p = url.pathname;
-    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events)$/);
+    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events|m|m\/create|m\/join|m\/act)$/);
     if (g) {
       const code = g[1].toUpperCase(); if (!isRoom(code)) return json({ error: "No game with that code" }, 404);
       const inner = new URL(req.url); inner.pathname = "/api/" + g[2];
@@ -667,12 +737,16 @@ async function route(req, env) {
       return json({ error: "Not found" }, 404);
     }
     if (p.startsWith("/api/")) return json({ error: "Not found" }, 404);
-    // a Table: the game page (TV at /t/CODE, Keeper at /t/CODE#keeper; the old /g/ addresses still work)
-    if (/^\/[gt]\/[A-Za-z0-9]{6}\/?$/.test(p)) {
+    // a Table: the game page (TV at /t/CODE, Keeper at /t/CODE#keeper; the old /g/ addresses still work). A Modern
+    // Table's /t/CODE is its TV, and /m/CODE is where its phones play; /join is Modern's "enter the code" page.
+    if (/^\/[gtm]\/[A-Za-z0-9]{6}\/?$/.test(p)) {
       const code = p.slice(3, 9).toUpperCase();
       if (p.slice(3, 9) !== code) return Response.redirect(url.origin + p.slice(0, 3) + code + url.search + url.hash, 301);
-      return env.ASSETS.fetch(new Request(url.origin + "/play.html", req));
+      let modern = p[1] === "m";
+      if (!modern && isRoom(code)) { const r = await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_mode"); modern = r.ok && (await r.json()).mode === "modern"; }
+      return env.ASSETS.fetch(new Request(url.origin + (modern ? "/modern.html" : "/play.html"), req));
     }
+    if (p === "/join" || p === "/join/") return env.ASSETS.fetch(new Request(url.origin + "/modern.html", req));
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour)\/?$/);
