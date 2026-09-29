@@ -164,7 +164,7 @@ function phase(me) {
   switch (V.phase) {
     case "lobby": return lobby(me);
     case "oath": return me.optIn ? `<h2>Sworn</h2><p class="sub">Waiting for everyone to take the Oath.</p>${people(V.players, (p) => p.optedIn)}${tally((p) => p.optedIn, "sworn")}${V.me.director ? `<p class="small">Someone stuck? Tools can deal the roles now.</p>` : ""}`
-      : `<div class="eyebrow">the oath</div><h2>Would you like to be Forsworn?</h2><p class="sub">The Forsworn are the traitors: they lie all night, choose who dies, and try to steal the prize. Nobody sees your answer. The game uses it when it deals the roles, but it can’t always give everyone what they asked for.</p>
+      : `<div class="eyebrow">the oath</div><h2>Would you like to be Forsworn?</h2><p class="sub">The Forsworn lie all night, choose who dies, and try to steal the prize. Nobody sees your answer. The game uses it when it deals the roles, but it can’t always give everyone what they asked for.</p>
         <div class="stack">${btn("Yes, make me Forsworn", "optin", "yes")}${btn("I’d rather be Loyal", "optin", "no", "ghost")}${btn("Either way", "optin", "any", "dark")}</div>`;
     case "roles": return roleCard(me);
     case "day": return day(me);

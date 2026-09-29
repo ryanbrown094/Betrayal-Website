@@ -102,6 +102,7 @@ def oath(w, h):
       <div class=eyebrow style="font-size:26px;margin-top:28px">a dinner-party game</div>
       <div class=h style="font-size:{124 if tall else 112}px;margin-top:{40 if tall else 26}px">Everyone swore<br>an oath.</div>
       <div class=say style="font-size:{64 if tall else 56}px;margin-top:{34 if tall else 20}px;color:#F4C9B7">Not everyone meant it.</div>
+      <div class=body style="font-size:{36 if tall else 32}px;margin-top:{40 if tall else 24}px;max-width:900px">Everyone plays on their own phone. The host plays too.</div>
       <div style="flex:1"></div>
       <div style="margin-bottom:{70 if tall else 44}px">{candles(9, (2, 6), 150 if tall else 128, 30 if tall else 26)}</div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
@@ -110,17 +111,17 @@ def oath(w, h):
 def keeper(w, h):
     tall = h > 1500
     return f"""<div class=c style="width:{w}px;height:{h}px;{pad(tall)}">
-      <div class=eyebrow style="font-size:26px">for the host</div>
+      <div class=eyebrow style="font-size:26px">everyone plays</div>
       <div class=h style="font-size:{112 if tall else 100}px;margin-top:20px">Your phone<br>runs the game.</div>
-      <div class=say style="font-size:{40 if tall else 36}px;margin-top:26px;max-width:900px">Five questions to set up.<br>Every line to read. You just tap Next.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;margin-top:26px;max-width:900px">Scan the code. Type your name.<br>Your secret arrives on your screen.</div>
       <div style="flex:1"></div>
       <div class=card style="width:{880 if tall else 820}px;padding:{46 if tall else 38}px 50px">
-        <div class=label style="font-size:22px">say this</div>
-        <div class=say style="font-size:{46 if tall else 40}px;margin-top:16px;border-left:3px solid #E6A58C;padding-left:26px">“Blindfolds on. Hands flat on the table. If you feel my hand on your shoulder, you are Forsworn.”</div>
+        <div class=label style="font-size:22px">the oath</div>
+        <div class=say style="font-size:{46 if tall else 40}px;margin-top:16px;border-left:3px solid #E6A58C;padding-left:26px">Would you like to be Forsworn?</div>
         <div class=label style="font-size:22px;margin-top:30px;color:#8FA3B8">private · only you see this</div>
-        <div class=body style="font-size:{30 if tall else 27}px;color:#AFA198;margin-top:10px">12 at the Table · 3 Forsworn · poison tonight</div></div>
+        <div class=body style="font-size:{30 if tall else 27}px;color:#AFA198;margin-top:10px">Yes, make me Forsworn · I’d rather be Loyal · Either way</div></div>
       <div style="flex:1"></div>
-      <div class=body style="font-size:{32 if tall else 29}px;margin-bottom:{44 if tall else 30}px;color:#E8D0C8">Rather play? Hand the phone to a friend to keep.</div>
+      <div class=body style="font-size:{32 if tall else 29}px;margin-bottom:{44 if tall else 30}px;color:#E8D0C8">No blindfolds, no chalkboards. The host plays too.</div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">{FOOT}</div></div>"""
 
@@ -133,9 +134,9 @@ def price(w, h):
       <div class=say style="font-size:{40 if tall else 36}px;margin-top:22px">£15 books a Table for a party of eight or more.</div>
       <div class=eyebrow style="font-size:26px;margin-top:{80 if tall else 56}px">what you need</div>
       <ul class=need style="font-size:{42 if tall else 37}px;margin-top:18px;width:820px">
-        <li>A TV and a laptop</li><li>The host’s phone</li>
-        <li>A blindfold and a chalkboard each</li>
-        <li>A prize worth betraying a friend for</li></ul>
+        <li>Eight or more friends</li><li>A phone each</li>
+        <li>A prize worth betraying a friend for</li>
+        <li>A TV, if you like (it’s optional)</li></ul>
       <div style="flex:1"></div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">No app &nbsp;·&nbsp; no accounts &nbsp;·&nbsp; <b>{SITE}</b></div></div>"""
@@ -151,7 +152,7 @@ def exile(w, h):
       <div style="flex:1"></div>
       <div style="display:grid;grid-template-columns:repeat(5,{s}px);gap:{56 if tall else 40}px {40 if tall else 34}px">{ring}</div>
       <div style="flex:1"></div>
-      <div class=say style="font-size:{40 if tall else 36}px;max-width:920px">Chalk a name. Turn the boards one by one.<br>Watch your friends’ faces as the count climbs.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;max-width:920px">Talk. Accuse. Defend.<br>Then everyone votes on their phone.</div>
       <div style="height:{60 if tall else 40}px"></div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">{FOOT}</div></div>"""
@@ -167,7 +168,7 @@ def card(w, h):
         <div style="width:100%;height:100%">{svg.replace('<svg ', '<svg style="width:100%;height:100%" ')}</div></div>
       <div class=foot style="font-size:40px;margin-top:44px;color:#E8D0C8">{SITE}</div>
       <div style="flex:1"></div>
-      <div class=foot style="font-size:34px"><b>Book a Table, £15</b> &nbsp;·&nbsp; best with 8–16 &nbsp;·&nbsp; no app</div></div>"""
+      <div class=foot style="font-size:34px"><b>Book a Table, £15</b> &nbsp;·&nbsp; a phone each &nbsp;·&nbsp; no app</div></div>"""
 
 def og(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;padding:70px 80px;justify-content:center">

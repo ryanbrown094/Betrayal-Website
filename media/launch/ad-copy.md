@@ -2,7 +2,7 @@
 
 Pair each set with the matching image in `ads/`: the `feed-1080x1350` file for feeds, the `story-1080x1920` file for Stories and Reels. Meta shows about 125 characters of primary text before “See more”, so the first line has to work on its own. Headlines stay under 40 characters and descriptions under 30.
 
-Every line follows `01-game/glossary-and-naming.md`: public words only, no TV programme or its words, no Hasbro Betrayal words, and the twists are never named or explained. Say the table size and the length honestly; never sell a big table or a long night.
+Every line follows `01-game/glossary-and-naming.md`: public words only, no TV programme or its words, no Hasbro Betrayal words, and the twists are never named or explained. Sell Modern: everyone plays on their own phone, nothing to buy, and the host plays too. Classic (a Keeper, blindfolds and chalk) gets a line at most. Say the table size and the length honestly; never sell a big table or a long night.
 
 ---
 
@@ -10,8 +10,8 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 **Primary text**
 - A: Everyone at your table swore an oath. Not everyone meant it. By the end of the night, you’ll know who.
-- B: Invite your friends to dinner. Give a few of them a secret. Watch what happens to the conversation.
-- C: A dinner-party game for 8 to 16 friends. A few are secretly Forsworn. The rest have one evening to find them.
+- B: Invite your friends to dinner. Send a few of them a secret, straight to their phone. Watch what happens to the conversation.
+- C: A dinner-party game for 8 to 16 friends, played on everyone’s phone. A few are secretly Forsworn. The rest have one evening to find them.
 
 **Headline:** A dinner-party game of loyalty and lies · or · Not everyone meant it
 **Description:** Book a Table · £15 a party
@@ -19,40 +19,43 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## 2 · Your phone runs the game (`02-your-phone-runs-the-game`)
 
 **Primary text**
-- A: Host a whole evening of lies without learning a single rule. Your phone gives you every line to read.
-- B: Five questions on your phone. Then the TV runs the show and you just tap Next.
-- C: Want to play as well? Hand the phone to a friend to keep. You’ll never see the roles.
+- A: Scan the code, type your name, and you’re in. Your role arrives on your phone, and nobody else sees it.
+- B: Hosting? You play too. The game plans its own Trials, courses and votes. Your phone just says when to begin.
+- C: Would you like to be Forsworn? The question arrives on every phone at once. Nobody sees your answer.
 
-**Headline:** Your phone runs the game · or · Five questions, then Start
+**Headline:** Everyone plays on their phone · or · The host plays too
 **Description:** No app · no accounts
 
 ## 3 · Under £2 a guest (`03-under-2-a-guest`)
 
 **Primary text**
-- A: One £15 Table runs the whole party for eight or more. Bring blindfolds, chalkboards and a prize worth betraying a friend for.
-- B: Cheaper than a round of drinks. One Table, one party, and a friend you’ll never quite trust again.
+- A: One £15 Table runs the whole party for eight or more. Everyone brings their phone; you bring a prize worth betraying a friend for.
+- B: Cheaper than a round of drinks. Nothing to buy, nothing to download, and a friend you’ll never quite trust again.
 
 **Headline:** Under £2 a guest · or · Book a Table for £15
-**Description:** Best with 8–16 · no downloads
+**Description:** Best with 8–16 · a phone each
 
 ## 4 · Who do you exile? (`04-who-do-you-exile`)
 
 **Primary text**
-- A: Chalk a name. Turn the boards one by one. Watch your best friend’s face as the count climbs.
-- B: Every round ends the same way: one name on every chalkboard, and one guest leaves the table.
+- A: Talk. Accuse. Defend. Then everyone votes on their phone, and your best friend waits for the count.
+- B: Every round ends the same way: one name on every phone, and one guest leaves the table.
 
-**Headline:** Who do you exile? · or · The boards turn one at a time
+**Headline:** Who do you exile? · or · Vote on your phone
 **Description:** Book a Table · £15 a party
 
 ## Extra lines (any set)
 
-- Short on time? The Short game takes about two hours, for 8 to 10 players.
+- At night, everyone taps their phone. Only the Forsworn’s taps count. Nobody can tell who’s choosing.
+- Poisoned? You’ll find out on your phone. Say nothing until dawn.
+- Charades, but only the actor’s phone knows the word.
 - Dinner, served in three courses. Betrayal, served in between.
-- The prize is secret until the end. How good it is depends on the Purse.
+- The Loyal build the Purse. The Forsworn take what it falls short. Sabotage, quietly.
+- Prefer it the old-fashioned way? Classic has a Keeper, blindfolds and chalk.
 
 ## Seasonal lines (weeks 3 and 4)
 
-- Halloween: This Halloween, skip the costumes. Blindfolds on, candles lit, and somebody at the table is lying.
+- Halloween: This Halloween, skip the costumes. Candles lit, phones out, and somebody at the table is lying.
 - Christmas: The office party that ends with your manager exiled. Book a Table for £15.
 - Christmas: Book a Table for the big family night. Three courses, a few lies, and a grudge that lasts until Boxing Day.
 - Christmas: Hosting more than once this season? Become a Regular: £20 a month, a new Table whenever you like.
@@ -62,7 +65,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## Set-up notes
 
 - **Objective:** start with **Traffic (link clicks)**. The Sales objective needs a Meta pixel and a purchase event on the site, and a pixel needs cookie consent. Switch objectives once the pixel is set up and consent is handled.
-- **Audience:** UK, 25–45, all genders. Either Advantage+ audience, or interests in dinner parties, murder mystery games, party games, board games, hen parties and party planning. Leave it broad and let the creative do the filtering.
+- **Audience:** UK, 25–45, all genders. Either Advantage+ audience, or interests in dinner parties, murder mystery games, party games, pub quizzes, board games, hen parties and party planning. Leave it broad and let the creative do the filtering.
 - **Placements:** Advantage+ placements, with the story images assigned to Stories and Reels.
 - **Link:** `https://thebetrayal.co.uk/?utm_source=meta&utm_medium=paid&utm_campaign=launch&utm_content=01-everyone-swore-an-oath`, with `utm_content` changed for each ad.
-- **Attribution:** a “How did you hear about us?” question (Instagram, Facebook, TikTok, a friend’s party, a friend told me, other) is more reliable than a pixel at this volume. Checkout can’t carry extra fields with Managed Payments on, so see `NEXT-STEPS.md` step 7 for where to ask it.
+- **Attribution:** a “How did you hear about us?” question (Instagram, Facebook, TikTok, a friend’s party, a friend told me, other) is more reliable than a pixel at this volume. Checkout can’t carry extra fields with Managed Payments on, so see `NEXT-STEPS.md` step 4 for where to ask it.

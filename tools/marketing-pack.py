@@ -48,6 +48,12 @@ def wcsv(path, rows):
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
 wcsv(P("01-game", "table-sizes.csv"), data["table"])
 wcsv(P("01-game", "trials.csv"), data["missions"])
+# Modern's Trials, as they are played on phones, straight from the Modern engine (worker/src/modern.js)
+modern = json.loads(subprocess.check_output(["node", "--input-type=module", "-e",
+    "import { TRIALS } from './worker/src/modern.js'; console.log(JSON.stringify(TRIALS))"], cwd=ROOT))
+TEMPT = "One word, in secret, on your phone: PURSE, for the table, or SELF, for yourself. Exactly one SELF takes Sanctuary and the Purse grows. Nobody: the Purse grows double. Two or more: nobody gets it, and the Purse shrinks."
+wcsv(P("01-game", "trials-modern.csv"), [{ "key": k, "title": t["title"], "carries_sanctuary": "yes" if t.get("prize") else "no", "needs_ghosts": "yes" if t.get("ghosts") else "no", "rules": t["rules"] } for k, t in modern.items()]
+     + [{ "key": "tempt", "title": "The Temptation (once a game)", "carries_sanctuary": "yes", "needs_ghosts": "no", "rules": TEMPT }])
 with open(P("01-game", "question-banks.md"), "w", encoding="utf-8") as f:
     total = sum(x["items"] for x in data["banks"])
     f.write("# Question banks\n\nEvery game draws from these, and nothing repeats within a game. Hosts can switch off any item that won’t suit their group.\n\n| bank | items |\n|---|---|\n")
@@ -93,12 +99,16 @@ cp("media/logos", P("02-brand", "logos")); cp("media/palette", P("02-brand", "pa
 for f in os.listdir("worker/public/fonts"): cp(os.path.join("worker/public/fonts", f), P("02-brand", "fonts", "web", f))
 cp("media/copy/fonts.md", P("02-brand", "fonts", "README.md")); cp("media/copy/OFL.txt", P("02-brand", "fonts", "OFL.txt"))
 for f in ("icon-180.png", "icon-512.png"): cp(os.path.join("worker/public", f), P("02-brand", "app-icons", f))
-for f in sorted(os.listdir("media/screenshots")):
-    cp(os.path.join("media/screenshots", f), P("04-screenshots", "tv" if f.startswith("tv-") else "phone", f))
+# Modern first (everyone on their own phone), then Classic (the Keeper's phone and the TV)
 for f in sorted(os.listdir("media/web")):
-    if f.startswith("tour-"): cp(os.path.join("media/web", f), P("04-screenshots", "web-sized", f[5:]))
+    if f.startswith("tour-modern-"): cp(os.path.join("media/web", f), P("04-screenshots", "modern", f[len("tour-modern-"):]))
+for f in sorted(os.listdir("media/screenshots")):
+    cp(os.path.join("media/screenshots", f), P("04-screenshots", "classic", "tv" if f.startswith("tv-") else "phone", f))
+for f in sorted(os.listdir("media/web")):
+    if f.startswith("tour-") and not f.startswith("tour-modern-"): cp(os.path.join("media/web", f), P("04-screenshots", "classic", "web-sized", f[5:]))
 cp("media/social", P("05-social"))
-cp("media/web/tv-table.jpg", P("05-social", "hero-tv-table.jpg"))
+cp("media/web/hero-modern.jpg", P("05-social", "hero-modern.jpg"))
+cp("media/web/tv-table.jpg", P("05-social", "classic-tv-table.jpg"))
 cp("media/launch", P("06-launch")); cp("media/copy/NEXT-STEPS.md", P("NEXT-STEPS.md"))
 
 with open(P("VERSION.txt"), "w") as f: f.write(f"The Betrayal {data['version']} · build {data['build']} · made {time.strftime('%d %B %Y')}\n")
