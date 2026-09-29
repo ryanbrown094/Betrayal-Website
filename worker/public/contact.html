@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260928223907">
-<title>Contact and company information — The Betrayal</title>
+<meta name="build" content="20260929080643">
+<title>Contact us — The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <style>
@@ -60,21 +60,38 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 1
 <div class="eyebrow">contact</div>
 <h1>Contact us</h1>
 
-<p>Questions about a pass, a problem on the night, or a refund: email us and we’ll reply within <span class="ph">[1–2]</span> working days. On a Friday or Saturday evening we aim to reply within <span class="ph">[an hour]</span>.</p>
+<p>Questions about an Invitation, a problem on the night, or a refund: send us a message here and we’ll reply to your email within 1–2 working days. On a Friday or Saturday evening we aim to reply within an hour. If something goes wrong mid-game, “Report a problem” on the Keeper’s phone or the TV is quickest: it sends us a snapshot of the screen too.</p>
 <div class="panel">
-<p style="margin:0"><strong>Email:</strong> <span class="ph">[contact email]</span></p>
-<p style="margin:8px 0 0">Please include your Invitation code (<code>CNDL-XXXX-XXXX</code>) or your Table code if you have one. Never send us your Keeper PIN.</p>
+<form id="cf">
+<label class="fl" for="cf-mail">Your email (so we can reply)</label><input id="cf-mail" type="email" autocomplete="email" required>
+<label class="fl" for="cf-code">Invitation or Table code <small>(if you have one)</small></label><input id="cf-code" autocomplete="off" autocapitalize="characters" spellcheck="false">
+<label class="fl" for="cf-msg">Your message</label><textarea id="cf-msg" rows="6" required></textarea>
+<p style="margin:10px 0 0;font-size:15px">Never send us your Keeper PIN.</p>
+<div style="margin-top:14px"><button class="btn" id="cf-send">Send message</button></div>
+<p class="cf-msg" id="cf-out" role="status"></p>
+</form>
 </div>
+<style>.fl { display: block; margin: 14px 0 6px; font-weight: 700; color: var(--ivory) } .fl small { font-weight: 400; color: var(--ivory2) }
+#cf input, #cf textarea { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui) }
+.cf-msg { min-height: 1.4em; margin: 12px 0 0 } .cf-msg.err { color: #ff9dbf }</style>
+<script>
+document.getElementById("cf").onsubmit = async e => {
+  e.preventDefault(); const out = document.getElementById("cf-out"), b = document.getElementById("cf-send"), v = id => document.getElementById(id).value.trim();
+  const code = v("cf-code").toUpperCase(), room = /^[A-Z0-9]{6}$/.test(code) ? code : null;
+  b.disabled = true; out.className = "cf-msg"; out.textContent = "Sending…";
+  try {
+    const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: v("cf-msg") + (code && !room ? "\n\nCode: " + code : ""), email: v("cf-mail"), room, url: "/contact", device: "contact form", ua: navigator.userAgent }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "It didn’t send");
+    e.target.reset(); out.textContent = "Thank you. Your message is in (reference " + j.id + "), and we’ll reply to your email.";
+  } catch (err) { out.className = "cf-msg err"; out.textContent = err.message + ". Please try again in a moment."; }
+  b.disabled = false;
+};
+</script>
 
-<h2>Lost your room?</h2>
-<p>Go to the <a href="/#start">home page</a> and enter your pass again: within its 48 hours, the same room comes back.</p>
+<h2>Lost your Table?</h2>
+<p>Go to the <a href="/#start">home page</a> and enter your Invitation again: within its 48 hours, the same Table comes back.</p>
 
-<h2>Company information</h2>
-<p>The Betrayal is a trading name of:</p>
-<p><strong><span class="ph">[Business or company name]</span></strong><br>
-<span class="ph">[Registered / trading address]</span><br>
-<span class="ph">[Company registered in England and Wales, number 00000000 — or delete if a sole trader]</span><br>
-<span class="ph">[VAT number GB000000000 — or delete if not VAT-registered]</span></p>
 </main>
 <footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>

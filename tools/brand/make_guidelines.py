@@ -195,7 +195,7 @@ pages.append(f"""<div class=page><div class=eb>10 · in use</div><h1>How it come
 pages.append(f"""<div class=page style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
   <div style="width:24mm">{svg('the-betrayal-mark-rosegold.svg').replace('<svg ', '<svg style="width:100%;height:auto" ')}</div>
   <div class=lead style="margin-top:8mm">Questions about the brand, or artwork we haven't supplied?</div>
-  <div style="margin-top:3mm;font-weight:700;color:#E6A58C">[name] · [email] · thebetrayal.co.uk</div>
+  <div style="margin-top:3mm;font-weight:700;color:#E6A58C">thebetrayal.co.uk/contact</div>
   <p class=cap style="margin-top:14mm;max-width:200mm">The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme, broadcaster or other game. Fonts: Grenze Gotisch, IM Fell DW Pica, Alegreya Sans and Alegreya Sans SC, SIL Open Font License 1.1.</p>
   <div class=foot><span>the betrayal · brand guidelines</span><span>version 2.0</span></div></div>""")
 

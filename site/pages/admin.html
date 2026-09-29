@@ -279,7 +279,7 @@ let reports = [];
 async function loadReports() { try { reports = (await api("reports")).reports || []; renderReports() } catch (e) { say($("#repmsg"), e.message, true) } }
 function renderReports() {
   const f = $("#rf").value, list = reports.filter(r => f === "all" || r.status === f), tb = $("#reprows"); tb.textContent = "";
-  for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.host ? "Keeper phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
+  for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.url === "/contact" ? "contact form" : r.host ? "Keeper phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
   $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "";
   say($("#repmsg"), list.length ? list.length + " reports" : "No reports here.");
 }
@@ -296,7 +296,7 @@ async function openReport(id) {
   const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { alert(e.message) } };
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
     h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
-    kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
+    kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.url === "/contact" ? "the contact form" : r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
     h("h3", {}, "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
     r.room && r.rec ? h("p", {}, h("button.btn.small", { onclick: () => openRoom(r.room, r.rec) }, "Replay the game at this moment")) : null);
   if (r.snap) {
