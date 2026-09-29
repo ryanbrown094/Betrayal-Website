@@ -73,15 +73,15 @@ pages.append(f"""<div class=page style="display:flex;flex-direction:column;align
   <div class=foot><span>the betrayal · brand guidelines</span><span>version 2.1 · september 2026</span></div></div>""")
 
 pages.append(f"""<div class=page><div class=eb>01 · the brand</div><h1>Candlelit. Theatrical. Mischievous.</h1>
-  <div class=lead>The Betrayal is a hosted party game for one room and one evening. It opens with the Oath: every guest, blindfolded, swears loyalty to the table, and a few of them are lying. Its world is a long table, a candle burning for every guest, and a hood that hides whoever broke their word. Everything we make should feel like that room: warm, dim, a little dangerous, and very well dressed.</div>
+  <div class=lead>The Betrayal is a hosted party game for one room and one evening. Everyone plays on their own phone. It opens with the Oath: every guest swears loyalty to the table, and a few of them are lying. Its world is a long table, a candle burning for every guest, and a hood that hides whoever broke their word. Everything we make should feel like that room: warm, dim, a little dangerous, and very well dressed.</div>
   <div class=cols style="grid-template-columns:repeat(4,1fr);margin-top:9mm">
    <div class=box><h3>candlelit</h3><p>Dark grounds, warm light. We glow; we never glare. Rose-gold is the candle flame of the brand. The hood is the dark around it.</p></div>
-   <div class=box><h3>theatrical</h3><p>Every screen is a scene. Big type, slow reveals, a pause before the name. The Keeper is a narrator, not a quizmaster.</p></div>
+   <div class=box><h3>theatrical</h3><p>Every screen is a scene. Big type, slow reveals, a pause before the name. The narrator tells a story; it never runs a quiz show.</p></div>
    <div class=box><h3>mischievous</h3><p>We enjoy the lie. We wink at the Forsworn and tease the Loyal. Never mean, never crude.</p></div>
    <div class=box><h3>premium</h3><p>One idea per screen, generous space, careful words. It should feel like the good napkins came out.</p></div></div>
   <div class=cols style="grid-template-columns:1fr 1fr;margin-top:9mm">
-   <div><div class=lab>what we are</div><ul class=l><li><b>Our own world.</b> An original game with its own look, sound and words.</li><li><b>For hosts.</b> The Keeper is the hero: we make them look effortless.</li><li><b>For one room.</b> Faces, blindfolds, chalk. The TV is the stage, not the game.</li></ul></div>
-   <div><div class=lab>what we are not</div><ul class=l><li><b>Not a TV tie-in.</b> We never name, quote, imitate or allude to a television programme, its presenters, its castle, its music or its words.</li><li><b>Not another company’s Betrayal.</b> We never borrow the vocabulary or look of other games that use the word.</li><li><b>Not horror.</b> No gore, no jump-scares. A drop of wine-red, not blood spatter.</li><li><b>Not a gadget.</b> No apps to install, no accounts, no guests on their phones.</li></ul></div></div>
+   <div><div class=lab>what we are</div><ul class=l><li><b>Our own world.</b> An original game with its own look, sound and words.</li><li><b>For hosts.</b> The host plays too: we make the evening run itself.</li><li><b>For one room.</b> Faces across a table, a secret on every phone. The TV is the stage, not the game.</li></ul></div>
+   <div><div class=lab>what we are not</div><ul class=l><li><b>Not a TV tie-in.</b> We never name, quote, imitate or allude to a television programme, its presenters, its castle, its music or its words.</li><li><b>Not another company’s Betrayal.</b> We never borrow the vocabulary or look of other games that use the word.</li><li><b>Not horror.</b> No gore, no jump-scares. A drop of wine-red, not blood spatter.</li><li><b>Not a gadget.</b> No apps to install, no accounts: scan a code, type a name, play.</li></ul></div></div>
   {foot(2)}</div>""")
 
 pages.append(f"""<div class=page><div class=eb>02 · the mark</div><h1>The one in the hood</h1>
@@ -166,20 +166,20 @@ pages.append(f"""<div class=page><div class=eb>07 · typography</div><h1>Four vo
 pages.append(f"""<div class=page><div class=eb>08 · the world</div><h1>Oaths, candles and seals</h1>
   <div class=cols style="grid-template-columns:1fr 1fr;gap:14mm">
    <div><div class=lab>motifs</div><ul class=l>
-     <li><b>The Oath</b> is where every night begins. Hands flat on the table, blindfolds on, one promise to the room.</li>
+     <li><b>The Oath</b> is where every night begins. Heads down, hands flat on the table, one promise to the room.</li>
      <li><b>Candles</b> are the guests: one each, lit as they sit down. A snuffed candle is a death, and it’s the only place we show one.</li>
      <li><b>Wax seals</b> stand for people: one colour each, initial pressed in blackletter. A Forsworn’s seal cracks at the Unmasking, and that cracked seal is the secondary mark: the broken oath.</li>
      <li><b>The hood</b> belongs to the Forsworn. Never draw it as a person with a face: a hood, a fold, a shadow at the edge of the light.</li>
      <li><b>Lancet windows</b> frame the TV; their glass changes with the hour (dawn rose, day amber, night steel).</li>
      <li><b>Mist and dust</b> are slow and low. Nothing flashes except a reveal.</li></ul></div>
    <div><div class=lab>the oath</div>
-    <p style="color:#E8D0C8">The Oath is the opening: every guest, blindfolded, swears the oath of loyalty to the table, and the Keeper’s tap on the shoulder makes a few of them Forsworn. It’s the brand’s most theatrical moment. Treat it with care:</p>
-    <ul class=l style="margin-top:3mm"><li>Capital O for the scene (“the Oath”), lower case for the promise itself (“everyone swore an oath”).</li><li>Keep it theatrical, not religious: no crosses, altars, priests or holy books.</li><li>Show it with hands on a table, blindfolds and candlelight.</li></ul>
+    <p style="color:#E8D0C8">The Oath is the opening: every guest swears the oath of loyalty to the table, and a secret on their phone makes a few of them Forsworn (in Classic, blindfolded, it’s the Keeper’s tap on the shoulder). It’s the brand’s most theatrical moment. Treat it with care:</p>
+    <ul class=l style="margin-top:3mm"><li>Capital O for the scene (“the Oath”), lower case for the promise itself (“everyone swore an oath”).</li><li>Keep it theatrical, not religious: no crosses, altars, priests or holy books.</li><li>Show it with hands on a table, phones face down and candlelight.</li></ul>
     <div class=q style="margin-top:6mm">“Lay your hands on the table. Swear to the people beside you that you will be loyal until the last candle goes out.”</div></div></div>
   {foot(9)}</div>""")
 
 public = [('The Betrayal', 'the product'), ('the Forsworn', 'the hidden killers'), ('the Loyal', 'everyone else'),
-          ('Ghosts', 'players who are out'), ('the Keeper', 'the person running the game'), ('the Oath', 'the opening, under blindfold'),
+          ('Ghosts', 'players who are out'), ('the host', 'opens the Table and plays too'), ('the Keeper', 'runs a Classic game and doesn’t play'), ('the Oath', 'the opening promise'),
           ('Trials', 'the party games'), ('the Reckoning', 'the vote; the loser is exiled'), ('Sanctuary', 'safe from tonight’s kill'),
           ('the Purse', 'the shared winnings; it decides the prize'), ('the Unmasking', 'the final reveal'),
           ('a Table', '£15, one party · Book a Table'), ('a booking code', 'what the buyer is sent: OATH-XXXX-XXXX'),
@@ -202,15 +202,15 @@ pages.append(f"""<div class=page><div class=eb>09 · the words</div><h1>Two tier
   <p class=cap style="margin-top:3mm">Plain words, lower case: exile, night, dawn, dinner, poison, murder, oath, seal, candle, blindfold, chalkboard; and the Interval. The full lists, awards included, are in <i>01-game/glossary-and-naming.md</i>.</p>
   {foot(10)}</div>""")
 
-pages.append(f"""<div class=page><div class=eb>10 · voice</div><h1>The Keeper at the head of the table</h1>
+pages.append(f"""<div class=page><div class=eb>10 · voice</div><h1>The voice at the head of the table</h1>
   <div class=lead style="font-size:12pt">We speak like a host who has been waiting all evening to say this: second person, present tense, a little wicked, never wordy. Short sentences. A pause before the name.</div>
   <div class=cols style="grid-template-columns:1.2fr 1fr;gap:14mm;margin-top:7mm">
    <div><div class=lab>sounds like us</div>
-    <div class=q>“Blindfolds on. Hands flat on the table. If I hear a single word, you will answer for it at dawn.”</div>
-    <div class=q>“If you feel my hand on your shoulder, you are Forsworn.”</div>
+    <div class=q>“Heads down. Hands flat on the table. If I hear a single word, you will answer for it at dawn.”</div>
+    <div class=q>“Look at your phone. If it says Forsworn, don’t let your face say it too.”</div>
     <div class=q>“Look at the screen: there is a candle burning for every one of you.”</div>
     <div class=q>“Every Forsworn has been unmasked. The Loyal have won.”</div></div>
-   <div><div class=lab>do</div><ul class=l><li>Address the room directly: you, your table, tonight.</li><li>Use British English and plain words: chalk a name, not submit a vote; the Interval, not a break-out.</li><li>Ask for the sale plainly: <b>Book a Table</b>, or <b>Become a Regular</b>.</li><li>Say the length honestly: best with 8 to 16. A big table or a long night is a fact, not a selling point.</li><li>Keep secrets in the copy too. Never hint who holds a role.</li></ul>
+   <div><div class=lab>do</div><ul class=l><li>Address the room directly: you, your table, tonight.</li><li>Use British English and plain words: name who you exile, not submit a vote; the Interval, not a break-out.</li><li>Ask for the sale plainly: <b>Book a Table</b>, or <b>Become a Regular</b>.</li><li>Say the length honestly: best with 8 to 16. A big table or a long night is a fact, not a selling point.</li><li>Keep secrets in the copy too. Never hint who holds a role.</li></ul>
     <div class=lab style="margin-top:5mm">don’t</div><ul class=l><li>Name, quote or allude to any TV programme, presenter, catchphrase, castle or theme tune.</li><li>Borrow another Betrayal game’s words or look.</li><li>Write gore or cruelty. Murder is a tap on the shoulder, not a crime scene.</li><li>Use tech words in front of guests: app, sync, user, click.</li></ul></div></div>
   {foot(11)}</div>""")
 

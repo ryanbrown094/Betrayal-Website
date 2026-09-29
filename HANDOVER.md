@@ -34,6 +34,11 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.3 (29 Sep 2026), Modern first:** everything we publish now sells Modern, with Classic as the alternative.
+- **Home page:** the pitch is phones-first. The hero is `media/hero-modern.jpg` (made by `tools/hero-modern.py` from the tour screenshots). "How it works" covers open, join and play. A short "There's Classic, too" section follows, and the FAQ covers phones, the host playing, and Wi-Fi. After a booking, the Modern card comes first, marked recommended.
+- **Rules page:** explains Modern, with a `#classic` section listing what changes. **Tour page:** shows Modern screens first, then the Classic walk-through under `#classic`. **Buy page:** the copy is phones-first.
+- **Marketing pack** (`media/copy`, `media/launch`): rewritten the same way.
+
 **1.6.2 (29 Sep 2026), QA sweep:** three reviews (the Modern engine and server, fuzzed with 3,000 random games; every Modern screen at five sizes, 734 screenshots; the site and Classic) and their fixes.
 - **Modern engine:**
   - Players who leave no longer block the Oath or get dealt a role, and Play again keeps a test game.

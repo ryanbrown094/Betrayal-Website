@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929153644">
+<meta name="build" content="20260929164259">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
-<meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Play it Classic, with a Keeper and your TV, or Modern, with everyone on their own phone.">
+<meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
 <meta name="theme-color" content="#09070a">
 <meta property="og:title" content="The Betrayal — the dinner-party game of loyalty and lies">
-<meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies, played with a Keeper and your TV, or on everyone’s phones.">
+<meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The dinner-party game of loyalty and lies, played on everyone’s phones: scan the code, get your secret role, trust nobody.">
 <meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/">
 <meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -74,6 +74,8 @@ input:focus { outline: 2px solid var(--rose); outline-offset: 2px }
 .row { display: flex; gap: 10px; margin-top: 10px } .row > input { flex: 1; min-width: 0 }
 .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px } @media (max-width: 640px) { .modes { grid-template-columns: 1fr } }
 .mode { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; border-radius: 12px; border: 1px solid #4a3150; background: rgba(37,20,40,.6); color: var(--ivory); font: 16px/1.45 var(--ui); cursor: pointer }
+.mode.primary { grid-column: 1 / -1; border-color: var(--rose); background: linear-gradient(180deg, rgba(174,98,73,.18), rgba(37,20,40,.7)) } .mode b i { font: 700 12px/1 var(--sc); letter-spacing: .12em; text-transform: uppercase; color: #150b17; background: var(--rose); padding: 4px 8px; border-radius: 99px; vertical-align: 6px; margin-left: 8px; font-style: normal }
+.mode.quiet { background: transparent } .mode.quiet b { font-size: 20px; color: var(--ivory) } .mode.quiet em { color: var(--ivory2) }
 .mode:hover { border-color: var(--rose) } .mode b { font: 400 26px/1 var(--book); color: var(--rose) } .mode span { color: var(--ivory2) } .mode em { font-style: normal; font-weight: 700; color: var(--rose); margin-top: auto }
 @media (max-width: 480px) { .forms .row { flex-direction: column } .forms .row > .btn { width: 100% } }
 .msg { min-height: 1.4em; margin: 10px 0 0; font-size: 15.5px; color: var(--ivory2) } .msg.err { color: #ff9dbf }
@@ -99,37 +101,34 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <svg class="mark" viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 16l44 54-44 54-44-54z" fill="currentColor" fill-opacity=".14" stroke="none"/><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 16l44 54-44 54-44-54z" stroke-width="1"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 41c-6 5-9 10.5-9 16 0 6 4 9.5 9 9.5s9-3.5 9-9.5c0-5.5-3-11-9-16z" stroke-width="1.4"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/><circle cx="60" cy="70.5" r="1.6"/><path d="M60 73c-.4 8-.8 15.5-1.2 23" stroke-width="1.3"/><path d="M50 77c-1 6.5-2 13-3 19M70 77c1 6.5 2 13 3 19" stroke-width="1"/><path d="M27 70h-9M93 70h9" stroke-width="1.4"/><circle cx="14" cy="70" r="1.6"/><circle cx="106" cy="70" r="1.6"/></svg>
     <div class="eyebrow" style="margin-top:18px">a dinner-party game</div>
     <h1 translate="no">The Betrayal</h1>
-    <p class="tag">Everyone swore an oath. Not everyone meant it. By the end of the night, everyone will know who lied.</p>
+    <p class="tag">Everyone swore an oath. Not everyone meant it. Played on your guests’ own phones: scan the code, get a secret role, and trust nobody.</p>
     <div class="ctas"><a class="btn" id="buy" href="#start">Book a Table</a><a class="btn ghost" href="#start">I have a booking</a></div>
     <div class="price" id="price"></div>
-    <div class="shot"><img src="/media/tv-table.jpg" fetchpriority="high" alt="The Reckoning on the TV: eight players' seals around a glowing table, with the words ‘Talk. Accuse. Defend. Deflect.’" width="1920" height="1080"></div>
+    <div class="shot"><img src="/media/hero-modern.jpg" fetchpriority="high" alt="The TV showing a QR code and the Table code for guests to join, with three phones in front of it: a secret Forsworn role, the vote, and the night" width="1920" height="1080"></div>
   </header>
 
   <section>
-    <div class="eyebrow">how Classic works</div><h2>Your TV runs the show. Your phone runs the game.</h2>
+    <div class="eyebrow">how it works</div><h2>Everyone plays on their own phone. Everyone lies to your face.</h2>
     <div class="grid3">
-      <div class="card"><b>1 · plan</b><h3>Set it up once</h3><p>On your phone, before anyone arrives. Five questions, and the rest is planned for you, every choice explained if you want to change it. Five minutes, even the first time.</p></div>
-      <div class="card"><b>2 · cast</b><h3>Put it on the TV</h3><p>Open your Table on a laptop and cast it. Title cards, Trials, the Reckoning, candlelit nights and a full score — all on the big screen.</p></div>
-      <div class="card"><b>3 · play</b><h3>Tap, read, reveal</h3><p>The phone gives you every line to read and every secret to keep. You just tap Next. The game counts the votes, deals the Trials and keeps the Purse.</p></div>
+      <div class="card"><b>1 · open</b><h3>Open your Table</h3><p>Enter your booking code, type your name, and your Table is open. Choose murder or poison and the prize. That’s the setup.</p></div>
+      <div class="card"><b>2 · join</b><h3>Everyone scans in</h3><p>Guests scan the code on the TV, or go to <a href="/join">thebetrayal.co.uk/join</a> and type it in. No app, no accounts, just a name. Their role arrives in secret on their own phone.</p></div>
+      <div class="card"><b>3 · play</b><h3>The game runs itself</h3><p>Quizzes and games answered on phones, secret votes, murders in the night, all timed and scored for you. You play too: your phone just says when to begin the next part.</p></div>
     </div>
     <div class="duo">
-      <figure><img src="/media/tour-tv-09-exiled.jpg" width="1280" height="720" loading="lazy" alt="The TV: an exiled player's seal breaks to reveal they were Forsworn"><figcaption><b>On the TV:</b> every Trial, vote and reveal, with music, candlelight and a running Purse.</figcaption></figure>
-      <figure class="ph"><img src="/media/tour-phone-06-brief.jpg" width="780" height="1688" loading="lazy" alt="The Keeper's phone: a Trial's brief with the exact words to read out"><figcaption><b>On the Keeper’s phone:</b> the words to say, and the secrets to keep.</figcaption></figure>
+      <figure><img src="/media/tour-modern-tv-quiz.jpg" width="1280" height="720" loading="lazy" alt="The TV: a quiz question with a countdown, and each player's seal lighting up as they answer on their phone"><figcaption><b>On the TV (optional):</b> the questions, the votes, the reveals, with music and a running Purse.</figcaption></figure>
+      <figure class="ph"><img src="/media/tour-modern-phone-role.jpg" width="780" height="1688" loading="lazy" alt="A guest's phone: their secret role, Forsworn, and the name of their fellow Forsworn"><figcaption><b>On every phone:</b> your secret role, your vote, and at night, your victim.</figcaption></figure>
     </div>
     <div class="ctas" style="margin-top:26px"><a class="btn ghost" href="/tour">See a game, screen by screen</a><a class="btn ghost" href="/rules">Read the rules</a></div>
   </section>
 
   <section>
-    <div class="eyebrow">two ways to play</div><h2>Classic or Modern. You choose on the night.</h2>
-    <div class="grid3 two">
-      <div class="card"><b>classic</b><h3>A Keeper, blindfolds and chalk</h3><p>One phone runs the game. The Keeper reads the script and keeps the secrets, the guests wear blindfolds at night and chalk their votes, and the TV puts on the show. The Keeper doesn’t play.</p></div>
-      <div class="card"><b>modern</b><h3>Everyone on their own phone</h3><p>Guests scan the code on the TV or go to <a href="/join">thebetrayal.co.uk/join</a> with the Table code, a bit like a pub quiz app. Roles, votes, nights and poisonings arrive in secret on each phone, and quizzes are answered there too. No blindfolds, no chalkboards, the TV is optional, and the host plays as well.</p></div>
-    </div>
+    <div class="eyebrow">prefer it the old-fashioned way?</div><h2>There’s Classic, too.</h2>
+    <p style="color:var(--ivory2)">Every Table can also be played <b style="color:var(--ivory)">Classic</b>: one phone runs the game and a Keeper reads the script like a presenter, guests wear blindfolds at night and chalk their votes on small boards, and the TV puts on the show. Same game, same price; you choose when you open your Table.</p>
   </section>
 
   <section>
     <div class="eyebrow">what you need</div><h2>Bring the people. We bring the lies.</h2>
-    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 4 hours for 8 to 12 players, with dinner served in courses between the rounds. A Short game takes about 2 hours.</li><li>Classic: a TV and a laptop to cast to it, a phone for the Keeper, and a blindfold, small chalkboard and chalk for everyone</li><li>Modern: a phone each (the TV is optional)</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
+    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 4 hours for 8 to 12 players, with dinner served in courses between the rounds. A Short game takes about 2 hours.</li><li>A phone each. A TV makes it a show, but it’s optional</li><li>No blindfolds, no chalk, nobody stuck reading a script: the host plays too</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
   </section>
 
   <section>
@@ -138,19 +137,19 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
       <div class="card"><b>one party</b><div class="amt">£15</div><ul><li>One Table for 8 to 24 players</li><li>Open for 48 hours from the moment you start it</li><li>Buy it now, play it whenever you like</li></ul><a class="btn" href="/buy">Book a Table</a></div>
       <div class="card"><b>a regular</b><div class="amt">£20<em> a month</em></div><ul><li>A booking code that opens a new Table whenever you like</li><li>One game at a time, each open for 48 hours</li><li>Cancel any time</li></ul><a class="btn ghost" href="/buy">Become a Regular</a></div>
     </div>
-    <p style="color:var(--ivory2);font-size:16px;margin-top:14px">Both include all fifteen Trials, thousands of questions and prompts, the full TV show and the Keeper’s script. Payments by Stripe.</p>
+    <p style="color:var(--ivory2);font-size:16px;margin-top:14px">Both include all fifteen Trials, thousands of questions and prompts, the full TV show, and Classic with the Keeper’s script if you prefer it. Payments by Stripe.</p>
   </section>
 
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
-    <details><summary>Does everyone need a phone?</summary><p>Only in Modern, where everyone plays on their own. In Classic only the Keeper uses one: guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. You choose Classic or Modern when you open your Table.</p></details>
+    <details><summary>Does everyone need a phone?</summary><p>Yes: everyone plays on their own, in the browser, with nothing to install. If your group would rather put phones away, play Classic: only the Keeper uses one, guests wear blindfolds at night and chalk their votes. You choose when you open your Table.</p></details>
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
-    <details><summary>Does the host get to play?</summary><p>In Modern, yes: the host’s phone also starts each Trial and calls the breaks, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
+    <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to break for dinner, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 or 9 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
-    <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave. In Modern, the victim is told on their phone instead of being tapped.</p></details>
-    <details><summary>What if the Wi-Fi drops?</summary><p>Every screen reconnects by itself. In Classic the Keeper’s phone keeps every change until the server has it; in Modern the game lives on the server, so a phone that drops just picks up where it was, and a lost phone can be let back in by the host. Nothing is lost.</p></details>
+    <details><summary>Murder or poison?</summary><p>Your choice, when you open your Table. The victim finds out in secret on their phone during the night. Murdered players leave the table quietly at dawn; poisoned players announce it, get their last words, then leave. (In Classic, the Keeper taps them while everyone is blindfolded.)</p></details>
+    <details><summary>What if the Wi-Fi drops?</summary><p>Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in. Nothing is lost.</p></details>
     <details><summary>Who wins the Purse?</summary><p>The Loyal, if they win, take the Purse they built. The Forsworn, if they win, take what it <b>fell short</b> of its target, so every point they quietly sabotage is theirs. <a href="/rules#pot">More in the rules</a>.</p></details>
   </section>
 
@@ -159,7 +158,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your booking code</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
     <div class="forms">
       <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="invitation" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
-      <div class="panel"><label for="room">Joining a game, or setting up the TV? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Playing Modern? Enter the code on your phone. Setting up the TV? Enter it on the laptop you’ll cast.</p></div>
+      <div class="panel"><label for="room">Joining a game? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Enter it on your phone to play. For the TV, enter it on the laptop you’ll cast.</p></div>
     </div>
   </section>
 
@@ -197,10 +196,11 @@ async function go(pass, room, test) {
   const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
   m.append("Your Table is open. How will you play?");
   const row = document.createElement("div"); row.className = "modes";
-  const card = (h, p, cta, fn) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode"; c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
+  const card = (h, p, cta, fn, cls) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode " + (cls || ""); c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
+  // Modern is the game we lead with; Classic is there for groups who'd rather put their phones away
   row.append(
-    card("Modern", "Everyone plays on their own phone. Roles, votes and nights are secret on each phone; quizzes are answered on phones too. No blindfolds, no chalkboards, and the TV is optional. You play as well.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }),
-    card("Classic", "One phone runs it: a Keeper reads the script, guests wear blindfolds and chalk their votes, and the TV shows the show. The Keeper doesn’t play.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }));
+    card("Modern <i>recommended</i>", "Everyone plays on their own phone: secret roles, votes and nights, and every Trial answered on phones. No props, the TV is optional, and you play too.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
+    card("Classic", "Phones away: a Keeper runs it from one phone and doesn’t play; blindfolds at night, votes chalked on boards, the TV puts on the show.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }, "quiet"));
   // the master code opens a test room: Modern can be played against bots there
   if (test) row.append(card("Modern test", "You against bots that swear, vote, choose at night and trust by themselves. Trials give random scores; every countdown is ten seconds.", "Play against bots", () => { try { sessionStorage.setItem("bt-test-" + room, "1") } catch (e) {} location.href = "/m/" + room + "#create-bots" }));
   m.append(row);
