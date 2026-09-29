@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929124452">
+<meta name="build" content="20260929132000">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
@@ -180,13 +180,13 @@ async function open(pass, fresh) {
     const j = await r.json().catch(() => ({}));
     // a subscriber with a game still open: carry on with it, or start a new one (which closes it)
     if (r.ok && j.room && j.sub && j.again) { b.disabled = false; return subChoice(pass, j.room) }
-    if (r.ok && j.room) { b.disabled = false; return go(pass, j.room) }
+    if (r.ok && j.room) { b.disabled = false; return go(pass, j.room, j.test) }
     say($("#passmsg"), j.error || "That didn’t work — try again.", true);
   } catch (e) { say($("#passmsg"), "Can’t reach the server. Check you’re online.", true) }
   b.disabled = false;
 }
 // a Table plays Classic (one phone, a Keeper, blindfolds) or Modern (everyone on their own phone); it's chosen once
-async function go(pass, room) {
+async function go(pass, room, test) {
   let mode = null;
   try { const j = await (await fetch("/api/g/" + room + "/m", { cache: "no-store" })).json(); mode = j.none ? (j.classic ? "classic" : null) : "modern" } catch (e) {}
   if (mode === "classic") { location.href = "/t/" + room + "#keeper"; return }
@@ -198,6 +198,8 @@ async function go(pass, room) {
   row.append(
     card("Modern", "Everyone plays on their own phone. Roles, votes and nights are secret on each phone; quizzes are answered on phones too. No blindfolds, no chalkboards, and the TV is optional. You play as well.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }),
     card("Classic", "One phone runs it: a Keeper reads the script, guests wear blindfolds and chalk their votes, and the TV shows the show. The Keeper doesn’t play.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }));
+  // the master code opens a test room: Modern can be played against bots there
+  if (test) row.append(card("Modern test", "You against bots that swear, vote, choose at night and trust by themselves. Trials give random scores; every countdown is ten seconds.", "Play against bots", () => { try { sessionStorage.setItem("bt-test-" + room, "1") } catch (e) {} location.href = "/m/" + room + "#create-bots" }));
   m.append(row);
 }
 function subChoice(pass, room) {

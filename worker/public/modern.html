@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929124452">
+<meta name="build" content="20260929132000">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -665,7 +665,8 @@ let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) |
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
 let tools = 0, peekList = null, narr = false, lastSaid = "", replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], online = true, pollT = 0;
-let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : location.hash === "#create" ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
+const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
+let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
 const $ = (s) => document.querySelector(s), app = () => $(isTV() ? "#tvapp" : "#app");
 const now = () => Date.now() + off;
@@ -758,6 +759,11 @@ function joinScreen() {
   ${btn("Join", "join", null, "big")}</div>${msg()}</div>`;
 }
 function createScreen() {
+  if (TESTGAME) return `${brand("test game")}<div class="card fade"><div class="eyebrow">test table · ${CODE}</div><h2>A test game against bots</h2>
+  <p class="sub">You host and play; the bots swear, vote, choose at night and trust by themselves. Trials give everyone a random score, and every countdown is ten seconds.</p>
+  <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
+  <div style="height:10px"></div><label class="l" for="nbots">Players, you included</label><select class="f" id="nbots">${[6, 8, 10, 12, 16, 20, 24].map((n) => `<option${n === 8 ? " selected" : ""}>${n}</option>`).join("")}</select>
+  <div style="height:12px"></div>${btn("Start the test game", "create", null, "big")}${msg()}</div>`;
   return `${brand()}<div class="card fade"><div class="eyebrow">your table · ${CODE}</div><h2>You’re the host, and you play too</h2>
   <p class="sub">Your phone runs the evening: you start each Trial, call the breaks and the Reckoning. Everything else runs itself, and you never see anyone’s role.</p>
   <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
@@ -800,7 +806,7 @@ function rejoinCard() {
 }
 const dirCard = (inner, head) => (V.me.director ? `<div class="card dir"><div class="eyebrow">${head || "host"}</div>${inner}</div>` : "");
 const waitHost = () => (V.me.director ? "" : `<p class="sub center">Waiting for ${esc(V.director ? V.director.name : "the host")}…</p>`);
-function people(list, mark) { return `<ul class="people">${list.map((p) => `<li class="${p.alive ? "" : "dead"} ${mark && mark(p) ? "ok" : ""}">${ART.seal(p)}<b>${esc(p.name)}</b></li>`).join("")}</ul>`; }
+function people(list, mark) { return `<ul class="people">${list.map((p) => `<li class="${p.alive ? "" : "dead"} ${mark && mark(p) ? "ok" : ""}">${ART.seal(p)}<b>${esc(p.name)}</b>${p.bot ? `<span class="small">bot</span>` : ""}</li>`).join("")}</ul>`; }
 
 function phase(me) {
   switch (V.phase) {
@@ -829,6 +835,7 @@ function lobby(me) {
   let h = `<div class="eyebrow">table ${CODE}</div><h2>You’re in</h2><p class="sub">Friends join at <b>${esc(url)}</b> with the code <b class="num">${CODE}</b>.</p>${people(V.players)}<p class="small" style="margin-top:10px">${plural(n, "player")} · 6 to 24 can play</p>`;
   if (!me.director) return h + waitHost();
   const o = V.opts || {};
+  if (V.test) h += `<div class="banner">Test game: the bots play themselves, Trials score at random, and every countdown is ten seconds.</div><div class="row" style="margin-bottom:14px">${btn("Add a bot", "bots", String(n + 1), "dark sm")}</div>`;
   const two = (k, a, b) => `<div class="grid2">${[a, b].map(([v, t]) => `<button class="btn ${o[k] === v ? "on" : "dark"} sm" data-a="opt" data-k="${k}" data-v="${v}">${t}</button>`).join("")}</div>`; // v may be true/false
   h += `<div class="card dir"><div class="eyebrow">host · before you start</div>
   <label class="l">How do the Forsworn kill?</label>${two("kill", ["poison", "Poison"], ["murder", "Murder"])}
@@ -1065,7 +1072,7 @@ function end(me) {
 function tvScreen() {
   if (!V) return `<div class="tvmain">${brand("modern")}<p class="sub">${screen === "tv" && CODE ? "Table " + CODE + " isn’t set up yet." : "Connecting…"}</p></div>`;
   const url = esc(location.host) + "/join";
-  const top = `<div class="tvtop"><span>${esc(V.title || "The Betrayal")} · ${V.final ? "the final" : V.round ? "round " + V.round : "table " + CODE}</span><span class="pot num">${V.phase === "lobby" ? "" : "Purse " + V.pot}</span></div>`;
+  const top = (V.test ? `<div class="tvtop" style="justify-content:center;color:var(--blood2)">test game · bots</div>` : "") + `<div class="tvtop"><span>${esc(V.title || "The Betrayal")} · ${V.final ? "the final" : V.round ? "round " + V.round : "table " + CODE}</span><span class="pot num">${V.phase === "lobby" ? "" : "Purse " + V.pot}</span></div>`;
   const btns = screen === "replay" ? "" : `<div class="tvbtns">${btn(typeof AC !== "undefined" && AC && !muted ? "Mute" : "Turn on sound", "sndtv", null, "ghost sm")}${"speechSynthesis" in window ? btn(narr ? "Narrator: on" : "Narrator: off", "narr", null, "ghost sm") : ""}</div>`;
   return top + btns + `<div class="tvmain" data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${tvBody(url)}</div>`;
 }
@@ -1233,7 +1240,7 @@ async function doCreate() {
   let pass = ""; try { pass = sessionStorage.getItem("bt-pass-" + CODE) || ""; } catch (e) {}
   say("Opening…");
   try {
-    const r = await api("m/create", { name, pass });
+    const r = await api("m/create", TESTGAME ? { name, pass, test: true, bots: +(($("#nbots") || {}).value || 8) } : { name, pass });
     if (r.j.tok) { tok = r.j.tok; store.set(TOKKEY, tok); take(r.j); screen = "play"; toast = ""; history.replaceState(null, "", "/m/" + CODE); draw(); return poll(); }
     if (r.j.mode === "modern") { history.replaceState(null, "", "/m/" + CODE); screen = tok ? "play" : "join"; draw(); return tok ? poll() : say(r.j.error, true); }
     say(r.j.error || "That didn’t work.", true);

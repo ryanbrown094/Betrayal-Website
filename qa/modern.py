@@ -56,7 +56,7 @@ with sync_playwright() as p:
     # a real game
     host = page()
     host.goto(URL + "/"); host.fill("#pass", "MASTERTEST"); host.click("#go")
-    check("home: after the booking code, a choice of Classic or Modern", until(lambda: host.locator(".mode").count() == 2))
+    check("home: after the booking code, a choice of Classic or Modern (and, for the master code, a test against bots)", until(lambda: host.locator(".mode").count() == 3))
     code = until(lambda: re.search(r"/g/([A-Z0-9]{6})/m", host.evaluate("performance.getEntriesByType('resource').map(e=>e.name).join(' ')")).group(1))
     host.click(".mode:has-text('Modern')")
     check("Modern: the host is asked their name (they play too)", until(lambda: "You’re the host, and you play too" in host.inner_text("#app")))

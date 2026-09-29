@@ -221,10 +221,13 @@ export class GameState {
         s = M.newGame(now, Math.random, {});
         // testing rooms (the master code) may fix the order of the Trials, so a test can play a known one
         if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
+        // and play a test game against bots, with every clock at ten seconds
+        if (meta.pass === "MASTER" && body.test) s.test = true;
         await save();
       }
       if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
       const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
+      if (s.test) M.addBots(s, Math.max(6, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
     if (!s) return json({ none: true, classic: !!(await this.storage.get("state")), room });
@@ -428,7 +431,7 @@ export class Registry {
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
-      return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires });
+      return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires, ...(b.master ? { test: true } : {}) });
     }
     // a subscription changed (renewed, failed, cancelled): its code opens games only while it's active or trialing
     if (url.pathname === "/substatus") {

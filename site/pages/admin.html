@@ -182,7 +182,9 @@ $("#room").onclick = async () => {
     const j = await api("room", {}), m = $("#rmsg"); m.className = "msg"; m.textContent = "Room " + j.room + ": ";
     const a = document.createElement("a"); a.href = "/g/" + j.room + "#host"; a.textContent = "Keeper phone"; a.target = "_blank";
     const b = document.createElement("a"); b.href = "/g/" + j.room; b.textContent = "TV"; b.target = "_blank";
-    m.append(a, " · ", b);
+    const c = document.createElement("a"); c.href = "/m/" + j.room + "#create-bots"; c.textContent = "Modern against bots"; c.target = "_blank";
+    const d = document.createElement("a"); d.href = "/m/" + j.room + "#create"; d.textContent = "Modern"; d.target = "_blank";
+    m.append("Classic: ", a, " · ", b, " — or ", c, " · ", d, " (use one per room: a room plays either Classic or Modern)");
   } catch (err) { say($("#rmsg"), err.message, true) }
 };
 $("#q").oninput = render; $("#f").onchange = render; $("#reload").onclick = load;
