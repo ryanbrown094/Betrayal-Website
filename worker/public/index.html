@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929181759">
+<meta name="build" content="20260929191019">
 <title>The Betrayal — the party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
@@ -45,7 +45,7 @@ header.hero { text-align: center; padding: 22px 0 28px }
 h1 { font: 600 clamp(46px, 11.5vw, 112px)/0.95 var(--disp); margin: 18px 0 8px; background: linear-gradient(176deg, #f4c9b7 8%, var(--rose) 40%, var(--copper) 70%, #763c29); -webkit-background-clip: text; background-clip: text; color: transparent }
 .tag { font: italic 400 clamp(20px, 3.4vw, 28px)/1.3 var(--book); color: var(--ivory2); margin: 0 auto 26px; max-width: 30em; text-wrap: balance }
 .eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .32em; text-transform: uppercase; color: var(--rose) }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17; font: 700 17px/1 var(--ui); letter-spacing: .02em; text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #c0715a 55%, #a0573f); color: #150b17; font: 700 17px/1 var(--ui); letter-spacing: .02em; text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
 .btn:hover { color: #150b17; filter: brightness(1.07); box-shadow: 0 8px 30px rgba(230,165,140,.28) } .btn:active { transform: translateY(1px) scale(.99) }
 .btn.ghost { background: transparent; color: var(--ivory); box-shadow: none } .btn.ghost:hover { background: rgba(230,165,140,.08); color: var(--ivory) } .btn:disabled { opacity: .6; cursor: progress; filter: none }
 .linkish { display: inline; padding: 0; border: 0; background: none; color: var(--rose); font: inherit; text-decoration: underline; text-underline-offset: .18em; cursor: pointer }
@@ -110,7 +110,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">how it works</div><h2>Everyone plays on their own phone. Everyone lies to your face.</h2>
     <div class="grid3">
-      <div class="card"><b>1 · open</b><h3>Open your Table</h3><p>Enter your booking code, type your name, and your Table is open. Choose murder or poison and the prize. That’s the setup.</p></div>
+      <div class="card"><b>1 · open</b><h3>Open your Table on your phone</h3><p>Enter your booking code, type your name, and your Table is open. Choose murder or poison and the prize. That’s the setup.</p></div>
       <div class="card"><b>2 · join</b><h3>Everyone scans in</h3><p>Guests scan the code on the TV, or go to <a href="/join">thebetrayal.co.uk/join</a> and type it in. No app, no accounts, just a name. Their role arrives in secret on their own phone.</p></div>
       <div class="card"><b>3 · play</b><h3>The game runs itself</h3><p>Quizzes and games answered on phones, secret votes, murders in the night, all timed and scored for you. You play too: your phone just says when to begin the next part.</p></div>
     </div>
@@ -128,7 +128,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section>
     <div class="eyebrow">what you need</div><h2>Bring the people. We bring the lies.</h2>
-    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 3½ hours for 8 to 12 players. Eating too? The game can serve dinner in courses between the rounds. A Short game takes about 2 hours.</li><li>A phone each. A TV makes it a show, but it’s optional</li><li>No blindfolds, no chalk, nobody stuck reading a script: the host plays too</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
+    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 3½ hours for 8 to 12 players, longer for bigger tables. Eating too? Dinner in courses is there if you want it. (Classic also has a Short game of about 2 hours.)</li><li>A phone each. A TV makes it a show, but it’s optional</li><li>No blindfolds, no chalk, nobody stuck reading a script: the host plays too</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
   </section>
 
   <section>
@@ -146,7 +146,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to take a break, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
-    <details><summary>How long does it take?</summary><p>About 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 or 9 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
+    <details><summary>How long does it take?</summary><p>About 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. In Classic there’s also a Short game (one Trial a round, no breaks) of about 2 hours for 8 to 10 players, and the Keeper’s setup shows an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, when you open your Table. The victim finds out in secret on their phone during the night. Murdered players leave the table quietly at dawn; poisoned players announce it, get their last words, then leave. (In Classic, the Keeper taps them while everyone is blindfolded.)</p></details>
     <details><summary>What if the Wi-Fi drops?</summary><p>Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in. Nothing is lost.</p></details>
@@ -157,7 +157,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="eyebrow">start</div><h2>Open your Table</h2>
     <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your booking code</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
     <div class="forms">
-      <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="invitation" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
+      <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="booking-code" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
       <div class="panel"><label for="room">Joining a game? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Enter it on your phone to play. For the TV, enter it on the laptop you’ll cast.</p></div>
     </div>
   </section>
@@ -234,7 +234,8 @@ const sid = new URLSearchParams(location.search).get("session_id");
 if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
-    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (j.sub) { $("#claimhead").textContent = "thank you — you’re a Regular"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+    try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (!j.sub) try { localStorage.removeItem("bt-egg") } catch (e) {} // the broken seal is for one party: used now
+      if (j.sub) { $("#claimhead").textContent = "thank you — you’re a Regular"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
   say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your booking code will appear here.", true);

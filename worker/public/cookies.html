@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929181759">
+<meta name="build" content="20260929191019">
 <title>Cookie notice — The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="The cookies and browser storage The Betrayal uses.">
@@ -36,6 +36,7 @@ body { margin: 0; background: radial-gradient(120vw 60vh at 50% -10%, #2a1630, t
 a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 }
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 4px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
+[hidden] { display: none !important }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
 .wrap { max-width: 760px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
 nav.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0 8px }
@@ -43,6 +44,7 @@ nav.top .home { display: flex; align-items: center; gap: 10px; color: var(--ivor
 nav.top svg { width: 30px; height: 35px; color: var(--rose) }
 nav.top .links { display: flex; align-items: center; gap: 4px 18px } nav.top .links a:not(.btn) { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 12px 0 } nav.top .links a:not(.btn):hover, nav.top .links a[aria-current] { color: var(--ivory) }
 nav.top .links .btn[aria-current] { display: none }
+nav.top .links .btn, nav.top .home span { white-space: nowrap } @media (max-width: 360px) { nav.top .home { font-size: 22px } nav.top .links .btn { padding: 8px 14px } }
 @media (max-width: 600px) { nav.top .links a:not(.btn) { display: none } }
 .eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .32em; text-transform: uppercase; color: var(--rose); margin-top: 34px }
 h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 10px 0 8px; text-wrap: balance }
@@ -55,7 +57,7 @@ p, li { color: var(--ivory2) } strong, b { color: var(--ivory) }
 .note { padding: 14px 16px; border-radius: 10px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); margin: 18px 0 }
 table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(230,165,140,.18) } th { color: var(--ivory); font-weight: 700 } td { color: var(--ivory2) }
 .table-scroll { overflow-x: auto }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17; font: 700 17px/1 var(--ui); text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #c0715a 55%, #a0573f); color: #150b17; font: 700 17px/1 var(--ui); text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
 .btn:hover { color: #150b17; filter: brightness(1.07); box-shadow: 0 8px 30px rgba(230,165,140,.28) } .btn:active { transform: translateY(1px) scale(.99) }
 .btn.ghost { background: transparent; color: var(--ivory); box-shadow: none } .btn.ghost:hover { background: rgba(230,165,140,.08); color: var(--ivory) }
 .btn.small { min-height: 44px; padding: 8px 18px; font-size: 15.5px }
@@ -93,6 +95,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18p
 <tr><td><code>candle-device</code></td><td>Browser storage</td><td>A random identifier for this device, sent with problem reports and the game’s error log so we can tell which screen had the trouble. It contains nothing about you.</td><td>Until cleared</td></tr>
 <tr><td><code>bt-m-</code><i>code</i>, <code>bt-mreq-</code><i>code</i></td><td>Browser storage</td><td>Modern: keeps your place in a Table (a random token), so a reload doesn’t lose it, or a request to be let back in.</td><td>Until cleared</td></tr>
 <tr><td><code>bt-name</code>, <code>bt-pass-</code><i>code</i>, <code>bt-test-</code><i>code</i></td><td>Browser storage (this tab only)</td><td>Modern: carries your name, the booking code or a test-game choice from one page to the next while you join or set up.</td><td>Until the tab is closed</td></tr>
+<tr><td><code>bt-egg</code></td><td>Browser storage</td><td>Remembers that you found the broken seal, so the Book a Table page can apply its 10% off one party. Cleared once you’ve used it.</td><td>Until used or cleared</td></tr>
 <tr><td><code>candle-v1</code>, <code>candle-settings</code></td><td>Browser storage</td><td>Only when the game is played offline without a room: keep the game and the question-bank switches on that device.</td><td>Until cleared</td></tr>
 </table></div>
 

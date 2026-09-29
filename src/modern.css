@@ -34,7 +34,7 @@ svg { display: block }
 .eyebrow { font-family: var(--sc); font-size: 14px; letter-spacing: .16em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
 h1, h2 { font-family: var(--book); font-weight: 400; margin: 0 0 10px; line-height: 1.12 }
 h1 { font-size: 34px } h2 { font-size: 27px }
-h1.disp { font-family: var(--disp); font-size: 44px; letter-spacing: .01em; color: var(--brass2) }
+h1.disp { font-family: var(--disp); font-size: clamp(34px, 11vw, 44px); letter-spacing: .01em; color: var(--brass2) }
 p { margin: 0 0 12px } .sub { color: var(--tallow2) } .small { font-size: 15px; color: var(--tallow2) }
 .card { background: linear-gradient(180deg, #1a0f1c, #120b13); border: 1px solid #33203a; border-radius: 16px; padding: 18px; margin: 0 0 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04) }
 .card.hot { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(174,98,73,.3), 0 10px 40px rgba(174,98,73,.12) }
@@ -66,7 +66,7 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .people li button.x { border: 0; background: none; color: var(--mist); font-size: 18px; padding: 0 2px; min-width: 28px; min-height: 28px }
 .pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
 .pick button { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid #3b2640; background: #170e19; text-align: left; font-size: 17px; line-height: 1.15 }
-.pick button .nm { min-width: 0; overflow-wrap: anywhere; flex: 1 } .pick.one { grid-template-columns: minmax(0, 1fr) }
+.pick button .nm { min-width: 0; overflow-wrap: break-word; hyphens: auto; flex: 1 } @media (max-width: 360px) { .pick.one { grid-template-columns: minmax(0, 1fr) } }
 .pick button .tag { flex: none; font: 700 12px/1 var(--ui); padding: 4px 7px; border-radius: 99px; background: #3a1622; color: #f3b7c4 } .pick button .tag.sanct { background: #10261e; color: #bfeadb }
 @media (max-width: 360px) { .pick button { padding: 8px 10px; gap: 8px; font-size: 16px } .pick button .seal { width: 28px; height: 28px } }
 .pick button .seal { width: 34px; height: 34px; flex: none }
@@ -117,7 +117,7 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .prize { border-color: var(--brass); box-shadow: inset 0 0 0 4px #150c13, inset 0 0 0 5px rgba(230,165,140,.3) }
 .meter { position: relative; height: 22px; border-radius: 11px; background: #1b111d; border: 1px solid #3b2640; overflow: hidden; margin: 8px 0 14px; min-width: 200px }
 .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--brass), var(--brass2)); transition: width .8s ease } .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.4) }
-.meter span { position: relative; display: block; text-align: center; font: 700 13px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
+.meter span { position: relative; z-index: 1; display: block; text-align: center; font: 700 13px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
 .snapprev { display: flex; align-items: center; justify-content: center; gap: 6px } .snapprev .ico { width: 22px; height: 22px; color: var(--brass2) }
 .snapbtn:active { filter: brightness(1.4) }
 .banner.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 }
@@ -148,7 +148,7 @@ body.tv.night { background: #030204 }
 .tvmain .verdict { font-size: 9vh } .tvmain .verdict svg { width: 22vh; height: 22vh } .tvmain .verdict.wait { font-size: 4vh }
 .tvpairs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh 1.4vw; max-width: 84vw } .tvpairs span { white-space: nowrap; padding: .8vh 1.6vw; border-radius: 99px; background: #1b111d; border: 1px solid #3b2640; font-size: 2.6vh } .tvpairs i { font-style: normal; color: var(--mist) }
 .tvpeople.answered .p { opacity: .4 } .tvpeople.answered .p.ok { opacity: 1 }
-.tvpeople.many .p { width: 7vw } .tvpeople.many .p .seal { width: 5.4vh; height: 5.4vh }
+.tvpeople.many .p { width: 8vw; font-size: 1.9vh } .tvpeople.many .p .seal { width: 5.4vh; height: 5.4vh }
 .tvpeople.end .p.dead { opacity: 1 } .tvpeople .p.f .seal { filter: drop-shadow(0 0 1.4vh rgba(234,90,143,.8)) }
 .tvscore li.win { color: var(--brass2) } .tvscore li.win .seal { filter: drop-shadow(0 0 1vh rgba(230,165,140,.8)) }
 .tvscore { grid-auto-flow: column; grid-template-rows: repeat(5, auto) }
@@ -156,7 +156,7 @@ body.tv.night { background: #030204 }
 .endl .disp { font-size: 9vh } .endl .disp.blood { color: var(--blood2) }
 .prizecard { margin-top: 3vh; padding: 3vh 2.4vw; border-radius: 2vh; border: 1px solid var(--brass); box-shadow: inset 0 0 0 .6vh #150c13, inset 0 0 0 .75vh rgba(230,165,140,.3) } .prizecard > span { font-family: var(--sc); letter-spacing: .14em; color: var(--brass2); font-size: 2.2vh } .prizecard h2 { font-size: 5vh; margin: .6vh 0 }
 .endr { display: flex; flex-direction: column; gap: 3vh; align-items: stretch } .endr .tvpeople { max-width: none }
-@media (max-aspect-ratio: 3/2) { .endl .disp { font-size: 7vh } .tvpeople.many.end .p .seal { width: 4.4vh; height: 4.4vh } .tvpeople.many.end .p { width: 6.4vw } .endr { gap: 2vh } .tvawards { font-size: 1.9vh } }
+@media (max-aspect-ratio: 3/2) { .endl .disp { font-size: 7vh } .tvpeople.many.end .p .seal { width: 4.4vh; height: 4.4vh } .tvpeople.many.end .p { width: 7.2vw } .tvpeople.many.end .p em { font-size: 1.6vh; letter-spacing: .02em } .endr { gap: 2vh } .tvawards { font-size: 1.9vh } }
 .tvawards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; font-size: 2.2vh } .tvawards li { display: flex; gap: 1vw; align-items: center } .tvawards .seal { width: 5vh; height: 5vh; flex: none } .tvawards b { display: block; color: var(--brass2); font-size: 2.4vh }
 .tvmain h1 { font-size: 8vh; margin: 0 } .tvmain h1.disp { font-size: 11vh }
 .tvmain h2 { font-size: 5.4vh; max-width: 80vw; margin: 0 }
@@ -170,7 +170,7 @@ body.tv.night { background: #030204 }
 .tvpeople { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4vh 1.4vw; max-width: 88vw }
 .tvpeople .p { display: flex; flex-direction: column; align-items: center; gap: .6vh; width: max(9vw, 15vh); font-size: 2.2vh }
 .tvpeople .p .seal { width: 7vh; height: 7vh } .tvpeople .p.dead { opacity: .35 } .tvpeople .p.ok .seal { filter: drop-shadow(0 0 1.2vh rgba(95,168,143,.8)) }
-.tvpeople .p span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tvpeople .p span { max-width: 100%; overflow: hidden; overflow-wrap: break-word; hyphens: auto; line-height: 1.1; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
 .tvpeople .p em { font-style: normal; font-family: var(--sc); font-size: 2.1vh; letter-spacing: .08em; color: var(--blood2) } .tvpeople .p em.l { color: #9ed3c0 }
 .tvscore { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: .6vh 4vw; min-width: 50vw; font-size: 3vh; text-align: left }
 .tvscore li { display: flex; gap: 1vw; align-items: center } .tvscore .seal { width: 4.5vh; height: 4.5vh } .tvscore b { margin-left: auto; color: var(--brass2) }
@@ -202,3 +202,12 @@ body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9v
 .wh { display: flex; flex-wrap: wrap; gap: 8px } .wh .btn { flex: 1 1 auto }
 .tbtn .pz { display: none } .top .me { min-width: 0 } .top .me .seal { flex: none }
 @media (max-width: 380px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }
+
+/* the host's bar: a long name shortens, "host" is a badge, the pause icon is two bars */
+.top .me { flex: 1 1 auto } .top .me .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.top .me .hosttag { flex: none; font: 600 11px/1 var(--sc); letter-spacing: .08em; text-transform: uppercase; font-style: normal; color: var(--brass2); border: 1px solid #5a3b3b; border-radius: 99px; padding: 3px 7px }
+.tbtn .pz { gap: 4px; align-items: center; height: 14px } .tbtn .pz i { display: block; width: 4px; height: 14px; border-radius: 1px; background: currentColor }
+@media (max-width: 380px) { .tbtn .pz { display: inline-flex } .top .me .hosttag { display: none } .top .tbtn { padding: 4px 9px } }
+body:has(.pausebox) { overflow: hidden } .pausebox .btn.sm { margin: 0 auto } body.tv .tvbtns { z-index: 21 }
+.whisp .wh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px } .whisp .wh .btn { width: 100% }
+.tvmain .lastw { width: min(70vw, 100%) }

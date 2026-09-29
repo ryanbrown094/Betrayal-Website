@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929181759">
+<meta name="build" content="20260929191019">
 <title>Terms of sale and use — The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="The terms of sale for The Betrayal.">
@@ -36,6 +36,7 @@ body { margin: 0; background: radial-gradient(120vw 60vh at 50% -10%, #2a1630, t
 a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 }
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 4px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
+[hidden] { display: none !important }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
 .wrap { max-width: 760px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
 nav.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0 8px }
@@ -43,6 +44,7 @@ nav.top .home { display: flex; align-items: center; gap: 10px; color: var(--ivor
 nav.top svg { width: 30px; height: 35px; color: var(--rose) }
 nav.top .links { display: flex; align-items: center; gap: 4px 18px } nav.top .links a:not(.btn) { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 12px 0 } nav.top .links a:not(.btn):hover, nav.top .links a[aria-current] { color: var(--ivory) }
 nav.top .links .btn[aria-current] { display: none }
+nav.top .links .btn, nav.top .home span { white-space: nowrap } @media (max-width: 360px) { nav.top .home { font-size: 22px } nav.top .links .btn { padding: 8px 14px } }
 @media (max-width: 600px) { nav.top .links a:not(.btn) { display: none } }
 .eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .32em; text-transform: uppercase; color: var(--rose); margin-top: 34px }
 h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 10px 0 8px; text-wrap: balance }
@@ -55,7 +57,7 @@ p, li { color: var(--ivory2) } strong, b { color: var(--ivory) }
 .note { padding: 14px 16px; border-radius: 10px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); margin: 18px 0 }
 table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(230,165,140,.18) } th { color: var(--ivory); font-weight: 700 } td { color: var(--ivory2) }
 .table-scroll { overflow-x: auto }
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17; font: 700 17px/1 var(--ui); text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 54px; padding: 12px 26px; border-radius: 10px; border: 1px solid var(--rose); background: linear-gradient(180deg, #eaac93, #c0715a 55%, #a0573f); color: #150b17; font: 700 17px/1 var(--ui); text-decoration: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; box-shadow: 0 6px 22px rgba(174,98,73,.18); transition: transform .15s ease, filter .15s ease, box-shadow .2s ease }
 .btn:hover { color: #150b17; filter: brightness(1.07); box-shadow: 0 8px 30px rgba(230,165,140,.28) } .btn:active { transform: translateY(1px) scale(.99) }
 .btn.ghost { background: transparent; color: var(--ivory); box-shadow: none } .btn.ghost:hover { background: rgba(230,165,140,.08); color: var(--ivory) }
 .btn.small { min-height: 44px; padding: 8px 18px; font-size: 15.5px }
@@ -87,7 +89,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18p
 <p>The Betrayal is an independent business based in England. You can contact us through our <a href="/contact">contact form</a>.</p>
 
 <h2>2. What you’re buying</h2>
-<p>When you book a <strong>Table</strong>, you get a <strong>booking code</strong> (called a “pass” in these terms; it looks like <code>OATH-XXXX-XXXX</code>, and older codes begin <code>CNDL-</code>). It opens one online game room (called a “Table” on our site) for one party. It is digital content: nothing is posted to you.</p>
+<p>When you book a <strong>Table</strong> (£10, one party), you get a <strong>booking code</strong> (called a “pass” in these terms; it looks like <code>OATH-XXXX-XXXX</code>, and older codes begin <code>CNDL-</code>). It opens one online game room (called a “Table” on our site) for one party. It is digital content: nothing is posted to you.</p>
 <ul>
 <li>When you first enter the pass, it opens a room. The room can be played for <strong>48 hours</strong> from that moment.</li>
 <li>After 48 hours the room becomes read-only. It is deleted, with everything in it, <strong>7 days</strong> after that.</li>
@@ -95,12 +97,13 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18p
 <li>Entering the pass again within the 48 hours brings back the same room.</li>
 </ul>
 <p>A <strong>Regular</strong> subscription (£20 a month) gives you one code that opens a new game room whenever you like, for as long as the subscription is paid. Each room works like a one-party Table (48 hours, then read-only, then deleted), and you can have one game open at a time: starting a new game closes the one that was open. The code is for you and your own parties; you may not share it with other hosts.</p>
-<p>To play, you need an internet connection and, for the Classic way of playing, a TV or large screen with a laptop or other device that can show a web page on it and a phone for the host; for the Modern way, a phone for each player (a TV is optional). You also need the props described on the home page, such as blindfolds and chalkboards. We don’t supply these.</p>
+<p>To play, you need an internet connection and a phone for each player; a TV is optional. If you choose the Classic way of playing instead, you need a TV or large screen with a laptop or other device that can show a web page on it, a phone for the Keeper, and a blindfold and a small chalkboard (or whiteboard) for each player. We don’t supply these.</p>
 
 <h2>3. Buying a pass</h2>
 <p>The price is shown on the <a href="/buy">buy page</a> before you pay, and includes VAT where it applies. Payment is taken by our payment provider, Stripe. We never see or store your card details.</p>
 <p>Your contract with us starts when your payment is confirmed and your pass is shown to you. Stripe also emails a receipt to the address you give at checkout. If you lose your pass, contact us and we’ll find it from that address.</p>
 <p>If a price on our site is obviously wrong, we may cancel the order and refund you in full.</p>
+<p>From time to time we may offer a discount, such as the 10% off one party found at the broken seal. A discount applies only to the product it names (the broken seal’s is for one party, not a Regular subscription), is applied automatically at checkout, and can’t be exchanged for cash. We may end a discount at any time; the price you pay is the one Stripe shows you before you pay.</p>
 
 <h2>4. Subscriptions: renewal and cancelling</h2>
 <p>A subscription renews automatically every month, on the same date, at the price you agreed when you subscribed, and Stripe takes the payment from the card you used. You can cancel at any time with “Manage subscription” on the home page (you’ll need your code), or by emailing us. Cancelling stops future payments; your code keeps working until the end of the month you’ve paid for. If a payment fails, the code stops opening new games until it’s paid. We’ll give you at least 30 days’ notice by email before any price change, and you can cancel before it takes effect.</p>
@@ -117,7 +120,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18p
 <h2>6. Playing safely</h2>
 <p>You, as the host, are responsible for the party and for the people at it. In particular:</p>
 <ul>
-<li>Some parts of the game have players blindfolded, standing on one leg, or moving around the room. Clear the space, keep drinks and candles away from anyone blindfolded, and let anyone sit out any part they don’t want to do.</li>
+<li>Some Trials have players standing on one leg or moving around the room, and in Classic players are blindfolded at night. Clear the space, keep drinks and candles away from anyone blindfolded, and let anyone sit out any part they don’t want to do.</li>
 <li>The game has themes of secrecy, betrayal and (make-believe) murder and poison. It is meant for adults. Anyone under 18 should only play with a parent or guardian’s agreement and supervision.</li>
 <li>Please drink responsibly. Don’t let anyone drive after drinking.</li>
 <li>Only put guests’ first names or nicknames into the game, and let them know you’re doing so. See our <a href="/privacy">privacy notice</a>.</li>

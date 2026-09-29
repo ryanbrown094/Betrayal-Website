@@ -49,7 +49,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - At night, everyone taps their phone. Only the Forsworn’s taps count. Nobody can tell who’s choosing.
 - Poisoned? You’ll find out on your phone. Say nothing until dawn.
 - Charades, but only the actor’s phone knows the word.
-- Eating together? The game can serve dinner in three courses. Betrayal comes in between.
+- Eating together? Switch on dinner in courses. Betrayal comes in between.
 - The Loyal build the Purse. The Forsworn take what it falls short. Sabotage, quietly.
 - Prefer it the old-fashioned way? Classic has a Keeper, blindfolds and chalk.
 

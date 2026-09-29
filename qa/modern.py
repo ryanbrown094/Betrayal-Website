@@ -63,7 +63,7 @@ with sync_playwright() as p:
     # the test fixes the Trials' order (master-code rooms only): the quiz first
     r = host.evaluate("async c => (await fetch('/api/g/' + c + '/m/create', {method:'POST', body: JSON.stringify({name:'Annie', plan:['quiz','hilo','estimate','countdown']})})).json()", code)
     host.evaluate("([c, t]) => localStorage.setItem('bt-m-' + c, t)", [code, r["tok"]]); host.goto(URL + "/m/" + code)
-    check("the host lands in the lobby as host", until(lambda: "You’re in" in host.inner_text("#app") and "host" in host.inner_text(".top")))
+    check("the host lands in the lobby as host", until(lambda: "You’re in" in host.inner_text("#app") and "host" in host.inner_text(".top").lower()))
     tv = page(1280, 720); tv.goto(URL + "/t/" + code)
     check("the TV at /t/CODE shows the code and a QR code", until(lambda: code in tv.inner_text("#tvapp") and tv.locator(".qrbox svg path").count() == 1))
     phones = [host]
@@ -99,6 +99,10 @@ with sync_playwright() as p:
     check("…no choosing Trials, no Temptation, no Reckoning button", host.locator("#pickt, [data-a=trial], [data-a=reckon]").count() == 0)
     check("…and players see what's next too", until(lambda: "Next:" in phones[1].inner_text("#app") and "Waiting for Annie" in phones[1].inner_text("#app"), 5))
     shot(host, "08-day-host")
+
+    check("day one opens with Most Likely To, the icebreaker", "Most Likely To" in host.inner_text("#app"))
+    host.click("[data-a=tools]"); host.click("[data-a=tool][data-v=skipStep]")
+    check("…which the host can skip from Tools", until(lambda: "Most Likely To" not in host.inner_text("#app") and host.locator("[data-a=next]").count() == 1))
 
     # the Trial with the Casting Vote: a whole quiz on phones
     host.click("[data-a=next]")
@@ -150,7 +154,7 @@ with sync_playwright() as p:
     # the night
     check("night: the Forsworn choose on their phones", until(lambda: "Choose who is murdered tonight" in phones[F[0]].inner_text("#app")))
     check("…the host has no dawn button (it's in Tools)", host.locator("[data-a=dawnNow]").count() == 0)
-    phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
+    phones[F[0]].click("details.whisp summary"); phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
     check("…and whisper to each other, which nobody else sees", until(lambda: "Vote with me tomorrow" in phones[F[1]].inner_text("#app")) and "Vote with me" not in phones[L[0]].inner_text("#app") and "Vote with me" not in tv.inner_text("#tvapp"))
     vi = L[0]; victim = NAMES[vi]
     for f in F: until(lambda: phones[f].locator(f"[data-a=pick]:has-text('{victim}')").count(), 10); phones[f].click(f"[data-a=pick]:has-text('{victim}')")

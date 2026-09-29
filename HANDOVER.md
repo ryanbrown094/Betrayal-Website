@@ -34,6 +34,35 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.7 (29 Sep 2026), QA sweep:** three reviews (the engine and server, fuzzed with 1,300 games including pauses and removals; every Modern screen at seven sizes; the site and the copy), and their fixes.
+- **Engine:**
+  - A host tool used while paused acts from the moment of the pause.
+  - A revote whose candidates were all taken out goes back to the whole table instead of ending the game.
+  - Most Likely To opens every game, at 8 and 9 players too.
+  - Someone taken out mid-Trial drops out of it (actor, teller, the RPS bracket), and the winner is taken from the living.
+  - The final starts clean, with no stale Trial or break.
+  - Snap's sequence doesn't run ahead while paused.
+  - Trust and Honour send their clocks.
+  - The Purse change shown is the real one.
+- **Screens:**
+  - The host's bar shortens a long name, and "host" is a badge (hidden under 380px).
+  - The TV dawn shows last words instead of the seat grid, so nothing is cut off.
+  - TV names wrap onto two lines instead of being cut.
+  - The Forsworn's whispers sit below their targets.
+  - Votes are in name order and stay two columns.
+  - The victims' copy is consistent.
+  - Trust and Honour show countdowns and say what happens if you don't choose.
+  - Unmasking uses role colours, and the TV shows only the survivors.
+- **Site:**
+  - `[hidden]` works on pages, so /seal hides Claim when the discount is off.
+  - The buy page shows £9 only once the server confirms it, and says the Regular plan isn't discounted.
+  - `bt-egg` is cleared after a one-party purchase and is listed in the cookie notice.
+  - The terms state the £10 price, cover discounts and are Modern-first.
+  - Privacy, contact, refunds and rules are updated for Modern; the lengths agree everywhere.
+  - The nav doesn't wrap at 320px.
+  - `robots.txt` added.
+- **Marketing copy:** long-game lengths and promo-code notes updated; the new features added.
+
 **1.6.6 (29 Sep 2026), the broken seal, and dinner made optional:**
 - **The broken seal:** the QR code in the marketing pictures (the home page's hero and the tour's TV lobby) now leads to `/seal`. `tools/modern-shots.mjs` passes `qr`, and `replayShow` draws it. The page gives 10% off one party. It's remembered in `localStorage` (`bt-egg`), and the buy page shows £9. Checkout then applies the Stripe promotion code `STRIPE_EGG_PROMO` (code QR10, `promo_1UL5tM9eT91BoTqdS0J7RLMs`) through `discounts`, so the buyer types nothing. Whether Managed Payments accepts discounts is unverified. If Stripe refuses the code, the checkout opens at full price and the error log says so. The seal is for one party only, never the subscription. `/api/egg` says whether it's on, and `/seal` is sent `noindex`.
 - **Dinner is optional:**

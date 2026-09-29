@@ -52,7 +52,7 @@ with sync_playwright() as p:
         sp.click("#claim"); sp.wait_for_url("**/buy"); sp.wait_for_timeout(900)
         check("seal → buy: one party at £9, crossed out from £10, with the seal named", "£9" in sp.inner_text("#p1") and "£9" in sp.inner_text("#pay") and sp.is_visible("#eggnote"))
         sp.check("input[value=sub]"); sp.wait_for_timeout(100)
-        check("…a Regular pays the usual £20", "£20 a month" in sp.inner_text("#pay") and not sp.is_visible("#eggnote"))
+        check("…a Regular pays the usual £20, and the note says the seal is for one party", "£20 a month" in sp.inner_text("#pay") and "Regular plan" in sp.inner_text("#eggnote"))
     b.close()
 print("RESULT: " + ("CLEAN" if not fails else "FAILED " + str(len(fails))))
 sys.exit(1 if fails else 0)
