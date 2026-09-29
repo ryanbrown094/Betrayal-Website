@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929164259">
+<meta name="build" content="20260929165232">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
@@ -134,7 +134,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">the price</div><h2>One code. The whole evening.</h2>
     <div class="prices">
-      <div class="card"><b>one party</b><div class="amt">£15</div><ul><li>One Table for 8 to 24 players</li><li>Open for 48 hours from the moment you start it</li><li>Buy it now, play it whenever you like</li></ul><a class="btn" href="/buy">Book a Table</a></div>
+      <div class="card"><b>one party</b><div class="amt">£10</div><ul><li>One Table for 8 to 24 players</li><li>Open for 48 hours from the moment you start it</li><li>Buy it now, play it whenever you like</li></ul><a class="btn" href="/buy">Book a Table</a></div>
       <div class="card"><b>a regular</b><div class="amt">£20<em> a month</em></div><ul><li>A booking code that opens a new Table whenever you like</li><li>One game at a time, each open for 48 hours</li><li>Cancel any time</li></ul><a class="btn ghost" href="/buy">Become a Regular</a></div>
     </div>
     <p style="color:var(--ivory2);font-size:16px;margin-top:14px">Both include all fifteen Trials, thousands of questions and prompts, the full TV show, and Classic with the Keeper’s script if you prefer it. Payments by Stripe.</p>
@@ -143,7 +143,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
     <details><summary>Does everyone need a phone?</summary><p>Yes: everyone plays on their own, in the browser, with nothing to install. If your group would rather put phones away, play Classic: only the Keeper uses one, guests wear blindfolds at night and chalk their votes. You choose when you open your Table.</p></details>
-    <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to break for dinner, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 or 9 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
@@ -169,7 +169,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 <script>
 "use strict";
 // Shop settings: the price shown and a contact address. The Stripe Payment Link goes in BUY at the bottom of site/pages/buy.html.
-const SHOP = { price: "£15 a Table · or £20 a month as a Regular", contact: "" };
+const SHOP = { price: "£10 a Table · or £20 a month as a Regular", contact: "" };
 const $ = s => document.querySelector(s);
 $("#buy").href = "/buy";
 $("#price").textContent = SHOP.price ? SHOP.price + " · best with 8 to 16 players" : "";

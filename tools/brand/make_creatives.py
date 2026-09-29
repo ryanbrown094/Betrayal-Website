@@ -90,7 +90,7 @@ def seal(letter, col, size=120, count=None):
             f'<circle cx="50" cy="50" r="30" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="3"/>'
             f'<text x="50" y="63" text-anchor="middle" font-family="Grenze" font-weight="600" font-size="38" fill="rgba(30,18,28,.62)">{letter}</text></svg>{badge}</div>')
 
-FOOT = f'Best with 8–16 players &nbsp;·&nbsp; <b>Book a Table, £15</b> &nbsp;·&nbsp; {SITE}'
+FOOT = f'Best with 8–16 players &nbsp;·&nbsp; <b>Book a Table, £10</b> &nbsp;·&nbsp; {SITE}'
 
 def pad(tall):
     return f"padding:{250 if tall else 90}px 70px {340 if tall else 70}px"
@@ -131,7 +131,7 @@ def price(w, h):
       {'<div style="flex:1"></div>' if tall else ''}
       <div class=svgbox style="width:96px">{MARK}</div>
       <div class=h style="font-size:{124 if tall else 118}px;margin-top:26px;white-space:nowrap">Under £2 a guest.</div>
-      <div class=say style="font-size:{40 if tall else 36}px;margin-top:22px">£15 books a Table for a party of eight or more.</div>
+      <div class=say style="font-size:{40 if tall else 36}px;margin-top:22px">£10 books a Table for a party of eight or more.</div>
       <div class=eyebrow style="font-size:26px;margin-top:{80 if tall else 56}px">what you need</div>
       <ul class=need style="font-size:{42 if tall else 37}px;margin-top:18px;width:820px">
         <li>Eight or more friends</li><li>A phone each</li>
@@ -168,7 +168,7 @@ def card(w, h):
         <div style="width:100%;height:100%">{svg.replace('<svg ', '<svg style="width:100%;height:100%" ')}</div></div>
       <div class=foot style="font-size:40px;margin-top:44px;color:#E8D0C8">{SITE}</div>
       <div style="flex:1"></div>
-      <div class=foot style="font-size:34px"><b>Book a Table, £15</b> &nbsp;·&nbsp; a phone each &nbsp;·&nbsp; no app</div></div>"""
+      <div class=foot style="font-size:34px"><b>Book a Table, £10</b> &nbsp;·&nbsp; a phone each &nbsp;·&nbsp; no app</div></div>"""
 
 def og(w, h):
     return f"""<div class=c style="width:{w}px;height:{h}px;padding:70px 80px;justify-content:center">

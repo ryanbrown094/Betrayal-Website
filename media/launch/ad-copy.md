@@ -14,7 +14,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - C: A dinner-party game for 8 to 16 friends, played on everyone’s phone. A few are secretly Forsworn. The rest have one evening to find them.
 
 **Headline:** A dinner-party game of loyalty and lies · or · Not everyone meant it
-**Description:** Book a Table · £15 a party
+**Description:** Book a Table · £10 a party
 
 ## 2 · Your phone runs the game (`02-your-phone-runs-the-game`)
 
@@ -29,10 +29,10 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## 3 · Under £2 a guest (`03-under-2-a-guest`)
 
 **Primary text**
-- A: One £15 Table runs the whole party for eight or more. Everyone brings their phone; you bring a prize worth betraying a friend for.
+- A: One £10 Table runs the whole party for eight or more. Everyone brings their phone; you bring a prize worth betraying a friend for.
 - B: Cheaper than a round of drinks. Nothing to buy, nothing to download, and a friend you’ll never quite trust again.
 
-**Headline:** Under £2 a guest · or · Book a Table for £15
+**Headline:** Under £2 a guest · or · Book a Table for £10
 **Description:** Best with 8–16 · a phone each
 
 ## 4 · Who do you exile? (`04-who-do-you-exile`)
@@ -42,7 +42,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - B: Every round ends the same way: one name on every phone, and one guest leaves the table.
 
 **Headline:** Who do you exile? · or · Vote on your phone
-**Description:** Book a Table · £15 a party
+**Description:** Book a Table · £10 a party
 
 ## Extra lines (any set)
 
@@ -56,7 +56,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## Seasonal lines (weeks 3 and 4)
 
 - Halloween: This Halloween, skip the costumes. Candles lit, phones out, and somebody at the table is lying.
-- Christmas: The office party that ends with your manager exiled. Book a Table for £15.
+- Christmas: The office party that ends with your manager exiled. Book a Table for £10.
 - Christmas: Book a Table for the big family night. Three courses, a few lies, and a grudge that lasts until Boxing Day.
 - Christmas: Hosting more than once this season? Become a Regular: £20 a month, a new Table whenever you like.
 

@@ -4,7 +4,7 @@ Every Table can be played two ways, and the host chooses when they open it. **Mo
 
 ## Modern: six steps
 
-1. **Book a Table** (£15, one party) or use a Regular’s booking code.
+1. **Book a Table** (£10, one party) or use a Regular’s booking code.
 2. **Open your Table:** enter the booking code at thebetrayal.co.uk, on the phone you’ll play on. It opens one Table for one party of 8 to 24, open for 48 hours from first use.
 3. **Choose Modern.** (“Your Table is open. How will you play?”)
 4. **Type your name** and tap **Open the Table**. You’re the host, and you play too: your phone runs the evening (you begin each Trial and call the breaks and the Reckoning), everything else runs itself, and you never see anyone’s role.

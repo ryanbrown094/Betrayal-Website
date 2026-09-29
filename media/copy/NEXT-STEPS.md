@@ -5,7 +5,7 @@
 1. **Domain.** thebetrayal.co.uk was registered on 28 September 2026 with Cloudflare nameservers. Confirm it’s yours; the QR card and every ad point to it. Keep cloakandcandle.co.uk and redirect it to the new domain.
 2. **Stripe, in the Dashboard (test mode and live mode are separate: do both).**
    - **Product names.** Customers see them at checkout and on receipts:
-     - the £15 one-off price: **The Betrayal — a Table (one party)**
+     - the £10 one-off price: **The Betrayal — a Table (one party)**
      - the £20 monthly price: **The Betrayal — Regular (monthly)**
    - **Statement descriptor:** make bank statements read The Betrayal, not Cloak & Candle.
    - **Tax codes:** with Managed Payments on, both products need an eligible tax code.

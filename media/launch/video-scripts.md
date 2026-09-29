@@ -32,7 +32,7 @@ Rules that carry over from the brand: never picture a face under the hood, never
 - Overhead shot of a set table. On the beat, phones land by every plate, one after another, then a box of chocolates with a label reading “the prize”.
 - **Text:** *“Everything you need for the best dinner party of your life:”* then *“your friends’ phones. That’s it.”*
 - **End:** *“Under £2 a guest.”*
-- **Caption:** Best with 8 to 16. Book a Table for £15. No app, no accounts, no props.
+- **Caption:** Best with 8 to 16. Book a Table for £10. No app, no accounts, no props.
 
 ### 5 · The Oath
 - A dim table, candles, every guest holding their phone close. The same question lights every screen: *Would you like to be Forsworn?*

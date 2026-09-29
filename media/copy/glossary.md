@@ -21,7 +21,7 @@ Every Table can be played two ways, chosen when it’s opened. **Modern is the h
 
 | was | now | how to use it |
 |---|---|---|
-| an Invitation (£15) | **a Table** (£15, one party) | Call to action: **Book a Table**. “Invitation” clashed with hosts inviting their guests, so “invite your friends” is now free to use in copy. |
+| an Invitation (£10) | **a Table** (£10, one party) | Call to action: **Book a Table**. “Invitation” clashed with hosts inviting their guests, so “invite your friends” is now free to use in copy. |
 | an Invitation code | **a booking code** | OATH-XXXX-XXXX (older CNDL- codes still work). It opens one Table for one party of 8 to 24, open 48 hours from first use. |
 | a Standing Invitation (£20 a month) | **a Regular** (£20 a month) | Call to action: **Become a Regular**. A Regular’s booking code opens a new Table whenever they like, one at a time. Cancel any time. |
 | the room code | **the Table code** | the six characters guests join with at /join (Modern), and the TV joins with |
@@ -76,7 +76,7 @@ These belong to the game. Each phone (and the TV, if there is one) explains each
 | the Forsworn’s secret tasks | side-quests | **Errands** | in-game | Classic only |
 | the last secret vote | End or Exile | **Trust or Doubt** | in-game | TRUST if every Forsworn is gone, DOUBT if one is still here |
 | the surviving Forsworn’s last choice | share or take | **Honour or Betray** | in-game | the name pays off in the last minute of the night |
-| what you buy | party pass, £15 | **a Table**, £15 | product | one party of 8 to 24, open 48 hours from first use; was “an Invitation” |
+| what you buy | party pass, £10 | **a Table**, £10 | product | one party of 8 to 24, open 48 hours from first use; was “an Invitation” |
 | the code you’re sent | pass | **a booking code** | product | OATH-XXXX-XXXX; CNDL- codes still work |
 | the subscription | £20 a month | **a Regular**, £20 a month | product | a new Table whenever you like, one at a time; was “a Standing Invitation” |
 | a game’s room | room | **the Table** | product | Modern: each phone at /m/CODE, the TV (optional) at /t/CODE. Classic: the TV at /t/CODE, the Keeper at /t/CODE#keeper |

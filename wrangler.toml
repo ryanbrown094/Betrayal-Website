@@ -21,7 +21,7 @@ OLD_HOSTS = "cloakandcandle.co.uk,www.cloakandcandle.co.uk"
 PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
-STRIPE_PRICE_ID = "price_1UKk9M9eT91BoTqdQ5HJ0lQa"  # the £15 party pass's Stripe Price — LIVE MODE. Empty = checkout closed
+STRIPE_PRICE_ID = "price_1UL4Ds9eT91BoTqdAel9htGQ"  # the £10 party pass's Stripe Price — LIVE MODE. Empty = checkout closed
 STRIPE_SUB_PRICE_ID = "price_1UKk9M9eT91BoTqd9P9iSm1I"  # the £20/month unlimited subscription's Price — LIVE MODE; empty = subscription not on sale
 ADMIN_USER = "ryanab94.admin"  # the /admin page's username; its password is the ADMIN_PASSWORD secret
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
