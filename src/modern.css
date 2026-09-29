@@ -188,3 +188,17 @@ body.tv.night { background: #030204 }
 .tvbtns .btn { width: auto; min-height: 36px; font-size: 14px }
 .qrbox { width: 30vh; height: 30vh; padding: 0; border-radius: 1.4vh; overflow: hidden; box-shadow: 0 0 6vh rgba(230,165,140,.18) } .qrbox svg { width: 100%; height: 100% }
 .tvcode .c { margin-bottom: 1.5vh }
+
+/* ---------- paused, last words, the dawn's verdict, the Forsworn's whispers ---------- */
+.pausebox { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; background: rgba(9,7,10,.86); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px) }
+.pausebox > div { max-width: 420px } .pausebox h1 { margin: 6px 0 10px }
+body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9vh } body.tv .pausebox .sub { font-size: 3.2vh } body.tv .pausebox .eyebrow { font-size: 2.6vh }
+.lastw { margin: 14px 0; padding: 14px 18px; border-left: 3px solid var(--brass); background: rgba(174,98,73,.08); border-radius: 0 12px 12px 0; font-family: var(--book); font-style: italic; font-size: 20px; color: var(--tallow); overflow-wrap: anywhere }
+.lastw cite { display: block; margin-top: 6px; font-family: var(--sc); font-style: normal; font-size: 13px; letter-spacing: .08em; color: var(--tallow2) }
+.epitaph { margin: 10px 0; font-family: var(--book); font-style: italic; color: var(--brass2); overflow-wrap: anywhere }
+.tvmain .lastw { max-width: 70vw; font-size: 4vh; padding: 2vh 3vw; text-align: left } .tvmain .lastw cite { font-size: 2.2vh }
+.tvmain .epitaph { max-width: 70vw; font-size: 3.4vh; margin: 0 }
+.whispers { list-style: none; margin: 8px 0 12px; padding: 0; font-size: 16px } .whispers li { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06) } .whispers b { color: var(--blood2); font-weight: 600; margin-right: 6px }
+.wh { display: flex; flex-wrap: wrap; gap: 8px } .wh .btn { flex: 1 1 auto }
+.tbtn .pz { display: none } .top .me { min-width: 0 } .top .me .seal { flex: none }
+@media (max-width: 380px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }

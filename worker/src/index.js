@@ -233,7 +233,7 @@ export class GameState {
       }
       if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
       const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
-      if (s.test) M.addBots(s, Math.max(6, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
+      if (s.test) M.addBots(s, Math.max(M.MINP, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
     if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });
@@ -245,7 +245,7 @@ export class GameState {
       // a phone that lost its place asks by name; the director lets it back in, and it collects a fresh token
       if (body.req) { const r = (s.rejoin || []).find((x) => x.id === body.req); if (!r) return json({ error: "The host turned that request down.", gone: true }, 404); if (!r.tok) return json({ waiting: true }); s.rejoin = s.rejoin.filter((x) => x !== r); await save(); return json({ tok: r.tok }); }
       if (s.phase !== "lobby") {
-        const name = String(body.name || "").trim().toLowerCase(), p = s.players.find((x) => x.name.toLowerCase() === name);
+        const name = String(body.name || "").trim().toLowerCase(), p = s.players.find((x) => x.name.toLowerCase() === name && !x.left);
         if (!p) return json({ error: "This game has already started, and nobody here is called that." }, 409);
         s.rejoin = (s.rejoin || []).filter((x) => x.pid !== p.id).concat([{ id: Math.random().toString(36).slice(2, 10), pid: p.id, t: now }]).slice(-10); s.ver++; await save();
         return json({ req: s.rejoin[s.rejoin.length - 1].id, waiting: true });

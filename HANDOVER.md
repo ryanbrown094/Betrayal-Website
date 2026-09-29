@@ -34,6 +34,16 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.5 (29 Sep 2026), ease of use and atmosphere (Modern):**
+- **Pause:** the host's top bar has Pause, which stops every clock (`s.paused`; `tick` does nothing, and every other action is refused). Carry on moves each deadline, and each answer's time, on by the length of the pause (`shiftClocks`). Host tools stay open while paused.
+- **Phones:** they stay awake (Wake Lock, and the TV too). They buzz (`navigator.vibrate`, Android only; iPhones can't) when something needs that player: their role, a Trial starting, their turn, the vote, the night, being killed, Trust, Honour. They buzz again 10 seconds before a clock closes while they still owe an answer.
+- **Last words:** an exiled player (not in the final) and a murdered player each get one optional typed line of up to 140 characters. It appears on the TV and the narrator reads it. Poison already gets spoken last words.
+- **Forsworn whispers:** at night, when two or more Forsworn are alive, they can send set phrases (`WHISPERS`, up to 8 each a night). Only the Forsworn see them.
+- **Dawn:** when a victim topped a Most Likely To prompt (`stats.likely`), the TV says so ("voted most likely to …. We’ll never know now.").
+- **Taking someone out** (Tools, for illness): their phone says they've left, and they can't ask to rejoin. At the Oath, the roles are dealt once everyone else has sworn. If no Forsworn is left, the final begins (a dawn or reveal already under way plays out first). A Casting Vote or Crown they held is spent.
+
+**1.6.4 (29 Sep 2026):** the Table is £10 (new `STRIPE_PRICE_ID`). Modern takes any number from 8 to 24, the same as Classic; its minimum was 6. The test game against bots offers every count from 8 to 24, and the engine tests now play odd-sized tables.
+
 **1.6.3 (29 Sep 2026), Modern first:** everything we publish now sells Modern, with Classic as the alternative.
 - **Home page:** the pitch is phones-first. The hero is `media/hero-modern.jpg` (made by `tools/hero-modern.py` from the tour screenshots). "How it works" covers open, join and play. A short "There's Classic, too" section follows, and the FAQ covers phones, the host playing, and Wi-Fi. After a booking, the Modern card comes first, marked recommended.
 - **Rules page:** explains Modern, with a `#classic` section listing what changes. **Tour page:** shows Modern screens first, then the Classic walk-through under `#classic`. **Buy page:** the copy is phones-first.

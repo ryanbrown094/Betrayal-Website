@@ -61,15 +61,15 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
 
 // 1. the lobby, the Oath, the deal
 {
-  const g = setup(5); check("five players can't start", !!A(g, g.dir, { a: "start" }).error);
-  join(g.s, "Priya", g.now, rnd); check("a duplicate name is refused", !!join(g.s, "priya", g.now, rnd).error);
+  const g = setup(7); check("seven players can't start", !!A(g, g.dir, { a: "start" }).error);
+  join(g.s, "Oliver", g.now, rnd); check("a duplicate name is refused", !!join(g.s, "oliver", g.now, rnd).error);
   check("only the director starts", !!A(g, g.ids[1], { a: "start" }).error && A(g, g.dir, { a: "start" }) === null && g.s.phase === "oath");
   check("nobody can join once started", !!join(g.s, "Late", g.now, rnd).error);
   const ids = g.s.players.map((p) => p.id);
   A(g, ids[0], { a: "optin", v: "no" }); A(g, ids[1], { a: "optin", v: "yes" }); A(g, ids[2], { a: "optin", v: "no" }); A(g, ids[3], { a: "optin", v: "no" }); A(g, ids[4], { a: "optin", v: "no" });
   check("the Oath waits for everyone", g.s.phase === "oath" && viewFor(g.s, null, g.now).players.filter((p) => p.optedIn).length === 5);
-  A(g, ids[5], { a: "optin", v: "any" });
-  check("…then deals: the volunteer is Forsworn", g.s.phase === "roles" && g.s.players[1].role === "f" && g.s.players.filter((p) => p.role === "f").length === forswornFor(6));
+  A(g, ids[5], { a: "optin", v: "no" }); A(g, ids[6], { a: "optin", v: "no" }); A(g, ids[7], { a: "optin", v: "any" });
+  check("…then deals: the volunteer is Forsworn", g.s.phase === "roles" && g.s.players[1].role === "f" && g.s.players.filter((p) => p.role === "f").length === forswornFor(8));
   const v0 = viewFor(g.s, ids[0], g.now), v1 = viewFor(g.s, ids[1], g.now), tv = viewFor(g.s, null, g.now);
   check("each phone sees only its own role (the host's included)", v0.me.role === "l" && v1.me.role === "f" && v0.players.every((p) => p.role === null) && tv.players.every((p) => p.role === null) && !tv.me);
   check("no token leaks into any view", !JSON.stringify(tv).includes(g.s.players[0].tok) && !JSON.stringify(v1).includes(g.s.players[0].tok));
@@ -168,7 +168,7 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
   check("end a Trial early", A(g, g.dir, { a: "tool", v: "endTrial" }) === null && g.s.trial.stage === "done");
 }
 // 6. whole games: until someone wins
-for (const [n, fw] of [[6, 0], [8, 1], [12, 0], [17, 1], [24, 0], [10, 1]]) {
+for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
   const g = setup(n); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
   let guard = 0, sawNight = false; const target = (p) => alive(g.s).find((q) => q.id !== p.id && q.role === (fw ? "l" : "f")) || alive(g.s).find((q) => q.id !== p.id);
   while (g.s.phase !== "end" && guard++ < 200) {
@@ -192,7 +192,7 @@ for (const [n, fw] of [[6, 0], [8, 1], [12, 0], [17, 1], [24, 0], [10, 1]]) {
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
 }
 // 7. a test game: one person against bots; Trials score at random, every clock is ten seconds at most
-for (const n of [8, 16]) {
+for (const n of [9, 16]) {
   let now = 1e12; const s = newGame(now, rnd, {}); s.test = true; const me = join(s, "Ryan", now, rnd).id; addBots(s, n, now, rnd);
   const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
   check(`test game: ${n - 1} bots join`, s.players.length === n && s.players.filter((p) => p.bot).length === n - 1);
@@ -217,6 +217,67 @@ for (const n of [8, 16]) {
   check(`test game, ${n} players: finishes with only the host tapping (${s.result && s.result.winner}, ${s.round} rounds)`, s.phase === "end", [s.phase, guard]);
   check(`…no countdown longer than ten seconds (longest ${Math.round(maxClock / 1000)}s)`, maxClock <= 10000);
   check("…Trials scored at random", s.stats && Object.keys(s.stats.wins).length > 0);
+}
+// 8. the host pauses; last words; the Forsworn whisper; the dawn remembers Most Likely To; someone is taken out
+const roles = (g, fs) => g.s.players.forEach((p, i) => (p.role = fs.includes(i) ? "f" : "l"));
+const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" }); } const X = g.s.players[i]; vote(g, (p) => (p === X ? g.s.players.find((q) => q !== X && q.alive) : X)); return X; };
+{
+  const g = begin(10), s = g.s;
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); const end0 = s.trial.introEnd;
+  check("pause: only the host can", !!A(g, g.ids[1], { a: "pause" }).error && A(g, g.dir, { a: "pause" }) === null && !!s.paused);
+  run(g, 60000);
+  check("…every clock stands still", s.trial.stage === "intro" && viewFor(s, g.ids[1], g.now).paused === s.paused.at);
+  check("…and nothing can be answered or moved on", !!A(g, g.ids[1], { a: "ans", v: "x" }).error && !!A(g, g.dir, { a: "next" }).error);
+  A(g, g.dir, { a: "pause", v: "off" });
+  check("carry on: every deadline moves on by the pause", !s.paused && s.trial.introEnd === end0 + 60000);
+  check("…and the game plays on", !finishCurrentTrial(g) && s.trial.stage === "done");
+  check("Most Likely To: the table's verdict is kept for the dawn", playTrial((A(g, g.dir, { a: "cont" }), g), "likely") === null && Object.values(s.stats.likely || {}).every((q) => /^Most likely to /.test(q)) && Object.keys(s.stats.likely || {}).length > 0, s.stats.likely);
+}
+{
+  const g = begin(10, { kill: "murder" }), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const X = exile(g, 6);
+  check("last words: the exiled may type one line", s.phase === "reveal" && viewFor(s, X.id, g.now).me.words === "" && viewFor(s, g.ids[1], g.now).me.words === undefined);
+  check("…nobody else may", !!A(g, g.ids[1], { a: "words", v: "not me" }).error);
+  check("…once, and the table sees it", A(g, X.id, { a: "words", v: "  I was   Loyal, you fools " }) === null && !!A(g, X.id, { a: "words", v: "again" }).error && viewFor(s, null, g.now).reveal.words === "I was Loyal, you fools");
+  run(g, 6000); A(g, g.dir, { a: "cont" });
+  check("night: the Forsworn may whisper set phrases", s.phase === "night" && A(g, s.players[3].id, { a: "whisper", v: 3 }) === null && !!A(g, s.players[3].id, { a: "whisper", v: 99 }).error);
+  check("…the Loyal may not, and never see them", !!A(g, g.ids[1], { a: "whisper", v: 0 }).error && viewFor(s, g.ids[1], g.now).me.whispers === undefined && !JSON.stringify(viewFor(s, null, g.now)).includes("Vote with me"));
+  check("…the other Forsworn sees it", JSON.stringify(viewFor(s, s.players[4].id, g.now).me.whispers) === JSON.stringify([["Annie" === s.players[3].name ? "Annie" : s.players[3].name, "Vote with me tomorrow"]]));
+  const V1 = s.players[7]; s.stats.likely = { [V1.id]: "Most likely to cry at a wedding" };
+  for (const p of alive(s)) A(g, p.id, p.role === "f" ? { a: "pick", v: V1.id } : { a: "sleep" }); run(g, 1000);
+  check("dawn: the murdered can't speak before the night is revealed", s.phase === "dawn" && !!A(g, V1.id, { a: "words", v: "x" }).error);
+  A(g, g.dir, { a: "cont" });
+  const dv = viewFor(s, null, g.now).dawn;
+  check("…then the table's verdict on them is read out", JSON.stringify(dv.likely) === JSON.stringify([[V1.name, "Most likely to cry at a wedding"]]));
+  check("…and they may type their last words", A(g, V1.id, { a: "words", v: "Tell my cat" }) === null && JSON.stringify(viewFor(s, null, g.now).dawn.words) === JSON.stringify([[V1.name, "Tell my cat"]]));
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const X = exile(g, 6); run(g, 6000); A(g, g.dir, { a: "cont" });
+  for (const p of alive(s)) A(g, p.id, p.role === "f" ? { a: "pick", v: s.players[7].id } : { a: "sleep" }); run(g, 1000); A(g, g.dir, { a: "cont" });
+  check("poison: last words are spoken, not typed", s.phase === "dawn" && !!A(g, s.players[7].id, { a: "words", v: "x" }).error);
+  check("…and the exiled can't come back to type", !!A(g, X.id, { a: "words", v: "late" }).error);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]);
+  check("take someone out: only the host", !!A(g, g.ids[1], { a: "tool", v: "remove", who: g.ids[2] }).error);
+  A(g, g.dir, { a: "tool", v: "remove", who: s.players[3].id });
+  check("…they're gone from every screen, and their phone says so", !viewFor(s, null, g.now).players.some((p) => p.id === s.players[3].id) && viewFor(s, s.players[3].id, g.now).me.left === true && !!A(g, s.players[3].id, { a: "sleep" }).error);
+  check("…a Forsworn still at the table: the game goes on", s.phase === "day" && !s.final);
+  A(g, g.dir, { a: "tool", v: "remove", who: s.players[4].id });
+  check("…no Forsworn left: straight to the final", s.final && s.phase === "day");
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  exile(g, 6); run(g, 6000); A(g, g.dir, { a: "cont" });
+  const before = alive(s).length;
+  A(g, g.dir, { a: "tool", v: "remove", who: s.players[3].id }); A(g, g.dir, { a: "tool", v: "remove", who: s.players[4].id });
+  check("…at night too: nobody dies, and the final begins", s.final && s.phase === "day" && alive(s).length === before - 2 && !s.players.some((p) => p.dying));
+}
+{
+  const g = setup(9); A(g, g.dir, { a: "start" }); for (const id of g.ids.slice(0, 8)) A(g, id, { a: "optin", v: "any" });
+  A(g, g.dir, { a: "tool", v: "remove", who: g.ids[8] });
+  check("…at the Oath: once the rest have sworn, the roles are dealt", g.s.phase === "roles" && g.s.players.filter((p) => p.role === "f").length === forswornFor(8));
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);
