@@ -2,7 +2,7 @@
 import json, sys
 from playwright.sync_api import sync_playwright
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8714/"
-PIN = "7351"; NAMES = ["Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess"]
+PIN = "7351"; NAMES = ["Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess", "Oliver"]
 fails = []
 def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + (" — " + str(extra) if extra and not cond else ""))
@@ -18,13 +18,13 @@ with sync_playwright() as p:
     host.evaluate("()=>act(s=>{s.players.forEach((p,i)=>p.role=[1,4].includes(i)?'cloak':'candle');s.phase='day';s.startedAt=now()})"); host.wait_for_timeout(1500)
     # 1 · PIN survives a reload (localStorage)
     host.reload(); host.wait_for_timeout(2500)
-    check("host phone reload keeps the PIN and the game", "pick a mission" in host.inner_text("body"))
+    check("host phone reload keeps the PIN and the game", "welcome to round" in host.inner_text("body").lower())
     # 2 · second host with a stale PIN in storage is shown the gate and does NOT lock itself out
     h2 = page(390, 844, "#host")
-    h2.evaluate("()=>localStorage.setItem('cloaks-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
-    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('cloaks-pin')") in (None, ""))
+    h2.evaluate("()=>localStorage.setItem('candle-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
+    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('candle-pin')") in (None, ""))
     h2.fill("#pin", PIN); h2.click("text=Unlock"); h2.wait_for_timeout(2500)
-    check("right PIN still unlocks after a stale one (no lockout)", "pick a mission" in h2.inner_text("body"), h2.inner_text("body")[:120])
+    check("right PIN still unlocks after a stale one (no lockout)", "welcome to round" in h2.inner_text("body").lower(), h2.inner_text("body")[:120])
     # 3 · both phones act from the same version: one wins, the other is refreshed with a toast, states converge
     host.wait_for_timeout(1500)
     v0 = host.evaluate("()=>state.ver")

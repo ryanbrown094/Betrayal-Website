@@ -53,9 +53,9 @@ async function openReport() {
   let snap = ""; try { snap = snapshot() } catch (e) { crumb("error", "snapshot failed: " + e.message) }
   const box = reportBox = document.createElement("div"); box.id = "report"; box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true"); box.setAttribute("aria-labelledby", "rp-h");
   box.innerHTML = `<form class="rp"><h2 id="rp-h">Report a problem</h2><p>Tell us what went wrong. We’ll get a snapshot of this screen and a record of what happened in this game, so you don’t need to describe everything.</p>
-<label for="rp-what">What happened?</label><textarea id="rp-what" rows="4" placeholder="e.g. The TV froze on the votes after I tapped Reveal"></textarea>
+<label for="rp-what">What happened?</label><textarea id="rp-what" rows="4" placeholder="e.g. The TV froze on the votes after I tapped Reveal…"></textarea>
 <label for="rp-exp">What did you expect to happen? <small>(optional)</small></label><textarea id="rp-exp" rows="2"></textarea>
-<label for="rp-mail">Your email, if you’d like a reply <small>(optional)</small></label><input id="rp-mail" type="email" autocomplete="email">
+<label for="rp-mail">Your email, if you’d like a reply <small>(optional)</small></label><input id="rp-mail" type="email" autocomplete="email" spellcheck="false">
 <label class="rp-chk"><input id="rp-snap" type="checkbox" checked> Include a snapshot of this screen${isHost ? " (it can show who the Forsworn are, and only we will see it)" : ""}</label>
 <p class="rp-msg" id="rp-msg" role="status"></p><div class="rp-row"><button type="button" class="rp-cancel">Cancel</button><button type="submit" class="rp-send">Send report</button></div></form>`;
   document.body.appendChild(box);
@@ -65,7 +65,7 @@ async function openReport() {
   setTimeout(() => { const t = box.querySelector("#rp-what"); if (t) t.focus() }, 50);
   box.querySelector("form").onsubmit = async e => {
     e.preventDefault(); const msg = box.querySelector("#rp-msg"), what = box.querySelector("#rp-what").value.trim(), send = box.querySelector(".rp-send");
-    if (!what) { msg.textContent = "Tell us what went wrong first."; return }
+    if (!what) { msg.textContent = "Tell us what went wrong first."; box.querySelector("#rp-what").focus(); return }
     send.disabled = true; msg.textContent = "Sending…"; flushEv();
     try {
       const body = { room: ROOM, device: DEVICE, host: isHost, build: BUILD + " " + APPV, ua: navigator.userAgent, url: location.pathname + (isHost ? "#keeper" : ""), what, expected: box.querySelector("#rp-exp").value.trim(), email: box.querySelector("#rp-mail").value.trim(),

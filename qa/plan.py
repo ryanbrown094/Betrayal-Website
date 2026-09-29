@@ -20,7 +20,7 @@ try:
             E("(a)=>startGame({names:a[0],cloaks:2,title:'',host:'Sam',potUnit:'£',potCap:2000,prize:'x',hours:4,pin:'1',rules:a[1]})", [NAMES[:n], rules])
             E("()=>act(s=>{s.players.forEach((p,i)=>p.role=[0,1].includes(i)?'cloak':'candle');s.phase='day'})"); h.wait_for_timeout(150)
         # setup screen: the accordion writes the plan into the game
-        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1'});renderHost()}", "\n".join(NAMES))
+        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111'});renderHost()}", "\n".join(NAMES))
         E("()=>{wSet('kill','murder');wSet('ghosts',false);wSet('blade',false);wSet('champion',false);wSet('rounds',4);wSet('perRound',2);poolD('quiz');poolD('statue')}")
         check("the blade and the Champion are separate choices", E("()=>{wSet('champion',true);const c=setupDraft.champion&&!setupDraft.blade;wSet('champion',false);return c}"))
         E("()=>submitSetup()"); h.wait_for_timeout(300)

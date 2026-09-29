@@ -68,17 +68,17 @@ try:
         check("Start game: twelve players, three Cloaks, the plan as chosen", bool(st) and st["n"] == 12 and st["t"] == 3 and st["pin"] == "1234" and st["rules"]["rounds"] == 5 and st["rules"]["shield"] == "mix" and st["rules"]["champion"], [st, errs, E("()=>[setupMsg,setupDraft&&setupDraft.step]")])
         # the quick path
         E(reset); h.wait_for_timeout(80)
-        E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{NAMES!r}.join('\\n'),pin:'9',step:'fast'}});renderHost()}}"); h.wait_for_timeout(60)
+        E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{NAMES!r}.join('\\n'),pin:'9999',step:'fast'}});renderHost()}}"); h.wait_for_timeout(60)
         h.click("text=Use the recommended settings"); h.wait_for_timeout(60)
         check("the quick path lands on the summary", step() == "review")
         E("()=>{setupDraft.pin='';renderHost()}"); nxt(); h.wait_for_timeout(100)
         check("Start with a missing PIN goes to the PIN page", step() == "pin" and not E("()=>!!state"))
-        h.fill("#pinset", "9"); nxt(); nxt(); h.wait_for_timeout(300)
+        h.fill("#pinset", "9999"); nxt(); nxt(); h.wait_for_timeout(300)
         check("…and then starts", E("()=>!!state&&state.players.length===12"))
         for n in (8, 16, 24):
             E(reset); h.wait_for_timeout(60)
             names = [f"P{i}" for i in range(n)]
-            E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{names!r}.join('\\n'),pin:'1',step:'rounds'}});renderHost()}}"); h.wait_for_timeout(60)
+            E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{names!r}.join('\\n'),pin:'1111',step:'rounds'}});renderHost()}}"); h.wait_for_timeout(60)
             check(f"{n} players: the rounds page fits the phone", not wide())
             h.screenshot(path=os.path.join(OUT, f"rounds-{n}.png"), full_page=True)
         check("no page errors", not errs, errs)

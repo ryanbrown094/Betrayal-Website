@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 mkdir -p worker/public
 BUILD=$(date -u +%Y%m%d%H%M%S)
 {
-  printf '<title>Cloak &amp; Candle</title>\n<style>\n'
+  printf '<title>The Betrayal</title>\n<style>\n'
   cat src/fonts.css src/style.css
   printf '</style>\n<div id="app"></div>\n<script>\n"use strict";\n'
   cat src/content.js src/scripts.js
@@ -15,11 +15,11 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
   printf '</script>\n'
 } > index.html
 {
-  printf '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta name="build" content="%s">\n<meta name="theme-color" content="#09070a">\n<meta name="robots" content="noindex">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="Cloak &amp; Candle">\n' "$BUILD"
+  printf '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta name="build" content="%s">\n<meta name="theme-color" content="#09070a">\n<meta name="robots" content="noindex">\n<meta name="apple-mobile-web-app-capable" content="yes">\n<meta name="mobile-web-app-capable" content="yes">\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n<meta name="apple-mobile-web-app-title" content="The Betrayal">\n<title>The Betrayal</title>\n' "$BUILD"
   printf '<link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>\n'
   printf '<link rel="apple-touch-icon" href="/icon-180.png">\n<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">\n'
   printf '<style>html{color-scheme:dark}img{max-width:100%%}[hidden]{display:none!important}</style>\n</head>\n<body>\n'
-  cat index.html
+  tail -n +2 index.html
   printf '\n</body>\n</html>\n'
 } > worker/public/play.html
 # the home page: sell, redeem a pass, join a room (site/index.html, self-contained)

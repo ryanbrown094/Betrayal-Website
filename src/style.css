@@ -440,7 +440,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 /* the phone is a working tool: plain system type throughout, the castle look stays on the TV */
 #host { --hui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-family: var(--hui); --gut: max(14px, env(safe-area-inset-left), env(safe-area-inset-right)); max-width: 560px; margin: 0 auto; padding: 0 var(--gut) calc(120px + env(safe-area-inset-bottom)); font-size: 17px; line-height: 1.4; min-height: 100vh; min-height: 100dvh;
   background: radial-gradient(90% 40% at 50% 0, rgba(174,98,73,.10), transparent), var(--soot) }
-#host h2 { font-family: var(--hui); font-weight: 700; font-size: 26px; line-height: 1.15; letter-spacing: -.01em; margin: 18px 0 10px; color: var(--tallow) }
+#host h2 { font-family: var(--disp); font-weight: 600; font-size: 31px; line-height: 1.08; letter-spacing: .005em; margin: 18px 0 10px; color: #f4ddd4; text-wrap: balance }
 #host h3 { font-family: var(--hui); font-weight: 700; font-size: 13px; letter-spacing: .08em; color: var(--brass2); margin: 22px 0 8px; text-transform: uppercase }
 #host .eyebrow { font-family: var(--hui); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-indent: 0; margin-top: 22px; text-transform: uppercase }
 #host .step-head { margin: 4px 0 10px; font-size: 15px; font-weight: 700; color: var(--brass2); font-variant-numeric: tabular-nums }
@@ -467,7 +467,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .bar .l1 { display: flex; align-items: center; justify-content: space-between; gap: 8px }
 #host .bar .ph { font-weight: 600; letter-spacing: .02em; font-size: 14px; color: var(--tallow2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 #host .bar .pot { font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--brass2); white-space: nowrap }
-#host .bar .nosync { color: var(--blood2); font-family: var(--ui); font-size: 12px; font-weight: 700; letter-spacing: .08em }
+#host .bar .nosync { margin: 6px 0 0; color: var(--blood2); font-size: 12px; font-weight: 700; letter-spacing: .08em }
 #host .bar button { min-height: 44px; padding: 4px 14px; font-size: 15px } #host .bar .l1 > span:last-child { flex: none; white-space: nowrap; display: flex; gap: 8px }
 #host .spoil { margin: 8px calc(-1 * var(--gut)) 0; padding: 12px var(--gut); min-height: 44px; font-size: 14px; color: var(--blood2); background: rgba(122,20,57,.22); border-top: 1px dashed rgba(194,41,97,.5) }
 #host .spoil b { letter-spacing: .1em; font-size: 12px; margin-right: 6px }
@@ -482,7 +482,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .advice.offer { border-style: solid; border-color: var(--brass); color: var(--tallow); background: rgba(174,98,73,.08) } #host .advice.offer::before { content: "SUGGESTION"; color: var(--brass2) }
 #host .plist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 }
 #host .plist button { display: flex; align-items: center; gap: 9px; text-align: left; padding: 6px 10px; min-width: 0 }
-#host .plist button .nm { flex: 1; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 1.15 }
+#host .plist button .nm { flex: 1; min-width: 0; white-space: normal; overflow-wrap: break-word; hyphens: auto; font-size: 15.5px; line-height: 1.15 }
 #host .plist .tagx { font-size: 13px; color: var(--blood2); font-weight: 700 }
 #host .seal { width: 34px; height: 34px; flex: none }
 #host .vote { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 4px 4px 4px 8px; border: 1px solid rgba(174,98,73,.2); border-radius: 10px; background: #100b11 }
@@ -491,7 +491,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .vote b.n { width: 38px; text-align: center; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--brass2); flex: none }
 #host .vote input { width: 86px; flex: none; text-align: center }
 #host .mlist { display: grid; gap: 8px } #host .mlist button { text-align: left; padding: 11px 14px; font-weight: 700 }
-#host .mlist em { display: block; font-style: normal; font-weight: 500; font-size: 13px; letter-spacing: .04em; color: var(--brass); margin-top: 2px }
+#host .mlist em { display: block; font-style: normal; font-weight: 500; font-size: 13px; letter-spacing: .04em; color: var(--brass2); margin-top: 2px }
 #host .mlist small { display: block; font-weight: 400; font-size: 14px; color: var(--tallow2); margin-top: 4px; line-height: 1.3 }
 #host .step { margin: 10px 0; padding: 12px 14px; border: 1px solid rgba(174,98,73,.25); border-radius: 10px; background: #100b11; font-size: 16px; color: var(--tallow2) }
 #host .step.cur { border-color: var(--brass2); background: rgba(230,165,140,.09); font-weight: 500; font-size: 19px; line-height: 1.42; color: #f4ddd4 }
@@ -510,7 +510,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .sheet h2 { margin-top: 4px } #host .sheet .big button { min-height: 96px; font-size: 22px; font-weight: 800; letter-spacing: .12em }
 #host > .eyebrow:first-child { margin-top: calc(22px + env(safe-area-inset-top)) }
 #host .pinwrap { padding-top: env(safe-area-inset-top); min-height: 80vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center }
-#host .hstamp { margin-top: 26px; font-size: 12px; color: rgba(232,208,200,.4); letter-spacing: .08em }
+#host .hstamp { margin-top: 26px; font-size: 12px; color: rgba(232,208,200,.62); letter-spacing: .08em } #host .hstamp button.linkish { padding: 14px 6px; margin: -14px -6px }
 #host .toast { position: fixed; left: 14px; right: 14px; margin: 0 auto; width: max-content; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30; max-width: calc(100vw - 28px); padding: 12px 16px; font-size: 15.5px; color: #150b17; background: var(--brass2); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: rise .3s both }
 #host .sheet input { font-size: 20px; text-align: center; margin: 12px 0 }
 /* the question bank */
@@ -527,7 +527,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .bankrow .tick { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 15px; font-weight: 700; color: #150b17; background: var(--brass2) }
 #host .bankrow .bt small { display: block; margin-top: 3px; font-size: 14px; color: var(--brass2) }
 #host .bankrow .st { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tallow2) }
-#host .bankrow.off { opacity: .55; border-style: dashed }
+#host .bankrow.off { opacity: .7; border-style: dashed }
 #host .bankrow.off .tick { background: transparent; border: 1.5px solid var(--mist) }
 #host .bankrow.off .bt { text-decoration: line-through; text-decoration-color: rgba(232,208,200,.45) }
 #host .bankrow.off .bt small { color: var(--tallow2) }
@@ -570,7 +570,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host button.wopt .wd { font-size: 15.5px; font-weight: 400; color: var(--tallow2); line-height: 1.45 }
 #host button.wopt .wn { font-size: 13.5px; font-weight: 600; color: var(--brass2) }
 #host button.wopt.sel { border-width: 2px; border-color: var(--brass2); background: rgba(174,98,73,.2); box-shadow: none } #host button.wopt.sel .wd { color: var(--tallow) }
-#host .mpool button.wopt { opacity: .62 } #host .mpool button.wopt.sel { opacity: 1 }
+#host .mpool button.wopt { opacity: .74 } #host .mpool button.wopt.sel { opacity: 1 }
 #host button.wopt .tk { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid rgba(230,165,140,.6); display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #150b17 }
 #host button.wopt.sel .tk { background: var(--brass2); border-color: var(--brass2) }
 #host .why { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 3px solid var(--brass); background: rgba(174,98,73,.08); font-size: 15.5px; line-height: 1.5; color: var(--tallow2) }
@@ -599,7 +599,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #stage:has(.rolls.huge) { gap: .7vh } #tv #stage:has(.rolls.huge) h1, #tv.big #stage:has(.rolls.huge) h1 { font-size: 6vh } #tv #stage:has(.rolls.huge) .prizeline b, #tv.big #stage:has(.rolls.huge) .prizeline b { font-size: 4vh } #tv #stage:has(.rolls.huge) .prizeline em, #tv.big #stage:has(.rolls.huge) .prizeline em { font-size: 2.3vh }
 
 /* ===================== Report a problem (TV and phone) ===================== */
-#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) 16px; background: rgba(5,3,6,.82); overflow: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif }
+#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); overscroll-behavior: contain; background: rgba(5,3,6,.82); overflow: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif }
 #report .rp { width: min(520px, 100%); padding: 22px; border-radius: 14px; background: #150e16; border: 1px solid rgba(230,165,140,.45); color: var(--tallow); box-shadow: 0 20px 60px rgba(0,0,0,.6) }
 #report h2 { margin: 0 0 8px; font-size: 24px; font-weight: 700; color: var(--tallow) } #report p { margin: 6px 0 12px; font-size: 15.5px; line-height: 1.45; color: var(--tallow2) } #report b { color: #fff }
 #report label { display: block; margin: 12px 0 5px; font-size: 14px; font-weight: 600; color: var(--brass2) } #report label small { font-weight: 400; color: var(--tallow2) }

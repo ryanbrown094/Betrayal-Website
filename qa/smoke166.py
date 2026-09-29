@@ -18,7 +18,7 @@ try:
         h.goto(f"http://localhost:{PORT}/play.html#host"); h.wait_for_timeout(1200)
         E = lambda js: h.evaluate(js)
         # setup: a pot target and the wrong-shout rule
-        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1',cloaks:'2',touched:['cloaks'],step:'pot'});renderHost()}", "\n".join(NAMES)); h.wait_for_timeout(200)
+        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111',cloaks:'2',touched:['cloaks'],step:'pot'});renderHost()}", "\n".join(NAMES)); h.wait_for_timeout(200)
         pc = h.input_value("#potCap"); E("()=>wGo('wrong')"); body = h.inner_text("body")
         check("setup offers a pot target (2000) and who pays for wrong shouts", pc == "2000" and "Only the Forsworn’s wrong answers" in body and "Everyone’s" in body)
         E("()=>submitSetup()"); h.wait_for_timeout(300)
@@ -120,7 +120,7 @@ try:
         check("…then one at a time", aw[0] in tvtxt and all(t not in tvtxt for t in aw[1:]) and "Next award" in h.inner_text("#host .foot"), tvtxt[:200])
         # v16.7: a fresh game for the rest
         E("()=>{newGame()}"); h.wait_for_timeout(200); E("()=>renderHost()")
-        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "1"]); h.wait_for_timeout(300)
+        h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "1111"]); h.wait_for_timeout(300)
         E("()=>act(s=>{s.players.forEach((p,i)=>p.role=i<2?'cloak':'candle');s.phase='day'})")
         E("()=>{pickMission('quiz');mWin('secret',1)}")
         check("offers move in fifties", E("()=>state.mission.stake%50===0 && state.mission.stake>0"), E("()=>state.mission.stake"))
