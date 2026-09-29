@@ -29,6 +29,8 @@ with sync_playwright() as p:
     check("…which asks your name and how many players", until(lambda: "A test game against bots" in me.inner_text("#app")))
     me.fill("#name", "Ryan"); me.click("[data-a=create]")
     check("the lobby fills with seven bots", until(lambda: me.inner_text("#app").count("bot") >= 7 and "Test game" in me.inner_text("#app")))
+    # every phase the phone is shown, recorded in the page itself, so a phase that passes in a moment still counts
+    me.evaluate("()=>{window.__ph=new Set();setInterval(()=>{if(typeof V!=='undefined'&&V)__ph.add(V.phase)},50)}")
     me.click("[data-a=start]")
     start = time.time(); seen = set(); stuck = 0; last = ""
     ORDER = ["[data-a=optin][data-v=any]", ".veil", "[data-a=ack]", "[data-a=ans][data-v=purse]", "[data-a=trust][data-v=trust]", "[data-a=honour][data-v=honour]",
@@ -49,7 +51,10 @@ with sync_playwright() as p:
         time.sleep(0.6)
     t = me.inner_text("#app"); took = int(time.time() - start)
     check(f"a whole test game ends by itself around one phone ({took}s)", "The Loyal win" in t or "The Forsworn win" in t, [me.evaluate("V && V.phase"), t[:200]])
-    check("…through the Oath, a Trial, the Reckoning, the night and dawn", {"oath", "trial", "vote", "night", "dawn"} <= seen, seen)
+    seen |= set(me.evaluate("()=>[...window.__ph]"))
+    # a night can pass between two refreshes when this phone's player is already dead and the bots choose at once;
+    # dawn only ever follows a night, so dawn is the proof the night happened
+    check("…through the Oath, a Trial, the Reckoning, the night and dawn", {"oath", "trial", "vote", "dawn"} <= seen, seen)
     check("no page errors", not errs, errs[:5])
 
     # the admin's test room: Classic or Modern
