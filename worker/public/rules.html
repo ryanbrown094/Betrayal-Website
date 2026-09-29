@@ -3,9 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929153025">
+<meta name="build" content="20260929153644">
 <title>How to play — The Betrayal</title>
 <meta name="theme-color" content="#09070a">
+<meta name="description" content="How to play The Betrayal: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game, in Classic and Modern.">
+<link rel="canonical" href="https://thebetrayal.co.uk/rules">
+<meta property="og:title" content="How to play — The Betrayal"><meta property="og:description" content="How to play The Betrayal: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game, in Classic and Modern."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/rules">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -65,7 +69,7 @@ label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0;
 .plan { display: flex; gap: 12px; padding: 18px; border-radius: 14px; background: var(--plum); border: 1px solid rgba(230,165,140,.3); cursor: pointer; transition: border-color .15s ease, background-color .15s ease } .plan:hover { border-color: rgba(230,165,140,.6) } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose); background: linear-gradient(180deg, rgba(230,165,140,.1), var(--plum)) }
 .plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2); display: inline-block; padding: 10px 0 }
+footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
 </style>
 </head>
 <body>
@@ -74,7 +78,7 @@ footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18p
 <nav class="top" aria-label="Site"><a class="home" href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg><span translate="no">The Betrayal</span></a><span class="links"><a href="/rules">How to play</a><a href="/tour">See a game</a><a class="btn small" href="/buy">Book a Table</a></span></nav>
 <main id="main">
 <style>
-.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; padding: 0; list-style: none } .toc a { display: inline-block; padding: 6px 12px; border-radius: 99px; border: 1px solid rgba(230,165,140,.35); color: var(--ivory); text-decoration: none; font-size: 15px }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; padding: 0; list-style: none } .toc a { display: inline-block; padding: 10px 14px; border-radius: 99px; border: 1px solid rgba(230,165,140,.35); color: var(--ivory); text-decoration: none; font-size: 15px }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0 }
 .card { padding: 16px 18px; border-radius: 12px; background: var(--plum); border: 1px solid rgba(230,165,140,.25) } .card b { display: block; font: 400 24px/1.1 var(--book); color: var(--ivory); margin-bottom: 6px } .card p { margin: 0; font-size: 16.5px; line-height: 1.5 }
 ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:first-child { color: var(--ivory) }
@@ -85,8 +89,15 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 </style>
 <div class="eyebrow">the rules</div>
 <h1>How to play</h1>
-<p>Everything that happens at a night of The Betrayal, from the first candle to the last. You don’t need to learn any of it before the night: the Keeper’s phone walks them through every step, and the TV shows the players what they need to know. But if you like to know what you’re buying, here is the whole game.</p>
-<ul class="toc"><li><a href="#idea">The idea</a></li><li><a href="#roles">Who’s who</a></li><li><a href="#round">A round</a></li><li><a href="#dead">The dead</a></li><li><a href="#powers">Sanctuary</a></li><li><a href="#twists">Twists</a></li><li><a href="#pot">The Purse</a></li><li><a href="#end">The end game</a></li><li><a href="#missions">Trials</a></li><li><a href="#need">What you need</a></li></ul>
+<p>Everything that happens at a night of The Betrayal, from the first candle to the last. You don’t need to learn any of it before the night: the game walks everyone through every step. But if you like to know what you’re buying, here is the whole game.</p>
+<h2 id="modes">Classic or Modern</h2>
+<p>Every Table can be played two ways; you choose when you open it. The rules below are the same for both, and they describe <strong>Classic</strong>. Where Modern differs, it’s here:</p>
+<div class="cards">
+<div class="card"><b>Classic</b><p>One phone runs the game. The Keeper reads every line and doesn’t play; guests wear blindfolds at night, chalk their votes on small boards, and watch the TV.</p></div>
+<div class="card"><b>Modern</b><p>Everyone plays on their own phone, joining at thebetrayal.co.uk/join with the Table code. Roles, votes, nights and poisonings arrive in secret on each phone, Trials are answered there too, and the host plays as well. No blindfolds, no chalkboards, and the TV is optional.</p></div>
+</div>
+<p>In Modern, the Oath is a question on your phone (would you like to be Forsworn?), the Forsworn choose at night on their phones while everyone else taps a dummy choice so nobody can tell who’s choosing, and the host’s phone just moves the evening on: the game plans its own Trials, courses and Reckonings.</p>
+<ul class="toc"><li><a href="#modes">Classic or Modern</a></li><li><a href="#idea">The idea</a></li><li><a href="#roles">Who’s who</a></li><li><a href="#round">A round</a></li><li><a href="#dead">The dead</a></li><li><a href="#powers">Sanctuary</a></li><li><a href="#twists">Twists</a></li><li><a href="#pot">The Purse</a></li><li><a href="#end">The end game</a></li><li><a href="#missions">Trials</a></li><li><a href="#need">What you need</a></li></ul>
 
 <h2 id="idea">The idea</h2>
 <p>A few of your guests are secretly <strong>Forsworn</strong>. Everyone else is one of the <strong>Loyal</strong>. Every night the Forsworn kill someone, and every day the table votes to throw someone out. The Loyal win if they find every Forsworn before the end. The Forsworn win if even one of them is still at the table when the game finishes.</p>
@@ -136,7 +147,7 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 <li><b>The last Reckoning.</b> The table votes one more player out, but this time their role is <em>not</em> revealed. That leaves four.</li>
 <li><b>The last vote.</b> The Keeper’s phone goes round the table, and each player votes in secret: TRUST if they believe every Forsworn is gone, DOUBT if they think one is still among them. The game only ends if the vote is unanimous. Otherwise, it’s back to the Reckoning for another exile, and another vote.</li>
 <li><b>The Unmasking.</b> One by one, the last players’ seals are turned on the TV. If only Loyal are left, the Loyal win and share the Purse. If a Forsworn is still at the table, the Forsworn win, and take what the Purse fell short.</li>
-<li><b>The last betrayal.</b> If two or more Forsworn survive, they get one final test: each one secretly chooses HONOUR or BETRAY. If they all honour the pact, they split the Purse and play rock, paper, scissors for the prize. If one betrays, they take everything. If two or more betray, it passes to the Ghosts who named a Forsworn, or to nobody.</li>
+<li><b>The last betrayal.</b> If two or more Forsworn survive, they get one final test: each one secretly chooses HONOUR or BETRAY. If they all honour the pact, they split what the Purse fell short and play rock, paper, scissors for the prize. If one betrays, they take everything. If two or more betray, it passes to the Ghosts who named a Forsworn, or to nobody.</li>
 <li><b>The awards.</b> The TV shows the full roll of who was who, then hands out up to six awards for the night: The Grand Deceiver, The Sharpest Eye, Barking Up the Wrong Tree, The Narrow Escape and more.</li>
 </ol>
 
@@ -163,17 +174,15 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 
 <h2 id="need">What you need</h2>
 <ul>
-<li>8 to 24 players. 10 to 16 is the sweet spot.</li>
-<li>An evening: about 3¼ to 4¼ hours for 8 to 12 players, and longer for bigger tables. The Keeper’s setup gives an estimate for your group.</li>
-<li>A TV, with a laptop connected or casting to it.</li>
-<li>A phone for the Keeper. Guests don’t need phones.</li>
-<li>A blindfold for every guest (sleep masks work well).</li>
-<li>A small chalkboard and chalk, or a whiteboard and pen, for every guest.</li>
+<li>8 to 24 players. 8 to 16 is the sweet spot.</li>
+<li>An evening: about 3 to 4 hours for 8 to 12 players, and longer for bigger tables. The Keeper’s setup gives an estimate for your group.</li>
 <li>A prize.</li>
+<li><b>Classic:</b> a TV with a laptop connected or casting to it, a phone for the Keeper (guests don’t need phones), a blindfold for every guest (sleep masks work well), and a small chalkboard and chalk, or a whiteboard and pen, for every guest.</li>
+<li><b>Modern:</b> a phone each. A TV is optional.</li>
 </ul>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/tour">See what a game looks like</a></div>
 </main>
-<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">A night in pictures</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
+<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>
 <script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page")</script>
 </body>

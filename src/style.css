@@ -613,3 +613,5 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #report button.rp-send { border-color: var(--brass2); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17 } #report button:disabled { opacity: .5 }
 #host button.linkish { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; letter-spacing: inherit }
 #repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .14em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.3); border-radius: 1.8vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }
+/* the Reckoning table on a 4:3 screen: room for the side name plates, so they neither overlap the words nor get cut */
+@media (max-aspect-ratio: 3/2) { .rtwrap { gap: 10vh } .rtcopy { width: 26vw } .rtcopy .eyebrow { letter-spacing: .1em; white-space: nowrap } .rt .nm { letter-spacing: .07em } .rt .nm.side { max-width: 19vh } }

@@ -212,7 +212,9 @@ export class GameState {
     if (me) me.seen = now; // (in memory: a phone still polling can't be taken over by a rejoin)
     if (+(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "Too large" }, 413);
     const body = req.method === "POST" ? (await req.json().catch(() => null)) || {} : {};
-    const view = (extra) => json({ view: viewOf(s, me, now), room, ...(extra || {}) });
+    // the host's phone always gets the requests to come back in, so none is lost between screens
+    const pending = () => (me && s && s.director === me.id && s.rejoin && s.rejoin.length ? { rejoin: s.rejoin.filter((x) => !x.tok).map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {});
+    const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
 
     if (path === "/api/m/create" && req.method === "POST") {
@@ -259,7 +261,7 @@ export class GameState {
         const r = (s.rejoin || []).find((x) => x.id === body.v); if (!r) return view();
         if (body.a === "letin") {
           const p = s.players.find((x) => x.id === r.pid);
-          if (p.seen && now - p.seen < 20000) return json({ error: p.name + "’s phone is still connected, so it can’t be let in on another.", view: viewOf(s, me, now) }, 409);
+          if (p.seen && now - p.seen < 20000) return json({ error: p.name + "’s phone is still connected, so it can’t be let in on another. Try again once it has gone quiet.", view: viewOf(s, me, now), ...pending() }, 409);
           p.tok = M.newTok(); r.tok = p.tok; s.log = [{ t: now, m: p.name + " came back on a new phone" }, ...(s.log || [])].slice(0, 300);
         }
         else s.rejoin = s.rejoin.filter((x) => x !== r);
@@ -271,9 +273,8 @@ export class GameState {
     }
     if (path === "/api/m" && req.method === "GET") {
       const it = s.trial && s.trial.item, live = it && it.k === "snap" && it.stage === "open";
-      if (!live && url.searchParams.get("v") === String(s.ver) && url.searchParams.get("me") === (me ? me.id : "")) return json({ same: true, now });
-      const extra = me && s.director === me.id && s.rejoin && s.rejoin.length ? { rejoin: s.rejoin.filter((x) => !x.tok).map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {};
-      return view(extra);
+      if (!live && url.searchParams.get("v") === String(s.ver) && url.searchParams.get("me") === (me ? me.id : "")) return json({ same: true, now, ...pending() });
+      return view();
     }
     return text("Not found", 404);
   }
