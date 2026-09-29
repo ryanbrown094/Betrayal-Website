@@ -280,5 +280,25 @@ const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" })
   A(g, g.dir, { a: "tool", v: "remove", who: g.ids[8] });
   check("…at the Oath: once the rest have sworn, the roles are dealt", g.s.phase === "roles" && g.s.players.filter((p) => p.role === "f").length === forswornFor(8));
 }
+// 9. the QA sweep's fixes: Most Likely To at every size, removals mid-Trial and mid-revote, tools while paused
+check("every table opens with Most Likely To (8 and 9 players included)", [8, 9, 10, 12, 16].every((n) => begin(n).s.steps[0].key === "likely"));
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "tool", v: "voteNow" });
+  const [x, y] = [s.players[6], s.players[7]]; for (const p of s.players) A(g, p.id, { a: "ballot", v: p === x ? y.id : p === y ? x.id : s.players.indexOf(p) % 2 ? x.id : y.id }); run(g, 1000);
+  const tied = s.vote && s.vote.revote && s.vote.revote.length === 2;
+  if (tied) { A(g, g.dir, { a: "tool", v: "remove", who: s.vote.revote[0] }); A(g, g.dir, { a: "tool", v: "remove", who: s.vote.revote[1] }); A(g, g.dir, { a: "tool", v: "closeVote" }); }
+  check("a revote whose candidates were both taken out exiles someone else, and the game goes on", tied && s.phase === "reveal" && !s.final, [s.phase, tied]);
+}
+{
+  const g = begin(10), s = g.s; setStep(g, { k: "trial", key: "rps" }); A(g, g.dir, { a: "next" }); run(g, 13000);
+  const gone = s.trial.item.pairs[0][0]; A(g, g.dir, { a: "tool", v: "remove", who: gone });
+  check("someone taken out mid-Trial drops out of it, and the Trial still has a winner", !finishCurrentTrial(g) && !(s.trial.results.slice(1).some((r) => JSON.stringify(r).includes(gone))) && (s.trial.winners || []).length === 1 && s.trial.winners[0] !== gone, s.trial.winners);
+}
+{
+  const g = begin(10), s = g.s; setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
+  A(g, g.dir, { a: "pause" }); g.now += 300000; A(g, g.dir, { a: "tool", v: "voteNow" }); g.now += 5000; A(g, g.dir, { a: "pause", v: "off" });
+  check("a host tool used while paused acts from the moment of the pause", s.phase === "vote" && s.vote.voteEnd - g.now === 120000, s.vote.voteEnd - g.now);
+}
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

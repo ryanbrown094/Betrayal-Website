@@ -33,7 +33,7 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 | | |
 |---|---|
 | Players | 8 to 24, best with 8 to 16. In Modern the host plays too |
-| Length | about 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer: 20 or more, about 5 hours |
+| Length | about 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer: about 5 hours for 16, and 6 or more for 20 and up |
 | You need | a phone each and a prize. A TV is optional (any laptop cast to it) |
 | Joining | scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and your name |
 | Format | web app; no download, no accounts |
@@ -58,6 +58,8 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 - Dinner if you want it: play over dinner, drinks or snacks. Switch dinner in courses on and the game stops for a starter, the main course and dessert, each in its place between the rounds.
 - The TV is optional, and worth it: the QR code, the questions, the votes and the reveals, with music and a narrator if you want one.
 - The dead keep playing: Ghosts still call each Reckoning from beyond the table.
+- The host can pause: one tap stops every clock for the doorbell or a second helping, and anyone taken ill can be taken out of the game without their role being revealed.
+- Last words for the exiled and the murdered, on the TV; the Forsworn can whisper to each other on their phones at night.
 - It ends with awards: up to six, from The Grand Deceiver to The Ghost Who Saw.
 - Prefer it the old-fashioned way? Classic runs from one phone, with a Keeper, blindfolds and chalk.
 

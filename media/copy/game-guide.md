@@ -20,7 +20,7 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 6. **The Unmasking**: every seal turned, the winners, the prize the Purse has earned, then **Honour or Betray** if two or more Forsworn survived.
 7. **Awards**, up to six. Then the host can **play again with the same people**.
 
-**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: 20 or more, about 5 hours, or 6 with dinner. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
+**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 5 hours for 16, and 6 or more for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
 
 ### The host plays too
 
@@ -65,10 +65,11 @@ Nobody is told how many Forsworn there are.
 - Most votes is **exiled**. A tie goes to a revote between the tied players, unless the Casting Vote breaks it (section 5); a tie that won’t break is settled by lot.
 - **Ghosts’ call:** the Ghosts vote too, on who they think will go. It doesn’t count, but it’s remembered, and the best Ghost can win an award.
 - **More than sixteen at the table:** two exiles.
-- **Reveal:** the exiled player’s role is shown, Forsworn or Loyal.
+- **Reveal:** the exiled player’s role is shown, Forsworn or Loyal, and they can type one last line for the TV (not in the final).
 
 ### 4.5 The night
 - **Heads down.** Every living player taps a name on their phone, so nobody can tell who is really choosing. Only the Forsworn’s choices count.
+- **Forsworn whispers:** at night the Forsworn can send each other set phrases (“Vote with me tomorrow”). Not the Classic twist called the Whisper.
 - **Victims per night** grow with the table so the final still starts with five: 1 below 12 alive, up to 2 from 12, up to 3 from 20.
 - **The victim learns in secret, on their phone.** **Poison** (default): “Say nothing yet”; when the host reveals the night, they get their **last words**. **Murder**: they say nothing and leave the table quietly at dawn.
 - Sanctuary saves its holder: “nobody died”, and the table doesn’t learn why.

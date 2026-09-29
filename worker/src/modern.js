@@ -146,15 +146,15 @@ function makeItem(s, t, now, rnd) {
     case "memory": { if (n >= 2) return null; const set = shuffle(fresh(MEMSETS, "mem"), rnd).slice(0, 12); return { ...base, k: "recall", stage: "study", words: set, end: now + 20000 }; }
     case "change": { if (n >= 4) return null; const grid = shuffle(CHSYM, rnd).slice(0, 12); return { ...base, k: "cell", stage: "study", grid, end: now + 12000 }; }
     case "snap": { if (n >= 1) return null; const seq = []; let last = -1; for (let i = 0; i < 24; i++) { let v; if (i > 0 && rnd() < 0.22) v = last; else { do v = Math.floor(rnd() * SNAPSYM.length); while (v === last); } seq.push(v); last = v; } return { ...base, k: "snap", seq, step: 3000, start: now + 3000, end: now + 3000 + 24 * 3000, taps: [], syms: SNAPSYM }; }
-    case "rps": { const inn = t.left || A.map((p) => p.id); if (inn.length <= 1) return null; const order = shuffle(inn, rnd), pairs = []; for (let i = 0; i + 1 < order.length; i += 2) pairs.push([order[i], order[i + 1]]); return { ...base, k: "rps", pairs, bye: order.length % 2 ? order[order.length - 1] : null, end: now + OPEN.rps * 1000 }; }
+    case "rps": { const inn = (t.left || A.map((p) => p.id)).filter((id) => A.some((p) => p.id === id)); if (inn.length <= 1) return null; const order = shuffle(inn, rnd), pairs = []; for (let i = 0; i + 1 < order.length; i += 2) pairs.push([order[i], order[i + 1]]); return { ...base, k: "rps", pairs, bye: order.length % 2 ? order[order.length - 1] : null, end: now + OPEN.rps * 1000 }; }
     case "oneleg": case "statue": { if (n >= 1) return null; return { ...base, k: "survive", out: [], end: now + 10 * 60000 }; }
     case "charades": case "hum": case "draw": {
       const turns = Math.min(A.length, 6); if (n >= turns) return null;
-      const order = t.order || (t.order = shuffle(A.map((p) => p.id), rnd)), actor = order[n % order.length], d = TRIALS[t.key];
+      const order = (t.order || (t.order = shuffle(A.map((p) => p.id), rnd))).filter((id) => A.some((p) => p.id === id)), actor = order[n % order.length], d = TRIALS[t.key];
       const bank = d.bank === "songs" ? SONGS : d.bank === "draw" ? PICTIONARY : CHARADES;
       return { ...base, k: "actor", actor, word: String(fresh(bank, d.bank)), skips: 0, end: now + d.actor * 1000 };
     }
-    case "truths": { const turns = Math.min(3, A.length); if (n >= turns) return null; const order = t.order || (t.order = shuffle(A.map((p) => p.id), rnd)); return { ...base, k: "truths", stage: "prep", teller: order[n], lie: null, end: now + 90000 }; }
+    case "truths": { const turns = Math.min(3, A.length); if (n >= turns) return null; const order = t.order || (t.order = shuffle(A.map((p) => p.id), rnd)), teller = order.slice(n).find((id) => A.some((p) => p.id === id)); if (!teller) return null; return { ...base, k: "truths", stage: "prep", teller, lie: null, end: now + 90000 }; }
     case "tempt": { if (n >= 1) return null; return { ...base, k: "tempt", end: now + OPEN.tempt * 1000 }; }
   }
   return null;
@@ -248,12 +248,12 @@ function planDay(s) {
     else if (!s.final && r === 2 && !s.done.starter) steps.push({ k: "break", v: "starter" });
     else if (!s.final && r === mainR && !s.done.main) steps.push({ k: "break", v: "main" });
   }
+  if (r === 1 && !s.final && !s.done.likely) steps.push({ k: "trial", key: "likely", once: "likely" });
   if (s.final) {
     if (!s.done.finalTrial) steps.push({ k: "trial", special: tw && alive(s).length === 5 && !s.confess ? "confess" : null, once: "finalTrial" });
   } else if (r === castR && !s.done.tempt) {
     steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, { k: "tempt" });
   } else {
-    if (r === 1 && !s.done.likely) steps.push({ k: "trial", key: "likely", once: "likely" });
     steps.push({ k: "trial", special: tw && r === crownR && !s.crown ? "crown" : null });
   }
   steps.push({ k: "reckon" });
@@ -300,7 +300,7 @@ function finishTrial(s, now, rnd) {
   } else {
     // the table's success fills the Purse; each wrong answer from a Forsworn takes 50 back, up to half the Trial's offer
     t.points = Math.max(0, fifty(t.offer * Math.min(1, tot / Math.max(1, A.length * items * 0.6)))) - Math.min(fifty(t.offer / 2), 50 * (t.wrongF || 0));
-    const best = Math.max(0, ...Object.values(t.scores)); let w = best > 0 ? Object.keys(t.scores).filter((id) => t.scores[id] === best && P(s, id) && P(s, id).alive) : [];
+    const live = Object.keys(t.scores).filter((id) => P(s, id) && P(s, id).alive), best = Math.max(0, ...live.map((id) => t.scores[id])); let w = best > 0 ? live.filter((id) => t.scores[id] === best) : [];
     if (w.length > 1) { w = [pick(w, rnd)]; t.byLot = true; } // one Sanctuary a Trial: a tie is settled by lot
     t.winners = w;
     if (t.special && w.length) {
@@ -315,7 +315,7 @@ function finishTrial(s, now, rnd) {
     }
     for (const id of w) s.stats.wins[id] = (s.stats.wins[id] || 0) + 1;
   }
-  s.pot = Math.max(0, Math.min(s.opts.potCap, s.pot + t.points));
+  const before = s.pot; s.pot = Math.max(0, Math.min(s.opts.potCap, s.pot + t.points)); t.points = s.pot - before;
   say(s, t.title + " done: " + (t.winners && t.winners.length ? P(s, t.winners[0]).name + " won" : "no winner") + ", Purse " + (t.points >= 0 ? "+" : "") + t.points, now);
 }
 function openReckoning(s, now) {
@@ -334,7 +334,7 @@ function closeVote(s, now, rnd) {
   const cv = s.cast && !s.cast.used && P(s, s.cast.id) && P(s, s.cast.id).alive ? v.ballots[s.cast.id] : null;
   if (tied.length > 1 && cv && tied.includes(cv)) { s.cast.used = true; tied = [cv]; v.cast = true; say(s, "The Casting Vote settled the tie", now); }
   if (tied.length > 1 && !v.revote) { v.revote = tied; v.ballots = {}; v.stage = "vote"; v.voteEnd = now + T(s, 90000); v.tie = true; say(s, "A tie: a revote between " + tied.map((id) => P(s, id).name).join(" and "), now); return; }
-  const pool = (v.revote && v.revote.length ? v.revote.filter((id) => P(s, id) && P(s, id).alive) : alive(s).map((p) => p.id)).filter((id) => id !== v.immune);
+  const rv = (v.revote || []).filter((id) => P(s, id) && P(s, id).alive), pool = (rv.length ? rv : alive(s).map((p) => p.id)).filter((id) => id !== v.immune);
   if (!tied.length && !pool.length) { v.stage = "done"; return startUnmask(s, now); }
   const out = tied.length ? (tied.length > 1 ? pick(tied, rnd) : tied[0]) : pick(pool, rnd); // a second tie, or no votes at all, is settled by lot
   const p = P(s, out); p.alive = false; p.shield = null; p.exiled = s.round;
@@ -353,7 +353,7 @@ function afterReveal(s, now) {
   if (A.length <= 5) return goFinal(s, now);
   startNight(s, now);
 }
-function goFinal(s, now) { s.final = true; s.round++; s.phase = "day"; s.roundTrials = 0; s.night = null; s.dawn = null; s.reveal = null; for (const p of s.players) p.shield = null; planDay(s); say(s, "The final", now); }
+function goFinal(s, now) { s.trial = null; s.brk = null; s.vote = null; s.final = true; s.round++; s.phase = "day"; s.roundTrials = 0; s.night = null; s.dawn = null; s.reveal = null; for (const p of s.players) p.shield = null; planDay(s); say(s, "The final", now); }
 function startNight(s, now) {
   s.phase = "night"; s.reveal = null; const a = alive(s).length;
   s.night = { picks: {}, slept: {}, kills: killsAt(a), end: now + T(s, 120000) };
@@ -421,7 +421,9 @@ function shiftClocks(s, d) {
   mv(s.trust, "end", "at"); mv(s.unmask, "next"); mv(s.honour, "end");
 }
 // someone the host took out of the game: if no Forsworn is left, the hunt is over and the final begins
-function afterLeaving(s, now, rnd) {
+function afterLeaving(s, now, rnd, id) {
+  const it = s.trial && s.trial.item;
+  if (it && (it.actor === id || it.teller === id) && ["open", "prep"].includes(it.stage)) { it.end = now; if (it.k === "truths") it.lie = it.lie || 1; }
   if (s.phase === "oath" && s.players.every((p) => p.left || p.optIn)) return deal(s, now, rnd);
   // (a dawn or an exile already under way plays out, and the next round sees there's nobody left to hunt)
   if (["lobby", "oath", "roles", "reveal", "dawn", "unmask", "honour", "end"].includes(s.phase) || s.final || forsworn(s).length) return;
@@ -564,6 +566,7 @@ export function act(s, pid, a, now, ctx) {
 }
 function tool(s, pid, a, now, ctx, done, need) {
   if (s.director !== pid) return need(false, "Only the host can do that.");
+  if (s.paused) now = s.paused.at; // its clocks then move on with everyone else's when the game carries on
   const rnd = ctx.rnd, t = s.trial, it = t && t.item, who = a.who && P(s, a.who);
   switch (a.v) {
     case "skip": if (t && t.stage === "intro") { nextItem(s, now, rnd); return done(); } if (it && ["open", "study", "prep", "blank"].includes(it.stage)) { it.end = now; if (it.k === "truths" && it.stage === "prep") it.lie = it.lie || 1; return done(); } return need(false);
@@ -581,7 +584,7 @@ function tool(s, pid, a, now, ctx, done, need) {
       who.left = true; who.alive = false; who.shield = null; who.dying = false; say(s, who.name + " left the game", now);
       if (s.cast && s.cast.id === who.id) s.cast.used = true;
       if (s.crown && s.crown.id === who.id) s.crown.used = true;
-      afterLeaving(s, now, rnd); return done();
+      afterLeaving(s, now, rnd, who.id); return done();
     case "roles":
       if (a.sure !== "SHOW THE ROLES" || !s.players.some((p) => p.role)) return need(false, "Type SHOW THE ROLES to confirm.");
       s.peeked = (s.peeked || []).concat([{ t: now, round: s.round }]).slice(-20); say(s, "The host opened the roles", now); s.ver++;
@@ -618,7 +621,7 @@ export function viewFor(s, pid, now) {
       const x = { k: it.k, stage: it.stage, end: it.end, from: it.from || it.opened, who: Object.keys(it.inputs), revealEnd: it.revealEnd, q: it.q, part: it.part, ref: it.ref, letters: it.letters, answered: Object.keys(it.inputs).length, of: owedCount(s, it) };
       if (it.k === "recall" && it.stage === "study") x.words = it.words;
       if (it.k === "cell") { x.grid = it.stage === "blank" ? null : it.grid; if (it.stage === "reveal") { x.changed = it.changed; x.before = it.before; } }
-      if (it.k === "snap") { x.seq = it.seq.slice(0, Math.max(0, Math.min(it.seq.length, Math.floor((now - it.start) / it.step) + 1))); x.start = it.start; x.step = it.step; x.syms = it.syms; x.len = it.seq.length; }
+      if (it.k === "snap") { x.seq = it.seq.slice(0, Math.max(0, Math.min(it.seq.length, Math.floor(((s.paused ? s.paused.at : now) - it.start) / it.step) + 1))); x.start = it.start; x.step = it.step; x.syms = it.syms; x.len = it.seq.length; }
       if (it.k === "rps") { x.pairs = it.pairs; x.bye = it.bye; }
       if (it.k === "survive") x.out = it.out;
       if (it.k === "actor") x.actor = it.actor;
@@ -643,9 +646,9 @@ export function viewFor(s, pid, now) {
     // the table's own verdict on the dead, from Most Likely To, and (after a murder) what they typed as they went
     if (d.revealed) { o.dawn.likely = d.victims.filter((id) => lk[id]).map((id) => [P(s, id).name, lk[id]]); o.dawn.words = Object.entries(d.words || {}).map(([id, w]) => [P(s, id).name, w]); }
   }
-  if (s.trust && s.phase === "trust") o.trust = { voted: Object.keys(s.trust.votes).length, of: alive(s).length, result: s.trust.result, count: s.trust.count, mine: me ? s.trust.votes[pid] || null : null };
+  if (s.trust && s.phase === "trust") o.trust = { end: s.trust.end, voted: Object.keys(s.trust.votes).length, of: alive(s).length, result: s.trust.result, count: s.trust.count, mine: me ? s.trust.votes[pid] || null : null };
   if (s.unmask && s.phase === "unmask") o.unmask = { order: s.unmask.order, shown: s.unmask.shown };
-  if (s.honour && s.phase === "honour") o.honour = { made: Object.keys(s.honour.choices).length, of: forsworn(s).length, mine: me ? s.honour.choices[pid] || null : null };
+  if (s.honour && s.phase === "honour") o.honour = { end: s.honour.end, made: Object.keys(s.honour.choices).length, of: forsworn(s).length, mine: me ? s.honour.choices[pid] || null : null };
   if (over) o.result = { ...s.result, to: s.result.to.map((id) => P(s, id).name), honour: s.honour ? Object.entries(s.honour.choices).map(([id, c]) => [P(s, id).name, c]) : null };
   if (me) {
     o.me = { id: me.id, name: me.name, left: me.left || undefined, alive: me.alive && !me.dying, director: s.director === pid, role: s.phase === "lobby" || s.phase === "oath" ? null : me.role, optIn: me.optIn, acked: me.acked, shield: me.shield && me.shield.round === s.round && me.role !== "f" ? true : false };

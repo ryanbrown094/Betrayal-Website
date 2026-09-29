@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929181759">
+<meta name="build" content="20260929191019">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -62,7 +62,7 @@ svg { display: block }
 .eyebrow { font-family: var(--sc); font-size: 14px; letter-spacing: .16em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
 h1, h2 { font-family: var(--book); font-weight: 400; margin: 0 0 10px; line-height: 1.12 }
 h1 { font-size: 34px } h2 { font-size: 27px }
-h1.disp { font-family: var(--disp); font-size: 44px; letter-spacing: .01em; color: var(--brass2) }
+h1.disp { font-family: var(--disp); font-size: clamp(34px, 11vw, 44px); letter-spacing: .01em; color: var(--brass2) }
 p { margin: 0 0 12px } .sub { color: var(--tallow2) } .small { font-size: 15px; color: var(--tallow2) }
 .card { background: linear-gradient(180deg, #1a0f1c, #120b13); border: 1px solid #33203a; border-radius: 16px; padding: 18px; margin: 0 0 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04) }
 .card.hot { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(174,98,73,.3), 0 10px 40px rgba(174,98,73,.12) }
@@ -94,7 +94,7 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .people li button.x { border: 0; background: none; color: var(--mist); font-size: 18px; padding: 0 2px; min-width: 28px; min-height: 28px }
 .pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
 .pick button { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid #3b2640; background: #170e19; text-align: left; font-size: 17px; line-height: 1.15 }
-.pick button .nm { min-width: 0; overflow-wrap: anywhere; flex: 1 } .pick.one { grid-template-columns: minmax(0, 1fr) }
+.pick button .nm { min-width: 0; overflow-wrap: break-word; hyphens: auto; flex: 1 } @media (max-width: 360px) { .pick.one { grid-template-columns: minmax(0, 1fr) } }
 .pick button .tag { flex: none; font: 700 12px/1 var(--ui); padding: 4px 7px; border-radius: 99px; background: #3a1622; color: #f3b7c4 } .pick button .tag.sanct { background: #10261e; color: #bfeadb }
 @media (max-width: 360px) { .pick button { padding: 8px 10px; gap: 8px; font-size: 16px } .pick button .seal { width: 28px; height: 28px } }
 .pick button .seal { width: 34px; height: 34px; flex: none }
@@ -145,7 +145,7 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .prize { border-color: var(--brass); box-shadow: inset 0 0 0 4px #150c13, inset 0 0 0 5px rgba(230,165,140,.3) }
 .meter { position: relative; height: 22px; border-radius: 11px; background: #1b111d; border: 1px solid #3b2640; overflow: hidden; margin: 8px 0 14px; min-width: 200px }
 .meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--brass), var(--brass2)); transition: width .8s ease } .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.4) }
-.meter span { position: relative; display: block; text-align: center; font: 700 13px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
+.meter span { position: relative; z-index: 1; display: block; text-align: center; font: 700 13px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
 .snapprev { display: flex; align-items: center; justify-content: center; gap: 6px } .snapprev .ico { width: 22px; height: 22px; color: var(--brass2) }
 .snapbtn:active { filter: brightness(1.4) }
 .banner.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 }
@@ -176,7 +176,7 @@ body.tv.night { background: #030204 }
 .tvmain .verdict { font-size: 9vh } .tvmain .verdict svg { width: 22vh; height: 22vh } .tvmain .verdict.wait { font-size: 4vh }
 .tvpairs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh 1.4vw; max-width: 84vw } .tvpairs span { white-space: nowrap; padding: .8vh 1.6vw; border-radius: 99px; background: #1b111d; border: 1px solid #3b2640; font-size: 2.6vh } .tvpairs i { font-style: normal; color: var(--mist) }
 .tvpeople.answered .p { opacity: .4 } .tvpeople.answered .p.ok { opacity: 1 }
-.tvpeople.many .p { width: 7vw } .tvpeople.many .p .seal { width: 5.4vh; height: 5.4vh }
+.tvpeople.many .p { width: 8vw; font-size: 1.9vh } .tvpeople.many .p .seal { width: 5.4vh; height: 5.4vh }
 .tvpeople.end .p.dead { opacity: 1 } .tvpeople .p.f .seal { filter: drop-shadow(0 0 1.4vh rgba(234,90,143,.8)) }
 .tvscore li.win { color: var(--brass2) } .tvscore li.win .seal { filter: drop-shadow(0 0 1vh rgba(230,165,140,.8)) }
 .tvscore { grid-auto-flow: column; grid-template-rows: repeat(5, auto) }
@@ -184,7 +184,7 @@ body.tv.night { background: #030204 }
 .endl .disp { font-size: 9vh } .endl .disp.blood { color: var(--blood2) }
 .prizecard { margin-top: 3vh; padding: 3vh 2.4vw; border-radius: 2vh; border: 1px solid var(--brass); box-shadow: inset 0 0 0 .6vh #150c13, inset 0 0 0 .75vh rgba(230,165,140,.3) } .prizecard > span { font-family: var(--sc); letter-spacing: .14em; color: var(--brass2); font-size: 2.2vh } .prizecard h2 { font-size: 5vh; margin: .6vh 0 }
 .endr { display: flex; flex-direction: column; gap: 3vh; align-items: stretch } .endr .tvpeople { max-width: none }
-@media (max-aspect-ratio: 3/2) { .endl .disp { font-size: 7vh } .tvpeople.many.end .p .seal { width: 4.4vh; height: 4.4vh } .tvpeople.many.end .p { width: 6.4vw } .endr { gap: 2vh } .tvawards { font-size: 1.9vh } }
+@media (max-aspect-ratio: 3/2) { .endl .disp { font-size: 7vh } .tvpeople.many.end .p .seal { width: 4.4vh; height: 4.4vh } .tvpeople.many.end .p { width: 7.2vw } .tvpeople.many.end .p em { font-size: 1.6vh; letter-spacing: .02em } .endr { gap: 2vh } .tvawards { font-size: 1.9vh } }
 .tvawards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1.4vh 2vw; font-size: 2.2vh } .tvawards li { display: flex; gap: 1vw; align-items: center } .tvawards .seal { width: 5vh; height: 5vh; flex: none } .tvawards b { display: block; color: var(--brass2); font-size: 2.4vh }
 .tvmain h1 { font-size: 8vh; margin: 0 } .tvmain h1.disp { font-size: 11vh }
 .tvmain h2 { font-size: 5.4vh; max-width: 80vw; margin: 0 }
@@ -198,7 +198,7 @@ body.tv.night { background: #030204 }
 .tvpeople { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4vh 1.4vw; max-width: 88vw }
 .tvpeople .p { display: flex; flex-direction: column; align-items: center; gap: .6vh; width: max(9vw, 15vh); font-size: 2.2vh }
 .tvpeople .p .seal { width: 7vh; height: 7vh } .tvpeople .p.dead { opacity: .35 } .tvpeople .p.ok .seal { filter: drop-shadow(0 0 1.2vh rgba(95,168,143,.8)) }
-.tvpeople .p span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tvpeople .p span { max-width: 100%; overflow: hidden; overflow-wrap: break-word; hyphens: auto; line-height: 1.1; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical }
 .tvpeople .p em { font-style: normal; font-family: var(--sc); font-size: 2.1vh; letter-spacing: .08em; color: var(--blood2) } .tvpeople .p em.l { color: #9ed3c0 }
 .tvscore { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: .6vh 4vw; min-width: 50vw; font-size: 3vh; text-align: left }
 .tvscore li { display: flex; gap: 1vw; align-items: center } .tvscore .seal { width: 4.5vh; height: 4.5vh } .tvscore b { margin-left: auto; color: var(--brass2) }
@@ -230,6 +230,15 @@ body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9v
 .wh { display: flex; flex-wrap: wrap; gap: 8px } .wh .btn { flex: 1 1 auto }
 .tbtn .pz { display: none } .top .me { min-width: 0 } .top .me .seal { flex: none }
 @media (max-width: 380px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }
+
+/* the host's bar: a long name shortens, "host" is a badge, the pause icon is two bars */
+.top .me { flex: 1 1 auto } .top .me .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.top .me .hosttag { flex: none; font: 600 11px/1 var(--sc); letter-spacing: .08em; text-transform: uppercase; font-style: normal; color: var(--brass2); border: 1px solid #5a3b3b; border-radius: 99px; padding: 3px 7px }
+.tbtn .pz { gap: 4px; align-items: center; height: 14px } .tbtn .pz i { display: block; width: 4px; height: 14px; border-radius: 1px; background: currentColor }
+@media (max-width: 380px) { .tbtn .pz { display: inline-flex } .top .me .hosttag { display: none } .top .tbtn { padding: 4px 9px } }
+body:has(.pausebox) { overflow: hidden } .pausebox .btn.sm { margin: 0 auto } body.tv .tvbtns { z-index: 21 }
+.whisp .wh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px } .whisp .wh .btn { width: 100% }
+.tvmain .lastw { width: min(70vw, 100%) }
 </style>
 </head>
 <body>
@@ -884,7 +893,7 @@ function phone() {
   if (tools && me.director) return topBar(me) + toolScreen(me);
   return phone0(me, phase(me));
 }
-const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}${esc(me.name)}${me.director ? " · host" : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true">❚❚</span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
+const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
   ${rejoinCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you no longer vote or play.</span></div>` : ""}
@@ -954,7 +963,7 @@ function lobby(me) {
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
   <label class="l" style="margin-top:12px">Twists</label>${two("twists", [true, "On"], [false, "Off"])}
   <p class="small">${o.twists ? "Once each: the Casting Vote, the Crown, and the Confessor in the final." : "No twists: Sanctuary and the Temptation only."}</p>
-  <label class="l">Eating as you play?</label>${two("courses", [true, "On"], [false, "Off"])}
+  <label class="l">Eating as you play?</label>${two("courses", [true, "Yes, in courses"], [false, "No"])}
   <p class="small">${o.courses ? "Dinner in courses: a starter, a main and dessert are served between the rounds." : "No meal breaks. Turn this on to serve dinner in courses between the rounds. You can always call a short break."}</p>
   <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
   <p class="small center">Want it on the TV? Open <b>${esc(SITE)}/t/${CODE}</b> on a laptop and cast it. It’s optional.</p></div>`;
@@ -1097,7 +1106,7 @@ function trialDone(me) {
   const t = V.trial, sc = Object.entries(t.scores || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const w = t.winners && t.winners[0];
   let h = `<div class="eyebrow">${esc(t.title)} · the result</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${t.special === "cast" ? `<p class="sub">Whoever won holds it now. Only they know.</p>` : ""}${w && t.byLot && t.key !== "tempt" ? `<p class="small">A tie at the top, settled by lot.</p>` : ""}
-  <p class="ans num">${t.points >= 0 ? "+" : ""}${t.points} <span class="small">to the Purse</span></p>${purse(V.pot)}${t.wrongF ? `<p class="small">The Forsworn gave ${plural(t.wrongF, "wrong answer")}, and the Purse paid for them.</p>` : ""}`;
+  <p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} <span class="small">to the Purse</span></p>${purse(V.pot)}${t.wrongF ? `<p class="small">The Forsworn gave ${plural(t.wrongF, "wrong answer")}, and the Purse paid for them.</p>` : ""}`;
   if (t.sanctPublic) h += `<div class="banner sanct">${N(t.sanctPublic)} takes Sanctuary for tonight.</div>`;
   if (me.wonSanct === "yes") h += `<div class="banner sanct">${ico("shield")}<span>You won Sanctuary. Nobody can take you tonight. ${t.sanctPublic ? "" : "Only you know."}</span></div>`;
   if (me.wonSanct === "wasted") h += `<div class="banner"><span>You won, but Sanctuary protects only the Loyal. Nobody else knows.</span></div>`;
@@ -1109,7 +1118,7 @@ function trialDone(me) {
 }
 // ---- the Reckoning
 function vote(me) {
-  const v = V.vote, cands = alive().filter((p) => p.id !== me.id && p.id !== v.immune && (!v.revote || v.revote.includes(p.id)));
+  const v = V.vote, cands = alive().filter((p) => p.id !== me.id && p.id !== v.immune && (!v.revote || v.revote.includes(p.id))).sort((a, b) => a.name.localeCompare(b.name));
   const head = `<div class="eyebrow">the reckoning${v.tie ? " · a tie: vote again" : ""}</div><h1>${me.alive ? "Who do you exile?" : "Call it, Ghost"}</h1>
   <p class="sub">${v.revote ? "A tie between " + esc(andList(v.revote.map((id) => P(id).name))) + ". " : ""}${me.alive ? "Your vote is secret until the count." : "Ghosts don’t vote, but if you call it right the table will know."} ${v.voted} of ${v.of} voted.</p>${v.voteEnd ? `<div class="ihead"><span class="small">Closes in</span>${clock(v.voteEnd)}</div>` : ""}${crownCard(me)}`;
   if (v.mine) return head + `<div class="done">${ico("scales")}<div>${me.alive ? "You voted" : "You called"} <b>${N(v.mine)}</b>.<br><span class="small">You can change it until everyone’s in.</span></div></div><div style="height:12px"></div>` + pickList(cands, "ballot", v.mine);
@@ -1134,8 +1143,10 @@ function reveal(me) {
   return h + (r.role || r.secret ? dirCard(btn("Continue", "cont")) : "");
 }
 const lastWords = (name, w) => `<blockquote class="lastw say">“${esc(w)}”<cite>${esc(name)}’s last words</cite></blockquote>`;
-const wordsForm = (me) => (me.words == null ? "" : me.words ? "" : `<div class="card"><label class="l" for="lw">Your last words, on the TV (optional)</label><input class="f" id="lw" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="One line for the table"><div style="height:10px"></div>${btn("Say it", "wordsf", "lw", "dark")}</div>`);
-const epitaphs = (d) => (d.likely || []).map(([n, q]) => `<p class="epitaph say">${esc(n)}, voted ${esc(q.replace(/^most/i, "most"))}. We’ll never know now.</p>`).join("") + (d.words || []).map(([n, w]) => lastWords(n, w)).join("");
+const wordsForm = (me) => (me.words == null ? "" : me.words ? "" : `<div class="card"><label class="l" for="lw">Your last words, for the whole table (optional, 140 characters)</label><input class="f" id="lw" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="One line for the table"><div style="height:10px"></div>${btn("Say it", "wordsf", "lw", "dark")}</div>`);
+// each victim in turn: what the table once voted them most likely to do, then their last words
+const epitaphs = (d) => (d.victims || []).map((n) => { const q = (d.likely || []).find((x) => x[0] === n), w = (d.words || []).find((x) => x[0] === n); return (q ? `<p class="epitaph say">The table voted ${esc(n)} ${esc(q[1].replace(/^most/i, "most"))}. Now we’ll never find out.</p>` : "") + (w ? lastWords(n, w[1]) : ""); }).join("");
+const nb = (n) => esc(n).replace(/ /g, "&nbsp;"); // a name never breaks across lines
 function night(me) {
   const n = V.night;
   let h = `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">Everyone taps someone now, so nobody can tell who is choosing. Keep your screen hidden.</p>`;
@@ -1144,8 +1155,8 @@ function night(me) {
     const votes = {}; for (const ps of Object.values(me.picks || {})) for (const nm of ps) votes[nm] = (votes[nm] || 0) + 1;
     h += `<div class="card hot"><div class="eyebrow">tonight</div><p>${n.kills > 1 ? "Choose " + n.kills + ". The " + n.kills + " chosen most by the Forsworn are " + KILL() + "." : "Choose who is " + KILL() + " tonight. The one chosen most goes."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
     ${Object.entries(me.picks || {}).filter(([nm]) => nm !== me.name).map(([nm, ps]) => `<p class="small">${esc(nm)}: ${ps.length ? esc(andList(ps)) : "not yet"}</p>`).join("")}<p class="small">${(me.mine || []).length} of ${n.kills} chosen</p></div>`;
-    if (me.whispers) h += `<div class="card"><div class="eyebrow">whisper to the Forsworn</div>${me.whispers.length ? `<ul class="whispers">${me.whispers.map(([n, m]) => `<li><b>${esc(n)}</b> ${esc(m)}</li>`).join("")}</ul>` : `<p class="small">Only the Forsworn see these.</p>`}<div class="wh">${(me.whisperSay || []).map((m, i) => btn(esc(m), "whisper", i, "dark sm")).join("")}</div></div>`;
-    return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">Chosen. You can change it until everyone’s done.</p>` : "");
+    const wh = me.whispers ? `<details class="more whisp"${me.whispers.length ? " open" : ""}><summary>Whisper to the Forsworn${me.whispers.length ? " · " + me.whispers.length : ""}</summary>${me.whispers.length ? `<ul class="whispers">${me.whispers.map(([n, m]) => `<li><b>${esc(n)}</b> ${esc(m)}</li>`).join("")}</ul>` : `<p class="small">Only the Forsworn see these.</p>`}<div class="wh">${(me.whisperSay || []).map((m, i) => btn(esc(m), "whisper", i, "dark sm")).join("")}</div></details>` : "";
+    return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">Chosen. You can change it until everyone’s done.</p>` : "") + wh;
   }
   h += `<div class="card"><p>Who do you suspect most? (Nothing happens to them: it just keeps the night secret.)</p></div>`;
   return h + (n.done ? `<div class="done">${ico("moon")}<div>Done. Heads down until dawn.</div></div>` : pickList(alive().filter((p) => p.id !== me.id), "sleep"));
@@ -1153,36 +1164,36 @@ function night(me) {
 function dawn(me) {
   const d = V.dawn;
   if (!d.revealed) {
-    if (me.victim) return `<div class="card hot center"><div class="eyebrow">the night</div><h1>You were ${me.victim === "murder" ? "murdered" : "poisoned"}</h1><p class="sub">${me.victim === "murder" ? "Say nothing. When the host reveals the night, leave the table quietly." : "Say nothing yet. When the host reveals the night, you get your last words."}</p></div>` + dirCard(btn("Reveal the night", "cont"));
+    if (me.victim) return `<div class="card hot center"><div class="eyebrow">the night</div><h1>You were ${me.victim === "murder" ? "murdered" : "poisoned"}</h1><p class="sub">${me.victim === "murder" ? "Say nothing. When the host reveals the night, you can leave a line of last words for the table, then leave quietly." : "Say nothing yet. When the host reveals the night, you get your last words."}</p></div>` + dirCard(btn("Reveal the night", "cont"));
     return `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>` + dirCard(btn("Reveal the night", "cont")) + waitHost();
   }
   const v = d.victims || [];
   if (v.includes(me.name) && d.lastEnd && V.kill !== "murder") return `<div class="card hot center"><div class="eyebrow">dawn</div><h1>Your last words</h1><p class="sub">Stand up, tell the table you were poisoned, and say what you like. Then you’re a Ghost.</p><p class="bigclock">${clock(d.lastEnd)}</p></div>` + dirCard(btn("On to the next round", "cont"));
-  return `<div class="eyebrow">dawn</div><h1>${v.length ? esc(andList(v)) + (v.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>
-  <p class="sub">${v.length ? (V.kill === "murder" ? "Murdered in the night." : "Poisoned in the night. Last words" + (d.lastEnd ? ": " + clock(d.lastEnd) : ".")) : d.saved ? "Sanctuary held. The Forsworn struck, and failed." : "The night passed quietly."}</p>${epitaphs(d)}${v.includes(me.name) ? wordsForm(me) : ""}` + dirCard(btn("On to the next round", "cont")) + waitHost();
+  return `<div class="eyebrow">dawn</div><h1>${v.length ? andList(v.map(nb)) + (v.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>
+  <p class="sub">${v.length ? (V.kill === "murder" ? "Murdered in the night." : "Poisoned in the night. Last words" + (d.lastEnd ? ": " + clock(d.lastEnd) : ".")) : d.saved ? "Sanctuary held. The Forsworn struck, and failed." : "The night passed quietly."}</p>${v.includes(me.name) ? `<div class="banner ghost">${ico("ghost")}<span>You were ${KILL()}. You’re a Ghost now.</span></div>` : ""}${epitaphs(d)}${v.includes(me.name) ? wordsForm(me) : ""}` + dirCard(btn("On to the next round", "cont")) + waitHost();
 }
 function trust(me) {
   const t = V.trust;
   if (t.result) return `<div class="eyebrow">trust or doubt</div><h1>${t.result === "trust" ? "The table trusts" : "Doubt"}</h1><p class="sub">${t.result === "trust" ? "Everyone chose Trust. The masks come off." : plural(t.count, "player") + " doubted. Another Reckoning."}</p>`;
   if (!me.alive) return `<div class="eyebrow">trust or doubt</div><h1>The survivors decide</h1><p class="sub">${t.voted} of ${t.of} have chosen.</p>`;
-  return `<div class="eyebrow">trust or doubt</div><h1>Do you trust everyone left?</h1><p class="sub">If every survivor chooses Trust, the game ends and the masks come off. One Doubt, and there’s another Reckoning.</p>` +
+  return `<div class="eyebrow">trust or doubt</div><h1>Do you trust everyone left?</h1><p class="sub">If every survivor chooses Trust, the game ends and the masks come off. One Doubt, and there’s another Reckoning. No answer in time counts as Doubt.</p>${t.end ? `<p>${clock(t.end)}</p>` : ""}` +
     (t.mine ? `<div class="done">${ico("handshake")}<div>You chose <b>${t.mine.toUpperCase()}</b>.<br><span class="small">${t.voted} of ${t.of} in.</span></div></div>` : `<div class="grid2">${btn("Trust", "trust", "trust", "big verd")}${btn("Doubt", "trust", "doubt", "big blood")}</div>`);
 }
-function unmaskList() { const u = V.unmask; return `<ul class="score">${u.order.map((id, i) => `<li>${seal(id)}${N(id)}<span class="n">${i < u.shown ? (P(id).role === "f" ? "Forsworn" : "Loyal") : "…"}</span></li>`).join("")}</ul>`; }
+function unmaskList() { const u = V.unmask; return `<ul class="score">${u.order.map((id, i) => `<li>${seal(id)}${N(id)}<span class="n" style="${i < u.shown ? "color:" + (P(id).role === "f" ? "var(--blood2)" : "#9ed3c0") : ""}">${i < u.shown ? (P(id).role === "f" ? "Forsworn" : "Loyal") : "…"}</span></li>`).join("")}</ul>`; }
 function honour(me) {
   const h = V.honour;
   if (me.role !== "f" || !me.alive) return `<div class="eyebrow">the last betrayal</div><h1>The Forsworn decide</h1><p class="sub">They reached the end together. Now each chooses, in secret: share the prize, or betray the others for all of it.</p>`;
-  return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">If every Forsworn honours, you share the prize. One betrayer takes it all. Two or more betrayers, and nobody gets it.</p>` +
+  return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">If every Forsworn honours, you share the prize. One betrayer takes it all. Two or more betrayers, and nobody gets it. If you don’t choose in time, you honour.</p>${h.end ? `<p>${clock(h.end)}</p>` : ""}` +
     (h.mine ? `<div class="done">${ico("blade")}<div>You chose <b>${h.mine.toUpperCase()}</b>.</div></div>` : `<div class="grid2">${btn("Honour", "honour", "honour", "big verd")}${btn("Betray", "honour", "betray", "big blood")}</div>`);
 }
 function end(me) {
   const r = V.result, fw = r.winner === "forsworn";
   return `<div class="eyebrow">the end</div><h1 class="disp">${fw ? "The Forsworn win" : "The Loyal win"}</h1>
-  <p class="sub">${r.how === "betrayed" ? "Betrayed at the last: " + r.to.map(esc).join("") + " takes it all." : r.how === "nobody" ? "Too many betrayers: nobody takes the prize." : r.to.length ? "The prize goes to " + r.to.map(esc).join(", ") + "." : ""}</p>
-  <div class="card center prize"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.tier >= 1 ? "an empty" : "a half-empty") : r.tier >= 1 ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(r.prize)}</p><p class="small">${fw ? "The Loyal built " + r.pot + " of " + r.cap + ": the Forsworn take the " + r.won + " it fell short." : "The Purse: " + r.pot + " of " + r.cap + "."}</p></div>
+  <p class="sub">${r.how === "betrayed" ? "Betrayed at the last: " + andList(r.to.map(esc)) + " takes it all." : r.how === "nobody" ? "Too many betrayers: nobody takes the prize." : r.to.length ? "The prize goes to " + andList(r.to.map(esc)) + "." : ""}</p>
+  <div class="card center prize"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.pot <= 0 ? "an empty" : "a half-empty") : r.pot >= r.cap ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(r.prize)}</p><p class="small">${fw ? "The Loyal built " + r.pot + " of " + r.cap + ": the Forsworn take the " + r.won + " it fell short." : "The Purse: " + r.pot + " of " + r.cap + "."}</p></div>
   ${me.won ? `<div class="banner sanct">${ico("crown")}<span>You won.</span></div>` : ""}
   ${r.peeked && r.peeked.length ? `<p class="small">The host opened the roles in round ${r.peeked.join(", ")} (Tools, for when something went wrong).</p>` : ""}
-  <div class="eyebrow" style="margin-top:14px">who was who</div><ul class="roster">${V.players.slice().sort((a, b) => (a.role === "f" ? 0 : 1) - (b.role === "f" ? 0 : 1)).map((p) => `<li class="${p.role === "f" ? "f" : "l"}">${ART.seal(p)}<span>${esc(p.name)}${p.alive ? "" : ` <i>${p.role === "f" ? "exiled" : "out"}</i>`}</span><em>${p.role === "f" ? "Forsworn" : "Loyal"}</em></li>`).join("")}</ul>
+  <div class="eyebrow" style="margin-top:14px">who was who</div><ul class="roster">${V.players.slice().sort((a, b) => (a.role === "f" ? 0 : 1) - (b.role === "f" ? 0 : 1)).map((p) => `<li class="${p.role === "f" ? "f" : "l"}">${ART.seal(p)}<span>${esc(p.name)}${p.alive ? "" : ` <i>out</i>`}</span><em>${p.role === "f" ? "Forsworn" : "Loyal"}</em></li>`).join("")}</ul>
   ${r.awards && r.awards.length ? `<div style="height:14px"></div><div class="eyebrow">the awards</div><ul class="score awards">${r.awards.map((a) => `<li>${seal(a.id)}<div><b>${esc(a.title)}</b><br><span class="small">${esc(a.name)} ${esc(a.why)}</span></div></li>`).join("")}</ul>` : ""}
   ${dirCard(btn("Play again with the same people", "again", null, "dark"))}`;
 }
@@ -1209,17 +1220,17 @@ function tvBody(url) {
     case "trial": {
       const t = V.trial, x = t.item;
       if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1 class="disp">${esc(t.title)}</h1><p class="sub">${esc(t.rules)}</p><p>${clock(t.introEnd)}</p>`;
-      if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie at the top, settled by lot</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" : ""}${t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} takes the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won holds it. Only they know.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} takes Sanctuary.</p>` : t.prize && w ? `<p class="sub">Did they take Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}`; }
+      if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie at the top, settled by lot</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} takes the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won holds it. Only they know.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} takes Sanctuary.</p>` : t.prize && w ? `<p class="sub">Did they take Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}`; }
       return x ? `<div class="eyebrow">${esc(t.title)} · ${x.stage === "reveal" ? t.i : t.i + 1}</div>` + (x.stage === "reveal" ? tvReveal(x) : tvItem(x)) : "";
     }
-    case "talk": return `<div class="eyebrow">the reckoning</div><h1>Talk. Accuse. Defend. Deflect.</h1><p>${clock(V.vote.talkEnd)}</p>${tvPeople()}`;
-    case "vote": return `<div class="eyebrow">the reckoning${V.vote.tie ? " · a tie" : ""}</div><h1>${V.vote.tie ? "Vote again" : "Vote on your phones"}</h1>${V.vote.revote ? `<p class="sub">Between ${esc(andList(V.vote.revote.map((id) => P(id).name)))}</p>` : ""}<p class="tvcount">${V.vote.voted} of ${V.vote.of} voted · ${clock(V.vote.voteEnd)}</p>${V.vote.immune ? `<p class="sub">${N(V.vote.immune)} laid down the Crown, and is safe from this exile.</p>` : ""}${tvPeople()}`;
+    case "talk": return `<div class="eyebrow">the reckoning</div><h1>Talk. Accuse. Defend.</h1><p>${clock(V.vote.talkEnd)}</p>${tvPeople()}`;
+    case "vote": return `<div class="eyebrow">the reckoning${V.vote.tie ? " · a tie" : ""}</div><h1>${V.vote.tie ? "Vote again" : "Vote on your phones"}</h1>${V.vote.revote ? `<p class="sub">Between ${esc(andList(V.vote.revote.map((id) => P(id).name)))}</p>` : ""}<p class="tvcount">${V.vote.voted} of ${V.vote.of} voted · ${clock(V.vote.voteEnd)}</p>${V.vote.immune ? `<p class="sub">${N(V.vote.immune)} laid down the Crown, and is safe from this exile.</p>` : ""}${tvPeople(V.vote.revote ? (p) => V.vote.revote.includes(p.id) : null)}`;
     case "reveal": { const r = V.reveal; return `<div class="eyebrow">the reckoning</div><h1>${esc(r.name)} is exiled</h1><p class="sub">${(r.counts || []).map(([id, n]) => N(id) + " " + n).join(" · ")}${r.cast ? " · settled by the Casting Vote" : ""}</p>${r.secret ? `<p class="sub">In the final, the exiled go without a word.</p>` : r.role ? `<div class="verdict ${r.role === "f" ? "f" : "l"}">${ART.bigSeal(r.role === "f" ? "t" : "good", r.role === "f" ? "blade" : "candle")}<div>${r.role === "f" ? "Forsworn" : "Loyal"}</div></div>${r.called && r.called.length ? `<p class="sub">Called from beyond by ${esc(andList(r.called))}</p>` : ""}${r.words ? lastWords(r.name, r.words) : ""}` : `<div class="verdict wait">${ART.bigSeal("steel", "scales")}<div>They were…</div></div>`}`; }
     case "night": return `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">Everyone: tap your phone. The Forsworn are choosing.</p>`;
-    case "dawn": { const d = V.dawn; return d.revealed ? `<div class="eyebrow">dawn</div><h1>${d.victims.length ? esc(andList(d.victims)) + (d.victims.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>${d.lastEnd ? `<p class="sub">Last words ${clock(d.lastEnd)}</p>` : d.saved ? `<p class="sub">Sanctuary held.</p>` : ""}${epitaphs(d)}${tvPeople()}` : `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>`; }
-    case "trust": return `<div class="eyebrow">trust or doubt</div><h1>${V.trust.result ? (V.trust.result === "trust" ? "The table trusts" : "Doubt") : "Do you trust everyone left?"}</h1><p class="tvcount">${V.trust.result ? "" : V.trust.voted + " of " + V.trust.of + " chosen"}</p>`;
-    case "unmask": return `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`;
-    case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p>`;
+    case "dawn": { const d = V.dawn; return d.revealed ? `<div class="eyebrow">dawn</div><h1>${d.victims.length ? andList(d.victims.map(nb)) + (d.victims.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>${d.lastEnd ? `<p class="sub">Last words ${clock(d.lastEnd)}</p>` : d.saved ? `<p class="sub">Sanctuary held.</p>` : ""}${epitaphs(d) || tvPeople()}` : `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>`; }
+    case "trust": return `<div class="eyebrow">trust or doubt</div><h1>${V.trust.result ? (V.trust.result === "trust" ? "The table trusts" : "Doubt") : "Do you trust everyone left?"}</h1><p class="tvcount">${V.trust.result ? "" : V.trust.voted + " of " + V.trust.of + " chosen" + (V.trust.end ? " · " + clock(V.trust.end) : "")}</p>`;
+    case "unmask": { const keep = V.players; V.players = V.unmask.order.map(P); const h = `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`; V.players = keep; return h; }
+    case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p><p class="tvcount">${V.honour.made} of ${V.honour.of} chosen${V.honour.end ? " · " + clock(V.honour.end) : ""}</p>`;
     case "end": { const r = V.result, fw = r.winner === "forsworn";
       return `<div class="endgrid"><div class="endl"><div class="eyebrow">the end</div><h1 class="disp ${fw ? "blood" : ""}">${fw ? "The Forsworn win" : "The Loyal win"}</h1><div class="prizecard"><span>the prize</span><h2>${esc(r.prize)}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
       <div class="endr">${tvPeople(null, true, "end")}${r.awards && r.awards.length ? `<ul class="tvawards">${r.awards.slice(0, V.players.length > 16 ? 2 : 4).map((a) => `<li>${seal(a.id)}<span><b>${esc(a.title)}</b>${esc(a.name)} ${esc(a.why)}</span></li>`).join("")}</ul>` : ""}</div></div>`; }

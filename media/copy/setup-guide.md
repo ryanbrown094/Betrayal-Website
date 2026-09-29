@@ -26,7 +26,7 @@ The Purse target is 2,000 points. Everything else the game plans for itself: how
 
 ### During the game
 
-The host’s phone shows a small host card: **Begin** the next Trial, or **a short break first** (10 minutes, with **+5 minutes** and **End the break**), then the Reckoning, **Reveal the night** and **On to the next round**. **Tools** handles the awkward moments: let a phone that lost its place back in, someone has left the party, hand the host’s controls to someone else, play the music on this phone if there’s no TV, or move on when someone is stuck. At the end, **Play again with the same people**.
+The host’s phone shows a small host card: **Begin** the next Trial, or **a short break first** (10 minutes, with **+5 minutes** and **End the break**), then the Reckoning, **Reveal the night** and **On to the next round**. **Pause** stops every clock. **Tools** handles the awkward moments: let a phone that lost its place back in, take someone who is ill out of the game (nobody learns their role), hand the host’s controls to someone else, play the music on this phone if there’s no TV, or move on when someone is stuck. At the end, **Play again with the same people**.
 
 Screenshots: `04-screenshots/modern/`.
 
@@ -41,7 +41,7 @@ Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s
 | # | question | choices | notes |
 |---|---|---|---|
 | 1 | Who’s playing? | 8 to 24 names, in seating order | seat order is the TV’s candle order and the order boards are turned. Best with 8 to 16 |
-| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 5 hours for 20 or more), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
+| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 5 hours for 16, and 6 or more for 20 and up), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
 | 3 | Murder or poison? | poison / murder | how the Forsworn kill. Poison: the victim is told in the night and announces it at dawn. Murder: the victim is led away under blindfold |
 | 4 | The prize | up to three prizes | the prize; a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
 | 5 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |

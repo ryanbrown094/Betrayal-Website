@@ -25,7 +25,7 @@ Replace anything in [brackets]. Keep it personal: these work because they come f
 
 > Thanks for last night! If you fancy hosting your own game, use code [GUEST] for £5 off at thebetrayal.co.uk.
 
-(Set up the code first. Checkout runs with Managed Payments, which carries no promotion codes: see `NEXT-STEPS.md` step 4 before sending this.)
+(Set up the code first. Checkout applies the broken seal’s discount automatically but has no box for typing a code: see `NEXT-STEPS.md` step 4 before sending this.)
 
 ## 5 · Facebook groups (ask the admin first)
 
@@ -50,11 +50,11 @@ If they post, it must be labelled **#ad** (a gift given in exchange for content 
 
 ## 8 · Local press pitch (your local paper and local news sites)
 
-**Subject:** [Town] man turns his own dinner party into a game for the whole country
+**Subject:** [Town] man turns his own party into a game for the whole country
 
 > Hi [name],
 >
-> I’m [Ryan Brown] from [town]. This summer I built a party game for my own dinner party. It went down so well that I’ve spent the last few months turning it into The Betrayal, a game anyone can host.
+> I’m [Ryan Brown] from [town]. This summer I built a party game for friends at my house. It went down so well that I’ve spent the last few months turning it into The Betrayal, a game anyone can host.
 >
 > A few guests are secretly Forsworn; everyone else has one evening to find them. Everyone plays on their own phone, pub-quiz style: roles, votes and midnight poisonings arrive in secret on each screen, and the host plays too. It launched on [date] and costs £10 a Table (one party), or £20 a month for Regulars who host often.
 >

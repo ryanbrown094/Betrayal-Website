@@ -108,7 +108,7 @@ What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 - **Best at 8 to 16 players.** The game takes 8 to 24.
 - **8 to 12 players:** about 3 to 3½ hours. Stopping for dinner adds half an hour (one break) to an hour (three courses).
 - **The Short game** (Classic): about 2 hours for 8 to 10 players (one Trial a round, no Interval, no dinner break).
-- **Bigger tables run longer:** 20 or more, about 5 hours, or 6 with dinner.
+- **Bigger tables run longer:** about 5 hours for 16, and 6 or more for 20 and up.
 - State the capacity as a fact; never sell it as a benefit. No “up to 24 players, one very long night”.
 
 ## Marks and type

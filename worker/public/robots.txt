@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /seal
+Disallow: /api/
+Disallow: /t/
+Disallow: /m/
+Disallow: /g/
