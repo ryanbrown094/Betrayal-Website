@@ -233,7 +233,18 @@ async function openRoom(code, at) {
     h("h2", {}, "Room " + code),
     kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Pass", m.pass || "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
       ["Links", h("span", {}, h("a", { href: "/g/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/g/" + code + "#host", target: "_blank" }, "Keeper phone"))]]));
-  if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
+  const md = d.modern;
+  if (md) {
+    // a Modern game: the server ran it, so the whole state is here (the admin sees every role)
+    const cl = md.players.filter(p => p.role === "f").map(p => p.name), host = md.players.find(p => p.id === md.director);
+    ap(v, h("h2", {}, "The game (Modern)"),
+      kv([["Title", md.opts.title], ["Host", host ? host.name : "—"], ["Players", md.players.length + (cl.length ? " (" + cl.length + " Forsworn: " + cl.join(", ") + ")" : "")], ["Now", md.phase + " · round " + md.round + (md.final ? " (the final)" : "") + " · version " + (md.ver || 0)],
+        ["Purse", md.pot + " of " + md.opts.potCap], ["Prize", md.opts.prize + ((md.opts.prizes || []).length ? " · then " + md.opts.prizes.map(x => x.what).join(", then ") : "")], ["Kill", md.opts.kill], ["Sanctuary", md.opts.shield], ["Twists", yes(md.opts.twists)], ["Courses", yes(md.opts.courses)],
+        ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? md.result.winner : "—"]]),
+      h("h3", {}, "Players"),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), p.role === "f" ? "Forsworn" : p.role === "l" ? "Loyal" : "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
+      h("h3", {}, "Game log"), h("div.mono", {}, (md.log || []).slice().reverse().map(x => secs(x.t).slice(-8) + " " + x.m).join("\n") || "(empty)"));
+  } else if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
   else {
     const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
     ap(v, h("h2", {}, "The game"),
@@ -248,7 +259,8 @@ async function openRoom(code, at) {
   ap(v, h("h2", {}, "Replay"), h("p.note", {}, "Every change the Keeper’s phone saved, in order. Drag the slider or tap a line; Play steps through them. The TV shows what the guests saw, the phone what the Keeper saw."));
   if (!recs.length) ap(v, h("p.note", {}, "Nothing recorded yet."));
   else {
-    const tv = h("iframe", { src: "/play.html#replay-tv", title: "TV replay" }), ph = h("iframe", { src: "/play.html#replay-host", title: "Keeper phone replay" });
+    const page = recs.some(r => r.kind === "modern") ? "/modern.html" : "/play.html";
+    const tv = h("iframe", { src: page + "#replay-tv", title: "TV replay" }), ph = h("iframe", { src: page + "#replay-host", title: page === "/modern.html" ? "Host phone replay" : "Keeper phone replay" });
     const tvbox = h("div.tvbox", {}, tv), rng = h("input", { type: "range", min: 1, max: recs.length, value: 1, "aria-label": "Point in the game" }), now = h("div.now", {}), tl = h("div.tl", {});
     const play = h("button.btn.ghost.small", {}, "Play"), speed = h("select", { "aria-label": "Speed" }, [["1500", "slow"], ["700", "normal"], ["250", "fast"]].map(([v, l]) => h("option", { value: v, selected: v === "700" }, l)));
     recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "— game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));

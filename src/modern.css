@@ -1,0 +1,144 @@
+/* The Betrayal — Modern: every phone, the director's extra controls, and the optional TV. Same palette as Classic. */
+:root {
+  --soot: #09070a; --peat: #130d14; --walnut: #251428; --walnut2: #341b37;
+  --tallow: #e8d0c8; --tallow2: #afa198; --mist: #877e78;
+  --brass: #ae6249; --brass2: #e6a58c; --brass3: #582c5f;
+  --ox: #7a1439; --blood: #c22961; --blood2: #ea5a8f; --steel: #8fa3b8; --verd: #5fa88f; --verd2: #2e6b57;
+  --disp: "Grenze Gotisch", "Cinzel", "Times New Roman", serif;
+  --book: "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
+  --ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+  --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box }
+html, body { margin: 0; min-height: 100%; background: var(--soot); color: var(--tallow); -webkit-text-size-adjust: 100% }
+body { font-family: var(--ui); font-size: 18px; line-height: 1.4; overflow-x: hidden;
+  background: radial-gradient(120% 60% at 50% 0%, #1d1020 0%, var(--soot) 70%) fixed }
+button, input, textarea, select { font: inherit; color: inherit }
+button { cursor: pointer; -webkit-tap-highlight-color: transparent }
+svg { display: block }
+.ico { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible }
+.ico .f { fill: currentColor; stroke: none }
+.num { font-variant-numeric: tabular-nums lining-nums }
+.seal text { font-family: var(--disp); font-weight: 600; font-size: 46px; text-anchor: middle }
+.seal .crack { display: none } .seal.cracked .crack { display: block }
+
+/* ---------- a phone ---------- */
+#app { max-width: 520px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--sc); font-size: 14px; letter-spacing: .08em; color: var(--tallow2); padding-bottom: 10px; border-bottom: 1px solid #2a1a2c; margin-bottom: 18px }
+.top .me { display: flex; align-items: center; gap: 8px; color: var(--tallow); text-transform: none; letter-spacing: 0; font-family: var(--ui); font-size: 16px }
+.top .me .seal { width: 28px; height: 28px }
+.top .pot { color: var(--brass2); white-space: nowrap }
+.eyebrow { font-family: var(--sc); font-size: 14px; letter-spacing: .16em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
+h1, h2 { font-family: var(--book); font-weight: 400; margin: 0 0 10px; line-height: 1.12 }
+h1 { font-size: 34px } h2 { font-size: 27px }
+h1.disp { font-family: var(--disp); font-size: 44px; letter-spacing: .01em; color: var(--brass2) }
+p { margin: 0 0 12px } .sub { color: var(--tallow2) } .small { font-size: 15px; color: var(--tallow2) }
+.card { background: linear-gradient(180deg, #1a0f1c, #120b13); border: 1px solid #33203a; border-radius: 16px; padding: 18px; margin: 0 0 14px }
+.card.hot { border-color: var(--brass); box-shadow: 0 0 0 1px rgba(174,98,73,.3), 0 10px 40px rgba(174,98,73,.12) }
+.card.dir { border-style: dashed; border-color: #5b3a4f; background: #120a12 }
+.card.dir > .eyebrow { color: var(--steel) }
+.stack { display: flex; flex-direction: column; gap: 10px }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; padding: 12px 18px; border-radius: 14px; border: 1px solid transparent; background: linear-gradient(180deg, #c2735a, var(--brass)); color: #1a0a0c; font-weight: 700; font-size: 18px; text-align: center; width: 100%; transition: transform .08s, filter .2s }
+.btn:active { transform: scale(.98) } .btn:disabled { opacity: .45; cursor: default }
+.btn.ghost { background: transparent; color: var(--tallow); border-color: #4a3150 }
+.btn.dark { background: #1f1321; color: var(--tallow); border-color: #3b2640 }
+.btn.big { min-height: 72px; font-size: 22px }
+.btn.on { background: linear-gradient(180deg, #e6a58c, #c2735a); color: #1a0a0c; border-color: #f4c9b7 }
+.btn.blood { background: linear-gradient(180deg, #d63a70, var(--ox)); color: #fff }
+.btn.verd { background: linear-gradient(180deg, #6fbca1, var(--verd2)); color: #04120d }
+.btn.sm { min-height: 42px; font-size: 15px; padding: 8px 12px; border-radius: 11px; width: auto }
+.btn .ico { width: 22px; height: 22px }
+input.f, textarea.f, select.f { width: 100%; min-height: 54px; padding: 12px 14px; border-radius: 14px; border: 1px solid #4a3150; background: #0f0910; color: var(--tallow); font-size: 20px }
+textarea.f { min-height: 150px; resize: vertical; font-size: 18px }
+input.f:focus, textarea.f:focus, select.f:focus { outline: 2px solid var(--brass2); outline-offset: 1px }
+input.code { text-transform: uppercase; letter-spacing: .3em; text-align: center; font-size: 28px; font-weight: 700 }
+label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacing: .08em; color: var(--tallow2); margin: 0 0 6px }
+.msg { min-height: 22px; font-size: 15px; color: var(--tallow2); margin-top: 8px } .msg.err { color: var(--blood2) }
+.people { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none }
+.people li { display: flex; align-items: center; gap: 7px; padding: 5px 11px 5px 5px; border-radius: 99px; background: #1b111d; border: 1px solid #2f1f33; font-size: 16px }
+.people li .seal { width: 28px; height: 28px } .people li.dead { opacity: .45; text-decoration: line-through }
+.people li.ok { border-color: var(--verd2) } .people li b { font-weight: 600 }
+.people li button.x { border: 0; background: none; color: var(--mist); font-size: 18px; padding: 0 2px; min-width: 28px; min-height: 28px }
+.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.pick button { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid #3b2640; background: #170e19; text-align: left; font-size: 17px }
+.pick button .seal { width: 34px; height: 34px; flex: none }
+.pick button.on { border-color: var(--brass2); background: #2b1520; box-shadow: inset 0 0 0 1px var(--brass2) }
+.pick button:disabled { opacity: .4 }
+.clock { font-family: var(--book); font-size: 22px; color: var(--brass2); font-variant-numeric: tabular-nums }
+.clock.low { color: var(--blood2) }
+.bar { height: 6px; border-radius: 3px; background: #2a1a2c; overflow: hidden; margin: 6px 0 14px } .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass), var(--brass2)); transition: width .25s linear }
+.q { font-family: var(--book); font-size: 26px; line-height: 1.2; margin: 6px 0 16px }
+.ans { font-family: var(--book); font-size: 30px; color: var(--brass2) }
+.done { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 14px; background: #122019; border: 1px solid var(--verd2); color: #cfe9de }
+.done .ico { width: 26px; height: 26px; color: var(--verd) }
+.letters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 14px }
+.letters span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 9px; background: #efe0d4; color: #241018; font-family: var(--book); font-size: 26px }
+.words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px }
+.words span { padding: 10px 4px; text-align: center; border-radius: 10px; background: #1b111d; border: 1px solid #33203a; font-size: 17px }
+.cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px }
+.cells button, .cells span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 12px; background: #1b111d; border: 1px solid #3b2640; color: var(--brass2) }
+.cells .ico { width: 58%; height: 58% } .cells .hit { border-color: var(--verd); background: #10261e; color: #bfeadb } .cells .mine { box-shadow: inset 0 0 0 2px var(--brass2) }
+.cells.blank span { background: #120b13; color: transparent }
+.snapsym { display: grid; place-items: center; height: 42vh; max-height: 300px; color: var(--brass2) } .snapsym .ico { width: 70%; height: 70% }
+.role { text-align: center; padding: 28px 18px }
+.role .sigil { width: 150px; height: 150px; margin: 0 auto 14px }
+.role.f h1 { color: var(--blood2) } .role.l h1 { color: #bfe0d3 }
+.veil { display: grid; place-items: center; min-height: 300px; border-radius: 18px; border: 1px dashed #5b3a4f; background: repeating-linear-gradient(135deg, #140b15 0 14px, #170d18 14px 28px); text-align: center; padding: 20px }
+.score { list-style: none; margin: 0; padding: 0; counter-reset: s }
+.score li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #25172a }
+.score li .seal { width: 30px; height: 30px } .score li .n { margin-left: auto; font-weight: 700; color: var(--brass2) } .score li.me { color: var(--brass2) }
+.banner { padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; font-size: 16px; background: #1d1a10; border: 1px solid #5a4a22; color: #ecdcae }
+.banner.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 }
+.banner.sanct { background: #0f2019; border-color: var(--verd2); color: #cfe9de }
+.foot { margin-top: auto; padding-top: 16px }
+.ihead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px } .ihead .eyebrow { margin: 0 }
+.row { display: flex; gap: 10px; align-items: center } .row > * { flex: 1 }
+.center { text-align: center }
+details.more { margin-top: 10px } details.more summary { cursor: pointer; color: var(--tallow2); font-size: 15px; padding: 8px 0 }
+.live { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 12px; border-radius: 99px; background: #2a1316; border: 1px solid #6a2733; color: #f3b7c4; font-size: 14px; z-index: 5 }
+.brand { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 18px 0 22px; text-align: center }
+.brand svg { width: 64px; height: 76px; color: var(--brass2) }
+.brand .t { font-family: var(--disp); font-size: 40px; color: var(--brass2); line-height: 1 }
+.brand .m { font-family: var(--sc); font-size: 14px; letter-spacing: .3em; color: var(--tallow2) }
+.fade { animation: fade .35s ease both } @keyframes fade { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none } .bar i { transition: none } }
+
+/* ---------- the TV ---------- */
+body.tv { overflow: hidden; background: radial-gradient(90vw 70vh at 50% 110%, rgba(217,106,76,.18), transparent 62%), radial-gradient(120vw 80vh at 50% 0%, #1d1020, var(--soot) 70%) }
+body.tv.night { background: #030204 }
+#tvapp { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 4vh 5vw; font-size: 2.6vh }
+.tvtop { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--sc); letter-spacing: .12em; color: var(--tallow2); font-size: 2.4vh }
+.tvtop .pot { color: var(--brass2); font-size: 3.2vh }
+.tvmain { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 2.4vh; min-height: 0 }
+.tvmain h1 { font-size: 8vh; margin: 0 } .tvmain h1.disp { font-size: 11vh }
+.tvmain h2 { font-size: 5.4vh; max-width: 80vw; margin: 0 }
+.tvmain .sub { font-size: 3vh; max-width: 70vw }
+.tvmain .eyebrow { font-size: 2.6vh }
+.tvmain .ans { font-size: 7vh }
+.tvmain .clock { font-size: 5vh }
+.tvcode { display: flex; gap: 5vw; align-items: center; justify-content: center }
+.tvcode .c { font-family: var(--book); font-size: 13vh; letter-spacing: .12em; color: var(--brass2); line-height: 1 }
+.tvcode .u { font-size: 3.4vh; color: var(--tallow2) } .tvcode .u b { color: var(--tallow); font-weight: 600 }
+.tvpeople { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4vh 1.4vw; max-width: 88vw }
+.tvpeople .p { display: flex; flex-direction: column; align-items: center; gap: .6vh; width: 9vw; font-size: 2.2vh }
+.tvpeople .p .seal { width: 7vh; height: 7vh } .tvpeople .p.dead { opacity: .35 } .tvpeople .p.ok .seal { filter: drop-shadow(0 0 1.2vh rgba(95,168,143,.8)) }
+.tvpeople .p span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tvpeople .p em { font-style: normal; font-family: var(--sc); font-size: 1.7vh; letter-spacing: .08em; color: var(--blood2) } .tvpeople .p em.l { color: #9ed3c0 }
+.tvscore { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: .6vh 4vw; min-width: 50vw; font-size: 3vh; text-align: left }
+.tvscore li { display: flex; gap: 1vw; align-items: center } .tvscore .seal { width: 4.5vh; height: 4.5vh } .tvscore b { margin-left: auto; color: var(--brass2) }
+.tvgrid { display: grid; grid-template-columns: repeat(6, 11vh); gap: 1.4vh } .tvgrid span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 1.4vh; background: #1b111d; border: 1px solid #3b2640; color: var(--brass2) } .tvgrid .ico { width: 60%; height: 60% } .tvgrid .hit { border-color: var(--verd); background: #10261e }
+.tvletters { display: flex; gap: 1vh } .tvletters span { display: grid; place-items: center; width: 9vh; height: 9vh; border-radius: 1vh; background: #efe0d4; color: #241018; font-family: var(--book); font-size: 6vh }
+.tvwords { display: grid; grid-template-columns: repeat(4, auto); gap: 1.2vh 4vw; font-family: var(--book); font-size: 5vh }
+.tvsnap .ico { width: 40vh; height: 40vh; color: var(--brass2) }
+.tvcount { font-family: var(--sc); letter-spacing: .1em; color: var(--tallow2); font-size: 2.8vh }
+.tvlog { position: fixed; right: 2vw; bottom: 2vh; font-size: 1.8vh; color: var(--mist) }
+
+/* ---------- the host's tools, the TV's buttons, the QR code ---------- */
+.tool { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #25172a } .tool > div { flex: 1 } .tool .btn { flex: none }
+.tbtn { min-height: 34px; padding: 4px 10px; font-size: 14px; font-weight: 600 }
+.tvbtns { position: fixed; left: 2vw; bottom: 2vh; display: flex; gap: 8px; z-index: 3; opacity: .55 } .tvbtns:hover { opacity: 1 }
+.tvbtns .btn { width: auto; min-height: 36px; font-size: 14px }
+.qrbox { width: 30vh; height: 30vh; padding: 0; border-radius: 1.4vh; overflow: hidden; box-shadow: 0 0 6vh rgba(230,165,140,.18) } .qrbox svg { width: 100%; height: 100% }
+.tvcode .c { margin-bottom: 1.5vh }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929104245">
+<meta name="build" content="20260929124452">
 <title>The Betrayal — the dinner-party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your dinner party into a game of hidden Forsworn, secret Sanctuaries and midnight murders. Your TV runs the show; your phone runs the game.">
 <meta name="theme-color" content="#09070a">
@@ -59,7 +59,7 @@ h2 { font: 400 clamp(34px, 5.4vw, 50px)/1.08 var(--book); letter-spacing: -.005e
 .prices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
 .prices .card { display: flex; flex-direction: column; gap: 10px; padding: 24px } .prices .amt { font: 400 52px/1 var(--book); color: var(--ivory) } .prices .amt em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
 .prices ul { margin: 0; padding-left: 20px; color: var(--ivory2); font-size: 16.5px } .prices .btn { margin-top: auto; align-self: flex-start }
-.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px } .grid3.two { grid-template-columns: repeat(2, minmax(0, 1fr)) }
 .card { padding: 20px; border-radius: 14px; background: linear-gradient(180deg, rgba(230,165,140,.08), rgba(230,165,140,.02)); border: 1px solid rgba(230,165,140,.22) }
 .card b { display: block; font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose); margin-bottom: 8px }
 .card p { margin: 0; color: var(--ivory2); font-size: 17px }
@@ -70,6 +70,9 @@ label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose); margin
 input { width: 100%; min-height: 54px; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 600 20px/1 var(--ui); letter-spacing: .12em; text-transform: uppercase }
 input:focus { outline: 2px solid var(--rose); outline-offset: 2px }
 .row { display: flex; gap: 10px; margin-top: 10px } .row > input { flex: 1; min-width: 0 }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px } @media (max-width: 640px) { .modes { grid-template-columns: 1fr } }
+.mode { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 16px; border-radius: 12px; border: 1px solid #4a3150; background: rgba(37,20,40,.6); color: var(--ivory); font: 16px/1.45 var(--ui); cursor: pointer }
+.mode:hover { border-color: var(--rose) } .mode b { font: 400 26px/1 var(--book); color: var(--rose) } .mode span { color: var(--ivory2) } .mode em { font-style: normal; font-weight: 700; color: var(--rose); margin-top: auto }
 @media (max-width: 480px) { .forms .row { flex-direction: column } .forms .row > .btn { width: 100% } }
 .msg { min-height: 1.4em; margin: 10px 0 0; font-size: 15.5px; color: var(--ivory2) } .msg.err { color: #ff9dbf }
 .claim { display: none; text-align: center } .claim.on { display: block }
@@ -81,7 +84,7 @@ details summary::after { content: "+"; flex: none; font: 400 26px/.8 var(--ui); 
 details p { color: var(--ivory2); margin: 0 0 16px; max-width: 46em }
 footer { margin: 60px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px; text-align: center }
 footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 18px; margin-bottom: 12px } footer nav.legal a { color: var(--ivory2); display: inline-block; padding: 10px 0 }
-@media (max-width: 760px) { .grid3, .forms, .prices { grid-template-columns: 1fr } ul.need { columns: 1 } .duo { grid-template-columns: 1fr } .duo figure.ph { max-width: 260px; margin: 0 auto } }
+@media (max-width: 760px) { .grid3, .grid3.two, .forms, .prices { grid-template-columns: 1fr } ul.need { columns: 1 } .duo { grid-template-columns: 1fr } .duo figure.ph { max-width: 260px; margin: 0 auto } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important } }
 </style>
 </head>
@@ -115,8 +118,16 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
   </section>
 
   <section>
+    <div class="eyebrow">two ways to play</div><h2>Classic or Modern. You choose on the night.</h2>
+    <div class="grid3 two">
+      <div class="card"><b>classic</b><h3>A Keeper, blindfolds and chalk</h3><p>One phone runs the game. The Keeper reads the script and keeps the secrets, the guests wear blindfolds at night and chalk their votes, and the TV puts on the show. The Keeper doesn’t play.</p></div>
+      <div class="card"><b>modern</b><h3>Everyone on their own phone</h3><p>Guests join at thebetrayal.co.uk/join with the Table code, a bit like a pub quiz app. Roles, votes, nights and poisonings arrive in secret on each phone, and quizzes are answered there too. No blindfolds, no chalkboards, the TV is optional, and the host plays as well.</p></div>
+    </div>
+  </section>
+
+  <section>
     <div class="eyebrow">what you need</div><h2>Bring the people. We bring the lies.</h2>
-    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 4 hours for 8 to 12 players, with dinner served in courses between the rounds. A Short game takes about 2 hours.</li><li>A TV, and a laptop to cast to it</li><li>A phone for the Keeper</li><li>A blindfold for everyone</li><li>A small chalkboard and chalk each</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
+    <ul class="need"><li>8 to 16 players is the sweet spot (it takes up to 24)</li><li>About 3 to 4 hours for 8 to 12 players, with dinner served in courses between the rounds. A Short game takes about 2 hours.</li><li>Classic: a TV and a laptop to cast to it, a phone for the Keeper, and a blindfold, small chalkboard and chalk for everyone</li><li>Modern: a phone each (the TV is optional)</li><li>A prize worth betraying a friend for</li><li>No downloads, no app, no accounts</li></ul>
   </section>
 
   <section>
@@ -130,10 +141,10 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
 
   <section>
     <div class="eyebrow">questions</div><h2>Before you ask</h2>
-    <details><summary>Does everyone need a phone?</summary><p>No. Only the Keeper uses one. Guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. At a few moments the Keeper hands the phone round for a secret vote.</p></details>
+    <details><summary>Does everyone need a phone?</summary><p>Only in Modern, where everyone plays on their own. In Classic only the Keeper uses one: guests watch the TV, wear blindfolds when told, and chalk names at the Reckoning. You choose Classic or Modern when you open your Table.</p></details>
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£15). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
-    <details><summary>Does the host get to play?</summary><p>The game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
+    <details><summary>Does the host get to play?</summary><p>In Modern, yes: the host’s phone also starts each Trial and calls the breaks, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About 3 to 4 hours for 8 to 12 players, including dinner. A Short game (one Trial a round, no breaks) takes about 2 hours for 8 to 10 players. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. Setup shows you an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, at setup. Murdered players are tapped in the night and leave the table while everyone is blindfolded. Poisoned players find out in the night, announce it at dawn, say their last words, then leave.</p></details>
@@ -145,7 +156,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; justify-content: center; gap:
     <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your booking code</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
     <div class="forms">
       <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="invitation" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
-      <div class="panel"><label for="room">Setting up the TV? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Open this on the laptop you’ll cast to the TV.</p></div>
+      <div class="panel"><label for="room">Joining a game, or setting up the TV? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Playing Modern? Enter the code on your phone. Setting up the TV? Enter it on the laptop you’ll cast.</p></div>
     </div>
   </section>
 
@@ -169,16 +180,31 @@ async function open(pass, fresh) {
     const j = await r.json().catch(() => ({}));
     // a subscriber with a game still open: carry on with it, or start a new one (which closes it)
     if (r.ok && j.room && j.sub && j.again) { b.disabled = false; return subChoice(pass, j.room) }
-    if (r.ok && j.room) { location.href = "/t/" + j.room + "#keeper"; return }
+    if (r.ok && j.room) { b.disabled = false; return go(pass, j.room) }
     say($("#passmsg"), j.error || "That didn’t work — try again.", true);
   } catch (e) { say($("#passmsg"), "Can’t reach the server. Check you’re online.", true) }
   b.disabled = false;
+}
+// a Table plays Classic (one phone, a Keeper, blindfolds) or Modern (everyone on their own phone); it's chosen once
+async function go(pass, room) {
+  let mode = null;
+  try { const j = await (await fetch("/api/g/" + room + "/m", { cache: "no-store" })).json(); mode = j.none ? (j.classic ? "classic" : null) : "modern" } catch (e) {}
+  if (mode === "classic") { location.href = "/t/" + room + "#keeper"; return }
+  if (mode === "modern") { location.href = "/m/" + room; return }
+  const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
+  m.append("Your Table is open. How will you play?");
+  const row = document.createElement("div"); row.className = "modes";
+  const card = (h, p, cta, fn) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode"; c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
+  row.append(
+    card("Modern", "Everyone plays on their own phone. Roles, votes and nights are secret on each phone; quizzes are answered on phones too. No blindfolds, no chalkboards, and the TV is optional. You play as well.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }),
+    card("Classic", "One phone runs it: a Keeper reads the script, guests wear blindfolds and chalk their votes, and the TV shows the show. The Keeper doesn’t play.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }));
+  m.append(row);
 }
 function subChoice(pass, room) {
   const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
   m.append("You have a game open. Carry on with it, or start a new one? A new game closes the one that’s open.");
   const row = document.createElement("div"); row.className = "row";
-  const a = document.createElement("button"); a.className = "btn"; a.textContent = "Carry on"; a.onclick = () => { location.href = "/t/" + room + "#keeper" };
+  const a = document.createElement("button"); a.className = "btn"; a.textContent = "Carry on"; a.onclick = () => go(pass, room);
   const n = document.createElement("button"); n.className = "btn ghost"; n.textContent = "Start a new game"; n.onclick = () => open(pass, true);
   row.append(a, n); m.append(row);
 }
