@@ -24,6 +24,6 @@ Everything about the game and the brand, in one place, for building ads, social 
 
 Key facts at a glance: **8–24 players** (best 10–16) plus a Keeper · **about 3¼–4¼ hours** for 8–12 players, longer for bigger tables · **£15** a party, or **£20 a month** for unlimited games · a TV with a laptop, the Keeper's phone, a blindfold and a small chalkboard per guest · no app, no accounts, guests need no phones.
 
-Before sending anything out, replace `[name]`, `[email]` and `[town]` in `03-copy/press-kit.md`. Screenshots use invented names; the TV title and Keeper name can be anything.
+Screenshots use invented names; the TV title and Keeper name can be anything.
 
 Rebuild this pack from the repo with `./build.sh && python3 tools/marketing-pack.py` (it takes the rules and numbers from the game itself, so they always match what customers play). Screenshots are regenerated with `qa/media.py` and `tools/webshots.py`.

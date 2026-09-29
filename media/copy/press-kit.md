@@ -44,7 +44,7 @@ The TV (any laptop cast to it) carries the show: title cards, a candle for every
 - It ends with awards: The Grand Deceiver, The Sharpest Eye, Last Oath Standing and more.
 
 ## Boilerplate
-The Betrayal is an independent party game made in [town], England. It is not affiliated with, endorsed by or connected to any television programme, broadcaster or other game.
+The Betrayal is an independent party game made in England. It is not affiliated with, endorsed by or connected to any television programme, broadcaster or other game.
 
 ## Contact
-[name] · [email] · thebetrayal.co.uk
+thebetrayal.co.uk/contact

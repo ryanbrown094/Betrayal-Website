@@ -21,5 +21,5 @@
    - rename the awards
    - rename the Worker, change the site copy and the Stripe product names
 4. **New screenshots.** Once the game is renamed, regenerate the TV and phone screenshots (`qa/media.py`) and add screenshot-based ads alongside the drawn ones. The drawn ads in `04-launch/ads/` work until then.
-5. **Placeholders.** Fill `[name]`, `[email]` and `[town]` in `02-words/press-kit.md` and on the last page of the guidelines (`tools/make_guidelines.py`, then rebuild). A `hello@thebetrayal.co.uk` address via Cloudflare Email Routing is free.
+5. **Business details.** Removed for now: the site, legal pages and press kit point to the contact form (thebetrayal.co.uk/contact) instead of a name, address or email. When you have a business name, address and email, add them to the terms, privacy notice and contact page (UK consumer law expects your name and a geographic address before you sell to the public).
 6. **Launch plan.** The 4-week plan doc still says Cloak & Candle. Its steps and budget don't change, only the names.
