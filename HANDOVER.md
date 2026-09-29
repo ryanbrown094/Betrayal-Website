@@ -34,6 +34,19 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.8 (29 Sep 2026), a less templated look:** the brand stays (palette, blackletter wordmark, IM Fell, the cracked seal); the stock landing-page devices went.
+- **Home page:**
+  - The hero is the Oath: "Everyone swore an oath." with "Not everyone meant it." set as a line that cracks. The two halves are `.crack::before/::after` clip-paths, and they part once on load (off with reduced motion).
+  - The wordmark moves to the masthead.
+  - "How an evening goes" runs by the clock (7:30 to 10:30, a table of ten, roughly) instead of three numbered cards.
+  - The prices are a bill of fare with dotted leaders.
+  - "What you need" is one sentence.
+  - Classic is an aside.
+  - No labels over the headings.
+- **Buttons and boxes:** flat, square-shouldered buttons with small-caps labels; quieter links for secondary actions; rules and left borders instead of glowing rounded panels. This applies on every page and, more gently, in the game (6px radius, no gradients).
+- **Rules page:** the contents are one line of links.
+- **Game:** the Reckoning's talk and the breaks show a big clock.
+
 **1.6.7 (29 Sep 2026), QA sweep:** three reviews (the engine and server, fuzzed with 1,300 games including pauses and removals; every Modern screen at seven sizes; the site and the copy), and their fixes.
 - **Engine:**
   - A host tool used while paused acts from the moment of the pause.

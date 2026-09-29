@@ -205,8 +205,8 @@ function phase(me) {
     case "roles": return roleCard(me);
     case "day": return day(me);
     case "trial": return trial(me);
-    case "break": return `<div class="eyebrow">a break</div><h1>${esc(V.brk.name)}</h1><p class="sub">Eat, drink, and talk. Plot quietly.</p><p>${clock(V.brk.end)}</p>${dirCard(`<div class="row">${btn("+5 minutes", "brkMore", null, "dark sm")}${btn("End the break", "brkEnd", null, "sm")}</div>`)}`;
-    case "talk": return `<div class="eyebrow">the reckoning${V.vote.second ? " · the second exile" : ""}</div><h1>Talk. Accuse. Defend.</h1><p class="sub">Voting opens on every phone when the time is up.</p><p>${clock(V.vote.talkEnd)}</p>${crownCard(me)}`;
+    case "break": return `<div class="eyebrow">a break</div><h1>${esc(V.brk.name)}</h1><p class="bigclock">${clock(V.brk.end)}</p><p class="sub">Eat, drink, and talk. Plot quietly.</p>${dirCard(`<div class="row">${btn("+5 minutes", "brkMore", null, "dark sm")}${btn("End the break", "brkEnd", null, "sm")}</div>`)}`;
+    case "talk": return `<div class="eyebrow">the reckoning${V.vote.second ? " · the second exile" : ""}</div><h1>Talk. Accuse. Defend.</h1><p class="bigclock">${clock(V.vote.talkEnd)}</p><p class="sub">Voting opens on every phone when the time is up.</p>${crownCard(me)}`;
     case "vote": return vote(me);
     case "reveal": return reveal(me);
     case "night": return night(me);
