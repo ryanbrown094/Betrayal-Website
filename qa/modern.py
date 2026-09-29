@@ -129,17 +129,27 @@ with sync_playwright() as p:
     # the Reckoning
     until(lambda: host.locator("[data-a=next]").count()); check("next: the Reckoning", "The Reckoning" in host.inner_text("#app")); host.click("[data-a=next]")
     check("the Reckoning: a talk timer on every phone", until(lambda: all("Talk. Accuse. Defend." in q.inner_text("#app") for q in phones)))
+    host.click("[data-a=pause]")
+    check("Pause: every phone and the TV say so", until(lambda: all("The game is paused" in q.inner_text("#app") for q in phones[1:]) and "The game is paused" in tv.inner_text("#tvapp")))
+    c0 = phones[1].inner_text(".clock"); time.sleep(2.5)
+    check("…and the clocks stand still", phones[1].inner_text(".clock") == c0, c0)
+    host.click("[data-a=pause][data-v=off]")
+    check("Carry on: the game comes back", until(lambda: "The game is paused" not in phones[1].inner_text("#app") and "The game is paused" not in tv.inner_text("#tvapp")))
     host.click("[data-a=tools]"); host.click("[data-a=tool][data-v=voteNow]")
     until(lambda: all(q.locator("[data-a=ballot]").count() for q in phones))
     ti = L[-1]; target = NAMES[ti]
     for i, q in enumerate(phones): q.click(f"[data-a=ballot]:has-text('{target if i != ti else NAMES[L[0]]}')")
     check("the vote closes itself once all are in", until(lambda: f"{target} is exiled" in tv.inner_text("#tvapp")))
     check("…then shows their role", until(lambda: "Loyal" in tv.inner_text("#tvapp"), 10))
+    phones[ti].fill("#lw", "I was Loyal, you fools"); phones[ti].click("[data-a=wordsf]")
+    check("last words: the exiled types a line, and the TV shows it", until(lambda: "I was Loyal, you fools" in tv.inner_text("#tvapp") and "I was Loyal, you fools" in phones[1].inner_text("#app")))
     host.click("[data-a=cont]")
 
     # the night
     check("night: the Forsworn choose on their phones", until(lambda: "Choose who is murdered tonight" in phones[F[0]].inner_text("#app")))
     check("…the host has no dawn button (it's in Tools)", host.locator("[data-a=dawnNow]").count() == 0)
+    phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
+    check("…and whisper to each other, which nobody else sees", until(lambda: "Vote with me tomorrow" in phones[F[1]].inner_text("#app")) and "Vote with me" not in phones[L[0]].inner_text("#app") and "Vote with me" not in tv.inner_text("#tvapp"))
     vi = L[0]; victim = NAMES[vi]
     for f in F: until(lambda: phones[f].locator(f"[data-a=pick]:has-text('{victim}')").count(), 10); phones[f].click(f"[data-a=pick]:has-text('{victim}')")
     for i, q in enumerate(phones):
@@ -153,10 +163,11 @@ with sync_playwright() as p:
     # the tools: skip a step, someone leaves, the roles behind three confirmations
     host.click("[data-a=tools]"); until(lambda: host.locator("[data-a=tool][data-v=skipStep]").count())
     host.click("[data-a=tool][data-v=skipStep]"); check("Tools: skip the Starter", until(lambda: "The Starter" not in host.inner_text("#app") and "Next:" in host.inner_text("#app")))
-    host.click("[data-a=tools]"); host.click("summary:has-text('Someone has left')")
+    host.click("[data-a=tools]"); host.click("summary:has-text('Take someone out')")
     gone = [i for i in L if i not in (ti, vi)][-1]
     host.click(f"[data-a=tool][data-v=remove]:has-text('{NAMES[gone]}')")
     check("Tools: someone who left is taken out, without a word about their role", until(lambda: NAMES[gone] not in tv.inner_text("#tvapp")) and tv.inner_text("#tvapp").lower().count("loyal") == 1)
+    check("…and their phone says they've left", until(lambda: "You’ve left the game" in phones[gone].inner_text("#app")))
     host.click("[data-a=tools]"); shot(host, "12-tools")
     check("Tools: no role shown on the tools screen", "Forsworn" not in host.inner_text("#app").replace("who was Forsworn", ""))
     host.click("[data-a=peek1]")
