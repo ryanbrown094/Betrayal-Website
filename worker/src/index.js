@@ -193,8 +193,9 @@ export class GameState {
     const ctx = { rnd: Math.random, dict: null };
     let s = this.mstate || (this.mstate = (await this.storage.get("modern")) ?? null);
     // the Longest Word dictionary, loaded the first time a word round is open (before any read-modify-write below)
-    if (s && s.trial && s.trial.item && s.trial.item.k === "word" && !this.dict && this.env.ASSETS) {
-      try { const t = await (await this.env.ASSETS.fetch("https://assets/words.txt")).text(); this.dict = { t: "\n" + t.replace(/\r/g, "") + "\n", has(w) { return this.t.includes("\n" + w + "\n"); } }; } catch { this.dict = null; }
+    if (s && s.trial && s.trial.item && s.trial.item.k === "word" && !this.dictTried && this.env.ASSETS) {
+      this.dictTried = true; // once per room instance: a failed load leaves words unchecked rather than refetching on every poll
+      try { const r = await this.env.ASSETS.fetch("https://assets/words.txt"); if (r.ok) { const set = new Set((await r.text()).split(/\r?\n/)); this.dict = { has: (w) => set.has(w) }; } } catch { this.dict = null; }
       s = this.mstate = (await this.storage.get("modern")) ?? null;
     }
     ctx.dict = this.dict;
@@ -208,7 +209,9 @@ export class GameState {
       }
     };
     const tok = req.headers.get("X-Tok") || "", me = s && tok ? s.players.find((p) => p.tok === tok) : null;
-    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    if (me) me.seen = now; // (in memory: a phone still polling can't be taken over by a rejoin)
+    if (+(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "Too large" }, 413);
+    const body = req.method === "POST" ? (await req.json().catch(() => null)) || {} : {};
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
 
@@ -216,6 +219,7 @@ export class GameState {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
       const booked = meta.pass && meta.pass !== "MASTER"; // a room from the master code or open access has no booking to prove
       if (booked && passKey(String(body.pass || "")) !== meta.pass) return json({ error: "Only the person who booked this Table can set it up." }, 403);
+      if (!String(body.name || "").replace(/\s+/g, " ").trim()) return json({ error: "Type your name." }, 400);
       if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
       if (!s) {
         s = M.newGame(now, Math.random, {});
@@ -230,8 +234,9 @@ export class GameState {
       if (s.test) M.addBots(s, Math.max(6, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
-    if (!s) return json({ none: true, classic: !!(await this.storage.get("state")), room });
-    if (M.tick(s, now, ctx)) await save();
+    if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });
+    // a rules bug must never lock the room: log it and carry on answering
+    try { if (M.tick(s, now, ctx)) await save(); } catch (e) { logErr(this.env, { src: "server", room: meta.room, where: "modern tick", msg: e.message, stack: clip(e.stack, 1500) }); }
 
     if (path === "/api/m/join" && req.method === "POST") {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
@@ -252,7 +257,11 @@ export class GameState {
       if (body.a === "letin" || body.a === "keepout") {
         if (s.director !== me.id) return json({ error: "Only the host can do that." }, 403);
         const r = (s.rejoin || []).find((x) => x.id === body.v); if (!r) return view();
-        if (body.a === "letin") { const p = s.players.find((x) => x.id === r.pid); p.tok = Array.from({ length: 24 }, () => "abcdefghjkmnpqrstuvwxyz23456789"[Math.floor(Math.random() * 31)]).join(""); r.tok = p.tok; }
+        if (body.a === "letin") {
+          const p = s.players.find((x) => x.id === r.pid);
+          if (p.seen && now - p.seen < 20000) return json({ error: p.name + "’s phone is still connected, so it can’t be let in on another.", view: viewOf(s, me, now) }, 409);
+          p.tok = M.newTok(); r.tok = p.tok; s.log = [{ t: now, m: p.name + " came back on a new phone" }, ...(s.log || [])].slice(0, 300);
+        }
         else s.rejoin = s.rejoin.filter((x) => x !== r);
         s.ver++; await save(); return view();
       }

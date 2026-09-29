@@ -123,7 +123,8 @@ function begin(n, opts) { const g = setup(n, opts); A(g, g.dir, { a: "start" });
   A(g, g.dir, { a: "cont" }); setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
   const others = alive(g.s).filter((p) => p.id !== holder), [x, y] = others;
   // a 4-4 tie between x and y (holder votes x): the Casting Vote exiles x without a revote
-  vote(g, (p) => p.id === holder ? x : p.id === x.id ? y : p.id === y.id ? x : alive(g.s).indexOf(p) % 2 ? x : y);
+  const rest = alive(g.s).filter((p) => ![holder, x.id, y.id].includes(p.id)), half = Math.ceil(rest.length / 2) + (rest.length % 2 ? 0 : 1);
+  vote(g, (p) => p.id === holder ? x : p.id === x.id ? y : p.id === y.id ? x : rest.indexOf(p) < half ? y : x); // x: holder + y + the rest's second part; y: x + the first part — level
   check("a tie the holder voted in is settled by the Casting Vote, and everyone sees it was", g.s.phase === "reveal" && g.s.reveal.id === x.id && viewFor(g.s, null, g.now).reveal.cast && g.s.cast.used, [g.s.phase, g.s.vote && g.s.vote.counts]);
   check("…never whose", !JSON.stringify(viewFor(g.s, null, g.now).reveal).includes(holder));
 

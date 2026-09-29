@@ -1,0 +1,24 @@
+// Views of a Modern game at its key moments, from the rules engine, for tools/modern-shots.py to photograph.
+import { newGame, join, act, tick, viewFor } from "../worker/src/modern.js";
+let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, ctx = { rnd, dict: null };
+let now = 1e12; const s = newGame(now, rnd, { courses: false }), ids = [];
+for (const n of ["Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess", "Oliver"]) ids.push(join(s, n, now, rnd).id);
+const out = {}, code = "K7Q2XM", v = (k, pid) => (out[k] = { code, host: viewFor(s, pid, now), tv: viewFor(s, null, now) });
+v("lobby", ids[0]);
+act(s, ids[0], { a: "start" }, now, ctx); v("oath", ids[1]);
+for (const id of ids) act(s, id, { a: "optin", v: id === ids[3] ? "yes" : "any" }, now, ctx);
+const F = s.players.filter((p) => p.role === "f").map((p) => p.id), L = ids.filter((id) => !F.includes(id));
+v("role", F[0]);
+for (const id of ids) act(s, id, { a: "ack" }, now, ctx); tick(s, now, ctx);
+v("day", ids[0]);
+s.steps = [{ k: "trial", key: "quiz" }, { k: "reckon" }]; s.stepAt = 0; act(s, ids[0], { a: "next" }, now, ctx);
+now += 13000; tick(s, now, ctx); v("quiz", L[1]);
+for (const id of ids.slice(0, 5)) act(s, id, { a: "ans", v: "a guess" }, now, ctx); v("quizsent", L[1]);
+act(s, ids[0], { a: "tool", v: "endTrial" }, now, ctx); act(s, ids[0], { a: "cont" }, now, ctx);
+act(s, ids[0], { a: "next" }, now, ctx); act(s, ids[0], { a: "tool", v: "voteNow" }, now, ctx);
+for (const id of ids.slice(0, 5)) act(s, id, { a: "ballot", v: id === L[2] ? L[3] : L[2] }, now, ctx);
+v("vote", L[1]);
+for (const id of ids.slice(5)) act(s, id, { a: "ballot", v: L[2] }, now, ctx); tick(s, now, ctx); now += 6000; tick(s, now, ctx);
+v("reveal", L[1]); act(s, ids[0], { a: "cont" }, now, ctx);
+act(s, F[1] || F[0], { a: "pick", v: L[1] }, now, ctx); v("night", F[0]);
+process.stdout.write(JSON.stringify(out));
