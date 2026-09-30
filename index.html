@@ -224,7 +224,7 @@ h1.gold:not(.fx-title):not(.fx-slam) { animation: shimmer 8s ease-in-out 1.5s in
 #rail .row { position: absolute; left: 17vh; right: 17vh; bottom: 0; top: 0; display: flex; justify-content: center }
 #rail .row.stagger .seat:nth-child(even) .plaque { bottom: 3.9vh } #rail .row.stagger .seat .plaque { max-width: 190%; z-index: 1 } #rail .row.stagger .seat:nth-child(even) .seal { bottom: 6.6vh; width: 5vh; height: 5vh } #rail .row.stagger .seat:nth-child(odd) .seal { bottom: 4.4vh; width: 5.4vh; height: 5.4vh }
 .seat { position: relative; flex: 0 1 14vh; min-width: 0; height: 100% }
-.seat .badge { position: absolute; left: 50%; bottom: calc(11.2vh + var(--h) + 6.2vh); transform: translateX(-50%); min-width: 4.8vh; height: 4.8vh; padding: 0 1vh; display: grid; place-items: center; font-family: var(--disp); font-weight: 600; font-size: 3.7vh; color: var(--brass2); background: rgba(9,7,10,.78); border: max(1px, .1vh) solid rgba(174,98,73,.55); border-radius: 2.2vh; animation: slam .45s both }
+.seat .badge { position: absolute; left: 50%; bottom: calc(11.2vh + var(--h) + 6.2vh); transform: translateX(-50%); min-width: 4.8vh; height: 4.8vh; padding: 0 1vh; display: grid; place-items: center; font-family: var(--disp); font-weight: 600; font-size: 3.7vh; color: var(--brass2); background: none; border: max(1px, .1vh) solid transparent; border-radius: 0; animation: slam .45s both }
 .seat .badge.chalk { color: #efebe9; border-color: rgba(239,235,233,.5); background: #1b201d; border-radius: .4vh }
 .seat .badge.zero { opacity: .32; animation: none }
 .seat .candle { position: absolute; left: 50%; bottom: 11.2vh; width: 2.5vh; height: var(--h); transform: translateX(-50%); transition: height 2.4s ease }
@@ -544,7 +544,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .vote > span { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--tallow) }
 #host .vote.setrow > span { white-space: normal; overflow: visible; font-size: 17px; line-height: 1.25; padding: 4px 0 }
 #host .vote button { width: 48px; flex: none; font-size: 26px; font-weight: 400; padding: 0; color: var(--brass2) } #host .vote button.wide { width: auto; font-size: 16.5px; padding: 0 4px; text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-underline-offset: 5px }
-#host .vote b.n { width: 40px; text-align: center; font-family: var(--book); font-weight: 400; font-size: 24px; font-variant-numeric: tabular-nums lining-nums; color: var(--ink); flex: none }
+#host .vote b.n { width: 40px; text-align: center; font-weight: 700; font-size: 21px; font-variant-numeric: tabular-nums lining-nums; color: var(--ink); flex: none }
 #host .vote b.n.wide { width: auto; min-width: 40px; padding: 0 6px; font-size: 17px; white-space: nowrap }
 #host .vote input { width: 86px; flex: none; text-align: center }
 #host .vote > b:not(.n) { font-weight: 400; font-style: italic; font-family: var(--book) }
@@ -570,7 +570,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .sheet .sheethead h2 { margin: 0 } #host .sheet .sheethead button { flex: none }
 #host .sheet h3 { margin-top: 18px }
 #host .mrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 52px; padding: 8px 2px; text-align: left; color: var(--tallow); border-bottom: 1px solid var(--rule); border-radius: 0 }
-#host h3 + .mrow, #host h2 + .mrow, #host .sheethead + .mrow { border-top: 1px solid var(--rule) }
+#host h3 + .mrow, #host h2 + .mrow { border-top: 1px solid var(--rule) }
 #host .mrow > span { min-width: 0 } #host .mrow > i { flex: none; font-style: normal; font-size: 16px; color: var(--brass2); text-align: right }
 #host .mrow.danger { background: none; color: #f3b7cb; font-family: var(--ui); font-weight: 500; font-size: 17.5px; letter-spacing: 0; min-height: 52px; padding: 8px 2px }
 #host > .pinwrap:first-child, #host .pinwrap { padding-top: env(safe-area-inset-top); min-height: 80vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center }
@@ -675,6 +675,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .row:has(> button:only-child:not(.primary, .danger, .good)) { justify-content: flex-start; padding-left: var(--mg) } #host .row > button:only-child:not(.primary, .danger, .good) { flex: 0 1 auto; text-align: left }
 #host .wiz .row:has(> button:only-child), #host .sheet .row:has(> button:only-child) { padding-left: 0 }
 #host .mrow + h3, #host .rv + h3 { border-top: 0 }
+#host .say + .say .mn { visibility: hidden }
 </style>
 <div id="app"></div>
 <script>
@@ -3905,7 +3906,8 @@ function renderHost() {
       foot = nextBtn("Choose the Forsworn", "act(s=>{s.phase='night0';s.night={step:0}},'Night 0 started')"); break;
     case "night0": {
       const sc = NIGHT0_(H()), st = s.night.step;
-      body = stepList(sc, st) + secretPanel();
+      body = `<h2>The Oath</h2>` + stepList(sc, st) + secretPanel();
+
       foot = (st > 0 ? backBtn("act(s=>{s.night.step--})") : "") + (st < sc.length - 1 ? nextBtn("Next line", "act(s=>{s.night.step++})") : nextBtn("Start round 1", "act(s=>{s.phase='day';s.night=null;snapRound(s)},'Roles assigned')")); break;
     }
     case "day": {
@@ -3958,7 +3960,8 @@ function renderHost() {
       else if (lore) foot = nextBtn(esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
       // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
       // the end game always starts with four left: they vote End or Exile, whoever is left
-      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("One more Trial, then the last vote", "fiveMission()", "danger") : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
+      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("Five left: one more Trial, then the last vote", "fiveMission()", "danger")
+ : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
     }
     case "endvote": {
@@ -4359,7 +4362,7 @@ function setupForm() {
   if (d.step === "handover") return d.keeper === "friend" ? handoverForm(d) : (d.step = "review", setupForm());
   let w = steps.find(x => x.id === d.step); if (!w) { w = steps[0]; d.step = w.id }
   const core = !!w.core, list = core ? coreSteps(d) : moreSteps(d), i = list.findIndex(x => x.id === w.id), last = w.id === "review", friend = d.keeper === "friend";
-  return `<div class="wiz"><div class="wbar"><span>${esc(w.sec)}</span><span class="num">${core ? "" : "customise · "}${i + 1} of ${list.length}</span></div><div class="wprog"><i style="width:${Math.round((i + 1) / list.length * 100)}%"></i></div>
+  return `<div class="wiz"><div class="wbar"><span>${esc(w.sec)}</span><span class="num">${core ? "" : "Customise · "}${i + 1} of ${list.length}</span></div><div class="wprog"><i style="width:${Math.round((i + 1) / list.length * 100)}%"></i></div>
 ${syncErr ? `<div class="secret">Still clearing the last game from the server. This retries by itself once the phone is back online.</div>` : ""}
 <h2>${w.title(d, n)}</h2>${w.body(d, n)}
 ${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}</div>

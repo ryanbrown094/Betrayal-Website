@@ -42,7 +42,8 @@ function renderHost() {
       foot = nextBtn("Choose the Forsworn", "act(s=>{s.phase='night0';s.night={step:0}},'Night 0 started')"); break;
     case "night0": {
       const sc = NIGHT0_(H()), st = s.night.step;
-      body = stepList(sc, st) + secretPanel();
+      body = `<h2>The Oath</h2>` + stepList(sc, st) + secretPanel();
+
       foot = (st > 0 ? backBtn("act(s=>{s.night.step--})") : "") + (st < sc.length - 1 ? nextBtn("Next line", "act(s=>{s.night.step++})") : nextBtn("Start round 1", "act(s=>{s.phase='day';s.night=null;snapRound(s)},'Roles assigned')")); break;
     }
     case "day": {
@@ -95,7 +96,8 @@ function renderHost() {
       else if (lore) foot = nextBtn(esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
       // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
       // the end game always starts with four left: they vote End or Exile, whoever is left
-      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("One more Trial, then the last vote", "fiveMission()", "danger") : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
+      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("Five left: one more Trial, then the last vote", "fiveMission()", "danger")
+ : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
     }
     case "endvote": {
@@ -496,7 +498,7 @@ function setupForm() {
   if (d.step === "handover") return d.keeper === "friend" ? handoverForm(d) : (d.step = "review", setupForm());
   let w = steps.find(x => x.id === d.step); if (!w) { w = steps[0]; d.step = w.id }
   const core = !!w.core, list = core ? coreSteps(d) : moreSteps(d), i = list.findIndex(x => x.id === w.id), last = w.id === "review", friend = d.keeper === "friend";
-  return `<div class="wiz"><div class="wbar"><span>${esc(w.sec)}</span><span class="num">${core ? "" : "customise · "}${i + 1} of ${list.length}</span></div><div class="wprog"><i style="width:${Math.round((i + 1) / list.length * 100)}%"></i></div>
+  return `<div class="wiz"><div class="wbar"><span>${esc(w.sec)}</span><span class="num">${core ? "" : "Customise · "}${i + 1} of ${list.length}</span></div><div class="wprog"><i style="width:${Math.round((i + 1) / list.length * 100)}%"></i></div>
 ${syncErr ? `<div class="secret">Still clearing the last game from the server. This retries by itself once the phone is back online.</div>` : ""}
 <h2>${w.title(d, n)}</h2>${w.body(d, n)}
 ${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}</div>

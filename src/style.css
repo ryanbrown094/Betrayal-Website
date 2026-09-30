@@ -208,7 +208,7 @@ h1.gold:not(.fx-title):not(.fx-slam) { animation: shimmer 8s ease-in-out 1.5s in
 #rail .row { position: absolute; left: 17vh; right: 17vh; bottom: 0; top: 0; display: flex; justify-content: center }
 #rail .row.stagger .seat:nth-child(even) .plaque { bottom: 3.9vh } #rail .row.stagger .seat .plaque { max-width: 190%; z-index: 1 } #rail .row.stagger .seat:nth-child(even) .seal { bottom: 6.6vh; width: 5vh; height: 5vh } #rail .row.stagger .seat:nth-child(odd) .seal { bottom: 4.4vh; width: 5.4vh; height: 5.4vh }
 .seat { position: relative; flex: 0 1 14vh; min-width: 0; height: 100% }
-.seat .badge { position: absolute; left: 50%; bottom: calc(11.2vh + var(--h) + 6.2vh); transform: translateX(-50%); min-width: 4.8vh; height: 4.8vh; padding: 0 1vh; display: grid; place-items: center; font-family: var(--disp); font-weight: 600; font-size: 3.7vh; color: var(--brass2); background: rgba(9,7,10,.78); border: max(1px, .1vh) solid rgba(174,98,73,.55); border-radius: 2.2vh; animation: slam .45s both }
+.seat .badge { position: absolute; left: 50%; bottom: calc(11.2vh + var(--h) + 6.2vh); transform: translateX(-50%); min-width: 4.8vh; height: 4.8vh; padding: 0 1vh; display: grid; place-items: center; font-family: var(--disp); font-weight: 600; font-size: 3.7vh; color: var(--brass2); background: none; border: max(1px, .1vh) solid transparent; border-radius: 0; animation: slam .45s both }
 .seat .badge.chalk { color: #efebe9; border-color: rgba(239,235,233,.5); background: #1b201d; border-radius: .4vh }
 .seat .badge.zero { opacity: .32; animation: none }
 .seat .candle { position: absolute; left: 50%; bottom: 11.2vh; width: 2.5vh; height: var(--h); transform: translateX(-50%); transition: height 2.4s ease }
@@ -528,7 +528,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .vote > span { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--tallow) }
 #host .vote.setrow > span { white-space: normal; overflow: visible; font-size: 17px; line-height: 1.25; padding: 4px 0 }
 #host .vote button { width: 48px; flex: none; font-size: 26px; font-weight: 400; padding: 0; color: var(--brass2) } #host .vote button.wide { width: auto; font-size: 16.5px; padding: 0 4px; text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-underline-offset: 5px }
-#host .vote b.n { width: 40px; text-align: center; font-family: var(--book); font-weight: 400; font-size: 24px; font-variant-numeric: tabular-nums lining-nums; color: var(--ink); flex: none }
+#host .vote b.n { width: 40px; text-align: center; font-weight: 700; font-size: 21px; font-variant-numeric: tabular-nums lining-nums; color: var(--ink); flex: none }
 #host .vote b.n.wide { width: auto; min-width: 40px; padding: 0 6px; font-size: 17px; white-space: nowrap }
 #host .vote input { width: 86px; flex: none; text-align: center }
 #host .vote > b:not(.n) { font-weight: 400; font-style: italic; font-family: var(--book) }
@@ -554,7 +554,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .sheet .sheethead h2 { margin: 0 } #host .sheet .sheethead button { flex: none }
 #host .sheet h3 { margin-top: 18px }
 #host .mrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 52px; padding: 8px 2px; text-align: left; color: var(--tallow); border-bottom: 1px solid var(--rule); border-radius: 0 }
-#host h3 + .mrow, #host h2 + .mrow, #host .sheethead + .mrow { border-top: 1px solid var(--rule) }
+#host h3 + .mrow, #host h2 + .mrow { border-top: 1px solid var(--rule) }
 #host .mrow > span { min-width: 0 } #host .mrow > i { flex: none; font-style: normal; font-size: 16px; color: var(--brass2); text-align: right }
 #host .mrow.danger { background: none; color: #f3b7cb; font-family: var(--ui); font-weight: 500; font-size: 17.5px; letter-spacing: 0; min-height: 52px; padding: 8px 2px }
 #host > .pinwrap:first-child, #host .pinwrap { padding-top: env(safe-area-inset-top); min-height: 80vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center }
@@ -659,3 +659,4 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .row:has(> button:only-child:not(.primary, .danger, .good)) { justify-content: flex-start; padding-left: var(--mg) } #host .row > button:only-child:not(.primary, .danger, .good) { flex: 0 1 auto; text-align: left }
 #host .wiz .row:has(> button:only-child), #host .sheet .row:has(> button:only-child) { padding-left: 0 }
 #host .mrow + h3, #host .rv + h3 { border-top: 0 }
+#host .say + .say .mn { visibility: hidden }
