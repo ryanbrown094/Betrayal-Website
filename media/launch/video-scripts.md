@@ -30,9 +30,9 @@ Rules that carry over from the brand: never picture a face under the hood, never
 
 ### 4 · What you need (flat lay, no faces needed)
 - Overhead shot of a coffee table with drinks and snacks. On the beat, phones land by every glass, one after another, then a box of chocolates with a label reading “the prize”.
-- **Text:** *“Everything you need for the best party of your life:”* then *“your friends’ phones. That’s it.”*
+- **Text:** *“What you need to play:”* then *“a phone each, and a prize.”*
 - **End:** *“Under £2 a guest.”*
-- **Caption:** Best with 8 to 16. Book a Table for £10. No app, no accounts, no props.
+- **Caption:** Best with 8 to 16. Book a Table for £10. You don’t need an app, an account or any props.
 
 ### 5 · The Oath
 - A dim table, candles, every guest holding their phone close. The same question lights every screen: *Would you like to be Forsworn?*
@@ -47,4 +47,4 @@ Rules that carry over from the brand: never picture a face under the hood, never
 
 ---
 
-**Posting:** about 3 a week on TikTok and Reels (the same video on both is fine). Hidden-role games are part of the national conversation on Thursday and Friday evenings through October, so post a strong one around 9:30pm on those nights. If anyone asks about blindfolds and chalkboards, that’s Classic: “prefer it the old-fashioned way? It’s in there too.”
+**Posting:** about 3 a week on TikTok and Reels (the same video on both is fine). People talk about hidden-role games on Thursday and Friday evenings through October, so post a strong one around 9:30pm on those nights. If anyone asks about blindfolds and chalkboards, that’s Classic: “If you’d rather play the old-fashioned way, that’s in there too.”

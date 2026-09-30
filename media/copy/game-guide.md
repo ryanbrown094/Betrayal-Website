@@ -20,7 +20,7 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 6. **The Unmasking**: every seal turned, the winners, the prize the Purse has earned, then **Honour or Betray** if two or more Forsworn survived.
 7. **Awards**, up to six. Then the host can **play again with the same people**.
 
-**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 5 hours for 16, and 6 or more for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
+**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 4¼ hours for 16, and 5 to 6 for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
 
 ### The host plays too
 

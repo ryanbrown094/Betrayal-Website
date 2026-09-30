@@ -89,7 +89,7 @@ def text_of(path, start=None):
 with open(P("03-copy", "website-copy.md"), "w", encoding="utf-8") as f:
     f.write("# The website's words\n\nTaken from the live pages (thebetrayal.co.uk). Reuse freely; keep facts in step with `01-game/`.\n\n---\n\n# Home page\n\n")
     home = text_of("site/index.html", "<body>"); cut = home.index("## Open your Table")
-    f.write(home[:cut].rsplit("\n", 2)[0] + "\n\n" + text_of("site/index.html", '<div class="eyebrow">what you need</div>'))
+    f.write(home[:cut].rstrip() + "\n")
     for name, title in [("rules", "How to play (/rules): player-safe, no spoilers"), ("tour", "A night of The Betrayal (/tour): screenshot captions")]:
         f.write(f"\n\n---\n\n# {title}\n\n" + text_of(f"site/pages/{name}.html"))
 
