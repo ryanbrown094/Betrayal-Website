@@ -466,13 +466,13 @@ body.nocursor, body.nocursor * { cursor: none !important }
 /* stage directions: the private reminders, in italics and brackets, under the line they belong to */
 #host .dir, #host .secret, #host .advice { margin: 6px 0 14px var(--mg); font-family: var(--book); font-style: italic; font-size: 17px; line-height: 1.42; color: var(--tallow2) }
 #host .dir::before { content: "(" } #host .dir::after { content: ")" }
-#host .dir b, #host .secret b, #host .advice b { font-weight: 400; color: var(--tallow); font-style: normal }
+#host .dir b, #host .secret b, #host .advice b { font-weight: 400; color: var(--tallow) }
 #host .dir.end { color: #f3b7cb }
 #host .secret { color: #f3b7cb } #host .secret b { color: #ffe3ed }
 #host .secret:not(:has(.row, .plist, br))::before { content: "(" } #host .secret:not(:has(.row, .plist, br))::after { content: ")" }
 #host .secret .row, #host .advice .row, #host .dir + .row { font-style: normal }
 #host .step.sil .dir, #host .step .dir { grid-column: 2; margin: 0 }
-#host .step .tv { grid-column: 2; margin-top: 6px }
+#host .step .tv { grid-column: 2; margin-top: 10px; font-size: 15.5px; color: var(--mist) }
 #host .step:not(.cur) { opacity: .62 } #host .step:not(.cur) .ln { font-family: var(--book); font-size: 18px; color: var(--tallow) }
 #host .then .ln { font-family: var(--book); font-size: 17px; color: var(--tallow2) }
 
@@ -483,7 +483,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 
 /* buttons: secondary actions are plain words, the main one is solid copper */
 #host button { min-height: 44px; padding: 8px 6px; border: 0; border-radius: 3px; background: none; color: var(--brass2); font-family: var(--ui); font-weight: 500; font-size: 17.5px; line-height: 1.2; touch-action: manipulation }
-#host .row > button:not(.primary, .danger, .good), #host .foot button.ghost, #host .foot button.back, #host .bar button, #host .sheet > button:not(.primary, .danger, .good), #host .sheethead button:not(.primary) { text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-decoration-thickness: 1px; text-underline-offset: 5px }
+#host .row > button:not(.primary, .danger, .good), #host .foot button.ghost, #host .foot button.back, #host .bar button, #host .sheet > button:not(.primary, .danger, .good, .mrow), #host .sheethead button:not(.primary) { text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-decoration-thickness: 1px; text-underline-offset: 5px }
 #host button:active { background-color: rgba(230,165,140,.12) }
 #host button:disabled { opacity: .4 }
 #host button.primary, #host button.danger, #host button.good { min-height: 52px; padding: 10px 16px; font-family: var(--sc); font-weight: 700; font-size: 19px; letter-spacing: .03em; color: #fff6f1; background: var(--brass); text-decoration: none }
@@ -509,8 +509,8 @@ body.nocursor, body.nocursor * { cursor: none !important }
 /* the top bar: one quiet line */
 #host .bar { position: sticky; top: 0; z-index: 5; margin: 0 calc(-1 * var(--gut)); padding: env(safe-area-inset-top) var(--gut) 0; background: rgba(9,7,10,.97); border-bottom: 1px solid var(--rule) }
 #host .bar .l1 { display: flex; align-items: center; gap: 14px; min-height: 48px }
-#host .bar .ph { flex: 1; min-width: 0; font-family: var(--book); font-style: italic; font-size: 17px; color: var(--tallow2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-#host .bar .pot { font-family: var(--book); font-size: 20px; font-variant-numeric: tabular-nums lining-nums; color: var(--brass2); white-space: nowrap }
+#host .bar .ph { flex: 1; min-width: 0; font-size: 16px; color: var(--tallow2); font-variant-numeric: lining-nums tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+#host .bar .pot { font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums lining-nums; color: var(--brass2); white-space: nowrap }
 #host .bar button { padding: 0 2px; font-size: 16.5px; color: var(--tallow) }
 #host .bar .nosync { margin: 0 0 6px; color: #f3b7cb; font-size: 15px; font-weight: 700 }
 #host .spoil { margin: 0 calc(-1 * var(--gut)); padding: 10px var(--gut); min-height: 44px; font-size: 15.5px; color: var(--tallow2); border-top: 1px solid var(--rule); cursor: pointer }
@@ -655,3 +655,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 /* the Reckoning table on a 4:3 screen: room for the side name plates, so they neither overlap the words nor get cut */
 @media (max-aspect-ratio: 3/2) { .rtwrap { gap: 10vh } .rtcopy { width: 26vw } .rtcopy .eyebrow { letter-spacing: .1em; white-space: nowrap } .rt .nm { letter-spacing: .07em } .rt .nm.side { max-width: 19vh } }
 #host .aside { margin: 16px 0; font-family: var(--book); font-style: italic; font-size: 18px; line-height: 1.45; color: var(--tallow) }
+#host .wopts + .why, #host .mpool + .why { border-top: 0; padding-top: 0 }
+#host .row:has(> button:only-child:not(.primary, .danger, .good)) { justify-content: flex-start; padding-left: var(--mg) } #host .row > button:only-child:not(.primary, .danger, .good) { flex: 0 1 auto; text-align: left }
+#host .wiz .row:has(> button:only-child), #host .sheet .row:has(> button:only-child) { padding-left: 0 }
+#host .mrow + h3, #host .rv + h3 { border-top: 0 }
