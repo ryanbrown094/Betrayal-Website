@@ -5,26 +5,26 @@ nav.top .links { display: none }
 .wrap { max-width: 1100px }
 .adm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end }
 .adm-row > label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose) }
-.adm-row input, .adm-row select { display: block; margin-top: 6px; min-height: 46px; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 500 17px/1 var(--ui) }
+.adm-row input, .adm-row select { display: block; margin-top: 6px; min-height: 46px; padding: 8px 12px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 500 17px/1 var(--ui) }
 .btn.small { min-height: 46px; padding: 8px 18px; font-size: 16px } .btn.ghost { background: transparent; color: var(--ivory) } .btn.danger { background: transparent; border-color: #ff9dbf; color: #ff9dbf }
-.btn.tiny { min-height: 34px; padding: 4px 10px; font-size: 14px; border-radius: 8px }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 }
-.stat { padding: 14px 16px; border-radius: 12px; background: var(--plum); border: 1px solid rgba(230,165,140,.25) } .stat b { display: block; font: 600 34px/1 var(--disp); color: var(--ivory) } .stat span { color: var(--ivory2); font-size: 15px }
+.btn.tiny { min-height: 34px; padding: 4px 10px; font-size: 14px }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 24px; margin: 18px 0 }
+.stat { padding: 12px 0; border-top: 1px solid rgba(230,165,140,.25) } .stat b { display: block; font: 600 32px/1.1 var(--ui); color: var(--ivory); font-variant-numeric: tabular-nums lining-nums } .stat span { color: var(--ivory2); font-size: 15px }
 .msg { min-height: 1.4em; font-size: 15.5px; color: var(--ivory2); margin: 10px 0 0 } .msg.err { color: #ff9dbf }
-.codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 8px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
+.codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 3px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
 table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.notecol { white-space: normal; max-width: 240px; overflow-wrap: anywhere }
-.tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 13px; font-weight: 700; border: 1px solid currentColor }
-.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px } .tabs button { min-height: 42px; padding: 6px 16px; border-radius: 99px; border: 1px solid rgba(230,165,140,.35); background: transparent; color: var(--ivory2); font: 700 15px/1 var(--ui); cursor: pointer } .tabs button[aria-selected="true"] { background: var(--rose); border-color: var(--rose); color: #150b17 } .tabs .cnt { margin-left: 6px; font-weight: 500; opacity: .8 }
+.tag { font-size: 14.5px; font-weight: 700 }
+.tabs { display: flex; flex-wrap: wrap; gap: 0 26px; margin: 14px 0 6px; border-bottom: 1px solid rgba(230,165,140,.22) } .tabs button { min-height: 44px; margin-bottom: -1px; padding: 6px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--ivory2); font: 700 16px/1 var(--ui); cursor: pointer } .tabs button:hover { color: var(--ivory) } .tabs button[aria-selected="true"] { border-bottom-color: var(--rose); color: var(--ivory) } .tabs .cnt { margin-left: 6px; font-weight: 500; opacity: .8 }
 table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor: pointer } table.list tr.click:hover td { background: rgba(230,165,140,.07) } table.list td.msgcol { max-width: 420px; overflow-wrap: anywhere }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 15px; margin: 8px 0 } .kv b { color: var(--ivory2); font-weight: 600 } .kv span { color: var(--ivory); overflow-wrap: anywhere }
-.mono { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ivory2); background: #100b11; border: 1px solid rgba(230,165,140,.2); border-radius: 8px; padding: 10px 12px; max-height: 420px; overflow: auto; margin: 8px 0 }
-.back { margin: 8px 0 } .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 12.5px; font-weight: 700; border: 1px solid currentColor }
+.mono { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ivory2); background: #100b11; border: 1px solid rgba(230,165,140,.2); border-radius: 2px; padding: 10px 12px; max-height: 420px; overflow: auto; margin: 8px 0 }
+.back { margin: 8px 0 } .pill { font-size: 14px; font-weight: 700 }
 .stage { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start } @media (max-width: 900px) { .stage { grid-template-columns: 1fr } }
-.tvbox { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; border: 1px solid rgba(230,165,140,.25); background: #000 } .tvbox iframe { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none }
+.tvbox { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 3px; border: 1px solid rgba(230,165,140,.25); background: #000 } .tvbox iframe { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none }
 .phbox { position: relative; width: 280px; height: 606px; overflow: hidden; border-radius: 18px; border: 1px solid rgba(230,165,140,.25); background: #000 } .phbox iframe { position: absolute; left: 0; top: 0; width: 390px; height: 844px; border: 0; transform: scale(.718); transform-origin: 0 0 }
 .scrub { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 } .scrub input[type=range] { flex: 1; min-width: 200px; accent-color: var(--rose) } .scrub .now { font-size: 14px; color: var(--ivory2); flex-basis: 100% }
-.tl { max-height: 360px; overflow: auto; border: 1px solid rgba(230,165,140,.2); border-radius: 8px } .tl div { padding: 4px 10px; font-size: 13.5px; color: var(--ivory2); cursor: pointer; border-bottom: 1px solid rgba(230,165,140,.08) } .tl div.on { background: rgba(230,165,140,.18); color: var(--ivory) }
-.snapbox { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
+.tl { max-height: 360px; overflow: auto; border-top: 1px solid rgba(230,165,140,.2); border-bottom: 1px solid rgba(230,165,140,.2) } .tl div { padding: 4px 10px; font-size: 13.5px; color: var(--ivory2); cursor: pointer; border-bottom: 1px solid rgba(230,165,140,.08) } .tl div.on { background: rgba(230,165,140,.18); color: var(--ivory) }
+.snapbox { position: relative; overflow: hidden; border-radius: 3px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
 .ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
 .t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-failed { color: #ffb38a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
 @media (max-width: 700px) {
@@ -32,7 +32,6 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
   table.passes td { display: block; border: 0; padding: 2px 0; white-space: normal } table.passes td[data-l]::before { content: attr(data-l) ": "; color: #877e78 }
 }
 </style>
-<div class="eyebrow">admin</div>
 <h1>Admin</h1>
 
 <div id="login" hidden>
@@ -185,7 +184,7 @@ $("#room").onclick = async () => {
     const b = document.createElement("a"); b.href = "/g/" + j.room; b.textContent = "TV"; b.target = "_blank";
     const c = document.createElement("a"); c.href = "/m/" + j.room + "#create-bots"; c.textContent = "Modern against bots"; c.target = "_blank";
     const d = document.createElement("a"); d.href = "/m/" + j.room + "#create"; d.textContent = "Modern"; d.target = "_blank";
-    m.append("Classic: ", a, " · ", b, " — or ", c, " · ", d, " (use one per room: a room plays either Classic or Modern)");
+    m.append("Classic: ", a, " · ", b, ". Modern: ", c, " · ", d, ". A room plays one or the other, so use only one of these.");
   } catch (err) { say($("#rmsg"), err.message, true) }
 };
 $("#q").oninput = render; $("#f").onchange = render; $("#reload").onclick = load;
@@ -225,7 +224,7 @@ const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clo
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 let replay = null;
 // the whole game log, from each recorded save's newest line (a save that added no line repeats the one before)
-const fullLog = recs => recs.map((r, i) => r.kind === "wipe" ? secs(r.t) + " — game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : null).filter(Boolean).join("\n");
+const fullLog = recs => recs.map((r, i) => r.kind === "wipe" ? secs(r.t) + " (game wiped)" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : null).filter(Boolean).join("\n");
 async function openRoom(code, at) {
   const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
   let d, recs, evs;
@@ -266,7 +265,7 @@ async function openRoom(code, at) {
     const tv = h("iframe", { src: page + "#replay-tv", title: "TV replay" }), ph = h("iframe", { src: page + "#replay-host", title: page === "/modern.html" ? "Host phone replay" : "Keeper phone replay" });
     const tvbox = h("div.tvbox", {}, tv), rng = h("input", { type: "range", min: 1, max: recs.length, value: 1, "aria-label": "Point in the game" }), now = h("div.now", {}), tl = h("div.tl", {});
     const play = h("button.btn.ghost.small", {}, "Play"), speed = h("select", { "aria-label": "Speed" }, [["1500", "slow"], ["700", "normal"], ["250", "fast"]].map(([v, l]) => h("option", { value: v, selected: v === "700" }, l)));
-    recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "— game wiped —" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));
+    recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "(game wiped)" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));
     ap(v, h("div.scrub", {}, play, speed, h("button.btn.ghost.small", { onclick: () => go(+rng.value - 1) }, "◀"), rng, h("button.btn.ghost.small", { onclick: () => go(+rng.value + 1) }, "▶"), now), h("div.stage", {}, tvbox, h("div.phbox", {}, ph)), h("h3", {}, "Timeline"), tl);
     const fit = () => { tv.style.transform = "scale(" + tvbox.clientWidth / 1600 + ")" }; fit(); addEventListener("resize", fit);
     const cache = new Map(); let cur = 0, timer = null;

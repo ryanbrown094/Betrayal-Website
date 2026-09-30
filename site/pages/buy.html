@@ -1,8 +1,7 @@
 <!-- title: Book a Table -->
 <!-- desc: Book a Table for The Betrayal: £10 for one party of 8 to 24, or £20 a month as a Regular. Played on everyone’s phones, no app, no props. -->
-<div class="eyebrow">checkout</div>
 <h1>Book a Table</h1>
-<p class="lede">Everything for the evening, in one booking: fifteen Trials, thousands of questions and prompts, played on everyone’s own phones, with a full show on your TV if you want one. Prefer phones away? Classic, with a Keeper reading every line, is included too. Play once, or as often as you like.</p>
+<p class="lede">One booking covers the evening: fifteen Trials and thousands of questions and prompts, played on everyone’s own phones, with a full show on your TV if you want one. Classic, with a Keeper reading every line, is included too, for groups who’d rather put their phones away.</p>
 
 <fieldset class="plans"><legend class="vh">Choose how to play</legend>
 <label class="plan"><input type="radio" name="plan" value="one" checked><span><b>One party</b><span class="price" id="p1">£10</span><small>One Table for one party of 8 to 24 players, open for 48 hours from when you first use it.</small></span></label>
@@ -13,7 +12,7 @@
 <ul>
 <li id="li1">Your booking code is shown on screen as soon as you’ve paid: write it down or take a screenshot. Lost it? Send us a message through the contact page and we’ll find it.</li>
 <li id="li2">Use it whenever you like: the 48 hours start only when you open your Table.</li>
-<li>No app, no accounts: everyone plays in their phone’s browser, and a TV is optional. (Classic needs a TV and a phone for the Keeper.) Prices include VAT where it applies.</li>
+<li>There’s no app to install and no account to make. Everyone plays in their phone’s browser, and a TV is optional. (Classic needs a TV and a phone for the Keeper.) Prices include VAT where it applies.</li>
 </ul>
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
@@ -58,7 +57,7 @@ $("#pay").onclick = async () => {
     const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one" }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    busy = false; update((j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
+    busy = false; update((j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.", true) }
 };
 choose();

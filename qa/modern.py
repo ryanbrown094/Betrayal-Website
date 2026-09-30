@@ -134,7 +134,7 @@ with sync_playwright() as p:
 
     # the Reckoning
     until(lambda: host.locator("[data-a=next]").count()); check("next: the Reckoning", "The Reckoning" in host.inner_text("#app")); host.click("[data-a=next]")
-    check("the Reckoning: a talk timer on every phone", until(lambda: all("Talk. Accuse. Defend." in q.inner_text("#app") for q in phones)))
+    check("the Reckoning: a talk timer on every phone", until(lambda: all("Make your accusations" in q.inner_text("#app") for q in phones)))
     host.click("[data-a=pause]")
     check("Pause: every phone and the TV say so", until(lambda: all("The game is paused" in q.inner_text("#app") for q in phones[1:]) and "The game is paused" in tv.inner_text("#tvapp")))
     c0 = phones[1].inner_text(".clock"); time.sleep(2.5)

@@ -36,9 +36,9 @@ with sync_playwright() as p:
     check("the losing phone saw a toast", "moved first" in loser.evaluate("()=>document.body.innerText") or loser.evaluate("()=>(state.log||[]).length>0"))
     # 4 · host loses the connection mid-game: NOT SYNCED appears, then the state is pushed again by itself once the link is back
     host.route("**/api/state", lambda r: r.abort()); host.evaluate("()=>act(s=>{s.pot=555},'offline tap')"); host.wait_for_timeout(3500)
-    check("dropped connection shows NOT SYNCED on the phone", "NOT SYNCED" in host.inner_text("body"))
+    check("dropped connection shows NOT SYNCED on the phone", "Not synced" in host.inner_text("body"))
     host.unroute("**/api/state"); host.wait_for_timeout(8000)
-    check("state re-syncs by itself after the link returns (no extra tap)", api.get(URL + "api/state").json()["state"]["pot"] == 555 and "NOT SYNCED" not in host.inner_text("body"), api.get(URL + "api/state").json()["state"]["pot"])
+    check("state re-syncs by itself after the link returns (no extra tap)", api.get(URL + "api/state").json()["state"]["pot"] == 555 and "Not synced" not in host.inner_text("body"), api.get(URL + "api/state").json()["state"]["pot"])
     # 5 · TV loses the connection: reconnecting badge, then clears
     tv = page(1280, 720); tv.evaluate("()=>{window.__noCards=true}")
     tv.route("**/api/state", lambda r: r.abort()); tv.wait_for_timeout(7000)

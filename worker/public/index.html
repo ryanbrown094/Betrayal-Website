@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929211252">
-<title>The Betrayal — the party game of loyalty and lies</title>
+<meta name="build" content="20260930081800">
+<title>The Betrayal · the party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
 <meta name="theme-color" content="#09070a">
-<meta property="og:title" content="The Betrayal — the party game of loyalty and lies">
+<meta property="og:title" content="The Betrayal · the party game of loyalty and lies">
 <meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The party game of loyalty and lies, played on everyone’s phones: scan the code, get your secret role, trust nobody.">
 <meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/">
 <meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
@@ -73,16 +73,15 @@ header.hero .shot { align-self: start }
 
 section { padding: 72px 0 0 }
 h2 { font: 400 clamp(32px, 4.6vw, 48px)/1.08 var(--book); margin: 0 0 22px; color: var(--ivory); text-wrap: balance; max-width: 18em }
-.aside { font: italic 400 20px/1.5 var(--book); color: var(--ivory2); border-left: 2px solid var(--copper); padding: 2px 0 2px 20px; max-width: 38em; margin: 0 }
+.aside { font: italic 400 20px/1.5 var(--book); color: var(--ivory2); max-width: 38em; margin: 0 }
 .aside b { color: var(--ivory); font-style: normal; font-family: var(--ui); font-weight: 600; font-size: 18px }
 
 /* an evening, by the clock */
 .evening { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 20px 56px; align-items: start }
 ol.clock { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule) }
-ol.clock li { display: grid; grid-template-columns: 5.2em 1fr; gap: 0 18px; padding: 0 0 22px; position: relative }
-ol.clock li::before { content: ""; position: absolute; left: -4px; top: .55em; width: 7px; height: 7px; border-radius: 50%; background: var(--copper) }
+ol.clock li { padding: 0 0 22px 24px; position: relative }
+ol.clock li::before { content: ""; position: absolute; left: -4px; top: .6em; width: 7px; height: 7px; border-radius: 50%; background: var(--copper) }
 ol.clock li.night::before { background: var(--blood) }
-ol.clock time { padding-left: 18px; font: 500 16px/1.6 var(--sc); letter-spacing: .06em; color: var(--rose); font-variant-numeric: tabular-nums lining-nums }
 ol.clock b { display: block; font: 400 23px/1.25 var(--book); color: var(--ivory); margin-bottom: 2px }
 ol.clock span { color: var(--ivory2); font-size: 17px }
 .clocknote { margin: 4px 0 0 18px; font: italic 16px/1.4 var(--book); color: var(--dim) }
@@ -120,13 +119,13 @@ input:focus { outline: 2px solid var(--rose); outline-offset: 2px }
 .row { display: flex; gap: 10px; margin-top: 10px } .row > input { flex: 1; min-width: 0 }
 .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px } @media (max-width: 640px) { .modes { grid-template-columns: 1fr } }
 .mode { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 18px; border-radius: 3px; border: 1px solid #4a3150; background: transparent; color: var(--ivory); font: 16px/1.45 var(--ui); cursor: pointer }
-.mode.primary { grid-column: 1 / -1; border-color: var(--rose); background: rgba(174,98,73,.1) } .mode b i { font: 700 12px/1 var(--sc); letter-spacing: .12em; text-transform: uppercase; font-style: normal; color: #150b17; background: var(--rose); padding: 4px 8px; margin-left: 10px; vertical-align: middle }
+.mode.primary { grid-column: 1 / -1; border-color: var(--rose) } .mode b i { font: italic 400 19px/1 var(--book); color: var(--ivory2); margin-left: 4px }
 .mode.quiet b { font-size: 20px; color: var(--ivory) } .mode.quiet em { color: var(--ivory2) }
 .mode:hover { border-color: var(--rose) } .mode b { font: 400 26px/1 var(--book); color: var(--rose) } .mode span { color: var(--ivory2) } .mode em { font-style: normal; font: 700 15px/1 var(--sc); letter-spacing: .06em; color: var(--rose); margin-top: auto }
 .msg { min-height: 1.4em; margin: 10px 0 0; font-size: 15.5px; color: var(--ivory2) } .msg.err { color: #ff9dbf }
 .claim { display: none; text-align: center; border: 1px solid var(--rose); padding: 28px 22px; margin-bottom: 20px } .claim.on { display: block }
 .claim .code { font: 700 clamp(24px, 6.4vw, 48px)/1.1 var(--ui); letter-spacing: .08em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; user-select: all; color: var(--ivory); margin: 12px 0 } .claim .ctas { justify-content: center }
-.eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) }
+.claimhead { font: 400 24px/1.25 var(--book); color: var(--ivory) }
 
 footer { margin: 80px 0 0; padding: 28px 0 44px; border-top: 1px solid var(--rule); color: var(--dim); font-size: 14.5px }
 footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } footer nav.legal a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
@@ -136,7 +135,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
   .evening { grid-template-columns: 1fr } .screens { position: static; max-width: 560px }
   .forms { grid-template-columns: 1fr } .forms .panel + .panel { padding-left: 0; margin-left: 0; border-left: 0; border-top: 1px solid var(--rule) }
 }
-@media (max-width: 480px) { .row { flex-direction: column } .row > .btn { width: 100% } ol.clock li { grid-template-columns: 4.4em 1fr; gap: 0 10px } ol.clock time { padding-left: 14px; font-size: 15px } .bill .item { font-size: 23px } nav.topnav .home { font-size: 24px } }
+@media (max-width: 480px) { .row { flex-direction: column } .row > .btn { width: 100% } .bill .item { font-size: 23px } nav.topnav .home { font-size: 24px } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
 </style>
 </head>
@@ -160,15 +159,15 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
     <div class="evening">
       <div>
         <ol class="clock">
-          <li><time>7:30</time><div><b>You open your Table</b><span>Your booking code, your name, murder or poison, and the prize. That’s the setup.</span></div></li>
-          <li><time>7:40</time><div><b>Everyone scans in</b><span>The code on the TV, or <a href="/join">thebetrayal.co.uk/join</a>. No app, no accounts, just a name.</span></div></li>
-          <li><time>7:50</time><div><b>The Oath</b><span>Each phone asks, privately: would you like to be Forsworn? Then the roles arrive, one screen at a time.</span></div></li>
-          <li><time>8:00</time><div><b>The Trials</b><span>Quizzes and games on the phones, timed and scored for you. They fill the Purse. The Forsworn lose them on purpose, quietly.</span></div></li>
-          <li><time>9:00</time><div><b>The Reckoning</b><span>Talk, accuse, defend, then vote in secret. Someone is exiled, and the table learns what they were.</span></div></li>
-          <li class="night"><time>9:10</time><div><b>Night</b><span>Heads down. Everyone taps a name so nobody can tell who’s choosing. By dawn, someone is dead.</span></div></li>
-          <li><time>10:30</time><div><b>The masks come off</b><span>Five left, then fewer. When the table trusts everyone who remains, every role is shown and the prize is won.</span></div></li>
+          <li><div><b>You open your Table</b><span>Enter your booking code and your name, choose murder or poison, and name the prize.</span></div></li>
+          <li><div><b>Everyone scans in</b><span>The code on the TV, or <a href="/join">thebetrayal.co.uk/join</a>. Nobody needs an app or an account, only a name.</span></div></li>
+          <li><div><b>The Oath</b><span>Each phone asks, privately: would you like to be Forsworn? Then the roles arrive, one screen at a time.</span></div></li>
+          <li><div><b>The Trials</b><span>Quizzes and games on the phones, timed and scored for you. They fill the Purse. The Forsworn lose them on purpose, quietly.</span></div></li>
+          <li><div><b>The Reckoning</b><span>Argue it out, then vote in secret. Someone is exiled, and the table learns what they were.</span></div></li>
+          <li class="night"><div><b>Night</b><span>Heads down. Everyone taps a name so nobody can tell who’s choosing. By dawn, someone is dead.</span></div></li>
+          <li><div><b>The masks come off</b><span>Five left, then fewer. When the table trusts everyone who remains, every role is shown and the prize is won.</span></div></li>
         </ol>
-        <p class="clocknote">A table of ten, roughly. Your phone only says when to begin the next part; the game does the rest.</p>
+        <p class="clocknote">Your phone only says when to begin the next part; the game does the rest.</p>
       </div>
       <div class="screens">
         <figure><img src="/media/tour-modern-tv-quiz.jpg" width="1280" height="720" loading="lazy" alt="The TV: a quiz question with a countdown, and each player's seal lighting up as they answer on their phone"></figure>
@@ -201,18 +200,18 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
     <h2>Before you ask</h2>
     <details><summary>Does everyone need a phone?</summary><p>Yes: everyone plays on their own, in the browser, with nothing to install. If your group would rather put phones away, play Classic: only the Keeper uses one, guests wear blindfolds at night and chalk their votes. You choose when you open your Table.</p></details>
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
-    <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like — one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
+    <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like, one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to take a break, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables need more rounds: about 5 hours for 16, and 6 or more for 20 and up. In Classic there’s also a Short game (one Trial a round, no breaks) of about 2 hours for 8 to 10 players, and the Keeper’s setup shows an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
     <details><summary>Murder or poison?</summary><p>Your choice, when you open your Table. The victim finds out in secret on their phone during the night. Murdered players leave the table quietly at dawn; poisoned players announce it, get their last words, then leave. (In Classic, the Keeper taps them while everyone is blindfolded.)</p></details>
-    <details><summary>What if the Wi-Fi drops?</summary><p>Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in. Nothing is lost.</p></details>
+    <details><summary>What if the Wi-Fi drops?</summary><p>Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in.</p></details>
     <details><summary>Who wins the Purse?</summary><p>The Loyal, if they win, take the Purse they built. The Forsworn, if they win, take what it <b>fell short</b> of its target, so every point they quietly sabotage is theirs. <a href="/rules#pot">More in the rules</a>.</p></details>
   </section>
 
   <section id="start">
     <h2>Open your Table</h2>
-    <div class="panel claim" id="claim"><div class="eyebrow" id="claimhead">thank you — here is your booking code</div><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
+    <div class="panel claim" id="claim"><p class="claimhead" id="claimhead">Thank you. Here is your booking code.</p><div class="code" id="claimcode">…</div><p class="msg" id="claimmsg" role="status">Write it down or take a screenshot: it opens your Table, and entering it again brings the same Table back.</p><div class="ctas"><button class="btn" id="claimgo">Start my game</button><button class="btn ghost" id="claimcopy">Copy the code</button></div></div>
     <div class="forms">
       <div class="panel"><label for="pass">Booking code</label><div class="row"><input id="pass" placeholder="OATH-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" name="booking-code" enterkeyhint="go"><button class="btn" id="go">Open my Table</button></div><p class="msg" id="passmsg" role="status">One booking, one party: your Table stays open for 48 hours from the moment you open it. Do this on the phone you’ll run the game from.</p><p class="msg">Regulars: enter your code to start a new game, or <button type="button" class="linkish" id="manage">manage your subscription</button>.</p></div>
       <div class="panel"><label for="room">Joining a game? Table code</label><div class="row"><input id="room" name="table" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="go"><button class="btn ghost" id="join">Join</button></div><p class="msg" id="roommsg" role="status">Enter it on your phone to play. For the TV, enter it on the laptop you’ll cast.</p></div>
@@ -240,7 +239,7 @@ async function open(pass, fresh) {
     // a subscriber with a game still open: carry on with it, or start a new one (which closes it)
     if (r.ok && j.room && j.sub && j.again) { b.disabled = false; return subChoice(pass, j.room) }
     if (r.ok && j.room) { b.disabled = false; return go(pass, j.room, j.test) }
-    say($("#passmsg"), j.error || "That didn’t work — try again.", true);
+    say($("#passmsg"), j.error || "That didn’t work. Try again.", true);
   } catch (e) { say($("#passmsg"), "Can’t reach the server. Check you’re online.", true) }
   b.disabled = false;
 }
@@ -256,7 +255,7 @@ async function go(pass, room, test) {
   const card = (h, p, cta, fn, cls) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode " + (cls || ""); c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
   // Modern is the game we lead with; Classic is there for groups who'd rather put their phones away
   row.append(
-    card("Modern <i>recommended</i>", "Everyone plays on their own phone: secret roles, votes and nights, and every Trial answered on phones. No props, the TV is optional, and you play too.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
+    card("Modern <i>(recommended)</i>", "Everyone plays on their own phone, from the secret roles to the votes, the nights and every Trial. You play too, and the TV is optional.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
     card("Classic", "Phones away: a Keeper runs it from one phone and doesn’t play; blindfolds at night, votes chalked on boards, the TV puts on the show.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }, "quiet"));
   // the master code opens a test room: Modern can be played against bots there
   if (test) row.append(card("Modern test", "You against bots that swear, vote, choose at night and trust by themselves. Trials give random scores; every countdown is ten seconds.", "Play against bots", () => { try { sessionStorage.setItem("bt-test-" + room, "1") } catch (e) {} location.href = "/m/" + room + "#create-bots" }));
@@ -278,7 +277,7 @@ async function manage() {
     const r = await fetch("/api/portal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pass: v }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
-    say(m, (j.error || "That didn’t work — try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
+    say(m, (j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
   } catch (e) { say(m, "Can’t reach the server. Check you’re online.", true) }
 }
 $("#manage").onclick = () => manage();
@@ -292,10 +291,10 @@ if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
     try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (!j.sub) try { localStorage.removeItem("bt-egg") } catch (e) {} // the broken seal is for one party: used now
-      if (j.sub) { $("#claimhead").textContent = "thank you — you’re a Regular"; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+      if (j.sub) { $("#claimhead").textContent = "Thank you. You’re a Regular."; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
-  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute — your booking code will appear here.", true);
+  say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute and your booking code will appear here.", true);
 })();
 </script>
 </body>

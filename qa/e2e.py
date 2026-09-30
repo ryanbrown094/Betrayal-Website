@@ -56,12 +56,12 @@ with sync_playwright() as p:
     rd = api.delete(APIU + "state", headers={"X-Pin": "0000"}); check("delete with a wrong PIN is refused", rd.status in (403, 429), (rd.status, rd.text()[:120]))
     # a second phone: PIN gate
     h2 = page(390, 844, "#host")
-    check("second host sees the PIN gate, not the game", h2.locator("#pin").count() == 1 and "SPOILERS" not in h2.inner_text("body"))
+    check("second host sees the PIN gate, not the game", h2.locator("#pin").count() == 1 and "Spoilers" not in h2.inner_text("body"))
     h2.fill("#pin", "1111"); h2.click("text=Unlock"); h2.wait_for_timeout(900)
     check("wrong PIN stays locked", h2.locator("#pin").count() == 1 and ("Wrong PIN" in h2.inner_text("body") or "Too many" in h2.inner_text("body")))
     h2.fill("#pin", PIN); h2.click("text=Unlock"); h2.wait_for_timeout(2500)
     if "Too many" in h2.inner_text("body"): h2.wait_for_timeout(61000); h2.fill("#pin", PIN); h2.click("text=Unlock"); h2.wait_for_timeout(2500)
-    check("right PIN unlocks the host screen", "SPOILERS" in h2.inner_text("body"))
+    check("right PIN unlocks the host screen", "Spoilers" in h2.inner_text("body"))
     tv = page(1280, 720); tv.evaluate("()=>{window.__noCards=true}")
     check("TV shows the lobby with every guest", all(n in tv.inner_text("#rail") for n in NAMES))
     check("TV page never receives roles or the PIN", tv.evaluate("()=>!state.hostPin && !state.prev && state.players.every(p=>p.role===null)"))
@@ -69,7 +69,8 @@ with sync_playwright() as p:
     host.evaluate("()=>act(s=>{s.players.forEach((p,i)=>p.role=[1,4].includes(i)?'cloak':'candle');s.phase='day';s.startedAt=now()})")
     sync(tv, h2)
     check("TV follows the host within a poll", "A new day at the house" in tv.inner_text("#stage"))
-    check("second phone follows too", "next in your plan" in h2.inner_text("body").lower())
+    check("second phone follows too", "swap it" in h2.inner_text("body").lower()
+)
     # the Witness: offered, won, met straight away in the ceremony (v16.9); the TV never learns who; then a night
     host.evaluate("()=>{pickMission('rps');act(s=>{s.mission.witnessOffer=true});startMission();startMission();act(s=>{finishPlay(s)});witnessPick(state.players[0].id);endMission()}"); sync(tv, h2)
     check("the Witness meets the Cloak at once, in the ceremony", host.evaluate("()=>state.witness.used===true && !!state.witness.metId && state.shieldCard.mode==='witness'"))
@@ -99,7 +100,8 @@ with sync_playwright() as p:
     host.evaluate("()=>{castTake(state.players[2].id,'take');castTake(state.players[7].id,'share');handoff=null;startGhostReveal();act(s=>{s.final2.ghostRound.revealed=1})}"); sync(tv, h2)
     check("TV sees only the revealed ghost vote", tv.evaluate("()=>Object.values(state.final2.ghostRound.votes).filter(v=>v!=='·').length===1"))
     host.evaluate("()=>{act(s=>{s.final2.ghostRound.revealed=2});finishGame()}"); sync(tv, h2); tv.wait_for_timeout(400)
-    check("prize goes to the Ghost who stole", host.evaluate("()=>state.phase==='final' && state.winner==='cloaks' && state.prizeTo") == "Tom — a Ghost", host.evaluate("()=>state.prizeTo"))
+    check("prize goes to the Ghost who stole", host.evaluate("()=>state.phase==='final' && state.winner==='cloaks' && state.prizeTo") == "Tom, a Ghost"
+, host.evaluate("()=>state.prizeTo"))
     check("TV final shows every role", tv.evaluate("()=>state.players.every(p=>p.role)") and "The Forsworn win" in tv.inner_text("#stage"))
     # undo, then wipe and immediately start again: the TV must not cling to the old game's higher version
     host.evaluate("()=>undo()"); sync(tv, h2)

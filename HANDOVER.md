@@ -34,6 +34,15 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.9 (30 Sep 2026), the whole codebase de-templated:** follows the design doc "tour toggle, evening list and de-templating pass".
+- **Tour page:** Modern / Classic toggle (Modern by default; `/tour#classic` opens Classic; both show without JavaScript).
+- **Home page:** the evening list has no clock times.
+- **Seals:** jewel-toned colours in `COLORS`, with a brighter highlight and lighter shadow in the wax gradient (`src/art.js`).
+- **Classic Keeper phone:** a prompt book. The lines to read are the page, with "Say", "Next" and "Then" as margin notes. Private notes are italic stage directions. Buttons are flat (one solid main action, the rest plain words). The setup choices are ruled lists with "(we'd pick this)". The menus are ruled rows.
+- **Everywhere:** small spaced-capital labels removed except where they carry information; no gradient buttons, pills, dashed boxes or glow (candlelight on the TVs aside).
+- **Copy:** em dashes removed from all visible copy and scripts; stock phrasing rewritten. Deliberately left: admin's "—" empty-cell marker, code comments, and en dashes in ranges.
+- **Testing note:** `qa/resilience.py` locks the local stand-in server's PINs on purpose at its last step, so restart `qa/server.mjs` before running it twice.
+
 **1.6.8 (29 Sep 2026), a less templated look:** the brand stays (palette, blackletter wordmark, IM Fell, the cracked seal); the stock landing-page devices went.
 - **Home page:**
   - The hero is the Oath: "Everyone swore an oath." with "Not everyone meant it." set as a line that cracks. The two halves are `.crack::before/::after` clip-paths, and they part once on load (off with reduced motion).

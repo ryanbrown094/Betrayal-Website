@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929211252">
-<title>The broken seal — The Betrayal</title>
+<meta name="build" content="20260930081800">
+<title>The broken seal · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="You looked closely. That’s exactly what the Forsworn are afraid of.">
 <link rel="canonical" href="https://thebetrayal.co.uk/seal">
-<meta property="og:title" content="The broken seal — The Betrayal"><meta property="og:description" content="You looked closely. That’s exactly what the Forsworn are afraid of."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/seal">
+<meta property="og:title" content="The broken seal · The Betrayal"><meta property="og:description" content="You looked closely. That’s exactly what the Forsworn are afraid of."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/seal">
 <meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -46,15 +46,14 @@ nav.top .links { display: flex; align-items: center; gap: 4px 18px } nav.top .li
 nav.top .links .btn[aria-current] { display: none }
 nav.top .links .btn, nav.top .home span { white-space: nowrap } @media (max-width: 360px) { nav.top .home { font-size: 22px } nav.top .links .btn { padding: 8px 14px } }
 @media (max-width: 600px) { nav.top .links a:not(.btn) { display: none } }
-.eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose); margin-top: 34px }
-h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 10px 0 8px; text-wrap: balance }
+h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 44px 0 10px; text-wrap: balance }
 h2 { font: 400 31px/1.15 var(--book); margin: 36px 0 8px; color: var(--ivory); text-wrap: balance; scroll-margin-top: 16px }
 p { text-wrap: pretty } .lede { font-size: 19px; color: var(--ivory2); max-width: 36em }
 h3 { font: 700 17px/1.3 var(--ui); margin: 20px 0 4px; color: var(--rose) }
 p, li { color: var(--ivory2) } strong, b { color: var(--ivory) }
 .updated { color: #877e78; font-size: 15px; margin: 0 }
-.ph { background: rgba(230,165,140,.16); color: var(--rose); border-radius: 4px; padding: 0 4px; font-weight: 600 }
-.note { padding: 4px 0 4px 18px; border-left: 2px solid var(--copper); margin: 18px 0 }
+.ph { color: var(--rose); font-weight: 600 }
+.note { margin: 14px 0; font-size: 16px; color: #877e78 }
 table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(230,165,140,.18) } th { color: var(--ivory); font-weight: 700 } td { color: var(--ivory2) }
 .table-scroll { overflow-x: auto }
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 12px 24px; border-radius: 3px; border: 1px solid var(--rose); background: var(--rose); color: #150b17; font: 700 16px/1 var(--sc); letter-spacing: .06em; text-decoration: none; cursor: pointer; touch-action: manipulation; transition: background .15s ease }
@@ -67,9 +66,9 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 
 .panel { padding: 22px 0; border-top: 1px solid rgba(230,165,140,.3); border-bottom: 1px solid rgba(230,165,140,.3); margin: 20px 0 } .panel > ul:first-child { margin-top: 0 }
 label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) } label.check input[aria-invalid] { outline: 2px solid #ff9dbf; outline-offset: 2px }
 .price { display: block; font: 400 44px/1.1 var(--book); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
-.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0; padding: 0; border: 0; min-width: 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
-.plan { display: flex; gap: 12px; padding: 18px; border-radius: 3px; background: transparent; border: 1px solid rgba(230,165,140,.3); cursor: pointer; transition: border-color .15s ease, background-color .15s ease } .plan:hover { border-color: rgba(230,165,140,.6) } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose); background: linear-gradient(180deg, rgba(230,165,140,.1), var(--plum)) }
-.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; margin: 24px 0 8px; padding: 0; border: 0; min-width: 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 14px; padding: 18px 0 20px; border-top: 1px solid rgba(230,165,140,.3); cursor: pointer; transition: border-color .15s ease } .plan:hover { border-top-color: rgba(230,165,140,.6) } .plan:has(input:checked) { border-top: 2px solid var(--rose); padding-top: 17px }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 400 24px/1.1 var(--book); color: var(--ivory) } .plan:has(input:checked) b { color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 72px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px }
 footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
 </style>
@@ -79,9 +78,8 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <div class="wrap">
 <nav class="top" aria-label="Site"><a class="home" href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg><span translate="no">The Betrayal</span></a><span class="links"><a href="/rules">How to play</a><a href="/tour">See a game</a><a class="btn small" href="/buy">Book a Table</a></span></nav>
 <main id="main">
-<div class="eyebrow">you found it</div>
 <h1>The broken seal</h1>
-<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead. A suspicious mind that checks everything twice: exactly what the Forsworn are afraid of.</p>
+<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead, and a mind that checks everything twice is what the Forsworn fear most.</p>
 
 <div class="panel">
 <p id="offer">For that, <b>10% off</b> one party (a single Table; the Regular plan isn’t discounted). We’ll remember it on this browser and take it off automatically when you book.</p>
@@ -89,7 +87,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <p id="msg" class="formmsg" role="status"></p>
 </div>
 
-<p style="font-size:15.5px">Keep it to yourself, or don’t. Every good secret gets out in the end.</p>
+<p style="font-size:15.5px">Keep it to yourself if you like, though good secrets tend to get out in the end.</p>
 
 <script>
 "use strict";

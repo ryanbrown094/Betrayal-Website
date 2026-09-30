@@ -1,4 +1,4 @@
-/* The Betrayal — Modern: every phone, the director's extra controls, and the optional TV. Same palette as Classic. */
+/* The Betrayal, Modern: every phone, the director's extra controls, and the optional TV. Same palette as Classic. */
 :root {
   --soot: #09070a; --peat: #130d14; --walnut: #251428; --walnut2: #341b37;
   --tallow: #e8d0c8; --tallow2: #afa198; --mist: #877e78;
@@ -27,19 +27,21 @@ svg { display: block }
 
 /* ---------- a phone ---------- */
 #app { max-width: 520px; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--sc); font-size: 14px; letter-spacing: .08em; color: var(--tallow2); padding-bottom: 10px; border-bottom: 1px solid #2a1a2c; margin-bottom: 18px }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--sc); font-size: 14px; letter-spacing: .04em; color: var(--tallow2); padding-bottom: 10px; border-bottom: 1px solid #2a1a2c; margin-bottom: 18px }
 .top .me { display: flex; align-items: center; gap: 8px; color: var(--tallow); text-transform: none; letter-spacing: 0; font-family: var(--ui); font-size: 16px }
 .top .me .seal { width: 28px; height: 28px }
 .top .pot { color: var(--brass2); white-space: nowrap }
-.eyebrow { font-family: var(--sc); font-size: 14px; letter-spacing: .16em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
+.eyebrow { font-family: var(--sc); font-size: 15px; letter-spacing: .05em; text-transform: lowercase; color: var(--brass2); margin: 0 0 4px }
 h1, h2 { font-family: var(--book); font-weight: 400; margin: 0 0 10px; line-height: 1.12 }
 h1 { font-size: 34px } h2 { font-size: 27px }
 h1.disp { font-family: var(--disp); font-size: clamp(34px, 11vw, 44px); letter-spacing: .01em; color: var(--brass2) }
 p { margin: 0 0 12px } .sub { color: var(--tallow2) } .small { font-size: 15px; color: var(--tallow2) }
-.card { background: #140c16; border: 1px solid #2e1d33; border-radius: 6px; padding: 18px; margin: 0 0 14px }
-.card.hot { border-color: var(--brass); border-left-width: 3px }
-.card.dir { border-style: dashed; border-color: #5b3a4f; background: #120a12 }
-.card.dir > .eyebrow { color: var(--steel) }
+/* sections are ruled, not boxed: a line above, open space around */
+.card { padding: 16px 0 4px; margin: 0 0 14px; border-top: 1px solid #2e1d33 }
+.card.hot { padding-bottom: 12px; border-top-color: var(--brass); border-bottom: 1px solid var(--brass) }
+.card.dir { margin-top: 22px; padding-top: 18px; border-top: 1px solid #5b3a4f }
+.card.role { border: 0 }
+h2.sec { font-size: 22px; color: var(--brass2); margin: 22px 0 4px }
 .stack { display: flex; flex-direction: column; gap: 10px }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px }
@@ -53,21 +55,21 @@ p { margin: 0 0 12px } .sub { color: var(--tallow2) } .small { font-size: 15px; 
 .btn.verd { background: #5fa88f; color: #04120d }
 .btn.sm { min-height: 44px; font-size: 15px; padding: 8px 12px; border-radius: 5px; width: auto }
 .btn .ico { width: 22px; height: 22px }
-input.f, textarea.f, select.f { width: 100%; min-height: 54px; padding: 12px 14px; border-radius: 14px; border: 1px solid #4a3150; background: #0f0910; color: var(--tallow); font-size: 20px }
+input.f, textarea.f, select.f { width: 100%; min-height: 54px; padding: 12px 14px; border-radius: 4px; border: 1px solid #4a3150; background: #0f0910; color: var(--tallow); font-size: 20px }
 textarea.f { min-height: 150px; resize: vertical; font-size: 18px }
 input.f:focus, textarea.f:focus, select.f:focus { outline: 2px solid var(--brass2); outline-offset: 1px }
 input.code { text-transform: uppercase; letter-spacing: .3em; text-align: center; font-size: 28px; font-weight: 700 }
-label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacing: .08em; color: var(--tallow2); margin: 0 0 6px }
+label.l { display: block; font: 600 15px/1.3 var(--ui); color: var(--tallow2); margin: 0 0 6px }
 .msg { min-height: 22px; font-size: 15px; color: var(--tallow2); margin-top: 8px } .msg.err { color: var(--blood2) }
-.people { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none }
-.people li { display: flex; align-items: center; gap: 7px; padding: 5px 11px 5px 5px; border-radius: 99px; background: #1b111d; border: 1px solid #2f1f33; font-size: 16px }
+.people { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none }
+.people li { display: flex; align-items: center; gap: 7px; padding: 3px 0; font-size: 16px }
 .people li .seal { width: 28px; height: 28px } .people li.dead { opacity: .45; text-decoration: line-through }
-.people li.ok { border-color: var(--verd); background: #10231c } .people li.wait { opacity: .55 } .people li b { font-weight: 600 } .people li i { font-style: normal; color: var(--verd) }
+.people li.wait { opacity: .55 } .people li b { font-weight: 600 } .people li i { font-style: normal; color: var(--verd) }
 .people li button.x { border: 0; background: none; color: var(--mist); font-size: 18px; padding: 0 2px; min-width: 28px; min-height: 28px }
 .pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
-.pick button { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 58px; padding: 8px 12px; border-radius: 14px; border: 1px solid #3b2640; background: #170e19; text-align: left; font-size: 17px; line-height: 1.15 }
+.pick button { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 58px; padding: 8px 12px; border-radius: 4px; border: 1px solid #3b2640; background: #150d17; text-align: left; font-size: 17px; line-height: 1.15 }
 .pick button .nm { min-width: 0; overflow-wrap: break-word; hyphens: auto; flex: 1 } @media (max-width: 360px) { .pick.one { grid-template-columns: minmax(0, 1fr) } }
-.pick button .tag { flex: none; font: 700 12px/1 var(--ui); padding: 4px 7px; border-radius: 99px; background: #3a1622; color: #f3b7c4 } .pick button .tag.sanct { background: #10261e; color: #bfeadb }
+.pick button .tag { flex: none; font: 700 14px/1 var(--ui); color: #f3b7c4 } .pick button .tag.sanct { font-weight: 600; color: #9ed3c0 }
 @media (max-width: 360px) { .pick button { padding: 8px 10px; gap: 8px; font-size: 16px } .pick button .seal { width: 28px; height: 28px } }
 .pick button .seal { width: 34px; height: 34px; flex: none }
 .pick button.on { border-color: var(--brass2); background: #2b1520; box-shadow: inset 0 0 0 1px var(--brass2) }
@@ -76,47 +78,48 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .clock.low { color: var(--blood2); animation: pulse 1s ease-in-out infinite } @keyframes pulse { 50% { opacity: .55 } }
 .bar.sticky { position: sticky; top: 0; z-index: 2; margin: 8px 0 14px }
 .bigclock .clock { font-size: 56px }
-.bar { height: 6px; border-radius: 3px; background: #2a1a2c; overflow: hidden; margin: 6px 0 14px } .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass), var(--brass2)); transition: width .25s linear }
+.bar { height: 4px; background: #2a1a2c; overflow: hidden; margin: 6px 0 14px } .bar i { display: block; height: 100%; background: var(--brass2); transition: width .25s linear }
 .q { font-family: var(--book); font-size: 26px; line-height: 1.2; margin: 6px 0 16px }
 .ans { font-family: var(--book); font-size: 30px; color: var(--brass2) }
-.done { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 14px; background: #122019; border: 1px solid var(--verd2); color: #cfe9de }
+.done { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--verd2); border-bottom: 1px solid var(--verd2); color: #cfe9de }
 .done .ico { width: 26px; height: 26px; color: var(--verd); flex: none } .done > :not(svg) { flex: 1; min-width: 0 }
 .letters { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 14px }
-.letters span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 9px; background: #efe0d4; color: #241018; font-family: var(--book); font-size: 26px }
+.letters span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 3px; background: #efe0d4; color: #241018; font-family: var(--book); font-size: 26px }
 .words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px }
-.words span { padding: 10px 4px; text-align: center; border-radius: 10px; background: #1b111d; border: 1px solid #33203a; font-size: 17px }
+.words span { padding: 10px 4px; text-align: center; border-bottom: 1px solid #33203a; font-size: 17px }
 .cells { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px }
-.cells button, .cells span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 12px; background: #1b111d; border: 1px solid #3b2640; color: var(--brass2) }
+.cells button, .cells span { display: grid; place-items: center; aspect-ratio: 1; border-radius: 4px; background: #1b111d; border: 1px solid #3b2640; color: var(--brass2) }
 .cells .ico { width: 58%; height: 58% } .cells .hit { border-color: var(--verd); background: #10261e; color: #bfeadb } .cells .mine { box-shadow: inset 0 0 0 2px var(--brass2) }
 .cells.blank span { background: #120b13; color: transparent }
 .snapsym { display: grid; place-items: center; height: 42vh; max-height: 300px; color: var(--brass2) } .snapsym .ico { width: 70%; height: 70% }
 .role { text-align: center; padding: 28px 18px }
 .role .sigil { width: 150px; height: 150px; margin: 0 auto 14px }
 .role.f h1 { color: var(--blood2) } .role.l h1 { color: #bfe0d3 }
-.veil { display: grid; place-items: center; min-height: 300px; border-radius: 18px; border: 1px dashed #5b3a4f; background: repeating-linear-gradient(135deg, #140b15 0 14px, #170d18 14px 28px); text-align: center; padding: 20px }
+.veil { display: grid; place-items: center; min-height: 300px; border-radius: 4px; border: 1px solid #3b2640; background: repeating-linear-gradient(135deg, #140b15 0 14px, #170d18 14px 28px); text-align: center; padding: 20px }
 .score { list-style: none; margin: 0; padding: 0; counter-reset: s }
 .score li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #25172a }
 .score li .seal { width: 30px; height: 30px } .score li .n { margin-left: auto; font-weight: 700; color: var(--brass2) } .score li.me { color: var(--brass2) }
-.banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; font-size: 16px; background: #1d1a10; border: 1px solid #5a4a22; color: #ecdcae } .banner .ico { flex: none; width: 20px; height: 20px; margin-top: 1px }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px }
-.chip { border-radius: 99px; background: #1d1a10; border: 1px solid #5a4a22; color: #ecdcae; font-size: 14px } .chip[open] { border-radius: 14px; flex-basis: 100% }
-.chip summary { display: flex; align-items: center; gap: 7px; padding: 7px 12px; min-height: 36px; cursor: pointer; list-style: none } .chip summary::-webkit-details-marker { display: none } .chip .ico { width: 16px; height: 16px; flex: none }
-.chip p { margin: 0; padding: 0 12px 10px; font-size: 14px }
-.chip.sanct { background: #0f2019; border-color: var(--verd2); color: #cfe9de } .chip.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 }
-.you { text-align: center; margin: 12px 0; padding: 10px; border-radius: 12px; background: #1b111d; color: var(--tallow2) } .you.good { background: #10231c; color: #bfeadb } .you.bad { background: #2a1316; color: #f3b7c4 }
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; margin-bottom: 14px; font-size: 16px; border-top: 1px solid #4a3d1f; border-bottom: 1px solid #4a3d1f; color: #ecdcae } .banner .ico { flex: none; width: 20px; height: 20px; margin-top: 1px }
+.chips { display: flex; flex-direction: column; margin-bottom: 14px; border-top: 1px solid #3a3020 }
+.chip { border-bottom: 1px solid #3a3020; color: #ecdcae; font-size: 15px }
+.chip summary { display: flex; align-items: center; gap: 8px; padding: 6px 0; min-height: 40px; cursor: pointer; list-style: none } .chip summary::-webkit-details-marker { display: none } .chip .ico { width: 16px; height: 16px; flex: none }
+.chip p { margin: 0; padding: 0 0 10px 24px; font-size: 15px; color: var(--tallow2) }
+.chip.sanct { color: #cfe9de } .chip.ghost { color: #c4d2e4 }
+.you { text-align: center; margin: 12px 0; padding: 4px 0; color: var(--tallow2) } .you.good { color: #bfeadb } .you.bad { color: #f3b7c4 }
 .score.rps li { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px 10px } .score.rps li > span:last-of-type { text-align: right } .score.rps .v { color: var(--mist) } .score.rps em { grid-column: 1 / -1; font-style: normal; color: var(--brass2); font-size: 15px }
 .waiting { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 22px 0 8px; text-align: center; color: var(--tallow2) } .waiting p { margin: 0 } .waiting em { font-family: var(--book); color: var(--mist) }
 .waiting svg { width: 40px; height: 48px; color: var(--brass2); animation: breathe 3.2s ease-in-out infinite } @keyframes breathe { 50% { opacity: .45; transform: scale(.94) } }
 .verdict { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 16px 0; overflow: hidden; font-family: var(--disp); font-size: 42px } .verdict > * { animation: stamp .7s cubic-bezier(.2,1.6,.4,1) both } .verdict svg { width: 120px; height: 120px }
-.verdict.f { color: var(--blood2); text-shadow: 0 0 24px rgba(234,90,143,.45) } .verdict.l { color: #bfe0d3; text-shadow: 0 0 24px rgba(95,168,143,.4) }
+.verdict.f { color: var(--blood2) } .verdict.l { color: #bfe0d3 }
+.tvmain .verdict.f { text-shadow: 0 0 24px rgba(234,90,143,.45) } .tvmain .verdict.l { text-shadow: 0 0 24px rgba(95,168,143,.4) }
 .verdict.wait { font-family: var(--book); font-size: 22px; color: var(--tallow2) } .verdict.wait > * { animation: none } .verdict.wait svg { animation: breathe 1.6s ease-in-out infinite }
 @keyframes stamp { from { opacity: 0; transform: scale(1.35) } to { opacity: 1; transform: none } }
-.roster { list-style: none; margin: 6px 0 0; padding: 0 } .roster li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; margin-bottom: 6px; background: #170e19; border: 1px solid #2f1f33 }
+.roster { list-style: none; margin: 6px 0 0; padding: 0 } .roster { border-top: 1px solid #25172a } .roster li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #25172a }
 .roster li .seal { width: 30px; height: 30px; flex: none } .roster li span { flex: 1; min-width: 0 } .roster li span i { font-style: normal; color: var(--mist); font-size: 14px }
-.roster li em { font-style: normal; font-family: var(--sc); letter-spacing: .08em; font-size: 14px } .roster li.f { border-color: #6a2733; background: #1e0e14 } .roster li.f em { color: var(--blood2) } .roster li.l em { color: #9ed3c0 }
-.prize { border-color: var(--brass); box-shadow: inset 0 0 0 4px #150c13, inset 0 0 0 5px rgba(230,165,140,.3) }
-.meter { position: relative; height: 22px; border-radius: 11px; background: #1b111d; border: 1px solid #3b2640; overflow: hidden; margin: 8px 0 14px; min-width: 200px }
-.meter i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--brass), var(--brass2)); transition: width .8s ease } .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.4) }
+.roster li em { font-style: normal; font-family: var(--sc); letter-spacing: .03em; font-size: 15px } .roster li.f span { color: #f3c5d3 } .roster li.f em { color: var(--blood2) } .roster li.l em { color: #9ed3c0 }
+.card.prize { padding: 18px 0 8px; border-top: 3px double var(--brass); border-bottom: 3px double var(--brass) }
+.meter { position: relative; height: 22px; border-radius: 2px; background: #1b111d; border: 1px solid #3b2640; overflow: hidden; margin: 8px 0 14px; min-width: 200px }
+.meter i { position: absolute; inset: 0 auto 0 0; background: var(--brass); transition: width .8s ease } .meter b { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.4) }
 .meter span { position: relative; z-index: 1; display: block; text-align: center; font: 700 13px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
 .snapprev { display: flex; align-items: center; justify-content: center; gap: 6px } .snapprev .ico { width: 22px; height: 22px; color: var(--brass2) }
 .snapbtn:active { filter: brightness(1.4) }
@@ -128,11 +131,11 @@ label.l { display: block; font-family: var(--sc); font-size: 14px; letter-spacin
 .center { text-align: center }
 details.more { margin-top: 10px } details.more summary { cursor: pointer; color: var(--tallow2); font-size: 15px; padding: 12px 0 }
 .card.dir .grid2 + .small { margin-top: 6px }
-.live { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 12px; border-radius: 99px; background: #2a1316; border: 1px solid #6a2733; color: #f3b7c4; font-size: 14px; z-index: 5 }
+.live { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); padding: 6px 12px; border-radius: 3px; background: #2a1316; border: 1px solid #6a2733; color: #f3b7c4; font-size: 14px; z-index: 5 }
 .brand { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 18px 0 22px; text-align: center }
 .brand svg { width: 64px; height: 76px; color: var(--brass2) }
 .brand .t { font-family: var(--disp); font-size: 40px; color: var(--brass2); line-height: 1 }
-.brand .m { font-family: var(--sc); font-size: 14px; letter-spacing: .3em; color: var(--tallow2) }
+.brand .m { font-family: var(--sc); font-size: 15px; letter-spacing: .12em; color: var(--tallow2) }
 .fade { animation: fade .35s ease both } @keyframes fade { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
 @media (prefers-reduced-motion: reduce) { .fade { animation: none } .bar i { transition: none } }
 
@@ -143,10 +146,10 @@ body.tv.night { background: #030204 }
 .tvtop { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--sc); letter-spacing: .12em; color: var(--tallow2); font-size: 2.4vh }
 .tvtop .pot { color: var(--brass2); font-size: 3.2vh }
 .tvmain { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: safe center; text-align: center; gap: 2.4vh; min-height: 0; overflow: hidden }
-.tvmain .meter { width: 40vw; height: 3.4vh; border-radius: 1.7vh } .tvmain .meter span { font-size: 2vh; line-height: 3.4vh }
+.tvmain .meter { width: 40vw; height: 3.4vh } .tvmain .meter span { font-size: 2vh; line-height: 3.4vh }
 .tvbar { width: 50vw; height: 1vh; margin: 0 }
 .tvmain .verdict { font-size: 9vh } .tvmain .verdict svg { width: 22vh; height: 22vh } .tvmain .verdict.wait { font-size: 4vh }
-.tvpairs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh 1.4vw; max-width: 84vw } .tvpairs span { white-space: nowrap; padding: .8vh 1.6vw; border-radius: 99px; background: #1b111d; border: 1px solid #3b2640; font-size: 2.6vh } .tvpairs i { font-style: normal; color: var(--mist) }
+.tvpairs { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vh 3.2vw; max-width: 84vw } .tvpairs span { white-space: nowrap; padding: .4vh 0; font-size: 3vh } .tvpairs i { font-style: normal; color: var(--mist) }
 .tvpeople.answered .p { opacity: .4 } .tvpeople.answered .p.ok { opacity: 1 }
 .tvpeople.many .p { width: 8vw; font-size: 1.9vh } .tvpeople.many .p .seal { width: 5.4vh; height: 5.4vh }
 .tvpeople.end .p.dead { opacity: 1 } .tvpeople .p.f .seal { filter: drop-shadow(0 0 1.4vh rgba(234,90,143,.8)) }
@@ -193,8 +196,8 @@ body.tv.night { background: #030204 }
 .pausebox { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; background: rgba(9,7,10,.86); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px) }
 .pausebox > div { max-width: 420px } .pausebox h1 { margin: 6px 0 10px }
 body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9vh } body.tv .pausebox .sub { font-size: 3.2vh } body.tv .pausebox .eyebrow { font-size: 2.6vh }
-.lastw { margin: 14px 0; padding: 14px 18px; border-left: 3px solid var(--brass); background: rgba(174,98,73,.08); border-radius: 0 12px 12px 0; font-family: var(--book); font-style: italic; font-size: 20px; color: var(--tallow); overflow-wrap: anywhere }
-.lastw cite { display: block; margin-top: 6px; font-family: var(--sc); font-style: normal; font-size: 13px; letter-spacing: .08em; color: var(--tallow2) }
+.lastw { margin: 14px 0; padding: 4px 0 4px 18px; border-left: 2px solid var(--brass); font-family: var(--book); font-style: italic; font-size: 20px; color: var(--tallow); overflow-wrap: anywhere }
+.lastw cite { display: block; margin-top: 6px; font-family: var(--sc); font-style: normal; font-size: 14px; letter-spacing: .03em; color: var(--tallow2) }
 .epitaph { margin: 10px 0; font-family: var(--book); font-style: italic; color: var(--brass2); overflow-wrap: anywhere }
 .tvmain .lastw { max-width: 70vw; font-size: 4vh; padding: 2vh 3vw; text-align: left } .tvmain .lastw cite { font-size: 2.2vh }
 .tvmain .epitaph { max-width: 70vw; font-size: 3.4vh; margin: 0 }
@@ -203,11 +206,12 @@ body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9v
 .tbtn .pz { display: none } .top .me { min-width: 0 } .top .me .seal { flex: none }
 @media (max-width: 380px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }
 
-/* the host's bar: a long name shortens, "host" is a badge, the pause icon is two bars */
+/* the host's bar: a long name shortens, "host" follows it in small letters, the pause icon is two bars */
 .top .me { flex: 1 1 auto } .top .me .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.top .me .hosttag { flex: none; font: 600 11px/1 var(--sc); letter-spacing: .08em; text-transform: uppercase; font-style: normal; color: var(--brass2); border: 1px solid #5a3b3b; border-radius: 99px; padding: 3px 7px }
+.top .me .hosttag { flex: none; font: 600 15px/1 var(--sc); letter-spacing: .03em; font-style: normal; color: var(--brass2) }
 .tbtn .pz { gap: 4px; align-items: center; height: 14px } .tbtn .pz i { display: block; width: 4px; height: 14px; border-radius: 1px; background: currentColor }
 @media (max-width: 380px) { .tbtn .pz { display: inline-flex } .top .me .hosttag { display: none } .top .tbtn { padding: 4px 9px } }
 body:has(.pausebox) { overflow: hidden } .pausebox .btn.sm { margin: 0 auto } body.tv .tvbtns { z-index: 21 }
 .whisp .wh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px } .whisp .wh .btn { width: 100% }
 .tvmain .lastw { width: min(70vw, 100%) }
+.card > h2.sec:first-child { margin-top: 0 }

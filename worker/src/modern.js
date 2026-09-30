@@ -523,7 +523,7 @@ export function act(s, pid, a, now, ctx) {
     case "out": { if (!it || it.k !== "survive" || it.stage !== "open") return need(false); const who = dir && a.who && P(s, a.who) ? a.who : pid; if (P(s, who) && P(s, who).alive && !it.out.includes(who)) it.out.push(who); return done(); }
     // --- answers
     case "ans": {
-      if (!it || it.stage !== "open" || !me.alive) return need(false, "Too late — that one has closed.");
+      if (!it || it.stage !== "open" || !me.alive) return need(false, "Too late. That one has closed.");
       if (["text", "number", "hilo", "vote", "word", "recall", "cell", "tempt"].includes(it.k)) { if (pid in it.inputs && it.k !== "recall" && it.k !== "word") return need(false, "You’ve already answered."); it.inputs[pid] = { v: clip(v, it.k === "recall" ? 600 : 80), t: now }; return done(); }
       if (it.k === "rps") { if (!it.pairs.flat().includes(pid) || pid in it.inputs || !["rock", "paper", "scissors"].includes(v)) return need(false); it.inputs[pid] = { v, t: now }; return done(); }
       if (it.k === "snap") { if (now < it.start) return need(false); if (it.taps.filter((x) => x.id === pid && now - x.t < 600).length) return null; it.taps.push({ id: pid, t: now }); return done(); }
