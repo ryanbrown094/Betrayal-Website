@@ -34,6 +34,9 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.10 (30 Sep 2026), the Modern tour covers a whole evening:** `/tour` walks through opening the Table, joining, the Oath, roles, a day, a Trial from intro to result (and six more on phones), breaks and the pause, the Reckoning with last words, night, dawn and the end, with 39 screenshots.
+- **Generator:** `tools/modern-shots.mjs` plays the evening through the engine and `tools/modern-shots.py` photographs it in replay mode. Twists are off in that game, so no secret prize, Temptation or final Honour/Betray appears; keep it that way (no spoilers). The final is forced to a Loyal win so the end screens are stable.
+
 **1.6.9 (30 Sep 2026), the whole codebase de-templated:** follows the design doc "tour toggle, evening list and de-templating pass".
 - **Tour page:** Modern / Classic toggle (Modern by default; `/tour#classic` opens Classic; both show without JavaScript).
 - **Home page:** the evening list has no clock times.
