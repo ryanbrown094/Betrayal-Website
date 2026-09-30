@@ -29,7 +29,7 @@ async ({games, budget}) => {
     if (s.mission && s.mission.stage !== "rules" && ((!ru.champion && s.mission.dag === "with") || (!ru.blade && s.mission.dag !== "none") || (ru.shield === "off" && s.mission.key !== "dilemma" && s.mission.win !== "none"))) fail("mission prize against the plan", {label, win: s.mission.win, dag: s.mission.dag});
     if (!ru.witness && s.witness) fail("a Witness with the Witness off", {label});
     if (s.phase === "night" && s.night && !modeOn(s, s.night.mode)) fail("night mode switched off in the plan: " + s.night.mode, {label});
-    if (ru.kill === "murder" && /poison(?!ed apple)/i.test(document.querySelector("#host .bodywrap") ? document.querySelector("#host .bodywrap").innerText : "")) fail("host says poison in a murder game", {label, at: (document.querySelector("#host .bodywrap").innerText.match(/.{0,40}poison.{0,40}/i) || [""])[0]});
+    if (/(?<!A )\bmurder(ed|s)?\b(?! on the)/i.test(document.querySelector("#host .bodywrap") ? document.querySelector("#host .bodywrap").innerText : "")) fail("host says murder (poison is the only kill)", {label, at: (document.querySelector("#host .bodywrap").innerText.match(/.{0,40}murder.{0,40}/i) || [""])[0]});
     if (s.players.some(p => !p.alive && p.shield)) fail("dead player holds a shield", {label});
     // a quarter of the table at most, counted against the most players alive at any point this round
     const aliveN = s.players.filter(p => p.alive).length, ra = roundAlive[s.round] = Math.max(roundAlive[s.round] || 0, aliveN);
@@ -52,7 +52,7 @@ async ({games, budget}) => {
     const ht = document.body.innerText; if (/undefined|NaN|\[object|null/.test(ht.replace(/annulled/g, ""))) fail("host text: " + (ht.match(/.{0,40}(undefined|NaN|\[object|null).{0,40}/) || [""])[0], {label});
     if (document.documentElement.scrollWidth > innerWidth + 1) fail("host horizontal overflow " + document.documentElement.scrollWidth, {label});
     let pv, v;
-    try { pv = publicView(JSON.parse(JSON.stringify(s))); v = tvView(pv); const d = document.createElement("div"); d.innerHTML = v.html + railHTML(pv, v.rail); const tt = d.textContent; if (rulesIn(s).kill === "murder" && /poison(?!ed apple)/i.test(tt)) fail("TV says poison in a murder game", {label, at: (tt.match(/.{0,40}poison.{0,40}/i) || [""])[0]}); if (/undefined|NaN|\[object|null/.test(tt)) fail("tv text: " + (tt.match(/.{0,40}(undefined|NaN|\[object|null).{0,40}/) || [""])[0], {label}); }
+    try { pv = publicView(JSON.parse(JSON.stringify(s))); v = tvView(pv); const d = document.createElement("div"); d.innerHTML = v.html + railHTML(pv, v.rail); const tt = d.textContent; if (/(?<!A )\bmurder(ed|s)?\b(?! on the)/i.test(tt)) fail("TV says murder (poison is the only kill)", {label, at: (tt.match(/.{0,40}murder.{0,40}/i) || [""])[0]}); if (/undefined|NaN|\[object|null/.test(tt)) fail("tv text: " + (tt.match(/.{0,40}(undefined|NaN|\[object|null).{0,40}/) || [""])[0], {label}); }
     catch (e) { fail("tv render threw: " + e.message + " @ " + (e.stack || "").split("\n")[1], {label}); }
     if (pv) {
       const js = JSON.stringify(pv);
@@ -92,7 +92,7 @@ async ({games, budget}) => {
     document.querySelector("#cloaks").value = R() < .3 ? 1 + Math.floor(R() * maxCloaks(n)) : ""; // setup refuses as many Forsworn as Loyal
     if (R() < .3) document.querySelector("#unit").value = pick(["£", "pts", "gold"]);
     // a random game plan: every setup switch gets exercised
-    Object.assign(setupDraft, { rounds: pick([0, 0, 2, 3, 4, 6]), perRound: pick([0, 1, 2]), dinnerAfter: pick([0, 1, 2]), mingle: R() < .6, kill: pick(["murder", "poison"]), ghosts: R() < .7,
+    Object.assign(setupDraft, { rounds: pick([0, 0, 2, 3, 4, 6]), perRound: pick([0, 1, 2]), dinnerAfter: pick([0, 1, 2]), mingle: R() < .6, ghosts: R() < .7,
       convert: R() < .7, bargain: R() < .6, quests: R() < .7, shield: pick(["mix", "public", "secret", "off"]), blade: R() < .7, champion: R() < .6, witness: R() < .7, dilemma: R() < .7,
       pool: R() < .4 ? [...MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key)].sort(() => R() - .5).slice(0, 3 + Math.floor(R() * 6)) : null });
     holdEndAt = 0; [...document.querySelectorAll("#host button")].find(b => /Start game/.test(b.textContent)).click();

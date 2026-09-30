@@ -190,7 +190,7 @@ const titleOf = s => (s && s.brand && s.brand.title) || "The Betrayal";
 const H = () => hostOf(state), T = () => titleOf(state);
 const moneyOf = (s, v) => { const u = String((s && s.potUnit) || "pts").replace(/[<>&"'`]/g, ""); return /^[£$€]$/.test(u) ? u + v : v + " " + u };
 const money = v => moneyOf(state, v);
-const PRIZE0 = "a box of chocolates"; // the default prize; the host sets their own at setup
+const PRIZE0 = "chocolate coins"; // the default prize; the host sets their own at setup. One coin for every 100 points won (coinsOf)
 // The prize can come in tiers: a better one once the Purse is half full, the best once it's full (s.prizes, set up front).
 // Until the end the TV only hears that the Purse decides the prize; the prizes themselves stay secret.
 // What the winners take from the Purse: the Loyal take what they built; the Forsworn take what it fell short of its target,
@@ -198,6 +198,11 @@ const PRIZE0 = "a box of chocolates"; // the default prize; the host sets their 
 const wonPot = s => s && s.winner === "cloaks" ? Math.max(0, ((s.potCap) || 2000) - (s.pot || 0)) : (s && s.pot) || 0;
 const prizeTier = s => { const cap = (s && s.potCap) || 2000, t = ((s && s.prizes) || []).filter(x => x && x.what && (wonPot(s) >= x.at * cap)); return t.length ? t[t.length - 1] : null };
 const prizeOf = s => { const t = prizeTier(s); return (t && t.what) || (s && s.prize) || PRIZE0 };
+// With the default prize, what the winners take in chocolate coins (null for any other prize)
+const coinsOf = s => prizeOf(s) === PRIZE0 ? Math.floor(wonPot(s) / 100) : null;
+const coinsText = n => n ? n + " chocolate coin" + (n === 1 ? "" : "s") : "no chocolate coins";
+// the prize as it's announced at the end: "15 chocolate coins", or the host's own prize
+const prizeName = s => { const c = coinsOf(s); return c == null ? prizeOf(s) : coinsText(c) };
 // Dinner in three courses: the starter after round one, the main course mid-game, dessert before the final.
 const COURSES = [{ k: "starter", name: "The Starter", dur: 900000 }, { k: "main", name: "The Main Course", dur: 1500000 }, { k: "dessert", name: "Dessert", dur: 900000 }];
 const courseRounds = R => R >= 4 ? [1, Math.ceil(R / 2), R - 1] : [];
@@ -212,23 +217,14 @@ const isFinal = s => !!s && s.finalRound === s.round;
 // rounds: 0 = decided by the table size (the final starts once five or fewer are left), or a fixed number (the last is the final)
 // perRound: missions a round (1, 2, or 0 = by the clock). dinnerAfter: the round dinner follows (0 = no dinner break).
 // courses: dinner in three courses instead (starter, main, dessert: see courseRounds). narrator: the TV reads the lines aloud.
-// kill: "poison" (the victim announces it at dawn, then leaves) or "murder" (the victim leaves the table in the night, under blindfold)
 // shield: "mix" (hidden in round-based missions, public otherwise) | "public" | "secret" | "off"
 const RULES0 = {
   rounds: 0, perRound: 0, dinnerAfter: 1, mingle: true, pool: null,
-  kill: "poison", ghosts: true, convert: true, bargain: true, quests: true,
+  ghosts: true, convert: true, bargain: true, quests: true,
   shield: "mix", blade: true, champion: true, witness: true, dilemma: true, courses: false, narrator: false
 };
 const rulesIn = s => Object.assign({}, RULES0, (s && s.rules) || {});
-const killOf = s => rulesIn(s || state).kill === "murder" ? "murder" : "poison";
 const ghostsOn = s => rulesIn(s || state).ghosts !== false;
-// Every line written for poison reads for murder too, once its words are swapped. The one bank item that says poison
-// (Pictionary's poisoned apple) is left alone.
-function kw(t, s) {
-  if (t == null || killOf(s || state) !== "murder") return t;
-  return String(t).replace(/\bpoisonings\b/g, "murders").replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
-}
-const kwLines = (a, s) => a.map(l => { const x = norm(l); return { ...x, tv: kw(x.tv, s), say: kw(x.say, s) } });
 // The end game always starts with four: the final round opens with five, its Reckoning takes one more without a reveal,
 // then Trust or Doubt. To get there, every round before the final is sized to what's left: its exiles (one, or two while
 // more than sixteen sit at the table) and its night's victims (up to two from 12 alive, three from 20), never below five.
@@ -362,7 +358,7 @@ function rewindRound() {
 // line, and hides names again on the last line (blindfolds off). These markers tell it where those lines are.
 function nightMarks(s) {
   const n = s.night, sc = nightScript(n, s);
-  n.revealStep = Math.max(0, sc.findIndex(l => { const x = norm(l); return x.murdered || x.answer }));
+  n.revealStep = Math.max(0, sc.findIndex(l => { const x = norm(l); return x.poisoned || x.answer }));
   n.questStep = sc.findIndex(l => norm(l).quest);
   n.endStep = sc.length - 1;
   if (n.questStep >= 0 && n.step >= n.questStep) resolveQuest(s);
@@ -397,7 +393,7 @@ function cleanRules(r) {
   const int = (v, lo, hi, d) => { v = Math.round(+v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d };
   o.rounds = int(r.rounds, 0, 12, 0); o.perRound = int(r.perRound, 0, 2, 0); o.dinnerAfter = int(r.dinnerAfter, 0, 12, 1); o.mingle = r.mingle !== false;
   const keys = MISSIONS.filter(m => !m.addon).map(m => m.key); o.pool = Array.isArray(r.pool) ? r.pool.filter(k => keys.includes(k)) : null; if (o.pool && !o.pool.length) o.pool = null;
-  o.kill = r.kill === "murder" ? "murder" : "poison"; o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
+  o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
   o.courses = !!r.courses; o.narrator = !!r.narrator; if (o.courses) o.dinnerAfter = 0;
   o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.blade = r.blade !== false; o.champion = r.champion !== false && o.shield !== "off"; o.witness = r.witness !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
   return o;
@@ -607,8 +603,7 @@ function prizeOf_(m, fin, s) {
   const off = m.stake || 0, all = s && s.wrongRule === "all", wr = WRONGABLE.includes(m.key);
   const pot = off > 0 ? "Up to " + moneyOf(s, off) + " for the Purse." + (wr ? (all ? " Every wrong shout costs it, and a Forsworn’s costs double." : " A Forsworn’s wrong shout costs it.") : "") : "The Purse is full." + (wr ? " Wrong shouts can still cost it." : "");
   say.push(off > 0 ? "Up to " + moneyOf(s, off) + " goes in the Purse." + (wr ? (all ? " Every wrong shout costs it, and a Forsworn's costs double." : " And a Forsworn's wrong shout costs it.") : "") : "The Purse is already full.");
-  items.forEach(i => { i.text = kw(i.text, s) });
-  return { items, pot, tv: items.map(i => i.head + ": " + i.text).concat([pot]), say: kw(say.join(" "), s) };
+  return { items, pot, tv: items.map(i => i.head + ": " + i.text).concat([pot]), say: say.join(" ") };
 }
 // the rules as the mission list shows them: default settings, no shield promises
 function defRules(def) {
@@ -1189,6 +1184,7 @@ function questResolve(ok) {
 // A big table loses more than one a night, so an evening still reaches the final (see roundsFrom). Only a kill night has
 // more than one; each victim is its own pass of the script.
 const nightKills = s => { const a = aliveOf(s).length, rt = s.rt && s.rt.round === s.round ? s.rt : null; return Math.max(1, Math.min(rt ? rt.kills || 1 : killsAt(a), killsAt(a), a - 5)) };
+// "murder" is the internal name of the poison night (s.night.mode, s.morning.kind, s.stats.murders): kept so saved games load
 const killsOf = n => n && n.mode === "murder" ? n.kills || 1 : 1;
 function nextVictim() {
   act(s => {
@@ -1222,7 +1218,7 @@ function autoMode(s) {
   return "murder";
 }
 const modeOn = (s, k) => k === "murder" || !!rulesIn(s)[k];
-const modeLabel = (k, s) => k === "murder" ? (killOf(s) === "murder" ? "Murder" : "Poison") : MODES[k].label;
+const modeLabel = k => MODES[k].label;
 // the Loyal player an Errand names is chosen when the Forsworn read it: never tonight's victim or target
 function resolveQuest(s) {
   const n = s.night; if (!n || !n.quest || !/\{F\}/.test(n.quest)) return;
@@ -1244,8 +1240,8 @@ function finishNight() {
       const vs = [...(n.victims || []), n.victimId].map(id => id && P2(s, id)).filter(v => v && v.alive), dead = [], logs = [];
       for (const v of vs) {
         if (s.players.length > 5 && aliveOf(s).length <= 5) { logs.push(v.name + " spared: five left"); continue } // someone left mid-night
-        if (v.shield || (s.witness && s.witness.id === v.id && !s.witness.fake)) { logs.push("Murder failed: " + v.name + (v.shield ? " holds Sanctuary" : " is the Confessor")); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
-        else { v.alive = false; dead.push(v); logs.push("Murdered: " + v.name) }
+        if (v.shield || (s.witness && s.witness.id === v.id && !s.witness.fake)) { logs.push("Poison failed: " + v.name + (v.shield ? " holds Sanctuary" : " is the Confessor")); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
+        else { v.alive = false; dead.push(v); logs.push("Poisoned: " + v.name) }
       }
       if (!vs.length) { m = { kind: "quiet" }; log = "Night ended with no victim picked" }
       else if (!dead.length) { m = { kind: "shield" }; log = logs.join(" · ") }
@@ -1260,7 +1256,7 @@ function finishNight() {
       else if (n.mode === "bargain") {
         t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]);
         if (t.shield || (s.witness && s.witness.id === t.id && !s.witness.fake)) { m = { kind: "shield" }; log = t.name + " refused the Last Offer but held Sanctuary"; s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: t.id, round: s.round }]) }
-        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused the Last Offer and was murdered" }
+        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused the Last Offer and was poisoned" }
       }
       else { t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]); m = { kind: "convert", refused: true }; log = t.name + " refused the " + MODES[n.mode].label }
     }
@@ -1465,7 +1461,8 @@ function finishGame() {
   act(s => {
     const lt = aliveOf(s).filter(p => p.role === "cloak");
     s.phase = "final"; s.winner = lt.length ? "cloaks" : "candles"; s.players.forEach(p => p.revealed = true); s.prizeTo = null;
-    // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps)
+    // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps).
+    // Chocolate coins (the default prize) are shared out like the Purse instead.
     const to = (ids, label) => { s.prizeIds = ids; s.prizeTo = label || andList(ids.map(id => P2(s, id).name)); s.potEach = ids.length ? Math.floor(wonPot(s) / ids.length) : 0 };
     if (lt.length >= 2) {
       const f = s.final2, st = lt.filter(p => f.votes[p.id] === "take");
@@ -1481,7 +1478,7 @@ function finishGame() {
     }
     else if (lt.length === 1) to([lt[0].id]);
     else { const A = aliveOf(s); to(A.map(p => p.id), A.length ? "the Loyal: " + andList(A.map(p => p.name)) : hostOf(s) + ", because nobody is left standing") }
-    s.rps = s.prizeIds.length >= 2 ? { ids: s.prizeIds.slice(), winner: null } : null;
+    s.rps = s.prizeIds.length >= 2 && coinsOf(s) == null ? { ids: s.prizeIds.slice(), winner: null } : null;
     s.awards = awardsOf(s); s.finalStep = 0; s.awardShown = 0; // worked out here, from the full record (the TV never sees the vote history)
     return { log: "Game over: " + (s.winner === "cloaks" ? "the Forsworn" : "the Loyal") + " win" };
   });

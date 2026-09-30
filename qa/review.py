@@ -449,7 +449,7 @@ with sync_playwright() as p:
     check("end-of-game awards come from the record", any(x.startswith("The Sharpest Eye:") for x in aw["a"]) and any(x.startswith("Mission Machine:") for x in aw["a"]) and any(x.startswith("Couldn’t Be Bought:") for x in aw["a"]) and any(x.startswith("First Blood:") for x in aw["a"]), aw)
     host.evaluate("()=>act(s=>{s.finalStep=1})"); sync(); tva = tv.inner_text("#stage")
     check("the host calls the awards and the TV shows them", "The Awards" in tva and "Sharpest Eye" in tva and "awards" in host.inner_text("#host").lower(), tva[:300])
-    vary = host.evaluate("()=>({t:[1,2,3].map(r=>SAY.table(r)),m:[1,2].map(r=>SAY.morningMurder('X',r)),n:[1,2].map(r=>{const s2=JSON.parse(JSON.stringify(state));s2.round=r;s2.phase='night';return nightScript({mode:'murder',step:0},s2)[0].say})})")
+    vary = host.evaluate("()=>({t:[1,2,3].map(r=>SAY.table(r)),m:[1,2].map(r=>SAY.morningPoison('X',r)),n:[1,2].map(r=>{const s2=JSON.parse(JSON.stringify(state));s2.round=r;s2.phase='night';return nightScript({mode:'murder',step:0},s2)[0].say})})")
     check("key lines change from round to round", len(set(vary["t"])) == 3 and len(set(vary["m"])) == 2 and len(set(vary["n"])) == 2, vary)
     card = tv.evaluate("()=>PHASECARDS.night0({})[3]")
     check("'The Cloaks Are Chosen' holds for over five seconds before fading into the night", card and card >= 5000, card)

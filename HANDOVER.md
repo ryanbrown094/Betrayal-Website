@@ -6,7 +6,7 @@ For whoever runs or changes the product next, most likely an LLM coding assistan
 
 ## 1. What it is
 
-**The Betrayal** is a hosted party game of loyalty and lies for 8 to 24 players in one room. A few players are secretly **the Forsworn**; the rest are **the Loyal**. Each day the table plays **Trials** to fill **the Purse**, then meets at **the Reckoning** to exile someone. Each night the Forsworn kill. It runs on a Cloudflare Worker at **thebetrayal.co.uk**.
+**The Betrayal** is a hosted party game of loyalty and lies for 8 to 24 players in one room. A few players are secretly **the Forsworn**; the rest are **the Loyal**. Each day the table plays **Trials** to fill **the Purse**, then meets at **the Reckoning** to exile someone. Each night the Forsworn poison someone. It runs on a Cloudflare Worker at **thebetrayal.co.uk**.
 
 There are two ways to play, chosen once per Table on the home page after the booking code is entered (Modern is offered first, marked recommended):
 
@@ -130,7 +130,7 @@ qa/                   test harnesses (§8)
 - **State:** one JSON `state`, `SCHEMA = 12`. Every change goes through `act(fn, logline)` (clone, run, stamp, log, save; stale taps dropped). Undo: 30 local snapshots plus a short `prev` chain; `rewindRound` restores `roundSnap`.
 - **Sync:** both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:true}`). The phone queues saves and rebases after lost replies. `flushSaves` handles 426 (reload), 403 (wrong PIN), 410 (wiped elsewhere), 409 (another phone moved), 423 (Table closed, read-only).
 - **What the TV may see:** `worker/src/public-view.js` is the single source of truth: it strips roles, the PIN, the log, the undo chain, the Confessor, secret Casting Vote and Crown holders, Trial secrets, quiz answers, the night's victim until its line, Errands, unrevealed votes, and the prize and stats until the final phase. **Add any new secret field there.** `rules`, `plan` and `planAt` are not secret.
-- **TV:** `tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; tuned for 16:9 and 16:10, with 4:3 checked. `kw()` swaps murder/poison wording everywhere. Before a game the TV shows the room code and the Keeper link. F toggles full screen.
+- **TV:** `tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; tuned for 16:9 and 16:10, with 4:3 checked. Before a game the TV shows the room code and the Keeper link. F toggles full screen.
 
 ### 4.5 Modern
 
@@ -189,12 +189,13 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
 - **8 to 24 players** (`MINP`, `MAXP`). Forsworn: 2 (8 to 10), 3 (11 to 15), 4 (16 to 22), 5 (23 to 24).
 - **Exiles:** two a Reckoning while more than 16 are at the table (`exilesAt`). **Night victims:** 2 from 12 alive, 3 from 20 (`killsAt`), never taking the table below five.
 - **The final** begins when five or fewer remain, or no Forsworn is left.
-- **The Purse** is capped at its target (2000 by default). The winners take the Purse the Loyal built; if the Forsworn win, they take what it **fell short** of its target (`wonPot` in `core.js`, `won` in `modern.js`), so sabotage pays. **Prize tiers** (a better prize at a half-full and a full Purse) follow the same amount. The default prize is a box of chocolates.
+- **The Purse** is capped at its target (2000 by default). The winners take the Purse the Loyal built; if the Forsworn win, they take what it **fell short** of its target (`wonPot` in `core.js`, `won` in `modern.js`), so sabotage pays. **Prize tiers** (a better prize at a half-full and a full Purse) follow the same amount. The default prize is **chocolate coins** (`PRIZE0` in both `core.js` and `modern.js`): every 100 points the winners take is one coin (`coinsOf`, floor(won / 100)), so the end screens say "15 chocolate coins" for a Purse of 1,500, and for the Forsworn the shortfall converted the same way. The Modern lobby and the Classic prize page explain the rate; a prize the host types gets no coins and behaves as before. In Classic, chocolate coins are shared out like the Purse: no rock, paper, scissors for them (`s.rps` stays null).
+- **Poison is the only kill.** Murder was removed from both modes. Saved games with `kill: "murder"` (Modern `s.opts.kill`, Classic `rules.kill`) still load and play as poison, because nothing reads the field any more. Internally the kill night keeps its old key `"murder"` (`s.night.mode`, `s.morning.kind`, `s.stats.murders`, `MODES.murder`, labelled Poison) so games in progress load; never show that key to players.
 - **Ghosts:** the exiled and the dead. They stay in the game.
 
 ### 5.2 Modern
 
-- **Lobby:** the host sets the kill (poison, the default, or murder), Sanctuary (secret or public), the prize and up to two prize tiers, the title, **twists** (on by default) and **dinner in courses** (off by default; the lobby asks "Eating as you play?"). Start needs 8 players.
+- **Lobby:** the host sets Sanctuary (secret or public), the prize and up to two prize tiers, the title, **twists** (on by default) and **dinner in courses** (off by default; the lobby asks "Eating as you play?"). Start needs 8 players.
 - **The Oath:** each player says whether they'd like to be Forsworn (yes, no, either way); roles are dealt to volunteers first, then "either way", then whoever must. Then each player sees their role.
 - **The evening plans itself** (`planDay`): each day is a list of steps and the host's phone has one button, **Begin: <next step>**, plus a short break (the 10-minute Interval), "+5 minutes" / "end the break", and "continue" after each result, reveal and dawn. The host can't choose Trials, call the Temptation or open the Reckoning early.
   - Round one opens with **Most Likely To** (no prize).
@@ -205,7 +206,7 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
 - **The Purse:** each Trial offers a share of what's left; the table's success fills it, and each wrong answer from a Forsworn takes 50 back (up to half the offer). Everything moves in 50s.
 - **The Temptation:** everyone answers PURSE or SELF in secret. Exactly one SELF takes Sanctuary and the Purse grows; nobody: the Purse grows double; two or more: nobody gets it and the Purse shrinks.
 - **The Reckoning:** talk (4 minutes by default), then a 2-minute vote. Ghosts vote too, as "calls" that don't count but are named. A tie goes to a 90-second revote between the tied; the **Casting Vote** settles a tie its holder voted in (the table sees it was used, never by whom); a second tie, or no votes, is settled by lot. The exile's role is shown five seconds later (not in the final). The **Crown** holder may lay it down once, during the talk or the vote, to be safe from that exile. Above 16 players a second Reckoning follows the first.
-- **Last words:** an exiled player (not in the final) and a murdered player each get one optional typed line of up to 140 characters; the TV shows it and the narrator reads it. Poison gives 30 seconds of spoken last words per victim at dawn.
+- **Last words:** an exiled player (not in the final) gets one optional typed line of up to 140 characters; the TV shows it and the narrator reads it. The poisoned get 30 seconds of spoken last words each at dawn.
 - **Night** (2 minutes): the Forsworn choose on their phones; the Loyal tap to sleep. With two or more Forsworn alive they can send set phrases (`WHISPERS`, up to 8 each a night), seen only by the Forsworn. If they choose nobody, the house chooses. Sanctuary saves its holder.
 - **Dawn:** names the victims; if one topped a Most Likely To prompt, the TV says so.
 - **The final:** one Trial, then Reckonings with no role reveal until four or fewer remain; then **Trust or Doubt**: only a unanimous TRUST ends the game, otherwise another Reckoning. At two left the game ends. **The Unmasking** shows every survivor's role. With two or more Forsworn among the survivors comes **Honour or Betray**: all honour, they share; exactly one betrays, they take it all; two or more betray, nobody wins it.
@@ -217,7 +218,7 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
 
 A wizard on the Keeper phone (`WIZ` in `host.js`).
 
-- **Six core pages** (`core: true`): who's playing, how long, murder or poison, the prize, who keeps, and the Keeper PIN (4 to 8 digits), then **Ready**: a summary with every other choice made. Each line has **Change** (back with **Done**); **Go through every choice** walks the Customise pages and returns.
+- **Five core pages** (`core: true`): who's playing, how long, the prize, who keeps, and the Keeper PIN (4 to 8 digits), then **Ready**: a summary with every other choice made. Each line has **Change** (back with **Done**); **Go through every choice** walks the Customise pages and returns.
 - **Who keeps:** the host, or "a friend will keep, and I'll play" (the host must be among the players, the Keeper must not). Ready's button becomes **Hand over to …**, where the Keeper can change the PIN and presses **Start game**.
 - **Recommendations** (`RECS`) follow earlier choices (rounds from table size and hours via `estMins`, an Interval from 3 hours, one Trial a round at 2.5 hours or less). The **Short game** (2 hours) is one Trial a round, no Interval, no dinner. Dinner is never recommended. **A first game is kept plain:** every twist off and Sanctuary public until `localStorage['candle-played']` is set, which happens when a game reaches its final screen on that phone. Until the Keeper picks something (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped.
 - The draft lives in `sessionStorage` (`candle-draft`); tests set `setupDraft` and call `submitSetup()`. The result is `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
@@ -230,7 +231,6 @@ A wizard on the Keeper phone (`WIZ` in `host.js`).
 | `courses` | on/off | dinner in three courses: starter after round one, main mid-game, dessert before the final (`courseDue`, `COURSES`) |
 | `mingle` | on/off | a 10-minute Interval before each Reckoning |
 | `pool` | Trial keys or null (all) | `planMissions` deals them: the icebreaker first, Ghost games after Trial two, no repeats until used up; `state.plan`/`planAt` hold the order; `nextPlanned` skips the Statue until there are Ghosts |
-| `kill` | `murder` / `poison` | murder: the victim is tapped and leaves under blindfold; poison: told at night, announces at dawn, last words. `kw()` swaps the wording everywhere |
 | `ghosts` | on/off | off: `ghostsOf` returns nobody (no lore, verdicts, Ghost round or Statue) |
 | `convert`, `bargain` | on/off | `autoMode` picks the night: one Whisper, then one Last Offer, only for a lone Forsworn against 4 or more Loyal |
 | `quests` | on/off | one Errand pre-chosen each night |
@@ -252,7 +252,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
    - Reckoning: talk → boards → exile.
    - Reveal: the role is shown unless it's the final; the new Ghost gives their verdict.
    - Night: a kill, or a Whisper / Last Offer when one Forsworn faces four or more (if on), plus an Errand.
-   - Morning: dawn (murder: an empty chair; poison: the victim stands, last words).
+   - Morning: dawn (the victim stands, announces it and has 30 seconds of last words).
 4. **The end game** (§5.7).
 5. **The final ceremony:** seals turned one by one (hold for a drumroll). With two or more Forsworn left, Honour or Betray; then possibly the Ghosts' round.
 6. **Final screen:** winner, prize, Purse split and the full roll (converted or bargaining Forsworn marked). Then the **awards**, one at a time.
@@ -299,7 +299,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - The round that starts with **5 or fewer alive is the final**. **Five never becomes four by poison:** an exile that leaves 5 goes straight into the final with no night.
 - If the final opens with more than five (Sanctuary held on the last night), `fiveMission()` plays one more Trial before the last vote so the Confessor can be won. The final never deals Most Likely To.
 - **The final Reckoning** takes the table to four with no role reveal ("Another vote, N more to go" if more than five). Then **Trust or Doubt**, every remaining player voting in secret on the phone: only a unanimous TRUST ends the game; otherwise another table (no reveal), 4 → 3 and vote again; 3 → 2 goes to the ceremony.
-- **The ceremony:** the Keeper turns each survivor's seal. With two or more Forsworn left, **Honour or Betray** (phone handed round): all honour, they split the Purse and play rock, paper, scissors for the prize; one betrays, they take both; two or more betray, it goes to the Ghosts who named a Forsworn (their own round if several), otherwise the Keeper keeps it.
+- **The ceremony:** the Keeper turns each survivor's seal. With two or more Forsworn left, **Honour or Betray** (phone handed round): all honour, they split the Purse and play rock, paper, scissors for the prize (unless it is chocolate coins, which are shared); one betrays, they take both; two or more betray, it goes to the Ghosts who named a Forsworn (their own round if several), otherwise the Keeper keeps it.
 
 ### 5.8 Classic: awards, scripts
 

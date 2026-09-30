@@ -108,13 +108,20 @@ try:
         check("no roles revealed in the end game", E("()=>{const d=state.players.filter(p=>!p.alive);return !d[d.length-1].revealed}"))
         E("()=>{act(s=>{s.phase='day';s.table=null;s.endvote=null})}"); E("()=>openTable()")
         check("a table in the final with four or fewer opens the vote instead", E("()=>state.phase==='endvote'"), E("()=>state.phase"))
-        # share: two Forsworn split what the Purse fell short (2000 − 200), rock paper scissors for the prize
-        E("()=>{act(s=>{s.pot=200;s.players.forEach((p,i)=>p.alive=i<3)});act(s=>{s.phase='day';s.endvote=null});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));const f=state.final2;f.cloakIds.forEach(id=>castTake(id,'share'));handoff=null;startTakeReveal();act(s=>{s.final2.revealed=s.final2.order.length});finishGame()}")
+        # share: two Forsworn split what the Purse fell short (2000 − 200), rock paper scissors for a prize the host chose
+        E("()=>{act(s=>{s.pot=200;s.prize='a bottle of wine';s.players.forEach((p,i)=>p.alive=i<3)});act(s=>{s.phase='day';s.endvote=null});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));const f=state.final2;f.cloakIds.forEach(id=>castTake(id,'share'));handoff=null;startTakeReveal();act(s=>{s.final2.revealed=s.final2.order.length});finishGame()}")
         fin = E("()=>({each:state.potEach,ids:state.prizeIds,rps:!!state.rps})")
         check("all share: the pot is split and they play for the prize", fin["each"] == 900 and len(fin["ids"]) == 2 and fin["rps"], fin)
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
         check("TV final: the pot splits two ways, 900 each", "splits two ways" in tvtxt and "900" in tvtxt, tvtxt[:300])
         check("host reads the split", "900" in h.inner_text("#host"))
+        # the default prize, chocolate coins: one per 100 points of the 1800 the Forsworn take, shared out, no rock paper scissors
+        coins = E("()=>{const s=JSON.parse(JSON.stringify(state));s.prize=PRIZE0;return [coinsOf(s),prizeName(s)]}")
+        check("chocolate coins: 1800 short of the target is 18 coins", coins == [18, "18 chocolate coins"], coins)
+        E("()=>{act(s=>{s.phase='final2';s.prize=PRIZE0});finishGame()}")
+        check("…shared out like the Purse: no rock, paper, scissors", E("()=>state.phase==='final' && !state.rps && state.prizeIds.length===2"), E("()=>[state.phase,state.rps]"))
+        tvc = E("()=>{const s=JSON.parse(JSON.stringify(state));const v=tvView(publicView(s));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
+        check("TV final with chocolate coins: the count, and no rock paper scissors", "18 chocolate coins" in tvc and "rock, paper, scissors" not in tvc, tvc[:300])
         # six awards, one at a time
         aw = E("()=>(state.awards||[]).map(a=>a.title)"); awn = E("()=>(state.awards||[]).flatMap(a=>a.names)")
         check("awards fill a grid (2, 4, 6, 8 or 12), one per person", len(aw) in (2, 4, 6, 8, 12) and len(awn) == len(set(awn)), (aw, awn))

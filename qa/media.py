@@ -18,7 +18,7 @@ with sync_playwright() as p:
     host.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1234',host:'Sam',prize:'a bottle of champagne',prize3:'dinner out, on the losers'});renderHost()}", "\n".join(NAMES)); host.wait_for_timeout(300)
     for i, step in enumerate(["welcome", "hours", "keeper", "prize", "review"]):
         H("()=>wGo('" + step + "')"); host.evaluate("()=>window.scrollTo(0,0)"); host.wait_for_timeout(250); hs(f"0{i}-setup-{step}")
-    H("()=>startGame({names:" + str(NAMES) + ",cloaks:2,title:'',host:'Sam',potUnit:'£',potCap:2000,prize:'a bottle of champagne',hours:4,pin:'1234',rules:{kill:'murder'}})")
+    H("()=>startGame({names:" + str(NAMES) + ",cloaks:2,title:'',host:'Sam',potUnit:'£',potCap:2000,prize:'a bottle of champagne',hours:4,pin:'1234'})")
     H("()=>act(s=>{s.players.forEach((p,i)=>p.role=[2,6].includes(i)?'cloak':'candle');s.plan=['quiz','countdown','charades','hilo','truths','change','memory','draw','estimate'];s.planAt=0})")
     host.wait_for_timeout(800)
     tv = b.new_context(viewport={"width": 1920, "height": 1080}).new_page(); tv.on("pageerror", lambda e: errs.append(str(e)))
@@ -46,7 +46,7 @@ with sync_playwright() as p:
     shot("10-night", None, 200)
     H("()=>{act(s=>{s.night.step=nightScript(s.night,s).length-1});finishNight()}"); tv.wait_for_timeout(5500)
     shot("11-dawn", None, 200)
-    shot("12-murdered", "()=>act(s=>{s.morning.revealed=true})", 4500)
+    shot("12-poisoned", "()=>act(s=>{s.morning.revealed=true})", 4500)
     H("()=>act(s=>{s.phase='final';s.round=5;s.finalRound=5;s.winner='candles';s.finalStep=0;s.players.forEach((p,i)=>{p.revealed=true;p.alive=[0,1,8].includes(i)});s.prizeTo='Annie, Ryan and Hannah';s.prizeIds=[s.players[0].id,s.players[1].id,s.players[8].id];s.potEach=600;s.pot=1800;s.awards=awardsOf(s)})")
     shot("13-final", None, 14000)
     shot("14-awards", "()=>act(s=>{s.finalStep=1;s.awardShown=(s.awards||[]).length})", 5000)

@@ -5,7 +5,7 @@
 import { newGame, join, act, tick, viewFor } from "../worker/src/modern.js";
 let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, ctx = { rnd, dict: null };
 let now = 1e12;
-const s = newGame(now, rnd, { courses: false, twists: false, kill: "murder", prize: "a bottle of champagne" }), ids = [];
+const s = newGame(now, rnd, { courses: false, twists: false }), ids = [];
 for (const n of ["Annie", "Ryan", "Tom", "Sophie", "Marcus", "Priya", "Jess", "Oliver"]) ids.push(join(s, n, now, rnd).id);
 const dir = ids[0], views = {}, shots = [];
 const a = (pid, x) => { const r = act(s, pid, x, now, ctx); if (r && r.error) throw new Error(JSON.stringify(x) + ": " + r.error); };
@@ -87,7 +87,7 @@ snap("night-l", L[1]); phone("tour-modern-phone-night-loyal.jpg", "night-l"); tv
 s.stats.likely = { [victim]: "Most likely to cry at a wedding" };
 alive().forEach((id) => { if (role(id) !== "f") a(id, { a: "sleep" }); }); t();
 snap("victim", victim); phone("tour-modern-phone-victim.jpg", "victim");
-a(dir, { a: "cont" }); a(victim, { a: "words", v: "Tell my cat I loved her." });
+a(dir, { a: "cont" });
 snap("dawn", L[1]); tv("tour-modern-tv-dawn.jpg", "dawn");
 a(dir, { a: "cont" });
 

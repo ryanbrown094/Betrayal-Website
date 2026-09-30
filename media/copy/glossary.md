@@ -60,7 +60,7 @@ These belong to the game. Each phone (and the TV, if there is one) explains each
 | the shared winnings | **the Purse** | public | the Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it fell short of its target. It also decides which prize is won |
 | the final reveal | **the Unmasking** | public | the seals turn one by one |
 | night and morning | **night, dawn** | plain | |
-| ways to kill | **poison, murder** | plain | |
+| the way the Forsworn kill | **poison, a poisoning, poisoned** | plain | the only kill: “poisoned in the night”. Never “murder” |
 | a tie-breaker, once a game | **the Casting Vote** | in-game | breaks a tie at one Reckoning |
 | both together | **the Crown** | in-game | Sanctuary and the Casting Vote together; its holder can lay it down to be immune from that vote (and unprotected that night) |
 | Purse or protection gamble | **the Temptation** | in-game | everyone chooses PURSE or SELF (on their phone in Modern, chalked in Classic). Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse loses points |
@@ -85,7 +85,7 @@ These belong to the game. Each phone (and the TV, if there is one) explains each
 
 Capitalised: **The Betrayal**, **the Forsworn**, **the Loyal**, **Ghost**, **the Keeper**, **the Oath** (the opening scene), **Trial**, **the Reckoning**, **the Interval**, **Sanctuary**, **the Purse**, **the Unmasking**; in-game, **the Casting Vote**, **the Crown**, **the Temptation**, **the Whisper**, **the Last Offer**, **Errand**, **the Confessor** (internal), **Trust or Doubt**, **Honour or Betray**; product, **Table**, **Table code**, **Regular**, **Modern**, **Classic**, **the Short game**, **Customise**.
 
-Lower case: the host, exile, night, dawn, poison, murder, oath (the promise itself: “everyone swore an oath”), seal, candle, phone, blindfold, chalkboard, dinner, starter, main course, dessert, booking code, QR code.
+Lower case: the host, exile, night, dawn, poison, oath (the promise itself: “everyone swore an oath”), seal, candle, phone, blindfold, chalkboard, dinner, starter, main course, dessert, booking code, QR code.
 
 What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 

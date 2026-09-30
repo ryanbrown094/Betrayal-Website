@@ -12,7 +12,7 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 
 ## 2. The shape of an evening (Modern)
 
-1. **Open the Table (the host, before or as guests arrive).** Enter the booking code, choose **Modern**, type your name, **Open the Table**. Share the Table code, or put the TV on so guests can scan its QR code. While they join, the host makes five quick choices (murder or poison, secret or public Sanctuary, the prize, twists on or off, dinner in courses on or off) and presses **Start**. Details in `setup-guide.md`.
+1. **Open the Table (the host, before or as guests arrive).** Enter the booking code, choose **Modern**, type your name, **Open the Table**. Share the Table code, or put the TV on so guests can scan its QR code. While they join, the host makes four quick choices (secret or public Sanctuary, the prize, twists on or off, dinner in courses on or off) and presses **Start**. Details in `setup-guide.md`.
 2. **The Oath.** Every phone asks the same question in secret: **“Would you like to be Forsworn?”** (Yes, make me Forsworn / I’d rather be Loyal / Either way). Nobody sees anyone’s answer. The game uses the answers when it deals the roles, but can’t always give everyone what they asked for.
 3. **Roles.** Each guest holds their phone close and taps to see their role. The Forsworn see each other’s names on their phones (a lone Forsworn is told they’re alone). Everyone taps “Got it” and the role hides again.
 4. **Rounds**, each: Trial(s) → the result and prizes → (a break) → the Reckoning → reveal → night → dawn. If the host switches dinner in courses on, a starter, a main and dessert come between the rounds (4.3).
@@ -71,7 +71,7 @@ Nobody is told how many Forsworn there are.
 - **Heads down.** Every living player taps a name on their phone, so nobody can tell who is really choosing. Only the Forsworn’s choices count.
 - **Forsworn whispers:** at night the Forsworn can send each other set phrases (“Vote with me tomorrow”). Not the Classic twist called the Whisper.
 - **Victims per night** grow with the table so the final still starts with five: 1 below 12 alive, up to 2 from 12, up to 3 from 20.
-- **The victim learns in secret, on their phone.** **Poison** (default): “Say nothing yet”; when the host reveals the night, they get their **last words**. **Murder**: they say nothing and leave the table quietly at dawn.
+- **The victim learns in secret, on their phone.** They were **poisoned**: “Say nothing yet”; when the host reveals the night, they get thirty seconds of spoken **last words**.
 - Sanctuary saves its holder: “nobody died”, and the table doesn’t learn why.
 - Five left after the Reckoning: **no night**. The final round starts.
 
@@ -95,7 +95,7 @@ The Whisper, the Last Offer and Errands are Classic only (section 10).
 - **The final always aims to start with five.** The game sizes every earlier round to land there.
 - **With five or fewer**, exiles aren’t revealed.
 - **Trust or Doubt:** each player votes on their phone, in secret: TRUST (every Forsworn is gone) or DOUBT (one’s still here). Unanimous TRUST ends the game. Anything else: back to the Reckoning for another unrevealed exile, then vote again.
-- **The prize:** the host sets it before the game (the default is **a box of chocolates**). Optionally, **better prizes for a fuller Purse**: one at a half-full Purse, one at a full Purse. If the Forsworn win it works the other way round: half empty wins them the better prize, empty the best. Nobody sees them until the end.
+- **The prize:** the host sets it before the game (the default is **chocolate coins**: every 100 points in the Purse is one coin, so the end screens say, for example, “15 chocolate coins” for a Purse of 1,500; for the Forsworn, what the Purse fell short, converted the same way). Optionally, **better prizes for a fuller Purse**: one at a half-full Purse, one at a full Purse. If the Forsworn win it works the other way round: half empty wins them the better prize, empty the best. Nobody sees them until the end.
 - **The Unmasking:** seals turn one by one.
   - **Only Loyal left:** the Loyal win and share the Purse they built.
   - **A Forsworn left:** the Forsworn win, and take what the Purse fell short.
@@ -129,7 +129,7 @@ The question banks hold about 3,700 questions and prompts (`question-banks.md`),
 **Classic is the other way to play, for groups who’d rather put their phones away.** One phone runs the game, a Keeper reads the script and doesn’t play, guests wear blindfolds at night and chalk their votes on small boards, and the TV puts on the show. Guests don’t need phones. The rules are the same game; these are the differences.
 
 ### 10.1 Setup and the Keeper
-- **Setup (the Keeper, before guests arrive):** five questions (who’s playing, how long, murder or poison, the prize, who’s keeping) and a Keeper PIN, then a summary that’s ready to start. Every other choice is pre-set and can be changed under **Customise** (Forsworn count, rounds, Trials each round, dinner (none unless you choose one break or three courses), the Interval, the narrator, Ghosts, which Trials, Sanctuaries, every twist, the Purse, a title for the night). Details in `setup-guide.md`.
+- **Setup (the Keeper, before guests arrive):** four questions (who’s playing, how long, the prize, who’s keeping) and a Keeper PIN, then a summary that’s ready to start. Every other choice is pre-set and can be changed under **Customise** (Forsworn count, rounds, Trials each round, dinner (none unless you choose one break or three courses), the Interval, the narrator, Ghosts, which Trials, Sanctuaries, every twist, the Purse, a title for the night). Details in `setup-guide.md`.
 - **The Keeper** runs it like a presenter, knows everything and doesn’t play. If the host wants to play, they choose **“A friend will keep, and I’ll play”**, add themselves to the players and hand the phone to a friend, who presses **Start**, so the host never sees the roles.
 - **Props:** a TV with a laptop to cast to it, the Keeper’s phone, and a blindfold, a small chalkboard and chalk per guest.
 - **The first game:** the twists are off (the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer and Errands) so everyone learns the game itself. Once a game has been played on that phone, setup recommends them: “your second night”.
@@ -141,9 +141,9 @@ The question banks hold about 3,700 questions and prompts (`question-banks.md`),
 - **Trials.** The Keeper’s phone shows the next Trial in a pre-dealt running order (the Keeper can swap it) and gives the brief to read; the TV shows the rules, the prize and the game. Answers are shouted or chalked. Wrong shouts in Rapid Quiz, Snap and What Changed? cost the Purse 50 (by default only a Forsworn’s). Some rounds have two Trials.
 - **Hidden Sanctuary.** In Trials played in rounds, one secret round can hide Sanctuary; its winner is tapped on the shoulder later, under blindfold. At most a quarter of the table can hold one at once.
 - **The Reckoning.** Every player chalks one name. The boards turn **one at a time, in seat order**; the Keeper taps each vote in and the TV counts it live. The Ghosts chalk their call too. A newly dead Loyal gives a secret **verdict** on the Keeper’s phone, naming the player they’re sure is Forsworn.
-- **The night.** Blindfolds on. The Keeper wakes the Forsworn by tapping them; they choose in silence. Poison: the Keeper quietly tells the victim, who announces it at dawn with 30 seconds of last words. Murder: the victim is tapped and led away under blindfold.
-- **The final.** A last Trial with five; if Sanctuary kept an extra player alive, the table first votes (no reveals) down to five. One more unrevealed vote to four, then Trust or Doubt with the Keeper’s phone passed round. At two left it goes straight to the Unmasking, the Keeper holding a button for the drumroll. Surviving Loyal play rock, paper, scissors for the prize. If two or more Forsworn betray at Honour or Betray, the prize passes to the Ghosts who named a Forsworn (who face the same question), or to nobody.
-- **The prize:** up to three, set at setup: the prize, a better one at half the Purse target, the best when it’s full.
+- **The night.** Blindfolds on. The Keeper wakes the Forsworn by tapping them; they choose in silence. The Keeper taps the victim, who reads that they’ve been poisoned, puts the blindfold back on and announces it at dawn with 30 seconds of last words.
+- **The final.** A last Trial with five; if Sanctuary kept an extra player alive, the table first votes (no reveals) down to five. One more unrevealed vote to four, then Trust or Doubt with the Keeper’s phone passed round. At two left it goes straight to the Unmasking, the Keeper holding a button for the drumroll. Surviving Loyal play rock, paper, scissors for the prize (chocolate coins, the default, are shared out with the Purse instead). If two or more Forsworn betray at Honour or Betray, the prize passes to the Ghosts who named a Forsworn (who face the same question), or to nobody.
+- **The prize:** up to three, set at setup: the prize (chocolate coins if left blank, one for every 100 points won), a better one at half the Purse target, the best when it’s full.
 
 ### 10.3 Classic’s powers and twists
 - **Casting Vote:** once a game, from about halfway; its holder breaks a tie. Won openly or in a hidden round.

@@ -39,7 +39,7 @@ const PHASECARDS = {
   endvote: () => ["Trust or Doubt?", "In secret, on the phone", "scales"]
 };
 const RULES_TV = h => [
-  ["The Forsworn", killOf() === "murder" ? "hide among you. Each night they murder " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who leave" : "one Loyal player, who leaves") + " the table in silence while you sit blindfolded." : "hide among you. Each night they poison " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who announce it at dawn" + (ghostsOn() ? " and become Ghosts." : ", then leave the table.") : "one Loyal player, who announces it at dawn" + (ghostsOn() ? " and becomes a Ghost." : ", then leaves the table."))],
+  ["The Forsworn", "hide among you. Each night they poison " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who announce it at dawn" + (ghostsOn() ? " and become Ghosts." : ", then leave the table.") : "one Loyal player, who announces it at dawn" + (ghostsOn() ? " and becomes a Ghost." : ", then leaves the table."))],
   ["The Loyal", "must find them. Each Reckoning, chalk a name. Whoever gets the most votes is exiled and reveals their role." + (state && aliveOf(state).length > 16 ? " While more than sixteen sit at the table, every Reckoning exiles two." : "")],
   ["Trials", "grow the Purse. Some hide Sanctuary: whoever holds it cannot be poisoned that night."],
   ["Blindfolds", "on when " + h + " says. If you feel a tap, do what the screen says. Never speak."],
@@ -264,7 +264,7 @@ function tvView(s) {
     }
     case "morning": {
       const m = s.morning; v.scene = "morning"; v.key += m.revealed ? "r" : ""; // last words add their ring in place
-      if (!m.revealed) { v.sfx = "dawn"; v.burst = "dust"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="gold fx-title">Did everyone sleep well?</h1><div class="rule"></div><div class="sub fx-rise" style="--d:1s">${killOf(s) === "murder" ? "Look around the table. Is every chair still full?" : "Every chair is full. But is everyone alive?"}</div>`; break }
+      if (!m.revealed) { v.sfx = "dawn"; v.burst = "dust"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="gold fx-title">Did everyone sleep well?</h1><div class="rule"></div><div class="sub fx-rise" style="--d:1s">Every chair is full. But is everyone alive?</div>`; break }
       if (m.kind === "murder") { v.sfx = m.lastEnd ? null : "poison"; v.burst = m.lastEnd ? null : "red"; v.html = `<div class="eyebrow">dawn</div><h1 class="xl bleed" data-k="nm">${esc(m.name)}</h1><div class="sub fx-fade" style="--d:1.6s">${m.many ? "were" : "was"} poisoned in the night.${m.lastEnd ? " Last words." : m.many ? " Their candles have gone out." : " Their candle has gone out."}</div>${m.lastEnd ? ring(m.lastEnd, 30000 * (m.victimIds || [1]).length, "sm") : ""}` }
       else { v.sfx = "gold"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="${m.kind === "shield" ? "gold" : ""} fx-title">Nobody was poisoned</h1><div class="sub fx-rise" style="--d:.9s">${m.kind === "shield" ? "Sanctuary held." : "A quiet night. Or was it?"}</div>` }
       break;
@@ -320,7 +320,7 @@ function tvView(s) {
       // how each Forsworn became one: from the start, by a Whisper, or by the Last Offer; and who refused
       const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer" : "Forsworn · by the Last Offer, round " + p.converted.round) : (many ? "Forsworn · Whisper" : "Forsworn · by a Whisper, round " + p.converted.round)) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
       v.scene = "final"; v.norail = true; v.tight = true; v.sfx = tr ? "sting" : "win"; v.flash = tr ? "red" : "gold"; v.waves = tr ? "red" : "gold";
-      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
+      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeName(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
       const plabel = pt === undefined ? "the prize" : tr ? (!pt ? "the Purse fell short by less than half: the prize" : pt.at >= 1 ? "an empty Purse: the best prize" : "a Purse short by half: the better prize") : !pt ? "the Purse didn’t reach half: the prize" : pt.at >= 1 ? "a full Purse: the best prize" : "a half-full Purse: the better prize";
       if (rw) { v.key += "·" + rw.id; v.sfx = "win"; v.flash = "gold"; v.waves = "gold" }
       const prizeLine = rw ? `<div class="prizeline fx-rise" style="--d:.6s"><span>takes home</span><b>${prz}</b></div>`
@@ -329,7 +329,6 @@ function tvView(s) {
 <h1 class="${tr ? "blood" : "gold"} fx-slam">${tr ? "The Forsworn win" : "The Loyal win"}</h1>${many ? `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Forsworn take " + moneyOf(s, wonPot(s)) + ", what the Purse fell short." : "Purse: " + moneyOf(s, s.pot) + "."}</div>` : `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Loyal built a Purse of " + moneyOf(s, s.pot) + " of " + moneyOf(s, s.potCap || 2000) + ", and the Forsworn take the " + moneyOf(s, wonPot(s)) + " it fell short." : "Every Forsworn is gone. Purse: " + moneyOf(s, s.pot) + "."}</div>`}${prizeLine}${rw || many ? "" : ghostVerdictTV(s)}${!rw && ps.length <= 12 && (s.cloakMisses || (s.questTally && (s.questTally.done || s.questTally.failed))) ? `<div class="sub small">${[s.cloakMisses ? `Forsworn shouted <b>${s.cloakMisses}</b> wrong answer${s.cloakMisses === 1 ? "" : "s"} all night.` : "", s.questTally && (s.questTally.done || s.questTally.failed) ? `Errands: ${s.questTally.done} completed, ${s.questTally.failed} failed, in plain sight.` : ""].filter(Boolean).join(" ")}</div>` : ""}<div class="rolls ${huge ? "huge" : ps.length > 10 ? "many" : ""}" style="grid-template-columns:repeat(${huge ? 6 : cols},minmax(0,1fr))">${ps.map((p, i) => `<div class="${p.role === "cloak" ? "t" : "f"}" style="--d:${(1.5 + i * Math.min(0.7, 20 / ps.length)).toFixed(1)}s">${ART.seal(p)}<span><b>${esc(p.name)}</b><small>${how(p)}${p.left ? " · left" : p.alive ? "" : " · out"}</small></span></div>`).join("")}</div>`; break;
     }
   }
-  if (v.html) v.html = kw(v.html, s); // murder or poison, as the host chose
   return v;
 }
 
