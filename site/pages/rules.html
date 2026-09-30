@@ -1,11 +1,22 @@
 <!-- title: How to play -->
-<!-- desc: How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away. -->
+<!-- fulltitle: How to play The Betrayal: rules for the party game -->
+<!-- desc: How to play The Betrayal, the hidden-role party game for 8 to 24 on phones: the Oath, Trials, the secret vote, the night, the Purse and the end game. -->
 <style>
 .toc { display: flex; flex-wrap: wrap; gap: 0; margin: 20px 0 6px; padding: 12px 0; list-style: none; border-top: 1px solid rgba(230,165,140,.22); border-bottom: 1px solid rgba(230,165,140,.22); font: 15px/1 var(--sc); letter-spacing: .05em } .toc li + li::before { content: "·"; color: var(--copper); padding: 0 10px } .toc a { display: inline-block; padding: 8px 0; color: var(--ivory2); text-decoration: none } .toc a:hover { color: var(--ivory) }
 ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:first-child { color: var(--ivory) }
 dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.missions dd { margin: 2px 0 0; color: var(--ivory2) }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 }
 .btn.ghost { background: transparent; color: var(--ivory) }
+/* the contents: a sticky row of chips with full-height tap targets, sideways-scrolling on phones, marking the section being read */
+.toc { position: sticky; top: 0; z-index: 5; gap: 0 20px; margin: 20px calc(-1 * max(20px, env(safe-area-inset-right))) 6px calc(-1 * max(20px, env(safe-area-inset-left))); padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); border-top: 0; background: rgba(9,7,10,.96); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px) }
+.toc li { flex: none } .toc li + li::before { content: none } .toc a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; white-space: nowrap } .toc a[aria-current="true"] { color: var(--rose); box-shadow: inset 0 -2px var(--rose) }
+@media (max-width: 900px) { .toc { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain } .toc::-webkit-scrollbar { display: none } }
+h2[id] { scroll-margin-top: calc(var(--barh, 46px) + 14px) }
+/* phones: each Trial folds into its name (built from the list below by the script at the foot of the page) */
+.missions.acc { margin: 12px 0; border-top: 1px solid rgba(230,165,140,.18) } .missions.acc details { border-bottom: 1px solid rgba(230,165,140,.18) }
+.missions.acc summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; font-weight: 700; color: var(--ivory); cursor: pointer; list-style: none } .missions.acc summary::-webkit-details-marker { display: none }
+.missions.acc summary::after { content: "+"; flex: none; color: var(--rose); font-size: 24px; font-weight: 400; line-height: 1 } .missions.acc details[open] summary::after { content: "\2212" }
+.missions.acc p { margin: -4px 0 14px; color: var(--ivory2) }
 </style>
 <h1>How to play</h1>
 <p>Everything that happens at a night of The Betrayal, from the first oath to the last betrayal. You don’t need to learn any of it before the night: every phone tells its player what to do, when. But if you like to know what you’re buying, here is the whole game.</p>
@@ -107,4 +118,39 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 <li>A phone each. A TV, with a laptop connected or casting to it, makes it a show, but it’s optional.</li>
 <li><b>For Classic:</b> a TV with a laptop connected or casting to it, a phone for the Keeper, a blindfold for every guest (sleep masks work well), and a small chalkboard and chalk, or a whiteboard and pen, for every guest.</li>
 </ul>
+<p>In short: The Betrayal is a hidden-role party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone with no app to install. A game takes about 3 to 3½ hours for 8 to 12 players. A Table costs £10 for one party, or £20 a month as a Regular.</p>
+<p>Hosting a big group, an office party or a birthday? Read <a href="/party-games-for-large-groups">party games for large groups</a>. Curious how hidden-traitor games work without an app? Read <a href="/traitors-at-home">how to host a traitors-style game night at home</a>.</p>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/tour">See what a game looks like</a></div>
+<script>
+(() => {
+  // the contents row: mark the section being read, and keep its chip in view along the row
+  const toc = document.querySelector(".toc"), root = document.documentElement;
+  if (toc) {
+    const links = [...toc.querySelectorAll('a[href^="#"]')]; let cur = null, raf = 0;
+    const setBar = () => root.style.setProperty("--barh", toc.offsetHeight + "px");
+    const spy = () => {
+      raf = 0; const y = toc.offsetHeight + 24; let a = null;
+      for (const l of links) { const h = document.getElementById(l.hash.slice(1)); if (h && h.getBoundingClientRect().top <= y) a = l; }
+      if (a === cur) return; if (cur) cur.removeAttribute("aria-current"); cur = a; if (!a) return;
+      a.setAttribute("aria-current", "true");
+      if (toc.scrollWidth > toc.clientWidth) { const r = a.getBoundingClientRect(), c = toc.getBoundingClientRect(); toc.scrollTo({ left: toc.scrollLeft + r.left - c.left - (c.width - r.width) / 2, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+    };
+    addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(spy); }, { passive: true });
+    addEventListener("resize", setBar); setBar(); if (document.fonts) document.fonts.ready.then(setBar); spy();
+  }
+  // phones: each Trial folds into its name, the same words, tap to read
+  const small = matchMedia("(max-width: 600px)");
+  const fold = () => {
+    if (!small.matches) return;
+    for (const dl of document.querySelectorAll("dl.missions")) {
+      const box = document.createElement("div"); box.className = "missions acc";
+      for (const dt of dl.querySelectorAll("dt")) {
+        const dd = dt.nextElementSibling, d = document.createElement("details"), s = document.createElement("summary"), p = document.createElement("p");
+        s.append(...dt.childNodes); if (dd && dd.tagName === "DD") p.append(...dd.childNodes); d.append(s, p); box.append(d);
+      }
+      dl.replaceWith(box);
+    }
+  };
+  fold(); if (small.addEventListener) small.addEventListener("change", fold);
+})();
+</script>

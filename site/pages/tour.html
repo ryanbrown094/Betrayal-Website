@@ -1,10 +1,11 @@
 <!-- title: See a game -->
-<!-- desc: A night of The Betrayal in pictures: played on everyone’s phones, with the TV as the show. And Classic, with a Keeper and blindfolds, for a night with phones away. -->
+<!-- fulltitle: See a game of The Betrayal, screen by screen -->
+<!-- desc: A night of The Betrayal in pictures: every phone screen and the TV, from the Oath to the Unmasking. And Classic, with a Keeper and blindfolds. -->
 <style>
 .wrap { max-width: 1000px }
 .shot { margin: 18px 0 30px } .shot img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(230,165,140,.25); background: #130d14 }
 .shot figcaption { margin-top: 10px; color: var(--ivory2); font-size: 16.5px; line-height: 1.55 } .shot figcaption b { color: var(--ivory) }
-.tag { font: 700 13px/1 var(--sc); letter-spacing: .06em; margin-right: 8px } .tag::after { content: " ·"; color: var(--copper) }
+.tag { font: 700 14px/1 var(--sc); letter-spacing: .06em; margin-right: 8px } .tag::after { content: " ·"; color: var(--copper) }
 .tag.tv { color: var(--rose) } .tag.ph { color: #b9c8d6 }
 /* Modern or Classic: one version at a time, like the tabs of a book (both show without JavaScript) */
 .vtabs { display: flex; gap: 28px; margin: 26px 0 8px; border-bottom: 1px solid rgba(230,165,140,.22) }
@@ -18,10 +19,42 @@
 .phones.two { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px } .mix { display: grid; grid-template-columns: minmax(0, 2.55fr) minmax(0, 1fr); gap: 16px; align-items: start; margin: 18px 0 30px } .mix .shot { margin: 0 } .mix .shot:last-child img { border-radius: 18px } @media (max-width: 700px) { .mix { grid-template-columns: 1fr } .mix .shot:last-child { max-width: 300px; margin: 0 auto } }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px } @media (max-width: 700px) { .pair { grid-template-columns: 1fr } }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 30px 0 } .btn.ghost { background: transparent; color: var(--ivory) }
+/* the sticky bar: Modern or Classic, and a row of chips for the sections of the one on show */
+.secbar { position: sticky; top: 0; z-index: 5; margin: 26px calc(-1 * max(20px, env(safe-area-inset-right))) 8px calc(-1 * max(20px, env(safe-area-inset-left))); padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); background: rgba(9,7,10,.96); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px) }
+.secbar .vtabs { margin: 0 }
+.chips { display: flex; gap: 0 20px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; margin: 0 calc(-1 * max(20px, env(safe-area-inset-right))) 0 calc(-1 * max(20px, env(safe-area-inset-left))); padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); border-bottom: 1px solid rgba(230,165,140,.22) } .chips::-webkit-scrollbar { display: none } .chips:empty { display: none }
+.chips a { flex: none; display: inline-flex; align-items: center; min-height: 44px; white-space: nowrap; font: 15px/1 var(--sc); letter-spacing: .05em; color: var(--ivory2); text-decoration: none } .chips a:hover { color: var(--ivory) }
+.chips a[aria-current="true"] { color: var(--rose); box-shadow: inset 0 -2px var(--rose) }
+@media (min-width: 901px) { .chips { flex-wrap: wrap } }
+@media (max-width: 600px) { .vtabs { gap: 24px } .vtabs button { font-size: 24px; padding: 8px 0 9px; min-height: 44px } }
+.ver h2[id], .ver h3[id], .ver[id] { scroll-margin-top: calc(var(--barh, 100px) + 14px) }
+/* TV screenshots open larger with a tap */
+.zoom { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: zoom-in; border-radius: 12px }
+.zoom .zhint { display: none }
+@media (max-width: 700px) { .zoom .zhint { display: block; position: absolute; right: 8px; bottom: 8px; padding: 5px 9px; border-radius: 3px; background: rgba(9,7,10,.78); color: var(--ivory); font: 14px/1 var(--sc); letter-spacing: .05em; pointer-events: none } }
+dialog.lb { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; overflow: hidden }
+dialog.lb::backdrop { background: rgba(9,7,10,.95) } html:has(dialog.lb[open]) { overflow: hidden }
+dialog.lb img { position: absolute; left: 50%; top: 50%; width: min(96vw, calc(92dvh * 16 / 9)); height: auto; transform: translate(-50%, -50%); border-radius: 8px; border: 1px solid rgba(230,165,140,.25); cursor: zoom-out }
+@media (max-width: 700px) and (orientation: portrait) { dialog.lb img { width: min(calc(100dvh - 128px), calc(94vw * 16 / 9)); transform: translate(-50%, -50%) rotate(90deg) } }
+dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(230,165,140,.45); background: rgba(9,7,10,.7); color: var(--rose); font: 400 28px/1 var(--ui); cursor: pointer }
+/* phones and iPads upright: each group of screenshots is a strip you swipe, edge to edge, with the next one peeking in */
+@media (max-width: 900px) {
+  .phones, .phones.four, .phones.two, .mix, .pair, .run { display: flex; align-items: flex-start; gap: 14px; max-width: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
+    margin: 18px calc(-1 * max(20px, env(safe-area-inset-right))) 30px calc(-1 * max(20px, env(safe-area-inset-left))); padding: 0 max(20px, env(safe-area-inset-right)) 2px max(20px, env(safe-area-inset-left));
+    scroll-padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
+  :is(.phones, .mix, .pair, .run)::-webkit-scrollbar { display: none }
+  .run { display: flex; align-items: flex-start; gap: 14px }
+  .run > :is(.phones, .mix, .pair) { display: contents }
+  :is(.phones, .mix, .pair, .run) .shot, .mix .shot:last-child { flex: none; width: min(62vw, 260px); max-width: none; margin: 0; scroll-snap-align: start }
+  :is(.phones, .mix, .pair, .run) .shot:has(img[width="1280"]) { width: 86vw }
+  .js :is(.phones, .mix, .pair, .run).strip { margin-bottom: 0 }
+  .dots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 26px } .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(230,165,140,.28); transition: background .2s ease } .dots i.on { background: var(--rose) }
+}
+@media (min-width: 901px) { .dots { display: none } .run { display: contents } }
 </style>
 <h1>A night of The Betrayal</h1>
 <p>Real screenshots from a game, played whichever way you choose.</p>
-<div class="vtabs" role="group" aria-label="Which way of playing to show"><button type="button" data-v="modern" aria-pressed="true">Modern</button><button type="button" data-v="classic" aria-pressed="false">Classic</button></div>
+<div class="secbar"><div class="vtabs" role="group" aria-label="Which way of playing to show"><button type="button" data-v="modern" aria-pressed="true">Modern</button><button type="button" data-v="classic" aria-pressed="false">Classic</button></div><nav class="chips" aria-label="Sections"></nav></div>
 
 <div class="ver on" data-v="modern">
 <p class="vnote">Everyone plays on their own phone. The TV, if you use one, puts on the show. Here is a whole evening, from opening the Table to the last reveal. (Some surprises are left out on purpose: you’ll meet them on the night.)</p>
@@ -135,7 +168,7 @@
 <div class="ver" data-v="classic" id="classic">
 <h2>Classic: phones away</h2>
 <p>In Classic, one phone runs the game: the Keeper reads every line and doesn’t play, guests wear blindfolds at night and chalk their votes, and the TV puts on the show. The rest of this page is a Classic night.</p>
-<h3>Before the guests arrive</h3>
+<h3 id="c-setup">Before the guests arrive</h3>
 <p>The Keeper sets the game up on their phone: four questions (who’s playing, how long, the prize, who keeps), and the rest is planned from the answers. Every choice is explained, and any of it can be changed before the game starts. A first game keeps the twists off, so everyone learns the game itself.</p>
 <div class="phones four">
 <figure class="shot"><img src="/media/tour-phone-00-setup-welcome.jpg" width="780" height="1688" loading="lazy" alt="The Keeper's phone: the first page of setup, with a checklist of what to prepare"><figcaption><span class="tag ph">phone</span>Setup starts with what to prepare and what the Keeper’s job is.</figcaption></figure>
@@ -144,11 +177,11 @@
 <figure class="shot"><img src="/media/tour-phone-04-setup-review.jpg" width="780" height="1688" loading="lazy" alt="The Keeper's phone: a summary of the whole game before starting"><figcaption><span class="tag ph">phone</span>Then the whole game on one page, every choice already made and each one yours to change. Tap Start, and the Forsworn are chosen at random.</figcaption></figure>
 </div>
 
-<h3>The game begins</h3>
+<h3 id="c-begins">The game begins</h3>
 <figure class="shot"><img src="/media/tour-tv-01-intro.jpg" width="1280" height="720" loading="lazy" alt="The TV: the opening title with a candle for every guest"><figcaption><span class="tag tv">tv</span>Every guest has a candle along the bottom of the screen. When a player is exiled or dies, their candle goes out.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-02-rules.jpg" width="1280" height="720" loading="lazy" alt="The TV: the rules explained to the players"><figcaption><span class="tag tv">tv</span>The rules go up on the TV while the Keeper reads them out, so nobody has to learn anything in advance. Then the Oath: blindfolded, every guest swears loyalty to the table, and a tap on the shoulder makes a few of them Forsworn. They see each other for the first time.</figcaption></figure>
 
-<h3>Trials</h3>
+<h3 id="c-trials">Trials</h3>
 <div class="pair">
 <figure class="shot"><img src="/media/tour-tv-04-brief.jpg" width="1280" height="720" loading="lazy" alt="The TV: a Trial's rules"><figcaption><span class="tag tv">tv</span>Each round opens with a Trial. The TV shows the rules…</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-05-prize.jpg" width="1280" height="720" loading="lazy" alt="The TV: the prize for this Trial, a hidden Sanctuary"><figcaption><span class="tag tv">tv</span>…then what’s at stake. Here, one secret question hides Sanctuary. Nobody will know who won it.</figcaption></figure>
@@ -160,32 +193,97 @@
 <figure class="shot"><img src="/media/tour-phone-03-setup-prize.jpg" width="780" height="1688" loading="lazy" alt="The Keeper's phone: the prize, with better prizes for a fuller Purse"><figcaption><span class="tag ph">phone</span>The Purse decides the prize: a better one if it ends half full, the best if it’s full. If the Forsworn win it flips: they take what the Purse fell short, and an emptier Purse wins them more. Nobody knows what the prizes are until the end.</figcaption></figure>
 </div>
 
-<h3>The Reckoning</h3>
+<h3 id="c-reckoning">The Reckoning</h3>
 <figure class="shot"><img src="/media/tour-tv-07-table.jpg" width="1280" height="720" loading="lazy" alt="The TV: the Reckoning table, with every player's seal around it"><figcaption><span class="tag tv">tv</span>After the Trials, and an Interval if you’ve chosen one, everyone sits down to debate. Then each player chalks one name.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-08-votes.jpg" width="1280" height="720" loading="lazy" alt="The TV: votes being counted, with a running total next to each player"><figcaption><span class="tag tv">tv</span>The boards turn one at a time, in seat order. The Keeper taps each vote in, and the TV counts it up in front of everyone.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-09-exiled.jpg" width="1280" height="720" loading="lazy" alt="The TV: the exiled player's role revealed"><figcaption><span class="tag tv">tv</span>The exiled player’s role is revealed. Did the table get a Forsworn, or throw out one of their own?</figcaption></figure>
 
-<h3>Night and dawn</h3>
+<h3 id="c-night">Night and dawn</h3>
 <div class="pair">
 <figure class="shot"><img src="/media/tour-tv-10-night.jpg" width="1280" height="720" loading="lazy" alt="The TV at night"><figcaption><span class="tag tv">tv</span>Blindfolds on. The screen goes dark while the Forsworn choose their victim. The Keeper’s phone guides them through it in silence.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-12-poisoned.jpg" width="1280" height="720" loading="lazy" alt="The TV at dawn, announcing who died"><figcaption><span class="tag tv">tv</span>Dawn. The poisoned stand, say their last words, and one more candle goes out.</figcaption></figure>
 </div>
 <p>Then the next round begins, with fewer chairs and longer memories. If you’re eating, dinner can come between the rounds.</p>
 
-<h3>The end</h3>
+<h3 id="c-end">The end</h3>
 <div class="pair">
 <figure class="shot"><img src="/media/tour-tv-13-final.jpg" width="1280" height="720" loading="lazy" alt="The TV: the final result and the full roll of who was who"><figcaption><span class="tag tv">tv</span>The final always starts with five. When the last four vote unanimously to end it, every seal is turned and everyone finally sees who they were sitting beside all night.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-14-awards.jpg" width="1280" height="720" loading="lazy" alt="The TV: end-of-game awards"><figcaption><span class="tag tv">tv</span>Then the awards: The Grand Deceiver, The Sharpest Eye, Barking Up the Wrong Tree, and more.</figcaption></figure>
 </div>
 </div>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/rules">Read the full rules</a></div>
+<p>The Betrayal is a party game for 8 to 24 players, played on everyone’s own phone. Planning for a crowd? Read <a href="/party-games-for-large-groups">party games for large groups</a>.</p>
 <script>
 (() => {
   document.documentElement.classList.add("js");
-  const btns = [...document.querySelectorAll(".vtabs button")], vers = [...document.querySelectorAll(".ver")];
-  const show = (v, push) => { btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v))); vers.forEach((x) => x.classList.toggle("on", x.dataset.v === v)); if (push) history.replaceState(null, "", v === "classic" ? "#classic" : location.pathname); };
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)], root = document.documentElement;
+  const btns = $$(".vtabs button"), vers = $$(".ver"), bar = document.querySelector(".secbar"), chips = document.querySelector(".chips");
+  const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+  let shown = null, heads = [], cur = null;
+  const setBar = () => root.style.setProperty("--barh", (bar ? bar.offsetHeight : 0) + "px");
+  // the chip for the section being read lights up, and scrolls into view along its row
+  const spy = () => {
+    const y = (bar ? bar.offsetHeight : 0) + 24; let h = null;
+    for (const x of heads) if (x.getBoundingClientRect().top <= y) h = x;
+    const a = h ? chips.querySelector('a[href="#' + h.id + '"]') : null;
+    if (a === cur) return; if (cur) cur.removeAttribute("aria-current"); cur = a; if (!a) return;
+    a.setAttribute("aria-current", "true");
+    if (chips.scrollWidth > chips.clientWidth) { const r = a.getBoundingClientRect(), c = chips.getBoundingClientRect(); chips.scrollTo({ left: chips.scrollLeft + r.left - c.left - (c.width - r.width) / 2, behavior: smooth() }); }
+  };
+  // a strip of screenshots: one dot per shot, lit while that shot is (mostly) on screen
+  const shotsOf = (s) => $$(".shot", s);
+  const lit = (s, d) => { const r = s.getBoundingClientRect(); shotsOf(s).forEach((f, i) => { const b = f.getBoundingClientRect(), seen = Math.min(b.right, r.right) - Math.max(b.left, r.left); d.children[i].classList.toggle("on", seen >= b.width * 0.6); }); };
+  const strips = () => {
+    for (const s of $$(".ver.on :is(.run, .phones, .mix, .pair)").filter((x) => !x.parentElement.closest(".run"))) {
+      let d = s.nextElementSibling;
+      if (!d || !d.classList.contains("dots")) {
+        d = document.createElement("div"); d.className = "dots"; d.setAttribute("aria-hidden", "true");
+        for (let i = 0; i < shotsOf(s).length; i++) d.append(document.createElement("i"));
+        s.after(d); let t = 0; s.addEventListener("scroll", () => { if (!t) t = requestAnimationFrame(() => { t = 0; lit(s, d); }); }, { passive: true });
+      }
+      const over = s.scrollWidth > s.clientWidth + 4;
+      s.classList.toggle("strip", over); d.hidden = !over;
+      if (over) { s.tabIndex = 0; s.setAttribute("aria-label", "Screenshots: scroll sideways for more"); lit(s, d); } else { s.removeAttribute("tabindex"); s.removeAttribute("aria-label"); }
+    }
+  };
+  const show = (v, push) => {
+    btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v))); vers.forEach((x) => x.classList.toggle("on", x.dataset.v === v));
+    if (push) history.replaceState(null, "", v === "classic" ? "#classic" : location.pathname);
+    if (v !== shown && chips) {
+      shown = v; cur = null; const ver = vers.find((x) => x.dataset.v === v);
+      heads = ver ? $$(v === "classic" ? "h3[id]" : "h2[id]", ver) : [];
+      chips.replaceChildren(...heads.map((h) => Object.assign(document.createElement("a"), { href: "#" + h.id, textContent: h.textContent })));
+      chips.scrollLeft = 0;
+    }
+    setBar(); strips(); spy();
+  };
   btns.forEach((b) => (b.onclick = () => show(b.dataset.v, true)));
-  const fromHash = () => show(location.hash === "#classic" ? "classic" : "modern");
+  // screenshots with no words between them make one run: one strip on a phone (on a wide screen the run's box vanishes and nothing moves)
+  const pic = (e) => e && (e.matches("figure.shot") || e.matches(".phones, .mix, .pair"));
+  for (const ver of vers) for (let e = ver.firstElementChild; e; e = e.nextElementSibling) {
+    if (!pic(e) || !pic(e.nextElementSibling)) continue;
+    const run = document.createElement("div"); run.className = "run"; e.before(run);
+    while (pic(run.nextElementSibling)) run.append(run.nextElementSibling);
+    e = run;
+  }
+  // tap a TV screenshot to see it bigger (on a phone held upright, it turns sideways to fill the screen)
+  if (typeof HTMLDialogElement === "function") {
+    const dlg = document.createElement("dialog"), big = document.createElement("img"), x = document.createElement("button"); let opener = null;
+    dlg.className = "lb"; dlg.setAttribute("aria-label", "Screenshot, enlarged"); x.type = "button"; x.className = "lbx"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
+    dlg.append(big, x); document.body.append(dlg);
+    dlg.addEventListener("click", () => dlg.close());
+    dlg.addEventListener("close", () => { big.removeAttribute("src"); if (opener) opener.focus(); });
+    for (const img of $$('.shot img[width="1280"]')) {
+      const b = document.createElement("button"), hint = document.createElement("span");
+      b.type = "button"; b.className = "zoom"; b.setAttribute("aria-label", "Enlarge: " + img.alt); hint.className = "zhint"; hint.setAttribute("aria-hidden", "true"); hint.textContent = "Tap to enlarge";
+      img.replaceWith(b); b.append(img, hint);
+      b.onclick = () => { opener = b; big.src = img.currentSrc || img.src; big.alt = img.alt; dlg.showModal(); x.focus(); };
+    }
+  }
+  const fromHash = () => { const id = decodeURIComponent(location.hash.slice(1)), t = id && document.getElementById(id), ver = t && t.closest(".ver"); show(ver ? ver.dataset.v : "modern"); if (ver) t.scrollIntoView(); };
   addEventListener("hashchange", fromHash); fromHash();
+  let raf = 0; addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; spy(); }); }, { passive: true });
+  addEventListener("resize", () => { setBar(); strips(); spy(); });
+  if (document.fonts) document.fonts.ready.then(setBar);
 })();
 </script>

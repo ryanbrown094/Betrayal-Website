@@ -816,7 +816,10 @@ async function route(req, env) {
     if (p === "/join" || p === "/join/") return env.ASSETS.fetch(new Request(url.origin + "/modern.html", req));
     if (p === "/") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
     if (p === "/claim") return env.ASSETS.fetch(new Request(url.origin + "/index.html", req));
-    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour|seal)\/?$/);
+    // one address per page: /rules.html (and /index.html) redirect to /rules (and /), the canonical URLs
+    const dup = p.match(/^\/(index|terms|privacy|cookies|refunds|contact|buy|rules|tour|traitors-at-home|party-games-for-large-groups)\.html$/);
+    if (dup) return Response.redirect(url.origin + (dup[1] === "index" ? "/" : "/" + dup[1]) + url.search, 301);
+    const page = p.match(/^\/(terms|privacy|cookies|refunds|contact|buy|admin|rules|tour|seal|traitors-at-home|party-games-for-large-groups)\/?$/);
     if (page) {
       const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
       if (page[1] !== "admin" && page[1] !== "seal") return r;
