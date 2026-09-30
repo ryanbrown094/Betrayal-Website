@@ -96,6 +96,12 @@ check("dinner is optional: courses are off unless the host switches them on", ne
     const all = days.join(" | ");
     check(`${n} players: the evening's plan has the courses, the Temptation, the Casting Vote and the Crown (${all})`, /starter/.test(all) && /tempt/.test(all) && /\+cast/.test(all) && (n < 10 || /\+crown/.test(all)), all);
   }
+  { // twists off: no Temptation, no Casting Vote, no Crown
+    const h = begin(12, { twists: false }), days = []; let r = 0;
+    while (r++ < 12 && !h.s.final) { days.push(h.s.steps.map((x) => x.k === "break" ? x.v : x.k === "trial" ? (x.key || "T") + (x.special ? "+" + x.special : "") : x.k).join(",")); h.s.round++; if (h.s.round >= h.s.total) h.s.final = true; h.s.steps = []; h.s.stepAt = 0; for (const p of h.s.players) p.shield = null; tick(h.s, h.now, ctx); act(h.s, h.dir, { a: "next" }, h.now, ctx); h.s.phase = "day"; h.s.trial = null; h.s.brk = null; }
+    const all = days.join(" | ");
+    check(`twists off: no Temptation, Casting Vote or Crown in the plan (${all})`, !/tempt|\+cast|\+crown|\+confess/.test(all), all);
+  }
 }
 // 3. every Trial, played to the end, with a winner, a Purse change, and Sanctuary for a Loyal winner
 {

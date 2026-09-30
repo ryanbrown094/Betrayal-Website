@@ -19,13 +19,13 @@ Rules that carry over from the brand: never picture a face under the hood, never
 - **0–3s:** candles, the night music, a ring of faces lit by phones. Text: *“At night, everyone taps their phone.”*
 - **3–8s:** close on three thumbs tapping names. Text: *“Only the Forsworn’s taps count.”*
 - **8–15s:** one guest’s phone: *You were poisoned. Say nothing yet.* They lock it and smile at the table. Text: *“Nobody can tell who’s choosing.”*
-- **Caption:** Party rule one: never trust whoever poured the wine.
+- **Caption:** Party rule one: never trust whoever offered to top you up.
 
 ### 3 · Host POV
 - A phone screen recording at speed, with a voiceover: *“Booking code. Modern. My name. Open the Table.”* Cut to the TV: the QR code, and names popping into the lobby as friends scan it.
-- *“Secret Sanctuary. Champagne for the prize. Start.”*
+- *“Secret Sanctuary. Chocolate coins for the prize. Start.”*
 - Cut to the host, phone held close, reading their own secret role.
-- **Text:** *“I hosted twelve people and played all night. The game ran itself.”*
+- **Text:** *“Twelve people, one phone each. The game ran itself.”*
 - **Caption:** The easiest big party I’ve ever hosted.
 
 ### 4 · What you need (flat lay, no faces needed)

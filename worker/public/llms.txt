@@ -5,7 +5,7 @@
 ## Key facts
 
 - What it is: a hidden-role (social deduction) party game for adults, "the party game of loyalty and lies". Always written "The Betrayal", with "The".
-- Players: 8 to 24 in one room, best with 8 to 16. Everyone plays, including the host.
+- Players: 8 to 24 in one room, best with 8 to 16. Nobody sits out, and the host never sees anyone else's role.
 - Length: about 3 to 3½ hours for 8 to 12 players; about 4¼ hours for 16; 5 to 6 hours for 20 and up. Stopping for dinner adds half an hour to an hour.
 - What you need: a phone each (any browser; no app to download, no account) and a prize. A TV is optional: a laptop connected or casting to it shows the questions, votes and reveals, with music.
 - Joining: guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the six-character Table code and their name.
@@ -22,9 +22,9 @@
 4. The Reckoning: a few minutes of debate on a timer, then a secret vote on every phone. The player with the most votes is exiled and their role is revealed.
 5. Night: the Forsworn choose someone to poison. Everyone else taps a name too, so nobody can tell who is choosing. At dawn the victim, told first in secret on their phone, announces it and gets thirty seconds of last words.
 6. Players who are out become Ghosts: they stay at the party and still call each vote.
-7. The final starts with five players. The survivors decide in secret whether they trust everyone left; then the Unmasking reveals every role. The Loyal win if every Forsworn is gone and take the Purse they built; the Forsworn win if one survives and take what the Purse fell short of its target. The game ends with up to six awards.
+7. The final starts with five or fewer players. The survivors decide in secret whether they trust everyone left; then the Unmasking reveals every role. The Loyal win if every Forsworn is gone and take the Purse they built; the Forsworn win if one survives and take what the Purse fell short of its target. The game ends with up to six awards.
 
-Classic is the other way to play every Table, for groups who would rather put phones away: a TV with a laptop, one phone for a Keeper who reads the script and doesn't play, blindfolds at night and votes chalked on small boards. Classic also has a Short game of about 2 hours for 8 to 10 players.
+Classic is the other way to play every Table, for groups who would rather put phones away: a TV with a laptop, one phone for a Keeper who reads the script and doesn't play, blindfolds at night and votes chalked on small boards. Classic also has a Short game of about 2 to 2½ hours for 8 to 10 players.
 
 ## Comparisons
 

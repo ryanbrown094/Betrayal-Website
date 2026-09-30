@@ -10,7 +10,7 @@ Public copy. It uses only the public words in `01-game/glossary-and-naming.md`. 
 - **Descriptor:** The party game of loyalty and lies.
 - Somebody at your table has already betrayed you.
 - Loyal to the end. Or not.
-- Trust no one. Not even whoever poured your wine.
+- Trust no one. Not even whoever offered to top you up.
 - Everyone plays on their phone. Somebody’s lying on theirs.
 - Your secret stays on your screen.
 

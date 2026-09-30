@@ -255,7 +255,7 @@ function planDay(s) {
   if (s.final) {
     if (!s.done.finalTrial) steps.push({ k: "trial", special: tw && alive(s).length === 5 && !s.confess ? "confess" : null, once: "finalTrial" });
   } else if (r === castR && !s.done.tempt) {
-    steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, { k: "tempt" });
+    steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, ...(tw ? [{ k: "tempt" }] : []));
   } else {
     steps.push({ k: "trial", special: tw && r === crownR && !s.crown ? "crown" : null });
   }
@@ -372,7 +372,7 @@ function resolveNight(s, now, rnd) {
   for (const id of targets) { const p = P(s, id); if (p.shield && p.shield.round === s.round) saved.push(id); else victims.push(id); }
   for (const id of victims) { const p = P(s, id); p.dying = true; if (!s.stats.firstBlood) s.stats.firstBlood = id; }
   s.phase = "dawn"; s.dawn = { victims, saved: saved.length, revealed: false, at: now };
-  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + " poisoned" : "nobody died") + (saved.length ? " (Sanctuary held)" : ""), now);
+  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + " poisoned" : "nobody poisoned") + (saved.length ? " (Sanctuary held)" : ""), now);
 }
 function revealDawn(s, now) {
   const d = s.dawn; d.revealed = true; d.lastEnd = d.victims.length ? now + T(s, 30000 * d.victims.length) : null;
@@ -404,13 +404,13 @@ function awardsOf(s) {
   const out = [], taken = new Set(), give = (title, id, why) => { if (id && !taken.has(id) && P(s, id)) { taken.add(id); out.push({ title, id, name: P(s, id).name, why }); } };
   const hitF = {}, hitL = {}; for (const v of s.stats.votes) for (const [voter, tg] of Object.entries(v.ballots)) { const p = P(s, tg); if (!p) continue; (p.role === "f" ? hitF : hitL)[voter] = ((p.role === "f" ? hitF : hitL)[voter] || 0) + 1; }
   const best = (o) => { const e = Object.entries(o).sort((a, b) => b[1] - a[1]); return e.length && (e.length < 2 || e[0][1] > e[1][1]) ? e[0] : null; };
-  let b = best(hitF); if (b) give("The Sharpest Eye", b[0], "chalked a Forsworn " + b[1] + (b[1] === 1 ? " time" : " times"));
+  let b = best(hitF); if (b) give("The Sharpest Eye", b[0], "voted for a Forsworn " + b[1] + (b[1] === 1 ? " time" : " times"));
   const F = s.players.filter((p) => p.role === "f"); const dec = F.map((p) => [p.id, (s.stats.against[p.id] || []).length]).sort((a, c) => a[1] - c[1])[0]; if (dec) give("The Grand Deceiver", dec[0], dec[1] ? "drew only " + dec[1] + (dec[1] === 1 ? " vote" : " votes") + " all night" : "drew no votes all night");
   b = best(s.stats.wins); if (b) give("Trial Machine", b[0], "won " + b[1] + (b[1] === 1 ? " Trial" : " Trials"));
-  b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "drew " + b[1] + " votes");
-  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to die");
+  b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "drew " + b[1] + (b[1] === 1 ? " vote" : " votes"));
+  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to be poisoned");
   b = best(s.stats.calls); if (b) give("The Ghost Who Saw", b[0], "called " + b[1] + (b[1] === 1 ? " exile" : " exiles") + " from beyond the table");
-  b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "chalked the Loyal " + b[1] + " times");
+  b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "voted for the Loyal " + b[1] + (b[1] === 1 ? " time" : " times"));
   return out.slice(0, 6);
 }
 

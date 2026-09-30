@@ -20,7 +20,7 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 6. **The Unmasking**: every seal turned, the winners, the prize the Purse has earned, then **Honour or Betray** if two or more Forsworn survived.
 7. **Awards**, up to six. Then the host can **play again with the same people**.
 
-**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 4¼ hours for 16, and 5 to 6 for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
+**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 4¼ hours for 16, and 5 to 6 for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 to 2½ hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
 
 ### The host
 
@@ -83,7 +83,7 @@ The host taps **Reveal the night**: every phone (and the TV) shows who died, one
 | power | when | what it does |
 |---|---|---|
 | **Sanctuary** | every round, from Trials | safe from that night’s kill |
-| **Temptation** | once a game, twists on or off | offered after a Trial: everyone chooses **PURSE or SELF** in secret on their phone. Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse shrinks |
+| **Temptation** | once a game, when twists are on | offered after a Trial: everyone chooses **PURSE or SELF** in secret on their phone. Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse shrinks |
 | **Casting Vote** | once a game, twists on | won in a Trial; only the winner knows. If a Reckoning ties and they voted for one of the tied players, their vote decides it |
 | **Crown** | once a game, twists on | won in a Trial late in the game: Sanctuary that night, and once, at a Reckoning, its holder may **lay down the Crown** to be safe from that exile |
 | **Confessor** (never named in public) | once, in the final, twists on | a special prize for the winner of a Trial in the final: in secret, on their phone, they learn one name that is Forsworn (or that no other Forsworn is left, if the winner is the last one) |
@@ -133,7 +133,7 @@ The question banks hold about 3,700 questions and prompts (`question-banks.md`),
 - **The Keeper** runs it like a presenter, knows everything and doesn’t play. If the host wants to play, they choose **“A friend will keep, and I’ll play”**, add themselves to the players and hand the phone to a friend, who presses **Start**, so the host never sees the roles.
 - **Props:** a TV with a laptop to cast to it, the Keeper’s phone, and a blindfold, a small chalkboard and chalk per guest.
 - **The first game:** the twists are off (the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer and Errands) so everyone learns the game itself. Once a game has been played on that phone, setup recommends them: “your second night”.
-- **The Short game:** about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break.
+- **The Short game:** about 2 to 2½ hours for 8 to 10 players: one Trial a round, no Interval, no dinner break.
 
 ### 10.2 The evening, Classic style
 - **Welcome.** The TV plays the titles and lights a candle for every guest. The Keeper reads the rules while the TV shows them; with the narrator on, the TV reads them aloud.

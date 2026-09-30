@@ -77,5 +77,16 @@ lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git
   printf '</script>\n</body>\n</html>\n'
 } > worker/public/modern.html
 mkdir -p worker/public/media && if [ -d media/web ]; then cp media/web/* worker/public/media/; fi
+# /media/* is cached for a week, so every page asks for each image by a fingerprint of its contents (?v=…): a changed
+# image gets a new address and nobody sees a stale one.
+python3 - <<'PY'
+import hashlib, pathlib, re
+pub = pathlib.Path('worker/public'); media = pub / 'media'
+ver = {f.name: hashlib.md5(f.read_bytes()).hexdigest()[:8] for f in media.iterdir() if f.is_file()}
+for page in pub.glob('*.html'):
+    s = page.read_text(encoding='utf-8')
+    t = re.sub(r'(/media/)([\w.-]+)(\?v=\w+)?', lambda m: m.group(1) + m.group(2) + ('?v=' + ver[m.group(2)] if m.group(2) in ver else ''), s)
+    if t != s: page.write_text(t, encoding='utf-8')
+PY
 printf '%s\n' "$BUILD" > worker/public/build.txt
 echo "wrote worker/public/play.html + index.html (build $BUILD)"
