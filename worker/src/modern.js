@@ -1,7 +1,7 @@
 // The Betrayal — Modern. Everyone plays on their own phone: the server runs the game, deals the roles, collects every
 // answer, vote and night choice, moves on by itself when everyone has answered or a clock runs out, and sends each phone
-// only what that player may see. The room's creator (the director) plays too; their phone also moves the evening on
-// (Trials, breaks, the Reckoning, dawn) but is shown no more secrets than anyone else's.
+// only what that player may see. The room's creator is the director (the host): a player whose phone also moves the
+// evening on (Trials, breaks, the Reckoning, dawn) and is shown no more secrets than anyone else's.
 //
 // Everything here is pure: (state, input, now) → state. The Durable Object (index.js) stores the state, calls tick()
 // on every request so clocks move on, and answers each phone with viewFor().
@@ -491,7 +491,6 @@ export function act(s, pid, a, now, ctx) {
     // --- the lobby and the oath
     case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["poison", "murder"].includes(o.kill)) s.opts.kill = o.kill; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || "a box of chocolates"; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
     case "bots": { if (!dir || !s.test || s.phase !== "lobby") return need(false); addBots(s, Math.max(s.players.length + 1, +v || 8), now, rnd); return done(); }
-    case "kick": { if (!dir || s.phase !== "lobby" || v === pid) return need(false); s.players = s.players.filter((p) => p.id !== v); return done(); }
     case "start": {
       if (!dir || s.phase !== "lobby") return need(false);
       if (s.players.length < MINP) return { error: "The game needs at least " + MINP + " players. " + s.players.length + " have joined." };

@@ -135,7 +135,7 @@
     if (!state) { fail("game did not start", { alert: (document.querySelector("#host [role=alert]") || {}).textContent }); return false }
     return true;
   };
-  // fix the roles: the first k seats are the Cloaks
+  // fix the roles: the first k seats are the Forsworn
   B.roles = k => act(s => { s.players.forEach((p, i) => p.role = i < k ? "cloak" : "candle") });
   B.T = () => aliveOf(state).filter(p => p.role === "cloak");
   B.F = () => aliveOf(state).filter(p => p.role === "candle");

@@ -3,10 +3,10 @@ import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
 import * as M from "./modern.js";
 
-// The Betrayal's server (formerly Cloak & Candle). Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
-// holding that party's one game. Rooms are made by redeeming a party pass, which lives in the Registry (one Durable
-// Object for the whole service). A pass makes one room, good for PASS_HOURS (default 48) from redemption; the room is
-// deleted KEEP_DAYS (default 7) after that. Settings are Worker vars and secrets — see wrangler.toml and README.
+// The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
+// holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
+// lives in the Registry (one Durable Object for the whole service). A room is good for PASS_HOURS (default 48) from
+// redemption and is deleted KEEP_DAYS (default 7) after that. Settings are Worker vars and secrets: see wrangler.toml and README.
 
 const json = (body, status, extra) =>
   new Response(JSON.stringify(body), { status: status || 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...(extra || {}) } });
@@ -300,7 +300,8 @@ export class GameState {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Party passes: minted by the admin (or by a paid Stripe checkout), redeemed once for a room.
+// Booking codes (passes): minted by the admin or by a paid Stripe checkout. A one-party code opens one room; a
+// Regular's (subscription) code opens a new room whenever they like, one at a time.
 export class Registry {
   constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; }
 
@@ -514,6 +515,8 @@ const same = (a, b) => { a = String(a || ""); b = String(b || ""); if (!a || a.l
 const bearer = (req, env) => !!env.ADMIN_TOKEN && same((req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, ""), env.ADMIN_TOKEN);
 // The /admin page signs in with ADMIN_USER (var) and ADMIN_PASSWORD (secret) and gets a 12-hour session cookie: the
 // expiry, signed with the password, so changing the password signs every session out.
+// The cookie names (cc_admin, cc_gate) and the gate's hash prefix keep their cc_ and cloak-and-candle forms: changing
+// them would sign every admin and every gate visitor out.
 const ADMIN_COOKIE = "cc_admin", ADMIN_HOURS = 12;
 async function hmacHex(key, msg) {
   const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -636,8 +639,9 @@ export default {
   },
 };
 async function route(req, env) {
-    // The domain: SITE_HOST is the one address. The old name's domain (OLD_HOSTS) and www. send every page there;
-    // the API stays answering on the old domain too, so Stripe's webhook and any Table already open keep working.
+    // The domain: SITE_HOST is the one address. www. and the domains in OLD_HOSTS (cloakandcandle.co.uk) send every page
+    // there, with /g/ addresses sent to /t/; the API answers on every domain, so a Stripe webhook or an open Table
+    // pointed at one of them keeps working.
     const u0 = new URL(req.url), home = env.SITE_HOST;
     if (home && u0.hostname !== home) {
       const old = String(env.OLD_HOSTS || "").split(",").map((h) => h.trim()).filter(Boolean);
@@ -680,7 +684,8 @@ async function route(req, env) {
       return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass, fresh: b.fresh === true }) });
     }
     // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
-    // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the party pass's Price).
+    // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the one-party Table's Price), STRIPE_SUB_PRICE_ID
+    // (var: the Regular's monthly Price).
     // the broken seal: the QR code in the home page's picture leads to /seal, which gives 10% off one party: Stripe's
     // promotion code STRIPE_EGG_PROMO (promo_…, the code QR10), applied for the buyer. Unset, the seal offers nothing.
     if (p === "/api/egg") return json({ on: !!env.STRIPE_EGG_PROMO });
@@ -799,7 +804,7 @@ async function route(req, env) {
       return json({ error: "Not found" }, 404);
     }
     if (p.startsWith("/api/")) return json({ error: "Not found" }, 404);
-    // a Table: the game page (TV at /t/CODE, Keeper at /t/CODE#keeper; the old /g/ addresses still work). A Modern
+    // a Table: the game page (TV at /t/CODE, Keeper at /t/CODE#keeper; /g/CODE serves the same page). A Modern
     // Table's /t/CODE is its TV, and /m/CODE is where its phones play; /join is Modern's "enter the code" page.
     if (/^\/[gtm]\/[A-Za-z0-9]{6}\/?$/.test(p)) {
       const code = p.slice(3, 9).toUpperCase();

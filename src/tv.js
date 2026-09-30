@@ -112,7 +112,7 @@ function ghostVerdictTV(s) {
   return `<div class="sub small">The Ghosts’ verdict: ${gs.map(x => esc(x.p.name) + " named " + esc(x.pickName) + (x.hits ? " ✓" : " ✗")).join(" · ")}${w.length ? `<br><b>${esc(w.map(x => x.p.name).join(" and "))}</b> saw a Forsworn from beyond the table.` : ""}</div>`;
 }
 
-// "round 2 · mission 1": which mission of the round this is
+// "round 2 · Trial 1": which Trial of the round this is
 const missionLabel = s => "round " + s.round + " · " + (s.mission && s.mission.key === "dilemma" ? "the temptation" : "Trial " + Math.max(1, s.roundMissions || 1));
 function missionTV(s, v) {
   const m = s.mission, label = missionLabel(s), head = `<div class="eyebrow">${label}</div><h1 class="gold md">${esc(m.title)}</h1>`;
@@ -175,7 +175,7 @@ function missionTV(s, v) {
   }
   if (m.key === "change") {
     const cells = g => `<div class="chgrid">${g.map((x, i) => `<div class="${m.showA && (m.changed || []).includes(i) ? "hit" : ""}" style="--i:${i}">${ART.icon(x)}</div>`).join("")}</div>`;
-    // no blindfolds: ten seconds of countdown, then the changed grid appears by itself
+    // the grid hides for a ten-second countdown, then the changed grid appears by itself
     const holding = m.cstage === "blind" && m.holdEnd && now() < m.holdEnd;
     v.key += "c" + n + (holding ? "hold" : m.cstage === "blind" ? "look" : m.cstage || "") + (m.showA ? "a" : ""); v.quiet = true;
     if (!m.cstage) { v.html = head + `<div class="sub small num">Round ${n} of ${tot}</div><div class="rules">${esc(m.rules)}</div>`; return }
@@ -290,7 +290,7 @@ function tvView(s) {
         v.html = `<div class="eyebrow fx-fade">the final ${surv.length === 2 ? "two" : surv.length}</div><h1 class="md fx-title" data-k="h${shown.length}">${shown.length ? esc(lastP.name) + " was " + (lastP.role === "cloak" ? "a Forsworn" : "a Loyal player") : "Nothing left to chalk"}</h1>${grid}`; break;
       }
       if (nT >= 2 && !f.order) { v.sfx = "sting"; v.flash = "red"; v.burst = "red"; v.rail = { only: tids }; v.html = `
-<h1 class="blood fx-slam">The Forsworn win</h1>${grid}<div class="sub fx-rise" style="--d:1s">${esc(ts.map(p => p.name).join(" and "))}, Forsworn to the last. One question left: share it, or take it.</div>`; break }
+<h1 class="blood fx-slam">The Forsworn win</h1>${grid}<div class="sub fx-rise" style="--d:1s">${esc(ts.map(p => p.name).join(" and "))}, Forsworn to the last. One question left: honour, or betray.</div>`; break }
       if (nT < 2) { v.sfx = nT ? "sting" : "win"; v.flash = nT ? "red" : "gold"; v.burst = nT ? "red" : "gold"; v.rail = nT ? { only: tids } : {}; v.html = `
 <h1 class="${nT ? "blood" : "gold"} fx-slam">${nT ? "The Forsworn win" : "The Loyal win"}</h1>${grid}<div class="sub fx-rise" style="--d:1s">${nT ? esc(ts[0].name) + ", a Forsworn to the last. The prize is theirs." : "Every Forsworn is gone. The prize belongs to the Loyal."}</div>`; break }
       if (nT >= 2 && f.order) {
@@ -317,7 +317,7 @@ function tvView(s) {
         const aw = s.awards || [], k = Math.min(s.awardShown || 0, aw.length); v.scene = "final"; v.norail = true; v.key += "aw" + k; v.sfx = k ? "gold" : "drum"; v.burst = k ? "gold" : null;
         v.html = `<h1 class="gold md fx-title">The Awards</h1>${aw.length ? `<div class="awards c${aw.length <= 4 ? 2 : aw.length === 6 ? 3 : 4} ${aw.length > 8 ? "dense" : aw.length > 4 ? "mid" : ""}">${aw.map((a, i) => i < k ? `<div class="award ${i === k - 1 ? "fresh fx-rise" : ""}" ${i === k - 1 ? 'style="--d:.2s"' : ""}><div class="aico">${ART.icon(a.icon)}</div><div class="at">${esc(a.title)}</div><b>${esc(andList(a.names))}</b><small>${esc(a.why)}</small></div>` : `<div class="award sealed"><div class="aico">${ART.icon("scroll")}</div><div class="at">${cap1(numWord(i + 1))}</div></div>`).join("")}</div>${k ? "" : `<div class="sub fx-rise" style="--d:.6s">${cap1(numWord(aw.length))}, one at a time.</div>`}` : `<div class="sub">No clear winners tonight. Everyone was equally suspicious.</div>`}`; break;
       }
-      // how each Cloak became one: from the start, converted, or by bargain; and who refused
+      // how each Forsworn became one: from the start, by a Whisper, or by the Last Offer; and who refused
       const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer" : "Forsworn · by the Last Offer, round " + p.converted.round) : (many ? "Forsworn · Whisper" : "Forsworn · by a Whisper, round " + p.converted.round)) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
       v.scene = "final"; v.norail = true; v.tight = true; v.sfx = tr ? "sting" : "win"; v.flash = tr ? "red" : "gold"; v.waves = tr ? "red" : "gold";
       const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
@@ -483,8 +483,8 @@ const FX = {
     this.c = $("#fx"); if (!this.c) return;
     if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return; // no drifting dust, no bursts
     this.x = this.c.getContext("2d");
-    // drawn at the screen's real resolution (a 4K TV gets a 4K canvas, never more); u keeps every size and speed
-    // the same share of the screen as the original half-resolution tuning
+    // drawn at the screen's real resolution (a 4K TV gets a 4K canvas, never more); u scales every size and speed so
+    // each keeps the same share of the screen at any resolution (the numbers are set for a half-resolution canvas)
     const fit = () => { const k = Math.min(devicePixelRatio || 1, 2160 / Math.max(1, innerHeight), 2); this.w = this.c.width = Math.round(innerWidth * k); this.h = this.c.height = Math.round(innerHeight * k); this.u = k * 2 }; fit(); addEventListener("resize", fit);
     for (let i = 0; i < 46; i++) this.ps.push(this.mote(true));
     const loop = t => { requestAnimationFrame(loop); if (t - this.last < 33) return; const dt = Math.min(0.1, (t - this.last) / 1000); this.last = t; this.step(dt) };

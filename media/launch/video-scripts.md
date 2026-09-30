@@ -2,7 +2,7 @@
 
 These are for TikTok, Instagram Reels and Facebook Reels, 15–35 seconds, vertical. Film real games wherever you can: the product already looks like a show, so the reactions are the ad. Get a clear yes from everyone whose face appears before you post, and say which clips might become paid ads.
 
-Sell Modern: everyone plays on their own phone, nothing to buy, and the host plays too. The best shots are faces lit by phones in candlelight, and one face that changes when a secret arrives. Never show a screen that gives a real player’s role away unless the game is over.
+Sell Modern: everyone plays on their own phone, and there’s nothing to buy. The best shots are faces lit by phones in candlelight, and one face that changes when a secret arrives. Never show a screen that gives a real player’s role away unless the game is over.
 
 Rules that carry over from the brand: never picture a face under the hood, never mention a TV programme, use only the public game words, never name or explain the twists (the game explains them when they happen), and no gore.
 
@@ -21,11 +21,11 @@ Rules that carry over from the brand: never picture a face under the hood, never
 - **8–15s:** one guest’s phone: *You were poisoned. Say nothing yet.* They lock it and smile at the table. Text: *“Nobody can tell who’s choosing.”*
 - **Caption:** Party rule one: never trust whoever poured the wine.
 
-### 3 · Host POV: I played too
+### 3 · Host POV
 - A phone screen recording at speed, with a voiceover: *“Booking code. Modern. My name. Open the Table.”* Cut to the TV: the QR code, and names popping into the lobby as friends scan it.
 - *“Poison, not murder. Champagne for the prize. Start.”*
 - Cut to the host, phone held close, reading their own secret role.
-- **Text:** *“I hosted twelve people and I still got to play. The game ran itself.”*
+- **Text:** *“I hosted twelve people and played all night. The game ran itself.”*
 - **Caption:** The easiest big party I’ve ever hosted.
 
 ### 4 · What you need (flat lay, no faces needed)
@@ -47,4 +47,4 @@ Rules that carry over from the brand: never picture a face under the hood, never
 
 ---
 
-**Posting:** about 3 a week on TikTok and Reels (the same video on both is fine). People talk about hidden-role games on Thursday and Friday evenings through October, so post a strong one around 9:30pm on those nights. If anyone asks about blindfolds and chalkboards, that’s Classic: “If you’d rather play the old-fashioned way, that’s in there too.”
+**Posting:** about 3 a week on TikTok and Reels (the same video on both is fine). People talk about hidden-role games on Thursday and Friday evenings through October, so post a strong one around 9:30pm on those nights. If anyone asks about blindfolds and chalkboards, that’s Classic: “If you’d rather put the phones away, there’s a Classic way to play with blindfolds and chalkboards.”

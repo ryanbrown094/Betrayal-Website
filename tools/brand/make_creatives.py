@@ -102,7 +102,7 @@ def oath(w, h):
       <div class=eyebrow style="font-size:26px;margin-top:28px">a party game</div>
       <div class=h style="font-size:{124 if tall else 112}px;margin-top:{40 if tall else 26}px">Everyone swore<br>an oath.</div>
       <div class=say style="font-size:{64 if tall else 56}px;margin-top:{34 if tall else 20}px;color:#F4C9B7">Not everyone meant it.</div>
-      <div class=body style="font-size:{36 if tall else 32}px;margin-top:{40 if tall else 24}px;max-width:900px">Everyone plays on their own phone. The host plays too.</div>
+      <div class=body style="font-size:{36 if tall else 32}px;margin-top:{40 if tall else 24}px;max-width:900px">Everyone plays on their own phone. Nobody else sees your role.</div>
       <div style="flex:1"></div>
       <div style="margin-bottom:{70 if tall else 44}px">{candles(9, (2, 6), 150 if tall else 128, 30 if tall else 26)}</div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
@@ -121,7 +121,7 @@ def keeper(w, h):
         <div class=label style="font-size:22px;margin-top:30px;color:#8FA3B8">private · only you see this</div>
         <div class=body style="font-size:{30 if tall else 27}px;color:#AFA198;margin-top:10px">Yes, make me Forsworn · I’d rather be Loyal · Either way</div></div>
       <div style="flex:1"></div>
-      <div class=body style="font-size:{32 if tall else 29}px;margin-bottom:{44 if tall else 30}px;color:#E8D0C8">No blindfolds, no chalkboards. The host plays too.</div>
+      <div class=body style="font-size:{32 if tall else 29}px;margin-bottom:{44 if tall else 30}px;color:#E8D0C8">No app to install. Nothing to learn first.</div>
       <div class=rule style="width:640px;margin-bottom:26px"></div>
       <div class=foot style="font-size:30px">{FOOT}</div></div>"""
 

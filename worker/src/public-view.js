@@ -44,16 +44,16 @@ export function publicView(s) {
     n.witnessId = n.witnessId ? "·" : null;
     n.witnessCloakId = n.witnessCloakId ? "·" : null;
     const step = n.step || 0;
-    // tonight's kind of night is for the Cloaks' eyes, on its own line
+    // tonight's kind of night is for the Forsworn's eyes, on its own line
     if (!n.confirmed) n.mode = "murder";
-    // who the Cloaks chose stays off the wire until the line that shows it to them…
+    // who the Forsworn chose stays off the wire until the line that shows it to them…
     if (!n.confirmed || typeof n.revealStep !== "number" || step < n.revealStep) { n.victimId = null; n.targetId = null; n.targetName = null; n.answer = null }
     // a shielded victim is never tapped, so their line on the TV stays dark: say so once the line is reached
     const vid = s.night.mode === "murder" ? s.night.victimId : s.night.targetId, vp = vid && (s.players || []).find((p) => p.id === vid);
     if (vp && vp.shield && n.confirmed && typeof n.revealStep === "number" && step >= n.revealStep) n.shielded = true;
     // …and goes again on the last line, when every blindfold is off (answer stays: it shapes the script's length)
     if (typeof n.endStep === "number" && step >= n.endStep) { n.victimId = null; n.targetId = null; n.targetName = null }
-    // the side-quest, and the Cloak it may name, only on its own line
+    // the side-quest, and the Forsworn player it may name, only on its own line
     if (n.quest && !(n.confirmed && step === n.questStep)) { n.quest = "…"; n.questTarget = null }
     o.night = n;
   }

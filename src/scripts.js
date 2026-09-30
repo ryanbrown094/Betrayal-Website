@@ -8,11 +8,11 @@ function nightScript(n,st){
     :{who:vName(id),silent:true,murdered:true,tv:vName(id)+". You have been poisoned. Say nothing. Blindfold back on. At dawn, when "+H()+" asks, you will announce it, say your last words, and "+(ghostsOn(st)?"join the Ghosts.":"leave the table."),say:"Silent. They read it and put the blindfold back on."}};
   const gh=ghostsOf(st).length>0;
   const R=st.round||1,G=gh?", everyone, the Ghosts too":"";
-  // a big table’s night takes more than one victim: one pass each, the Cloaks woken again for every pass after the first
+  // a big table’s night takes more than one victim: one pass each, the Forsworn woken again for every pass after the first
   const pass=n.pass||0,kills=killsOf(n),more=pass<kills-1;
   const s=pass?[]:[{who:"Everyone",tv:gh?"Blindfolds on, Ghosts too. Hands on the table. Not a sound.":"Blindfolds on. Hands on the table. Not a sound.",say:vr(["Night has fallen on the house. Blindfolds on"+G+". Hands flat on the table. If I hear a single word, you will answer for it at dawn.","The candles are low and the house is quiet. Blindfolds on"+G+". Hands on the table. Not a sound from anyone.","Another night. Somewhere at this table, someone has been waiting all day for this. Blindfolds on"+G+". Hands flat. Silence.","The house is asleep, or pretending to be. Blindfolds on"+G+". Hands on the table. Whatever you hear, you heard nothing."],R)}];
   s.push(pass?{who:"Forsworn",tv:"Forsworn, remove your blindfolds. The night isn’t over.",say:"Forsworn, and only the Forsworn, remove your blindfolds again. The night isn’t over. Not a word."}:{who:"Forsworn",tv:"Remove your blindfolds. Read the screen. Do exactly as it says.",say:"Forsworn, remove your blindfolds. Read the screen, and do exactly what it says. Not a word."});
-  // the side-quest comes after they point, so the Candle it names is never tonight’s victim or target
+  // the Errand comes after they point, so the Loyal player it names is never tonight’s victim or target
   const questLine=n.quest&&!pass?[{who:"Forsworn",silent:true,quest:true,tv:(n.questTarget?"For "+n.questTarget+", during the next break: ":"Errand, during the next break: ")+n.quest+" Done, and it counts for you at the end. Failed, and the Purse loses "+moneyOf(st,50)+".",say:"Silent. Their Errand for the next break. Give them a moment to read it twice."}]:[];
   const pubSh=aliveOf(st).filter(p=>p.shield==="public").map(p=>p.name),shNote=pubSh.length?" Remember: "+andList(pubSh)+(pubSh.length>1?" hold Sanctuaries":" holds Sanctuary")+", and cannot be poisoned tonight.":"";
   if(mode==="murder"){
@@ -27,7 +27,7 @@ function nightScript(n,st){
       ...questLine,
       {who:"Forsworn",pick:true,tv:"Blindfolds on.",say:"Forsworn, blindfolds back on."},
       {...tapGeneric,tap:"target"},
-      {who:t,silent:true,answer:true,tv:mode==="convert"?t+". The Forsworn have chosen you. Accept, and from tonight you are one of them: the prize is yours only if a Forsworn survives. Refuse, and you stay Loyal, but they will know your face and you will know nothing. Nod to accept. Shake your head to refuse.":t+". This is not an invitation. Join the Forsworn, or be poisoned tonight. Nod to join. Shake your head to die as one of the Loyal.",say:"Silent. They read the TV and nod or shake. Record their answer below."});
+      {who:t,silent:true,answer:true,tv:mode==="convert"?t+". The Forsworn have chosen you. Accept, and from tonight you are one of them: the prize is yours only if a Forsworn survives. Refuse, and you stay Loyal, but they will know your face and you will know nothing. Nod to accept. Shake your head to refuse.":t+". The Forsworn have chosen you. Join them, or be poisoned tonight. Nod to join. Shake your head to die as one of the Loyal.",say:"Silent. They read the TV and nod or shake. Record their answer below."});
     if(n.answer==="yes"){
       s.push({who:t,silent:true,tv:t+", welcome, Forsworn. Keep your blindfold off. Wait in silence.",say:"Silent. Now tap each Forsworn on the shoulder at the next line."},
         {who:"Forsworn",silent:true,tap:"cloaks",tv:"If you feel a tap on the shoulder, remove your blindfold and read the screen. Not a sound.",say:"Silent. Say nothing this time. Walk the table and tap each Forsworn, and they read the screen."},
@@ -55,8 +55,8 @@ const NIGHT0_=h=>[
 ["Forsworn","Blindfolds on.","Forsworn, blindfolds back on. Silently."],
 ["Everyone","Remove your blindfolds. The game has begun.","Everyone, remove your blindfolds. Look at each other. Somebody at this table has already broken their oath. The game has begun."]];
 const BF=g=>g?"Blindfolds on, Ghosts too.":"Blindfolds on.";
-// The special prize, straight after the mission: whoever won it meets the Cloak now. Nothing said aloud names it, and
-// when a Cloak won it the room hears exactly the same lines — the host taps them, then walks the table tapping nobody.
+// The special prize, straight after the Trial: whoever won it meets a Forsworn now. Nothing said aloud names it, and
+// when a Forsworn won it the room hears exactly the same lines: the host taps them, then walks the table tapping nobody.
 const WITNESSNOW_=(h,g,c)=>{
   const f=!!c.fake,G=g?", Ghosts too":"";
   return [
@@ -78,14 +78,6 @@ const CEREMONY_=(h,g,c)=>{
   L.push({who:"Everyone",tv:"Remove your blindfolds. "+cap1(andList(what))+(many?" have":" has")+" been claimed.",say:"Blindfolds off. "+cap1(andList(what))+(many?" have":" has")+" been claimed. Look around the table. Somebody here knows something you don’t."});
   return L.map(l=>({...l,tv:kw(l.tv),say:kw(l.say)}));
 };
-const SHIELD0_=(h,g,n)=>n>1?[
-["Everyone",BF(g),"The Trial is over, and somewhere in it "+numWord(n)+" Sanctuaries were won. Blindfolds on, everyone"+(g?", Ghosts too":"")+". Hands on the table."],
-[h,"Sanctuaries have been won. Whoever holds one will feel a tap on the shoulder.","Whoever feels my hand on their shoulder holds Sanctuary tonight. The Forsworn cannot poison you. Whether you tell the table… is up to you."],
-["Everyone","Remove your blindfolds. The Sanctuaries have been claimed.","Blindfolds off. Some of you are safe tonight. The rest of you are not."]]:[
-["Everyone",BF(g),"The Trial is over, and somewhere in it Sanctuary was won in secret. Blindfolds on, everyone"+(g?", Ghosts too":"")+". Hands on the table."],
-[h,"Sanctuary has been won. Whoever holds it will feel a tap on the shoulder.","Whoever feels my hand on their shoulder holds Sanctuary tonight. The Forsworn cannot poison you. Whether you tell the table… is up to you."],
-["Everyone","Remove your blindfolds. Sanctuary has been claimed.","Blindfolds off. Somebody here is safe tonight. Somebody else is not."]];
-
 const SAY={
   lobbyWait:"Take your seats, everyone, and fill your glasses. When the titles roll on the screen, the game begins.",
   lobby:"Welcome to The Betrayal. Look at the screen: there is a candle burning for every one of you. Tonight, around this table, sit the Loyal, and the Forsworn, who swore the same oath and meant none of it. Each night the Forsworn will poison one of you, and a candle will go out. Each day the Loyal must find them and exile them. Trust no one, not even the person who poured your wine.",
@@ -96,7 +88,7 @@ const SAY={
 ,"Trial over. The Purse remembers who helped it, and so should you."],r),
   afterCeremony:"Remember who played badly tonight. A Loyal player who plays badly looks a lot like a Forsworn who’s sabotaging.",
   shieldPublic:n=>n+" holds Sanctuary tonight. The Forsworn cannot touch them. Which, I suppose, means they can say whatever they like at the Reckoning.",
-  // the Champion is explained when it is given, and reminded at the table
+  // the Crown is explained when it is given, and reminded at the table
   championFull:n=>n+", you wear tonight’s Crown. You hold Sanctuary, so the Forsworn cannot poison you tonight, and the Casting Vote: if the Reckoning ties, your board decides it. One more thing. At the table, before the first board turns, you may lay both down. Then nobody may chalk your name, but you give up the Casting Vote, and tonight nothing protects you. Think about when you’ll need it.",
   blade:n=>n+", you hold the Casting Vote. If tonight’s Reckoning ties, your board decides it. Choose well. Everyone will be watching whose name you chalk.",
   talkChampionSecret:" And if any of you wears the Crown, won in secret: before the first board turns, you may lay down your Sanctuary and your Casting Vote, and nobody may chalk your name at this table. Say it now, or not at all. Keep them, and if the boards tie, your board breaks the tie.",
@@ -150,7 +142,7 @@ const SAY={
 // every SAY line reads for the game’s kill style (murder or poison); plain strings become getters so they follow the game
 for(const k of Object.keys(SAY)){const d=Object.getOwnPropertyDescriptor(SAY,k);if(d.get){const g=d.get;Object.defineProperty(SAY,k,{get:()=>kw(g.call(SAY)),enumerable:true})}else if(typeof d.value==="function"){const f=d.value;SAY[k]=(...a)=>kw(f(...a))}else{const v=d.value;Object.defineProperty(SAY,k,{get:()=>kw(v),enumerable:true})}}
 // Lines that answer the moment: how the vote went, and what the table just found out. One variant per round, so a
-// re-render never changes what the host is reading. The Cloak lines never hint whether it was the last one.
+// re-render never changes what the host is reading. The Forsworn lines never hint whether it was the last one.
 const BANTER={
   unanimous:["Unanimous. Not one of you hesitated. I hope, for your sakes, you’re right.","Every board, the same name. That is either clarity… or a very well-run campaign."],
   close:["One vote. A single board stood between staying and going.","That was close. One piece of chalk just decided a fate."],

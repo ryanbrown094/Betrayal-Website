@@ -136,11 +136,11 @@ function joinScreen() {
 }
 function createScreen() {
   if (TESTGAME) return `${brand("test game")}<div class="card fade"><h2>A test game against bots</h2>
-  <p class="sub">Table ${CODE}. You host and play, and the bots swear, vote, choose at night and trust by themselves. Trials give everyone a random score, and every countdown is ten seconds.</p>
+  <p class="sub">Table ${CODE}. You host, and the bots swear, vote, choose at night and trust by themselves. Trials give everyone a random score, and every countdown is ten seconds.</p>
   <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
   <div style="height:10px"></div><label class="l" for="nbots">Players, you included</label><select class="f" id="nbots">${Array.from({ length: 17 }, (_, i) => i + 8).map((n) => `<option${n === 8 ? " selected" : ""}>${n}</option>`).join("")}</select>
   <div style="height:12px"></div>${btn("Start the test game", "create", null, "big")}${msg()}</div>`;
-  return `${brand()}<div class="card fade"><h2>You’re the host, and you play too</h2>
+  return `${brand()}<div class="card fade"><h2>You’re the host</h2>
   <p class="sub">Table ${CODE}. You start each Trial and call the breaks and the Reckoning from your phone. The rest runs itself, and you never see anyone’s role.</p>
   <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
   <div style="height:12px"></div>${btn("Open the Table", "create", null, "big")}${msg()}</div>`;
@@ -169,7 +169,7 @@ function phone() {
 const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
-  ${rejoinCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you no longer vote or play.</span></div>` : ""}
+  ${rejoinCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
   ${holdings(me)}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
@@ -254,7 +254,7 @@ function roleCard(me) {
 }
 function day(me) {
   let h = `${V.final ? "" : `<div class="eyebrow">round ${V.round}</div>`}<h1>${V.final ? "The final" : V.roundTrials ? "Back at the table" : "A new day"}</h1>
-  <p class="sub">${V.final ? "Five or fewer remain. Exiles are no longer revealed. When the table trusts everyone left, it ends." : "Talk among yourselves, and watch each other."}</p>${people(V.players)}`;
+  <p class="sub">${V.final ? "Five or fewer remain. An exile’s role stays hidden until the end. When the table trusts everyone left, it ends." : "Talk among yourselves, and watch each other."}</p>${people(V.players)}`;
   h += `<p class="small" style="margin-top:12px">Next: <b>${esc(V.next || "")}</b>${V.tiers ? " · the Purse decides the prize" : ""}</p>`;
   if (!me.director) return h + waitHost();
   return h + `<div class="card dir"><div class="stack">${btn("Begin: " + esc(V.next || "next"), "next", null, "big")}${btn("A short break first · 10 min", "break", "interval", "ghost sm")}</div></div>`;
@@ -278,7 +278,7 @@ function toolScreen(me) {
   return `<h2>Host tools</h2><p class="sub">For when something goes wrong. Nothing here shows you anyone’s role, except the last one.</p>
   <div class="stack">${list.join("") || `<p class="small">Nothing to fix at this moment.</p>`}</div>
   <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role. If nobody Forsworn is left, the final begins.</p>${people2("remove")}</details>
-  <details class="more"><summary>Hand the host’s phone role to someone else</summary><p class="small">Their phone gets these controls; yours becomes a player’s.</p>${people2("host")}</details>
+  <details class="more"><summary>Make someone else the host</summary><p class="small">Their phone gets these controls, and yours loses them.</p>${people2("host")}</details>
   <details class="more"><summary>Music on this phone</summary><p class="small">If there’s no TV, this phone can play the music and sounds.</p>${btn(typeof AC !== "undefined" && AC ? (muted ? "Sound on" : "Sound off") : "Play music here", "sound", null, "dark sm")}</details>
   <div class="card" style="margin-top:18px;border-color:#6a2733"><p class="small"><b style="color:var(--blood2)">The last resort.</b> Only if the game can’t carry on otherwise, say a phone died and nobody remembers who was Forsworn.</p>${btn("Show me the roles…", "peek1", null, "ghost sm")}</div>`;
 }
@@ -296,10 +296,9 @@ function trial(me) {
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
   const head = `<div class="ihead"><div class="eyebrow">${esc(t.title)} · ${it.part ? esc(it.part) + " · " : ""}${it.stage === "reveal" ? t.i : t.i + 1}</div>${it.stage === "open" || it.stage === "study" || it.stage === "prep" ? clock(it.end) : ""}</div>${["open", "study", "prep", "blank"].includes(it.stage) && it.end && it.from ? `<div class="bar sticky"><i data-from="${it.from}" data-end="${it.end}"></i></div>` : ""}`;
-  const ctl = "";
   const watching = !me.alive && !(it.k === "survive" && t.key === "statue");
   if (!me.alive && it.k === "survive" && t.key === "statue" && it.stage === "open") return head + `<p class="q">You’re a Ghost, so haunt them.</p><p class="sub">Make the statues move or laugh, anything short of touching. Still standing: ${esc(andList(alive().filter((p) => !it.out.includes(p.id)).map((p) => p.name)))}.</p>`;
-  return head + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it)) + ctl;
+  return head + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it));
 }
 function sent(v) { return `<div class="done">${ico("handshake")}<div>Locked in${v != null && v !== "" ? `: <b>${esc(v)}</b>` : ""}.<br><span class="small">${it().answered} of ${it().of || "?"} in</span></div></div>`; }
 const it = () => V.trial.item;

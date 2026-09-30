@@ -47,11 +47,11 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 
 <div id="dash" hidden>
   <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
-  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Passes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
+  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
   <div id="t-passes">
   <div class="stats" id="stats"></div>
 
-  <h2>Create passes</h2>
+  <h2>Create booking codes</h2>
   <div class="panel">
     <form id="mf" class="adm-row">
       <label>How many <input id="mc" type="number" min="1" max="50" value="1" style="width:100px"></label>
@@ -66,10 +66,10 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
   <h2>Test room</h2>
   <div class="panel">
     <div class="adm-row"><button class="btn small" id="room">Open a test room</button></div>
-    <p class="msg" id="rmsg">A fresh room for trying the game, open for 48 hours. It doesn’t use a pass.</p>
+    <p class="msg" id="rmsg">A fresh room for trying the game, open for 48 hours. It doesn’t use a booking code.</p>
   </div>
 
-  <h2>All passes</h2>
+  <h2>All booking codes</h2>
   <div class="adm-row" style="margin-bottom:10px">
     <label style="flex:1;min-width:200px">Search <input id="q" placeholder="Code, note, email, room" style="width:100%"></label>
     <label>Show <select id="f">
@@ -83,8 +83,8 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
   </div>
 
   <div id="t-rooms" hidden>
-    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, pass, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
-      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Pass</th><th>Note</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
+    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
+      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Note</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
     <div id="roomview" hidden></div>
   </div>
 
@@ -102,8 +102,8 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 
   <div id="t-stripe" hidden>
     <div class="adm-row" style="margin:14px 0 10px"><button class="btn ghost small" id="hreload">Refresh</button></div>
-    <p class="note">Every webhook Stripe sent, and what it did. If a payment or refund doesn’t show on a pass, look for it here. Nothing here at all means Stripe isn’t reaching us: check the endpoint and its signing secret in Stripe’s dashboard.</p>
-    <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Event</th><th>Pass</th><th>Result</th></tr></thead><tbody id="hrows"></tbody></table></div><p class="msg" id="hmsg"></p>
+    <p class="note">Every webhook Stripe sent, and what it did. If a payment or refund doesn’t show on a booking code, look for it here. Nothing here at all means Stripe isn’t reaching us: check the endpoint and its signing secret in Stripe’s dashboard.</p>
+    <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Event</th><th>Booking code</th><th>Result</th></tr></thead><tbody id="hrows"></tbody></table></div><p class="msg" id="hmsg"></p>
   </div>
 </div>
 
@@ -147,11 +147,11 @@ function render() {
     if (!p.revoked) { const x = document.createElement("button"); x.className = "btn danger tiny"; x.style.marginLeft = "6px"; x.textContent = "Cancel"; x.onclick = () => cancel(p.pass); td.append(x) }
     rows.append(tr);
   }
-  say($("#tmsg"), list.length ? list.length + " of " + all.length + " passes" : all.length ? "Nothing matches." : "No passes yet.");
+  say($("#tmsg"), list.length ? list.length + " of " + all.length + " codes" : all.length ? "Nothing matches." : "No booking codes yet.");
 }
 function stats() {
   const c = k => all.filter(p => statusOf(p)[0] === k).length, subs = all.filter(p => p.kind === "sub" && p.subActive && !p.revoked);
-  const box = [["Passes", all.length - c("failed")], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length], ...(c("failed") ? [["Failed payments", c("failed")]] : [])];
+  const box = [["Codes", all.length - c("failed")], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length], ...(c("failed") ? [["Failed payments", c("failed")]] : [])];
   $("#stats").textContent = ""; for (const [l, n] of box) { const d = document.createElement("div"); d.className = "stat"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("#stats").append(d) }
 }
 async function load() { try { all = (await api("passes")).passes || []; stats(); render() } catch (e) { say($("#tmsg"), e.message, true) } }
@@ -172,7 +172,7 @@ $("#mf").onsubmit = async e => {
     const j = await api("passes", { count: n, note: $("#mn").value.trim(), kind: $("#mk").value });
     for (const p of j.passes) { const c = document.createElement("code"); c.textContent = p; $("#made").append(c) }
     const n2 = j.passes.length, sub = $("#mk").value === "sub";
-    say($("#mmsg"), "Created " + n2 + (sub ? " free unlimited code" + (n2 > 1 ? "s" : "") : " pass" + (n2 > 1 ? "es" : "")) + ".");
+    say($("#mmsg"), "Created " + n2 + (sub ? " free unlimited code" + (n2 > 1 ? "s" : "") : " booking code" + (n2 > 1 ? "s" : "")) + ".");
     if (navigator.clipboard) navigator.clipboard.writeText(j.passes.join("\n")).then(() => say($("#mmsg"), $("#mmsg").textContent + " Copied to the clipboard."), () => {});
     load();
   } catch (err) { say($("#mmsg"), err.message, true) }
@@ -180,8 +180,8 @@ $("#mf").onsubmit = async e => {
 $("#room").onclick = async () => {
   try {
     const j = await api("room", {}), m = $("#rmsg"); m.className = "msg"; m.textContent = "Room " + j.room + ": ";
-    const a = document.createElement("a"); a.href = "/g/" + j.room + "#host"; a.textContent = "Keeper phone"; a.target = "_blank";
-    const b = document.createElement("a"); b.href = "/g/" + j.room; b.textContent = "TV"; b.target = "_blank";
+    const a = document.createElement("a"); a.href = "/t/" + j.room + "#keeper"; a.textContent = "Keeper phone"; a.target = "_blank";
+    const b = document.createElement("a"); b.href = "/t/" + j.room; b.textContent = "TV"; b.target = "_blank";
     const c = document.createElement("a"); c.href = "/m/" + j.room + "#create-bots"; c.textContent = "Modern against bots"; c.target = "_blank";
     const d = document.createElement("a"); d.href = "/m/" + j.room + "#create"; d.textContent = "Modern"; d.target = "_blank";
     m.append("Classic: ", a, " · ", b, ". Modern: ", c, " · ", d, ". A room plays one or the other, so use only one of these.");
@@ -233,8 +233,8 @@ async function openRoom(code, at) {
   v.textContent = "";
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; if (replay) replay.stop() } }, "← All rooms"),
     h("h2", {}, "Room " + code),
-    kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Pass", m.pass || "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
-      ["Links", h("span", {}, h("a", { href: "/g/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/g/" + code + "#host", target: "_blank" }, "Keeper phone"))]]));
+    kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Booking code", m.pass ? m.pass.replace(/^CNDL-/, "OATH-") : "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
+      ["Links", h("span", {}, h("a", { href: "/t/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/t/" + code + "#keeper", target: "_blank" }, "Keeper phone"))]]));
   const md = d.modern;
   if (md) {
     // a Modern game: the server ran it, so the whole state is here (the admin sees every role)
