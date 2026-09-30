@@ -372,7 +372,7 @@ function resolveNight(s, now, rnd) {
   for (const id of targets) { const p = P(s, id); if (p.shield && p.shield.round === s.round) saved.push(id); else victims.push(id); }
   for (const id of victims) { const p = P(s, id); p.dying = true; if (!s.stats.firstBlood) s.stats.firstBlood = id; }
   s.phase = "dawn"; s.dawn = { victims, saved: saved.length, revealed: false, at: now };
-  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + " poisoned" : "nobody died") + (saved.length ? " (Sanctuary held)" : ""), now);
+  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + " poisoned" : "nobody poisoned") + (saved.length ? " (Sanctuary held)" : ""), now);
 }
 function revealDawn(s, now) {
   const d = s.dawn; d.revealed = true; d.lastEnd = d.victims.length ? now + T(s, 30000 * d.victims.length) : null;

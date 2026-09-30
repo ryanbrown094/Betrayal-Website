@@ -162,7 +162,7 @@ with sync_playwright() as p:
         if i not in F and i != ti:
             if until(lambda: q.locator("[data-a=sleep]").count(), 10): q.click("[data-a=sleep] >> nth=0")
     check("dawn: the victim learns first, in secret", until(lambda: "You were poisoned" in phones[vi].inner_text("#app")) and victim not in tv.inner_text("#tvapp"))
-    host.click("[data-a=cont]"); check("the host reveals the night", until(lambda: f"{victim} is dead" in tv.inner_text("#tvapp")))
+    host.click("[data-a=cont]"); check("the host reveals the night", until(lambda: f"{victim} was poisoned" in tv.inner_text("#tvapp")))
     host.click("[data-a=cont]")
     check("round two opens with the Starter", until(lambda: "The Starter" in host.inner_text("#app")))
 

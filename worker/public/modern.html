@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930155242">
+<meta name="build" content="20260930155918">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -871,7 +871,7 @@ function createScreen() {
   <div style="height:10px"></div><label class="l" for="nbots">Players, you included</label><select class="f" id="nbots">${Array.from({ length: 17 }, (_, i) => i + 8).map((n) => `<option${n === 8 ? " selected" : ""}>${n}</option>`).join("")}</select>
   <div style="height:12px"></div>${btn("Start the test game", "create", null, "big")}${msg()}</div>`;
   return `${brand()}<div class="card fade"><h2>You’re the host</h2>
-  <p class="sub">Table ${CODE}. You start each Trial and call the breaks and the Reckoning from your phone. The rest runs itself, and you never see anyone’s role.</p>
+  <p class="sub">Table ${CODE}. Your phone begins each part of the evening when the table is ready, and can call a short break. The rest runs itself, and you never see anyone else’s role.</p>
   <label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" autofocus enterkeyhint="go">
   <div style="height:12px"></div>${btn("Open the Table", "create", null, "big")}${msg()}</div>`;
 }
@@ -930,7 +930,7 @@ function phase(me) {
   switch (V.phase) {
     case "lobby": return lobby(me);
     case "oath": return me.optIn ? `<h2>Sworn</h2><p class="sub">Waiting for everyone to take the Oath.</p>${people(V.players, (p) => p.optedIn)}${tally((p) => p.optedIn, "sworn")}${V.me.director ? `<p class="small">Someone stuck? Tools can deal the roles now.</p>` : ""}`
-      : `<div class="eyebrow">the oath</div><h2>Would you like to be Forsworn?</h2><p class="sub">The Forsworn lie all evening, choose who dies each night and try to steal the prize. Nobody sees your answer. The game uses it when it deals the roles, but it can’t always give everyone what they asked for.</p>
+      : `<div class="eyebrow">the oath</div><h2>Would you like to be Forsworn?</h2><p class="sub">The Forsworn lie all evening, choose who to poison each night and try to steal the prize. Nobody sees your answer. The game uses it when it deals the roles, but it can’t always give everyone what they asked for.</p>
         <div class="stack">${btn("Yes, make me Forsworn", "optin", "yes")}${btn("I’d rather be Loyal", "optin", "no", "ghost")}${btn("Either way", "optin", "any", "dark")}</div>`;
     case "roles": return roleCard(me);
     case "day": return day(me);
@@ -960,10 +960,10 @@ function lobby(me) {
   <p class="small">${o.shield === "public" ? "Everyone sees who won Sanctuary." : "Only the winner knows they hold Sanctuary. (A Forsworn winner gets nothing, and learns so.)"}</p>
   <label class="l" for="prize">The prize</label><input class="f" id="prize" maxlength="80" value="${esc(o.prize || "")}" data-opt="prize">${o.coins ? `<p class="small">Every 100 points in the Purse is one chocolate coin.</p>` : ""}
   <details class="more"${(o.prizes || []).length ? " open" : ""}><summary>Better prizes for a fuller Purse</summary><p class="small">Optional. If the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end.</p>
-  <label class="l" for="tier1">At a half-full Purse</label><input class="f" id="tier1" maxlength="80" placeholder="e.g. champagne" value="${esc(((o.prizes || []).find((x) => x.at === 0.5) || {}).what || "")}" data-tier="1">
+  <label class="l" for="tier1">At a half-full Purse</label><input class="f" id="tier1" maxlength="80" placeholder="e.g. a big box of chocolates" value="${esc(((o.prizes || []).find((x) => x.at === 0.5) || {}).what || "")}" data-tier="1">
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
   <label class="l" style="margin-top:12px">Twists</label>${two("twists", [true, "On"], [false, "Off"])}
-  <p class="small">${o.twists ? "Once each: the Casting Vote, the Crown, and the Confessor in the final." : "No twists: Sanctuary and the Temptation only."}</p>
+  <p class="small">${o.twists ? "Once each: the Casting Vote, the Crown, and the Confessor in the final." : "Off: a plainer game, good for a first night."}</p>
   <label class="l">Eating as you play?</label>${two("courses", [true, "Yes, in courses"], [false, "No"])}
   <p class="small">${o.courses ? "Dinner in courses: a starter, a main and dessert are served between the rounds." : "No meal breaks. Turn this on to serve dinner in courses between the rounds. You can always call a short break."}</p>
   <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
@@ -976,7 +976,7 @@ function roleCard(me) {
   if (!peek) return `<div class="veil" data-a="peek"><div><div class="eyebrow">your role</div><h2>Hold your phone close</h2><p class="sub">Tap here when nobody can see your screen.</p></div></div>`;
   const f = me.role === "f";
   return `<div class="card role ${f ? "f" : "l"}"><div class="sigil">${ART.bigSeal(f ? "t" : "good", f ? "blade" : "candle")}</div><h1>${f ? "Forsworn" : "Loyal"}</h1>
-  <p class="sub">${f ? "You took the Oath and never meant it. Each night, choose who dies on your phone. Blend in, vote with the table, and reach the end unmasked to steal the prize, and every point the Purse falls short of its target. So sabotage the Trials, quietly." : "You are true to the table. Win Trials to fill the Purse (if you win, it’s yours; if the Forsworn win, they take whatever it falls short), find the Forsworn, and exile them at the Reckoning before they pick you off."}</p>
+  <p class="sub">${f ? "You took the Oath and never meant it. Each night, choose on your phone who is poisoned. Blend in, vote with the table, and reach the end unmasked to steal the prize, and every point the Purse falls short of its target. So sabotage the Trials, quietly." : "You are true to the table. Win Trials to fill the Purse (if you win, it’s yours; if the Forsworn win, they take whatever it falls short), find the Forsworn, and exile them at the Reckoning before they pick you off."}</p>
   ${f ? (me.allies && me.allies.length ? `<p>Your fellow Forsworn: <b>${me.allies.map((a) => esc(a.name)).join(", ")}</b></p>` : `<p>You are the only Forsworn. Trust nobody.</p>`) : ""}
   ${btn("Got it. Hide my role", "ack")}</div>`;
 }
@@ -1169,7 +1169,7 @@ function dawn(me) {
   }
   const v = d.victims || [];
   if (v.includes(me.name) && d.lastEnd) return `<div class="card hot center"><h1>Your last words</h1><p class="sub">Stand up, tell the table you were poisoned, and say what you like. Then you’re a Ghost.</p><p class="bigclock">${clock(d.lastEnd)}</p></div>` + dirCard(btn("On to the next round", "cont"));
-  return `<div class="eyebrow">dawn</div><h1>${v.length ? andList(v.map(nb)) + (v.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>
+  return `<div class="eyebrow">dawn</div><h1>${v.length ? andList(v.map(nb)) + (v.length > 1 ? " were" : " was") + " poisoned" : "Nobody was poisoned"}</h1>
   <p class="sub">${v.length ? "Poisoned in the night. Last words" + (d.lastEnd ? ": " + clock(d.lastEnd) : ".") : d.saved ? "Sanctuary held. The Forsworn struck, and failed." : "The night passed quietly."}</p>${v.includes(me.name) ? `<div class="banner ghost">${ico("ghost")}<span>You were poisoned. You’re a Ghost now.</span></div>` : ""}${epitaphs(d)}` + dirCard(btn("On to the next round", "cont")) + waitHost();
 }
 function trust(me) {
@@ -1227,7 +1227,7 @@ function tvBody(url) {
     case "vote": return `<div class="eyebrow">the reckoning${V.vote.tie ? " · a tie" : ""}</div><h1>${V.vote.tie ? "Vote again" : "Vote on your phones"}</h1>${V.vote.revote ? `<p class="sub">Between ${esc(andList(V.vote.revote.map((id) => P(id).name)))}</p>` : ""}<p class="tvcount">${V.vote.voted} of ${V.vote.of} voted · ${clock(V.vote.voteEnd)}</p>${V.vote.immune ? `<p class="sub">${N(V.vote.immune)} laid down the Crown, and is safe from this exile.</p>` : ""}${tvPeople(V.vote.revote ? (p) => V.vote.revote.includes(p.id) : null)}`;
     case "reveal": { const r = V.reveal; return `<h1>${esc(r.name)} is exiled</h1><p class="sub">${(r.counts || []).map(([id, n]) => N(id) + " " + n).join(" · ")}${r.cast ? " · settled by the Casting Vote" : ""}</p>${r.secret ? `<p class="sub">In the final, the exiled go without a word.</p>` : r.role ? `<div class="verdict ${r.role === "f" ? "f" : "l"}">${ART.bigSeal(r.role === "f" ? "t" : "good", r.role === "f" ? "blade" : "candle")}<div>${r.role === "f" ? "Forsworn" : "Loyal"}</div></div>${r.called && r.called.length ? `<p class="sub">Called from beyond by ${esc(andList(r.called))}</p>` : ""}${r.words ? lastWords(r.name, r.words) : ""}` : `<div class="verdict wait">${ART.bigSeal("steel", "scales")}<div>They were…</div></div>`}`; }
     case "night": return `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">Everyone, tap your phone. The Forsworn are choosing.</p>`;
-    case "dawn": { const d = V.dawn; return d.revealed ? `<div class="eyebrow">dawn</div><h1>${d.victims.length ? andList(d.victims.map(nb)) + (d.victims.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>${d.lastEnd ? `<p class="sub">Last words ${clock(d.lastEnd)}</p>` : d.saved ? `<p class="sub">Sanctuary held.</p>` : ""}${epitaphs(d) || tvPeople()}` : `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>`; }
+    case "dawn": { const d = V.dawn; return d.revealed ? `<div class="eyebrow">dawn</div><h1>${d.victims.length ? andList(d.victims.map(nb)) + (d.victims.length > 1 ? " were" : " was") + " poisoned" : "Nobody was poisoned"}</h1>${d.lastEnd ? `<p class="sub">Last words ${clock(d.lastEnd)}</p>` : d.saved ? `<p class="sub">Sanctuary held.</p>` : ""}${epitaphs(d) || tvPeople()}` : `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>`; }
     case "trust": return `<h1>${V.trust.result ? (V.trust.result === "trust" ? "The table trusts" : "Doubt") : "Do you trust everyone left?"}</h1><p class="tvcount">${V.trust.result ? "" : V.trust.voted + " of " + V.trust.of + " chosen" + (V.trust.end ? " · " + clock(V.trust.end) : "")}</p>`;
     case "unmask": { const keep = V.players; V.players = V.unmask.order.map(P); const h = `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`; V.players = keep; return h; }
     case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p><p class="tvcount">${V.honour.made} of ${V.honour.of} chosen${V.honour.end ? " · " + clock(V.honour.end) : ""}</p>`;

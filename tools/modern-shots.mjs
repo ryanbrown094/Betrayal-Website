@@ -92,6 +92,7 @@ snap("dawn", L[1]); tv("tour-modern-tv-dawn.jpg", "dawn");
 a(dir, { a: "cont" });
 
 // the final, straight on: every Forsworn found, four left who must decide whether to trust each other
+s.pot = 1500; // the rounds skipped here would have filled the Purse: the end shows 15 chocolate coins, not 5
 for (const p of s.players) if (p.alive && (p.role === "f" || ![dir, L[1], L[3], L[4]].includes(p.id))) { p.alive = false; p.exiled = s.round; }
 s.final = true; s.phase = "trust"; s.trust = { votes: {}, end: now + 120000 }; s.trial = null; s.vote = null; s.night = null; s.dawn = null;
 snap("trust", L[1]); phone("tour-modern-phone-trust.jpg", "trust");
