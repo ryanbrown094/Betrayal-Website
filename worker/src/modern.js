@@ -7,6 +7,9 @@
 // on every request so clocks move on, and answers each phone with viewFor().
 import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, MEMSETS, CHARADES, SONGS, SNAPSYM, PICTIONARY, COLORS } from "./content.gen.js";
 
+// the default prize: chocolate coins, one for every 100 points the winners take from the Purse (coinsOf)
+export const PRIZE0 = "chocolate coins";
+const coinsOf = (prize, won) => (prize === PRIZE0 ? Math.floor(won / 100) : null);
 export const MINP = 8, MAXP = 24, NAMEMAX = 14;
 const CHSYM = ["moon", "sun", "blade", "crown", "shield", "table", "chalice", "scroll", "hourglass", "scales", "raven", "ghost", "key", "skull", "candle", "eye", "handshake"];
 const TOKCH = "abcdefghjkmnpqrstuvwxyz23456789";
@@ -57,7 +60,7 @@ const say = (s, line, now) => { s.log = [{ t: now, m: clip(line, 300) }, ...(s.l
 export function newGame(now, rnd, opts) {
   return {
     mode: "modern", v: 1, gid: Math.floor(rnd() * 1e9).toString(36), ver: 1, created: now, phase: "lobby", round: 0, final: false,
-    opts: { kill: "poison", shield: "secret", prize: "a box of chocolates", prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: false, ...(opts || {}) },
+    opts: { shield: "secret", prize: PRIZE0, prizes: [], title: "The Betrayal", potCap: 2000, talk: 240, twists: true, courses: false, ...(opts || {}) },
     director: null, players: [], pot: 0, plan: [], planAt: 0, steps: [], stepAt: 0, total: 0, cast: null, crown: null, confess: null, peeked: [], done: {}, trial: null, brk: null, vote: null, reveal: null, night: null, dawn: null,
     trust: null, unmask: null, honour: null, result: null, stats: { wins: {}, against: {}, calls: {}, firstBlood: null, votes: [] }, log: [],
   };
@@ -369,10 +372,10 @@ function resolveNight(s, now, rnd) {
   for (const id of targets) { const p = P(s, id); if (p.shield && p.shield.round === s.round) saved.push(id); else victims.push(id); }
   for (const id of victims) { const p = P(s, id); p.dying = true; if (!s.stats.firstBlood) s.stats.firstBlood = id; }
   s.phase = "dawn"; s.dawn = { victims, saved: saved.length, revealed: false, at: now };
-  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + (s.opts.kill === "murder" ? " murdered" : " poisoned") : "nobody died") + (saved.length ? " (Sanctuary held)" : ""), now);
+  say(s, "Night: " + (victims.length ? victims.map((id) => P(s, id).name).join(", ") + " poisoned" : "nobody died") + (saved.length ? " (Sanctuary held)" : ""), now);
 }
 function revealDawn(s, now) {
-  const d = s.dawn; d.revealed = true; d.lastEnd = s.opts.kill === "poison" && d.victims.length ? now + T(s, 30000 * d.victims.length) : null;
+  const d = s.dawn; d.revealed = true; d.lastEnd = d.victims.length ? now + T(s, 30000 * d.victims.length) : null;
   for (const id of d.victims) { const p = P(s, id); p.alive = false; p.dying = false; p.died = s.round; }
 }
 function nextRound(s, now) {
@@ -394,7 +397,7 @@ function finishGame(s, now) {
     const b = Object.entries(s.honour.choices).filter(([, v]) => v === "betray").map(([id]) => id);
     if (b.length === 1) { to = b; how = "betrayed"; } else if (b.length > 1) { to = []; how = "nobody"; } else how = "honoured";
   }
-  s.phase = "end"; s.result = { winner: win, prize, tier: tiers.length ? tiers[tiers.length - 1].at : 0, to, how, pot: s.pot, won, cap: s.opts.potCap, awards: awardsOf(s), peeked: (s.peeked || []).map((x) => x.round) };
+  s.phase = "end"; s.result = { winner: win, prize, tier: tiers.length ? tiers[tiers.length - 1].at : 0, to, how, pot: s.pot, won, coins: coinsOf(prize, won), cap: s.opts.potCap, awards: awardsOf(s), peeked: (s.peeked || []).map((x) => x.round) };
   say(s, (win === "forsworn" ? "The Forsworn win" : "The Loyal win") + " · prize: " + prize, now);
 }
 function awardsOf(s) {
@@ -489,7 +492,7 @@ export function act(s, pid, a, now, ctx) {
   if (s.paused && !["pause", "tool", "words"].includes(a && a.a)) return need(false, "The game is paused.");
   switch (a && a.a) {
     // --- the lobby and the oath
-    case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["poison", "murder"].includes(o.kill)) s.opts.kill = o.kill; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || "a box of chocolates"; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
+    case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || PRIZE0; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
     case "bots": { if (!dir || !s.test || s.phase !== "lobby") return need(false); addBots(s, Math.max(s.players.length + 1, +v || 8), now, rnd); return done(); }
     case "start": {
       if (!dir || s.phase !== "lobby") return need(false);
@@ -545,7 +548,6 @@ export function act(s, pid, a, now, ctx) {
     case "words": {
       const text = clip(String(v || "").replace(/\s+/g, " ").trim(), WORDS); if (!text) return need(false, "Type something first.");
       if (s.phase === "reveal" && s.reveal && s.reveal.id === pid && !s.reveal.secret && !s.reveal.words) { s.reveal.words = text; say(s, me.name + "’s last words", now); return done(); }
-      if (s.phase === "dawn" && s.dawn && s.dawn.revealed && s.opts.kill === "murder" && s.dawn.victims.includes(pid) && !(s.dawn.words || {})[pid]) { (s.dawn.words = s.dawn.words || {})[pid] = text; say(s, me.name + "’s last words", now); return done(); }
       return need(false);
     }
     case "sleep": { if (s.phase !== "night" || !me.alive) return need(false); s.night.slept[pid] = true; return done(); }
@@ -606,12 +608,12 @@ export function viewFor(s, pid, now) {
   const me = pid ? P(s, pid) : null, over = s.phase === "end";
   const role = (p) => (over || p.revealed ? p.role : null);
   const o = {
-    mode: "modern", test: !!s.test, ver: s.ver, now, phase: s.phase, round: s.round, final: s.final, pot: s.pot, potCap: s.opts.potCap, title: s.opts.title, kill: s.opts.kill,
+    mode: "modern", test: !!s.test, ver: s.ver, now, phase: s.phase, round: s.round, final: s.final, pot: s.pot, potCap: s.opts.potCap, title: s.opts.title,
     tiers: (s.opts.prizes || []).length > 0, director: s.director ? { id: s.director, name: (P(s, s.director) || {}).name } : null,
     players: s.players.filter((p) => !p.left).map((p) => ({ id: p.id, name: p.name, color: p.color, bot: p.bot || undefined, alive: p.alive || !!p.dying, role: role(p), shield: p.shield && !p.shield.secret && p.shield.round === s.round ? true : false, optedIn: s.phase === "oath" ? !!p.optIn : undefined, acked: s.phase === "roles" ? !!p.acked : undefined })),
     paused: s.paused ? s.paused.at : null, brk: s.brk, done: { tempt: !!s.done.tempt, starter: !!s.done.starter, main: !!s.done.main, dessert: !!s.done.dessert }, roundTrials: s.roundTrials || 0,
   };
-  if (s.phase === "lobby") o.opts = { kill: s.opts.kill, shield: s.opts.shield, twists: s.opts.twists, courses: s.opts.courses, prize: me && s.director === pid ? s.opts.prize : undefined, prizes: me && s.director === pid ? s.opts.prizes : undefined, title: s.opts.title };
+  if (s.phase === "lobby") o.opts = { shield: s.opts.shield, twists: s.opts.twists, courses: s.opts.courses, prize: me && s.director === pid ? s.opts.prize : undefined, coins: me && s.director === pid ? s.opts.prize === PRIZE0 : undefined, prizes: me && s.director === pid ? s.opts.prizes : undefined, title: s.opts.title };
   if (s.phase === "day") o.next = stepLabel(s, s.steps[s.stepAt]) || "The Reckoning";
   if (s.trial) {
     const t = s.trial, it = t.item;
@@ -642,8 +644,8 @@ export function viewFor(s, pid, now) {
   if (s.phase === "dawn") {
     const d = s.dawn, lk = s.stats.likely || {};
     o.dawn = { revealed: d.revealed, victims: d.revealed ? d.victims.map((id) => P(s, id).name) : null, saved: d.revealed ? d.saved : null, lastEnd: d.lastEnd };
-    // the table's own verdict on the dead, from Most Likely To, and (after a murder) what they typed as they went
-    if (d.revealed) { o.dawn.likely = d.victims.filter((id) => lk[id]).map((id) => [P(s, id).name, lk[id]]); o.dawn.words = Object.entries(d.words || {}).map(([id, w]) => [P(s, id).name, w]); }
+    // the table's own verdict on the dead, from Most Likely To
+    if (d.revealed) { o.dawn.likely = d.victims.filter((id) => lk[id]).map((id) => [P(s, id).name, lk[id]]); }
   }
   if (s.trust && s.phase === "trust") o.trust = { end: s.trust.end, voted: Object.keys(s.trust.votes).length, of: alive(s).length, result: s.trust.result, count: s.trust.count, mine: me ? s.trust.votes[pid] || null : null };
   if (s.unmask && s.phase === "unmask") o.unmask = { order: s.unmask.order, shown: s.unmask.shown };
@@ -655,8 +657,7 @@ export function viewFor(s, pid, now) {
     if (s.phase === "night" && me.alive) {
       if (me.role === "f") { o.me.targets = alive(s).filter((p) => p.role !== "f").map((p) => p.id); o.me.picks = Object.fromEntries(forsworn(s).map((f) => [f.name, [].concat(s.night.picks[f.id] || []).map((id) => P(s, id).name)])); o.me.mine = [].concat(s.night.picks[pid] || []); o.me.sanct = alive(s).filter((p) => p.shield && !p.shield.secret && p.shield.round === s.round).map((p) => p.name); }
     }
-    if (s.phase === "dawn" && !s.dawn.revealed && s.dawn.victims.includes(pid)) o.me.victim = s.opts.kill;
-    if (s.phase === "dawn" && s.dawn.revealed && s.opts.kill === "murder" && s.dawn.victims.includes(pid)) o.me.words = (s.dawn.words || {})[pid] || "";
+    if (s.phase === "dawn" && !s.dawn.revealed && s.dawn.victims.includes(pid)) o.me.victim = true;
     if (s.phase === "reveal" && s.reveal.id === pid && !s.reveal.secret) o.me.words = s.reveal.words || "";
     if (s.phase === "night" && me.alive && me.role === "f" && forsworn(s).length > 1) { o.me.whispers = (s.night.wh || []).slice(-12).map((x) => [x.f === pid ? "You" : P(s, x.f).name, WHISPERS[x.m]]); o.me.whisperSay = WHISPERS; }
     if (s.trial && s.trial.stage === "done" && s.trial.sanct === pid) o.me.wonSanct = me.role === "f" ? "wasted" : "yes";

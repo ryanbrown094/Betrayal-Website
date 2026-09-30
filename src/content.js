@@ -158,7 +158,7 @@ const QUIZ_H=[
 ["Which courtier of Elizabeth I designed an early flushing toilet?","Sir John Harington"],["Who invented the phonograph?","Thomas Edison"],["Who developed the compression-ignition engine that bears his name?","Rudolf Diesel"],["Which mathematician led work on breaking Enigma at Bletchley Park’s Hut 8?","Alan Turing"],["Who invented the computer mouse?","Douglas Engelbart"],["Who invented a safety lamp for miners in 1815?","Sir Humphry Davy"],["Which Swedish astronomer gave his name to a temperature scale?","Anders Celsius"],["Who developed the first widely used polio vaccine, in the 1950s?","Jonas Salk"],["Who pioneered vaccination against smallpox in 1796?","Edward Jenner"],["Which surgeon pioneered antiseptic surgery using carbolic acid?","Joseph Lister"],
 ["What does the acronym laser stand for?","Light amplification by stimulated emission of radiation"],["What does the acronym radar stand for?","Radio detection and ranging"],["What does the acronym scuba stand for?","Self-contained underwater breathing apparatus"],["Which Sunderland-born inventor developed an incandescent light bulb at the same time as Edison?","Joseph Swan"],["Who patented the first practical pneumatic tyre, for his son’s tricycle?","John Boyd Dunlop"]];
 const CODEWORDS=[
-"POISON","LANTERN","MANOR","SPECTRE","SHIELD","RIDDLE","MURDER","SECRET","CLOAK","GHOST",
+"POISON","LANTERN","MANOR","SPECTRE","SHIELD","RIDDLE","DAGGER","SECRET","CLOAK","GHOST",
 "CANDLE","CHALICE","BETRAY","LIAR","EMBER","SIGIL","MASK","OATH","RAVEN","TOWER",
 "CRYPT","VEIL","BLADE","THRONE","DUNGEON","CURSE","WITCH","BLOOD","TOMB","VOW",
 "SWORD","VENOM","HEMLOCK","ARSENIC","GOBLET","SPIRE","MOAT","KNIGHT","DECEIT","PLOT",

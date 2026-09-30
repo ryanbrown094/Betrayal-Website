@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930125918">
+<meta name="build" content="20260930150156">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -860,7 +860,7 @@ const QUIZ_H=[
 ["Which courtier of Elizabeth I designed an early flushing toilet?","Sir John Harington"],["Who invented the phonograph?","Thomas Edison"],["Who developed the compression-ignition engine that bears his name?","Rudolf Diesel"],["Which mathematician led work on breaking Enigma at Bletchley Park’s Hut 8?","Alan Turing"],["Who invented the computer mouse?","Douglas Engelbart"],["Who invented a safety lamp for miners in 1815?","Sir Humphry Davy"],["Which Swedish astronomer gave his name to a temperature scale?","Anders Celsius"],["Who developed the first widely used polio vaccine, in the 1950s?","Jonas Salk"],["Who pioneered vaccination against smallpox in 1796?","Edward Jenner"],["Which surgeon pioneered antiseptic surgery using carbolic acid?","Joseph Lister"],
 ["What does the acronym laser stand for?","Light amplification by stimulated emission of radiation"],["What does the acronym radar stand for?","Radio detection and ranging"],["What does the acronym scuba stand for?","Self-contained underwater breathing apparatus"],["Which Sunderland-born inventor developed an incandescent light bulb at the same time as Edison?","Joseph Swan"],["Who patented the first practical pneumatic tyre, for his son’s tricycle?","John Boyd Dunlop"]];
 const CODEWORDS=[
-"POISON","LANTERN","MANOR","SPECTRE","SHIELD","RIDDLE","MURDER","SECRET","CLOAK","GHOST",
+"POISON","LANTERN","MANOR","SPECTRE","SHIELD","RIDDLE","DAGGER","SECRET","CLOAK","GHOST",
 "CANDLE","CHALICE","BETRAY","LIAR","EMBER","SIGIL","MASK","OATH","RAVEN","TOWER",
 "CRYPT","VEIL","BLADE","THRONE","DUNGEON","CURSE","WITCH","BLOOD","TOMB","VOW",
 "SWORD","VENOM","HEMLOCK","ARSENIC","GOBLET","SPIRE","MOAT","KNIGHT","DECEIT","PLOT",
@@ -1181,8 +1181,8 @@ function nightScript(n,st){
   const mode=n.mode,t=n.targetName||"…",tapGeneric={who:"Everyone",tv:"If you feel a tap on the shoulder, remove your blindfold and read the screen. Not a sound.",say:"I am walking the table. If you feel my hand on your shoulder, remove your blindfold and read the screen. Say nothing. Everyone else, stay exactly as you are."};
   const vName=id=>{const p=id&&P2(st,id);return p?p.name:"…"};
   // a shielded victim is never tapped, so nobody may see their name on the screen
-  const murderedScreen=(id)=>{const p=id&&P2(st,id);return (n.shielded||(p&&p.shield))?{who:"Everyone",silent:true,murdered:true,tv:"Blindfolds stay on. Not a sound.",say:"Silent. They hold Sanctuary, so you tapped nobody. Wait ten seconds so the room hears nothing, then next line."}:killOf(st)==="murder"?{who:vName(id),silent:true,murdered:true,tv:vName(id)+". You have been murdered. Not a sound. Stand up, and leave the table now."+(ghostsOn(st)?" Wait with the Ghosts, away from the table: you’ll watch the rest from there.":" Your game is over. Thank you for playing, and not a word to anyone still at the table."),say:"Silent. They read it, stand and leave the table. Keep your footsteps and your pace the same."}
-    :{who:vName(id),silent:true,murdered:true,tv:vName(id)+". You have been poisoned. Say nothing. Blindfold back on. At dawn, when "+H()+" asks, you will announce it, say your last words, and "+(ghostsOn(st)?"join the Ghosts.":"leave the table."),say:"Silent. They read it and put the blindfold back on."}};
+  const poisonedScreen=(id)=>{const p=id&&P2(st,id);return (n.shielded||(p&&p.shield))?{who:"Everyone",silent:true,poisoned:true,tv:"Blindfolds stay on. Not a sound.",say:"Silent. They hold Sanctuary, so you tapped nobody. Wait ten seconds so the room hears nothing, then next line."}
+    :{who:vName(id),silent:true,poisoned:true,tv:vName(id)+". You have been poisoned. Say nothing. Blindfold back on. At dawn, when "+H()+" asks, you will announce it, say your last words, and "+(ghostsOn(st)?"join the Ghosts.":"leave the table."),say:"Silent. They read it and put the blindfold back on."}};
   const gh=ghostsOf(st).length>0;
   const R=st.round||1,G=gh?", everyone, the Ghosts too":"";
   // a big table’s night takes more than one victim: one pass each, the Forsworn woken again for every pass after the first
@@ -1198,7 +1198,7 @@ function nightScript(n,st){
       ...questLine,
       {who:"Forsworn",pick:true,tv:"Blindfolds on.",say:"Forsworn, blindfolds back on."},
       {...tapGeneric,tap:"victim"},
-      murderedScreen(n.victimId),{who:"Everyone",silent:true,tv:"Blindfolds stay on. Not a sound.",say:killOf(st)==="murder"?"Silent. Wait until they are well clear of the table, about fifteen seconds, the same whether or not anyone left.":"Silent. Give it five seconds so nobody can tell whether anyone was tapped."});
+      poisonedScreen(n.victimId),{who:"Everyone",silent:true,tv:"Blindfolds stay on. Not a sound.",say:"Silent. Give it five seconds so nobody can tell whether anyone was tapped."});
   }else{
     s.push({who:"Forsworn",silent:true,pick:true,tv:mode==="convert"?"Tonight there is no poison, but a Whisper. Agree on one Loyal player to bring to your side, then point at them. Hold it until "+H()+" nods.":"Tonight: the Last Offer. Choose one Loyal player. They join you, or they die. Point at them. Hold it until "+H()+" nods."+(shNote?shNote.replace("and cannot be poisoned tonight","and Sanctuary still saves them if they refuse"):""),say:"Silent. They read the TV. Pick the target below as they point."},
       ...questLine,
@@ -1210,16 +1210,16 @@ function nightScript(n,st){
         {who:"Forsworn",silent:true,tap:"cloaks",tv:"If you feel a tap on the shoulder, remove your blindfold and read the screen. Not a sound.",say:"Silent. Say nothing this time. Walk the table and tap each Forsworn, and they read the screen."},
         {who:"Forsworn",silent:true,tv:"Forsworn, meet your newest ally: "+t+". Look at each other. Remember. Then all of you, blindfolds on together.",say:"Silent. Let them look. When all blindfolds are back on, go to the next line."});
     }else if(n.answer==="no"){
-      s.push({who:t,silent:true,tv:"Your answer is sealed. Blindfold on.",say:"Silent."+(mode==="bargain"?" They refused: the next line is the murder tap.":"")});
-      if(mode==="bargain")s.push({...tapGeneric,tap:"victim"},murderedScreen(n.targetId));
+      s.push({who:t,silent:true,tv:"Your answer is sealed. Blindfold on.",say:"Silent."+(mode==="bargain"?" They refused: the next line is the poison tap.":"")});
+      if(mode==="bargain")s.push({...tapGeneric,tap:"victim"},poisonedScreen(n.targetId));
     }else{
       s.push({who:"…",pending:true,tv:"…",say:"Record the answer to see the rest of the script."});
     }
   }
-  if(more){s.push({who:"Everyone",silent:true,tv:"Blindfolds stay on. The night isn’t over. Not a sound.",say:"Silent. Blindfolds stay on while the Forsworn strike again. Tap “Next victim” when you’re ready."});return kwLines(s,st)}
-  const dawn=killOf(st)==="murder"?["Everyone, remove your blindfolds. Dawn is coming. Say nothing yet. Dawn will tell us who made it through the night.","Blindfolds off, everyone. The night is over. Not a word until dawn.","Everyone, blindfolds off. Morning is on its way, and with it, the truth. Some of it.","Blindfolds off. First light over the house. Nobody say a word about what they did or didn’t hear."]:["Everyone, remove your blindfolds. Dawn is coming, and everyone is still here. For now.","Blindfolds off, everyone. The night is over. Look around. Every chair still full, for now.","Everyone, blindfolds off. Morning is on its way, and with it, the truth. Some of it.","Blindfolds off. First light over the house. Nobody say a word about what they did or didn’t hear."];
+  if(more){s.push({who:"Everyone",silent:true,tv:"Blindfolds stay on. The night isn’t over. Not a sound.",say:"Silent. Blindfolds stay on while the Forsworn strike again. Tap “Next victim” when you’re ready."});return s.map(norm)}
+  const dawn=["Everyone, remove your blindfolds. Dawn is coming, and everyone is still here. For now.","Blindfolds off, everyone. The night is over. Look around. Every chair still full, for now.","Everyone, blindfolds off. Morning is on its way, and with it, the truth. Some of it.","Blindfolds off. First light over the house. Nobody say a word about what they did or didn’t hear."];
   s.push({who:"Everyone",tv:vr(["Remove your blindfolds. Dawn is coming.","Blindfolds off. The night is over.","Remove your blindfolds. Morning is on its way.","Blindfolds off. First light."],R),say:vr(dawn,R)});
-  return kwLines(s,st);
+  return s.map(norm);
 }
 const norm=e=>Array.isArray(e)?{who:e[0],tv:e[1],say:e[2]}:e;
 // A key line has a few phrasings; each round takes the next, so no two rounds running sound the same and a line never
@@ -1243,7 +1243,7 @@ const WITNESSNOW_=(h,g,c)=>{
     {who:h,silent:true,tap:"cloak",tv:"If you feel a tap on the shoulder, remove your blindfold and look up. Not a sound.",say:f?"Silent. Walk the table as if you were tapping someone, and tap nobody.":"Silent. Tap the Forsworn on the shoulder."},
     {who:"Both",silent:true,tv:f?"Stay still. Thirty seconds. Not a sound.":"Confessor: the other person with their blindfold off is a Forsworn. Forsworn: this person is the Confessor. They know your face now, and you cannot poison them. Thirty seconds. Not a sound.",say:"Silent. Give them thirty seconds."},
     {who:"Both",silent:true,tv:f?"Blindfold back on.":"Blindfolds on. Both of you.",say:"Silent. When the blindfolds are back on, next line."},
-    {who:"Everyone",tv:"Remove your blindfolds.",say:"Blindfolds off, everyone. The special prize has been claimed. Somebody at this table knows more than they did a minute ago."}].map(l=>({...l,tv:kw(l.tv),say:kw(l.say)}));
+    {who:"Everyone",tv:"Remove your blindfolds.",say:"Blindfolds off, everyone. The special prize has been claimed. Somebody at this table knows more than they did a minute ago."}];
 };
 const CEREMONY_=(h,g,c)=>{
   const n=c.secCount||0,war=!!c.secWar,dag=!!c.secDag,G=g?", Ghosts too":"";
@@ -1253,7 +1253,7 @@ const CEREMONY_=(h,g,c)=>{
   if(n)L.push({who:h,tap:"shield",tv:(n>1?"Sanctuaries have":"Sanctuary has")+" been won. Whoever feels a tap now holds Sanctuary.",say:"Whoever feels my hand on their shoulder now holds Sanctuary tonight. The Forsworn cannot poison you. Whether you tell the table… is up to you."});
   if(dag)L.push({who:h,tap:"blade",tv:"The Casting Vote has been won. Whoever feels a tap now holds it.",say:"Whoever feels my hand on their shoulder now holds the Casting Vote. If tonight’s Reckoning ties, your board breaks the tie. The table will see which way the Casting Vote fell, never whose it was."});
   L.push({who:"Everyone",tv:"Remove your blindfolds. "+cap1(andList(what))+(many?" have":" has")+" been claimed.",say:"Blindfolds off. "+cap1(andList(what))+(many?" have":" has")+" been claimed. Look around the table. Somebody here knows something you don’t."});
-  return L.map(l=>({...l,tv:kw(l.tv),say:kw(l.say)}));
+  return L;
 };
 const SAY={
   lobbyWait:"Take your seats, everyone, and fill your glasses. When the titles roll on the screen, the game begins.",
@@ -1296,13 +1296,12 @@ const SAY={
   table:r=>vr(["It’s time. Chalk the name of the one you suspect, and keep your board to your chest. I’ll go round the table: when I say your name, turn it, and tell them why to their face.","Chalk in hand. One name: the one you believe is a Forsworn. Boards to your chest. When I say your name, turn it, and tell them why.","The talking is done. Write one name. Keep it hidden. I’ll come round the table: turn your board when I say your name, and look them in the eye while you explain.","One name each. Chalk it, hide it. When I call you, turn it, and say why to their face. No speeches. Just the truth as you see it."],r),
   revealFinal:(n,r)=>vr([n+", the table has spoken. In the final there are no confessions. Stand up, say nothing, and leave the table. We find out what you were when it is over.",n+", that’s the table’s decision. No confession now, not in the final. Stand, and go without a word. The rest of us will find out at the very end."],r),
   reveal:(n,r)=>vr([n+", the table has spoken. Stand up. Before you go, tell us honestly, for the first time tonight: are you Loyal… or Forsworn?",n+", you’ve been exiled. Stand up. No more games. Tell the table what you really are. Loyal… or Forsworn?",n+". The house has decided. Please stand. For once tonight, there’s no point lying: were you Loyal… or Forsworn?",n+", your candle is going out. On your feet. Tell them, and look at the people who chalked your name while you do. Loyal, or Forsworn?"],r),
-  dawnAsk:r=>killOf()==="murder"?vr(["Good morning. I hope you all slept well. Look around the table. Is every chair still full?","Good morning, everyone. Coffee’s poured. Before anyone gets comfortable, count the chairs.","Morning. Some of you look rested. Some of you look guilty. Did everyone make it through the night? Look around.","Dawn is served, for most of you. Look around the table."],r):vr(["Good morning. I hope you all slept well. Look around the table. Every chair is full… but is everyone alive? If you were poisoned in the night, stand up and tell us.","Good morning, everyone. Coffee’s poured. Before anyone gets comfortable: if the Forsworn came for you in the night, stand up now.","Morning. Some of you look rested. Some of you look guilty. If you were poisoned last night, on your feet, please.","Dawn is served, for most of you. If you were poisoned in the night, this is your moment. Stand up."],r),
-  morningMurder:(n,r)=>killOf()==="murder"?vr([n+". Murdered in the night. Their candle went out while every one of you sat blindfolded and heard nothing."+(ghostsOn()?" They’ll watch the rest of this from beyond the table.":" They won’t be back.")+" Someone here did this.",n+". Gone. Taken from this table in the dark, and not one of you noticed. Look at the empty chair, then look at each other.",n+". The Forsworn came for them in the night. Somewhere at this table sits the person who chose them.",n+". Murdered. One of the faces around you knows exactly how it happened."],r)
-    :vr([n+". Poisoned at this very table, while you all sat here. You have thirty seconds for your last words. Then your candle goes out, and you "+(ghostsOn()?"join the Ghosts":"leave the table")+". Everyone else: someone here handed them the cup.",n+". The Forsworn chose you while everyone at this table sat blindfolded and did nothing. Thirty seconds, "+n+". Make them count.",n+". Gone in the night. Thirty seconds for your last words, and then "+(ghostsOn()?"you’ll watch the rest of this from beyond the table.":"you leave us."),n+". Poisoned. Look at the faces around you. One of them did this. You have thirty seconds. Use them however you like."],r),
+  dawnAsk:r=>vr(["Good morning. I hope you all slept well. Look around the table. Every chair is full… but is everyone alive? If you were poisoned in the night, stand up and tell us.","Good morning, everyone. Coffee’s poured. Before anyone gets comfortable: if the Forsworn came for you in the night, stand up now.","Morning. Some of you look rested. Some of you look guilty. If you were poisoned last night, on your feet, please.","Dawn is served, for most of you. If you were poisoned in the night, this is your moment. Stand up."],r),
+  morningPoison:(n,r)=>vr([n+". Poisoned at this very table, while you all sat here. You have thirty seconds for your last words. Then your candle goes out, and you "+(ghostsOn()?"join the Ghosts":"leave the table")+". Everyone else: someone here handed them the cup.",n+". The Forsworn chose you while everyone at this table sat blindfolded and did nothing. Thirty seconds, "+n+". Make them count.",n+". Gone in the night. Thirty seconds for your last words, and then "+(ghostsOn()?"you’ll watch the rest of this from beyond the table.":"you leave us."),n+". Poisoned. Look at the faces around you. One of them did this. You have thirty seconds. Use them however you like."],r),
   // a big table’s night can take several: n is "A, B and C"; saved when one more was chosen and a shield held
-  morningMany:(n,r,saved)=>(killOf()==="murder"?vr([n+". Murdered in the night, every one of them. Their candles went out while you all sat blindfolded and heard nothing. Someone here did this.",n+". Gone. Taken from this table in the dark, and not one of you noticed. Look at the empty chairs, then look at each other."],r):vr([n+". Poisoned at this very table, while you all sat here. Each of you has thirty seconds for your last words. Then your candles go out.",n+". The Forsworn chose you, one after another, while this table sat blindfolded and did nothing. Thirty seconds each. Make them count."],r))+(saved?" And one more was chosen last night, and saved by Sanctuary.":""),
-  morningShield:r=>vr([killOf()==="murder"?"Every chair is still full. Nobody was murdered. The Forsworn chose someone last night. I walked round this table myself, and they found Sanctuary.":"Nobody. Nobody was poisoned. The Forsworn poured the cup last night. I walked it round this table myself, and it met Sanctuary. Somebody here was chosen, and may not even know it. The Forsworn do.",killOf()==="murder"?"Every candle still burns. The Forsworn struck last night, and hit Sanctuary. Someone at this table was their target. They know who. Do you?":"Nobody stands. The Forsworn struck last night, and hit Sanctuary. Someone at this table was their target. They know who. Do you?"],r),
-  morningQuiet:r=>vr(["Nobody. Nobody was poisoned last night. Which is either very lucky… or very suspicious.",(killOf()==="murder"?"Every chair is still full, and every candle still burns.":"Nobody stands. Every chair is still full.")+" The Forsworn were quiet last night, and quiet Forsworn are the ones to worry about.","Nobody. Every candle still burns. Enjoy the morning. Watch who’s enjoying it most."],r),
+  morningMany:(n,r,saved)=>vr([n+". Poisoned at this very table, while you all sat here. Each of you has thirty seconds for your last words. Then your candles go out.",n+". The Forsworn chose you, one after another, while this table sat blindfolded and did nothing. Thirty seconds each. Make them count."],r)+(saved?" And one more was chosen last night, and saved by Sanctuary.":""),
+  morningShield:r=>vr(["Nobody. Nobody was poisoned. The Forsworn poured the cup last night. I walked it round this table myself, and it met Sanctuary. Somebody here was chosen, and may not even know it. The Forsworn do.","Nobody stands. The Forsworn struck last night, and hit Sanctuary. Someone at this table was their target. They know who. Do you?"],r),
+  morningQuiet:r=>vr(["Nobody. Nobody was poisoned last night. Which is either very lucky… or very suspicious.","Nobody stands. Every chair is still full. The Forsworn were quiet last night, and quiet Forsworn are the ones to worry about.","Nobody. Every candle still burns. Enjoy the morning. Watch who’s enjoying it most."],r),
   ghostCall:" Ghosts: you chalk too. Write who you think goes tonight, and keep it to yourselves. Call it right, and the TV will name you.",
   ghostIntro:n=>"A word about the dead. In this house, a candle that goes out still smokes. "+n+", you are the first Ghost. The exiled and the poisoned stay at the party: they watch everything, and those who died Loyal will be asked to judge. At every Reckoning they chalk too: who do they think goes? Call it right, and the TV will say so. They can perform in Trials when I call on them. But they cannot vote, cannot whisper, and cannot warn you. And when the living put their blindfolds on, so do the Ghosts, every time, no peeking. A Ghost who tries to steer the living will answer to me.",
   ghosts:"Ghosts who died Loyal: you can’t vote, you can’t speak at the table, and when the blindfolds go on, yours do too. But you can judge. When I hand you my phone, name the one you’re sure is a Forsworn. Once. It locks. At the end, we’ll see which of the dead saw clearest, and if the living get greedy, the prize may fall to you.",
@@ -1316,8 +1315,6 @@ const SAY={
   prizeRps:(prize,names)=>"And now, the prize. All night you have played for it without knowing what it was. It is… "+prize+". There is only one of it. So "+names+": rock, paper, scissors for it. Last one standing takes it home.",
   prizeHome:(name,prize)=>name+" takes home "+prize+". Congratulations. Look after it."
 };
-// every SAY line reads for the game’s kill style (murder or poison); plain strings become getters so they follow the game
-for(const k of Object.keys(SAY)){const d=Object.getOwnPropertyDescriptor(SAY,k);if(d.get){const g=d.get;Object.defineProperty(SAY,k,{get:()=>kw(g.call(SAY)),enumerable:true})}else if(typeof d.value==="function"){const f=d.value;SAY[k]=(...a)=>kw(f(...a))}else{const v=d.value;Object.defineProperty(SAY,k,{get:()=>kw(v),enumerable:true})}}
 // Lines that answer the moment: how the vote went, and what the table just found out. One variant per round, so a
 // re-render never changes what the host is reading. The Forsworn lines never hint whether it was the last one.
 const BANTER={
@@ -1613,7 +1610,7 @@ const titleOf = s => (s && s.brand && s.brand.title) || "The Betrayal";
 const H = () => hostOf(state), T = () => titleOf(state);
 const moneyOf = (s, v) => { const u = String((s && s.potUnit) || "pts").replace(/[<>&"'`]/g, ""); return /^[£$€]$/.test(u) ? u + v : v + " " + u };
 const money = v => moneyOf(state, v);
-const PRIZE0 = "a box of chocolates"; // the default prize; the host sets their own at setup
+const PRIZE0 = "chocolate coins"; // the default prize; the host sets their own at setup. One coin for every 100 points won (coinsOf)
 // The prize can come in tiers: a better one once the Purse is half full, the best once it's full (s.prizes, set up front).
 // Until the end the TV only hears that the Purse decides the prize; the prizes themselves stay secret.
 // What the winners take from the Purse: the Loyal take what they built; the Forsworn take what it fell short of its target,
@@ -1621,6 +1618,11 @@ const PRIZE0 = "a box of chocolates"; // the default prize; the host sets their 
 const wonPot = s => s && s.winner === "cloaks" ? Math.max(0, ((s.potCap) || 2000) - (s.pot || 0)) : (s && s.pot) || 0;
 const prizeTier = s => { const cap = (s && s.potCap) || 2000, t = ((s && s.prizes) || []).filter(x => x && x.what && (wonPot(s) >= x.at * cap)); return t.length ? t[t.length - 1] : null };
 const prizeOf = s => { const t = prizeTier(s); return (t && t.what) || (s && s.prize) || PRIZE0 };
+// With the default prize, what the winners take in chocolate coins (null for any other prize)
+const coinsOf = s => prizeOf(s) === PRIZE0 ? Math.floor(wonPot(s) / 100) : null;
+const coinsText = n => n ? n + " chocolate coin" + (n === 1 ? "" : "s") : "no chocolate coins";
+// the prize as it's announced at the end: "15 chocolate coins", or the host's own prize
+const prizeName = s => { const c = coinsOf(s); return c == null ? prizeOf(s) : coinsText(c) };
 // Dinner in three courses: the starter after round one, the main course mid-game, dessert before the final.
 const COURSES = [{ k: "starter", name: "The Starter", dur: 900000 }, { k: "main", name: "The Main Course", dur: 1500000 }, { k: "dessert", name: "Dessert", dur: 900000 }];
 const courseRounds = R => R >= 4 ? [1, Math.ceil(R / 2), R - 1] : [];
@@ -1635,23 +1637,14 @@ const isFinal = s => !!s && s.finalRound === s.round;
 // rounds: 0 = decided by the table size (the final starts once five or fewer are left), or a fixed number (the last is the final)
 // perRound: missions a round (1, 2, or 0 = by the clock). dinnerAfter: the round dinner follows (0 = no dinner break).
 // courses: dinner in three courses instead (starter, main, dessert: see courseRounds). narrator: the TV reads the lines aloud.
-// kill: "poison" (the victim announces it at dawn, then leaves) or "murder" (the victim leaves the table in the night, under blindfold)
 // shield: "mix" (hidden in round-based missions, public otherwise) | "public" | "secret" | "off"
 const RULES0 = {
   rounds: 0, perRound: 0, dinnerAfter: 1, mingle: true, pool: null,
-  kill: "poison", ghosts: true, convert: true, bargain: true, quests: true,
+  ghosts: true, convert: true, bargain: true, quests: true,
   shield: "mix", blade: true, champion: true, witness: true, dilemma: true, courses: false, narrator: false
 };
 const rulesIn = s => Object.assign({}, RULES0, (s && s.rules) || {});
-const killOf = s => rulesIn(s || state).kill === "murder" ? "murder" : "poison";
 const ghostsOn = s => rulesIn(s || state).ghosts !== false;
-// Every line written for poison reads for murder too, once its words are swapped. The one bank item that says poison
-// (Pictionary's poisoned apple) is left alone.
-function kw(t, s) {
-  if (t == null || killOf(s || state) !== "murder") return t;
-  return String(t).replace(/\bpoisonings\b/g, "murders").replace(/\bpoisoning\b/g, "murder").replace(/\bPoisoning\b/g, "Murder").replace(/\bpoisoned\b(?! apple)/g, "murdered").replace(/\bPoisoned\b/g, "Murdered").replace(/\bpoison\b/g, "murder").replace(/\bPoison\b/g, "Murder");
-}
-const kwLines = (a, s) => a.map(l => { const x = norm(l); return { ...x, tv: kw(x.tv, s), say: kw(x.say, s) } });
 // The end game always starts with four: the final round opens with five, its Reckoning takes one more without a reveal,
 // then Trust or Doubt. To get there, every round before the final is sized to what's left: its exiles (one, or two while
 // more than sixteen sit at the table) and its night's victims (up to two from 12 alive, three from 20), never below five.
@@ -1785,7 +1778,7 @@ function rewindRound() {
 // line, and hides names again on the last line (blindfolds off). These markers tell it where those lines are.
 function nightMarks(s) {
   const n = s.night, sc = nightScript(n, s);
-  n.revealStep = Math.max(0, sc.findIndex(l => { const x = norm(l); return x.murdered || x.answer }));
+  n.revealStep = Math.max(0, sc.findIndex(l => { const x = norm(l); return x.poisoned || x.answer }));
   n.questStep = sc.findIndex(l => norm(l).quest);
   n.endStep = sc.length - 1;
   if (n.questStep >= 0 && n.step >= n.questStep) resolveQuest(s);
@@ -1820,7 +1813,7 @@ function cleanRules(r) {
   const int = (v, lo, hi, d) => { v = Math.round(+v); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d };
   o.rounds = int(r.rounds, 0, 12, 0); o.perRound = int(r.perRound, 0, 2, 0); o.dinnerAfter = int(r.dinnerAfter, 0, 12, 1); o.mingle = r.mingle !== false;
   const keys = MISSIONS.filter(m => !m.addon).map(m => m.key); o.pool = Array.isArray(r.pool) ? r.pool.filter(k => keys.includes(k)) : null; if (o.pool && !o.pool.length) o.pool = null;
-  o.kill = r.kill === "murder" ? "murder" : "poison"; o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
+  o.ghosts = r.ghosts !== false; o.convert = r.convert !== false; o.bargain = r.bargain !== false; o.quests = r.quests !== false;
   o.courses = !!r.courses; o.narrator = !!r.narrator; if (o.courses) o.dinnerAfter = 0;
   o.shield = ["mix", "public", "secret", "off"].includes(r.shield) ? r.shield : "mix"; o.blade = r.blade !== false; o.champion = r.champion !== false && o.shield !== "off"; o.witness = r.witness !== false; o.dilemma = r.dilemma !== false && o.shield !== "off";
   return o;
@@ -2030,8 +2023,7 @@ function prizeOf_(m, fin, s) {
   const off = m.stake || 0, all = s && s.wrongRule === "all", wr = WRONGABLE.includes(m.key);
   const pot = off > 0 ? "Up to " + moneyOf(s, off) + " for the Purse." + (wr ? (all ? " Every wrong shout costs it, and a Forsworn’s costs double." : " A Forsworn’s wrong shout costs it.") : "") : "The Purse is full." + (wr ? " Wrong shouts can still cost it." : "");
   say.push(off > 0 ? "Up to " + moneyOf(s, off) + " goes in the Purse." + (wr ? (all ? " Every wrong shout costs it, and a Forsworn's costs double." : " And a Forsworn's wrong shout costs it.") : "") : "The Purse is already full.");
-  items.forEach(i => { i.text = kw(i.text, s) });
-  return { items, pot, tv: items.map(i => i.head + ": " + i.text).concat([pot]), say: kw(say.join(" "), s) };
+  return { items, pot, tv: items.map(i => i.head + ": " + i.text).concat([pot]), say: say.join(" ") };
 }
 // the rules as the mission list shows them: default settings, no shield promises
 function defRules(def) {
@@ -2612,6 +2604,7 @@ function questResolve(ok) {
 // A big table loses more than one a night, so an evening still reaches the final (see roundsFrom). Only a kill night has
 // more than one; each victim is its own pass of the script.
 const nightKills = s => { const a = aliveOf(s).length, rt = s.rt && s.rt.round === s.round ? s.rt : null; return Math.max(1, Math.min(rt ? rt.kills || 1 : killsAt(a), killsAt(a), a - 5)) };
+// "murder" is the internal name of the poison night (s.night.mode, s.morning.kind, s.stats.murders): kept so saved games load
 const killsOf = n => n && n.mode === "murder" ? n.kills || 1 : 1;
 function nextVictim() {
   act(s => {
@@ -2645,7 +2638,7 @@ function autoMode(s) {
   return "murder";
 }
 const modeOn = (s, k) => k === "murder" || !!rulesIn(s)[k];
-const modeLabel = (k, s) => k === "murder" ? (killOf(s) === "murder" ? "Murder" : "Poison") : MODES[k].label;
+const modeLabel = k => MODES[k].label;
 // the Loyal player an Errand names is chosen when the Forsworn read it: never tonight's victim or target
 function resolveQuest(s) {
   const n = s.night; if (!n || !n.quest || !/\{F\}/.test(n.quest)) return;
@@ -2667,8 +2660,8 @@ function finishNight() {
       const vs = [...(n.victims || []), n.victimId].map(id => id && P2(s, id)).filter(v => v && v.alive), dead = [], logs = [];
       for (const v of vs) {
         if (s.players.length > 5 && aliveOf(s).length <= 5) { logs.push(v.name + " spared: five left"); continue } // someone left mid-night
-        if (v.shield || (s.witness && s.witness.id === v.id && !s.witness.fake)) { logs.push("Murder failed: " + v.name + (v.shield ? " holds Sanctuary" : " is the Confessor")); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
-        else { v.alive = false; dead.push(v); logs.push("Murdered: " + v.name) }
+        if (v.shield || (s.witness && s.witness.id === v.id && !s.witness.fake)) { logs.push("Poison failed: " + v.name + (v.shield ? " holds Sanctuary" : " is the Confessor")); s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: v.id, round: s.round }]) }
+        else { v.alive = false; dead.push(v); logs.push("Poisoned: " + v.name) }
       }
       if (!vs.length) { m = { kind: "quiet" }; log = "Night ended with no victim picked" }
       else if (!dead.length) { m = { kind: "shield" }; log = logs.join(" · ") }
@@ -2683,7 +2676,7 @@ function finishNight() {
       else if (n.mode === "bargain") {
         t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]);
         if (t.shield || (s.witness && s.witness.id === t.id && !s.witness.fake)) { m = { kind: "shield" }; log = t.name + " refused the Last Offer but held Sanctuary"; s.stats = s.stats || {}; s.stats.saved = (s.stats.saved || []).concat([{ id: t.id, round: s.round }]) }
-        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused the Last Offer and was murdered" }
+        else { t.alive = false; m = { kind: "murder", name: t.name, victimId: t.id }; log = t.name + " refused the Last Offer and was poisoned" }
       }
       else { t.refused = (t.refused || []).concat([{ round: s.round, mode: n.mode }]); m = { kind: "convert", refused: true }; log = t.name + " refused the " + MODES[n.mode].label }
     }
@@ -2888,7 +2881,8 @@ function finishGame() {
   act(s => {
     const lt = aliveOf(s).filter(p => p.role === "cloak");
     s.phase = "final"; s.winner = lt.length ? "cloaks" : "candles"; s.players.forEach(p => p.revealed = true); s.prizeTo = null;
-    // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps)
+    // prizeIds: who won it. There is one prize: two or more winners play rock, paper, scissors for it (s.rps).
+    // Chocolate coins (the default prize) are shared out like the Purse instead.
     const to = (ids, label) => { s.prizeIds = ids; s.prizeTo = label || andList(ids.map(id => P2(s, id).name)); s.potEach = ids.length ? Math.floor(wonPot(s) / ids.length) : 0 };
     if (lt.length >= 2) {
       const f = s.final2, st = lt.filter(p => f.votes[p.id] === "take");
@@ -2904,7 +2898,7 @@ function finishGame() {
     }
     else if (lt.length === 1) to([lt[0].id]);
     else { const A = aliveOf(s); to(A.map(p => p.id), A.length ? "the Loyal: " + andList(A.map(p => p.name)) : hostOf(s) + ", because nobody is left standing") }
-    s.rps = s.prizeIds.length >= 2 ? { ids: s.prizeIds.slice(), winner: null } : null;
+    s.rps = s.prizeIds.length >= 2 && coinsOf(s) == null ? { ids: s.prizeIds.slice(), winner: null } : null;
     s.awards = awardsOf(s); s.finalStep = 0; s.awardShown = 0; // worked out here, from the full record (the TV never sees the vote history)
     return { log: "Game over: " + (s.winner === "cloaks" ? "the Forsworn" : "the Loyal") + " win" };
   });
@@ -3402,7 +3396,7 @@ const PHASECARDS = {
   endvote: () => ["Trust or Doubt?", "In secret, on the phone", "scales"]
 };
 const RULES_TV = h => [
-  ["The Forsworn", killOf() === "murder" ? "hide among you. Each night they murder " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who leave" : "one Loyal player, who leaves") + " the table in silence while you sit blindfolded." : "hide among you. Each night they poison " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who announce it at dawn" + (ghostsOn() ? " and become Ghosts." : ", then leave the table.") : "one Loyal player, who announces it at dawn" + (ghostsOn() ? " and becomes a Ghost." : ", then leaves the table."))],
+  ["The Forsworn", "hide among you. Each night they poison " + (state && aliveOf(state).length >= 12 ? "two or more Loyal players, who announce it at dawn" + (ghostsOn() ? " and become Ghosts." : ", then leave the table.") : "one Loyal player, who announces it at dawn" + (ghostsOn() ? " and becomes a Ghost." : ", then leaves the table."))],
   ["The Loyal", "must find them. Each Reckoning, chalk a name. Whoever gets the most votes is exiled and reveals their role." + (state && aliveOf(state).length > 16 ? " While more than sixteen sit at the table, every Reckoning exiles two." : "")],
   ["Trials", "grow the Purse. Some hide Sanctuary: whoever holds it cannot be poisoned that night."],
   ["Blindfolds", "on when " + h + " says. If you feel a tap, do what the screen says. Never speak."],
@@ -3627,7 +3621,7 @@ function tvView(s) {
     }
     case "morning": {
       const m = s.morning; v.scene = "morning"; v.key += m.revealed ? "r" : ""; // last words add their ring in place
-      if (!m.revealed) { v.sfx = "dawn"; v.burst = "dust"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="gold fx-title">Did everyone sleep well?</h1><div class="rule"></div><div class="sub fx-rise" style="--d:1s">${killOf(s) === "murder" ? "Look around the table. Is every chair still full?" : "Every chair is full. But is everyone alive?"}</div>`; break }
+      if (!m.revealed) { v.sfx = "dawn"; v.burst = "dust"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="gold fx-title">Did everyone sleep well?</h1><div class="rule"></div><div class="sub fx-rise" style="--d:1s">Every chair is full. But is everyone alive?</div>`; break }
       if (m.kind === "murder") { v.sfx = m.lastEnd ? null : "poison"; v.burst = m.lastEnd ? null : "red"; v.html = `<div class="eyebrow">dawn</div><h1 class="xl bleed" data-k="nm">${esc(m.name)}</h1><div class="sub fx-fade" style="--d:1.6s">${m.many ? "were" : "was"} poisoned in the night.${m.lastEnd ? " Last words." : m.many ? " Their candles have gone out." : " Their candle has gone out."}</div>${m.lastEnd ? ring(m.lastEnd, 30000 * (m.victimIds || [1]).length, "sm") : ""}` }
       else { v.sfx = "gold"; v.html = `<div class="eyebrow fx-fade">dawn</div><h1 class="${m.kind === "shield" ? "gold" : ""} fx-title">Nobody was poisoned</h1><div class="sub fx-rise" style="--d:.9s">${m.kind === "shield" ? "Sanctuary held." : "A quiet night. Or was it?"}</div>` }
       break;
@@ -3683,7 +3677,7 @@ function tvView(s) {
       // how each Forsworn became one: from the start, by a Whisper, or by the Last Offer; and who refused
       const many = ps.length > 10, huge = ps.length > 16, how = p => p.role === "cloak" ? (p.converted ? (p.converted.mode === "bargain" ? (many ? "Forsworn · Last Offer" : "Forsworn · by the Last Offer, round " + p.converted.round) : (many ? "Forsworn · Whisper" : "Forsworn · by a Whisper, round " + p.converted.round)) : "Forsworn") : "Loyal" + ((p.refused || []).length ? (many ? " · refused" : " · refused the Forsworn") : "");
       v.scene = "final"; v.norail = true; v.tight = true; v.sfx = tr ? "sting" : "win"; v.flash = tr ? "red" : "gold"; v.waves = tr ? "red" : "gold";
-      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeOf(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
+      const r = s.rps, rw = r && r.winner ? P2(s, r.winner) : null, prz = esc(prizeName(s)), pt = (s.prizes || []).length ? prizeTier(s) : undefined;
       const plabel = pt === undefined ? "the prize" : tr ? (!pt ? "the Purse fell short by less than half: the prize" : pt.at >= 1 ? "an empty Purse: the best prize" : "a Purse short by half: the better prize") : !pt ? "the Purse didn’t reach half: the prize" : pt.at >= 1 ? "a full Purse: the best prize" : "a half-full Purse: the better prize";
       if (rw) { v.key += "·" + rw.id; v.sfx = "win"; v.flash = "gold"; v.waves = "gold" }
       const prizeLine = rw ? `<div class="prizeline fx-rise" style="--d:.6s"><span>takes home</span><b>${prz}</b></div>`
@@ -3692,7 +3686,6 @@ function tvView(s) {
 <h1 class="${tr ? "blood" : "gold"} fx-slam">${tr ? "The Forsworn win" : "The Loyal win"}</h1>${many ? `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Forsworn take " + moneyOf(s, wonPot(s)) + ", what the Purse fell short." : "Purse: " + moneyOf(s, s.pot) + "."}</div>` : `<div class="sub fx-rise" style="--d:.8s">${tr ? "The Loyal built a Purse of " + moneyOf(s, s.pot) + " of " + moneyOf(s, s.potCap || 2000) + ", and the Forsworn take the " + moneyOf(s, wonPot(s)) + " it fell short." : "Every Forsworn is gone. Purse: " + moneyOf(s, s.pot) + "."}</div>`}${prizeLine}${rw || many ? "" : ghostVerdictTV(s)}${!rw && ps.length <= 12 && (s.cloakMisses || (s.questTally && (s.questTally.done || s.questTally.failed))) ? `<div class="sub small">${[s.cloakMisses ? `Forsworn shouted <b>${s.cloakMisses}</b> wrong answer${s.cloakMisses === 1 ? "" : "s"} all night.` : "", s.questTally && (s.questTally.done || s.questTally.failed) ? `Errands: ${s.questTally.done} completed, ${s.questTally.failed} failed, in plain sight.` : ""].filter(Boolean).join(" ")}</div>` : ""}<div class="rolls ${huge ? "huge" : ps.length > 10 ? "many" : ""}" style="grid-template-columns:repeat(${huge ? 6 : cols},minmax(0,1fr))">${ps.map((p, i) => `<div class="${p.role === "cloak" ? "t" : "f"}" style="--d:${(1.5 + i * Math.min(0.7, 20 / ps.length)).toFixed(1)}s">${ART.seal(p)}<span><b>${esc(p.name)}</b><small>${how(p)}${p.left ? " · left" : p.alive ? "" : " · out"}</small></span></div>`).join("")}</div>`; break;
     }
   }
-  if (v.html) v.html = kw(v.html, s); // murder or poison, as the host chose
   return v;
 }
 
@@ -3881,7 +3874,7 @@ function askGo() { const a = ask; ask = null; if (a) a.fn() }
 // the TV narrator: with it on, every line to read has a ▶ TV button that has the TV speak it instead
 const narrOn = () => !!(state && rulesIn(state).narrator && typeof REPLAY !== "undefined" && !REPLAY);
 const tvRead = t => narrOn() && t ? `<button class="tvread" data-t="${esc(t)}" onclick="narrate(this)" aria-label="Read this line on the TV">▶ TV</button>` : "";
-const say = text => `<div class="say"><span class="mn">Say</span><div class="ln">${tvRead(kw(text))}${esc(kw(text))}</div></div>`;
+const say = text => `<div class="say"><span class="mn">Say</span><div class="ln">${tvRead(text)}${esc(text)}</div></div>`;
 // a stage direction: a private reminder, in italics and brackets, under the line it belongs to (html: already escaped)
 const dir = (html, cls) => `<p class="dir${cls ? " " + cls : ""}">${html}</p>`;
 const pbtn = (p, cls, fn, tag) => `<button class="${cls || ""}" onclick="${fn}">${ART.seal(p)}<span class="nm">${esc(p.name)}</span><span class="tagx">${tag || ""}</span></button>`;
@@ -3985,10 +3978,9 @@ function renderHost() {
     case "night": body = nightHost(s); foot = nightFoot(s); break;
     case "morning": {
       const ghosts = ghostsOf(s), m = s.morning;
-      const mu = killOf(s) === "murder";
-      if (!m.revealed) { body = `<h2>Dawn</h2>${say(SAY.dawnAsk(s.round))}<div class="secret">${m.kind === "murder" ? (mu ? "<b>" + esc(m.name) + "</b> left the table in the night. Let the room find the empty chair, then reveal." : "<b>" + esc(m.name) + "</b> " + (m.many ? "were" : "was") + " poisoned. Wait for " + (m.many ? "each of them" : "them") + " to stand and announce it, then reveal.") : mu ? "Nobody was murdered and every chair is full. Let it sink in, then reveal." : "Nobody was poisoned. Let the silence sit, then reveal."}</div>`; foot = nextBtn(m.kind === "murder" ? (mu ? "Reveal on the TV" : "They’ve announced it. Reveal on the TV") : "Reveal: nobody died", "act(s=>{s.morning.revealed=true})"); break }
+      if (!m.revealed) { body = `<h2>Dawn</h2>${say(SAY.dawnAsk(s.round))}<div class="secret">${m.kind === "murder" ? "<b>" + esc(m.name) + "</b> " + (m.many ? "were" : "was") + " poisoned. Wait for " + (m.many ? "each of them" : "them") + " to stand and announce it, then reveal." : "Nobody was poisoned. Let the silence sit, then reveal."}</div>`; foot = nextBtn(m.kind === "murder" ? "They’ve announced it. Reveal on the TV" : "Reveal: nobody died", "act(s=>{s.morning.revealed=true})"); break }
       const adv = advice().lvl === "final" && !s.finalRound, course = !endCheck() && courseDue(s), dinnerNow = course || (!s.dinnerDone && !endCheck() && rulesIn(s).dinnerAfter && rulesIn(s).dinnerAfter <= s.round);
-      body = `<h2>Morning</h2>${say(m.kind === "murder" ? (m.many ? SAY.morningMany(m.name, s.round, m.saved) : SAY.morningMurder(m.name, s.round)) : m.kind === "shield" ? SAY.morningShield(s.round) : SAY.morningQuiet(s.round))}${m.convert ? dir("Last night’s " + (m.refused ? "refusal" : "conversion") + " stays secret: this line is the same as any quiet night.") : ""}${m.kind === "murder" && !m.lastDone && !mu ? `<div class="row"><button onclick="act(s=>{s.morning.lastEnd=now()+30000*((s.morning.victimIds||[1]).length);s.morning.lastDone=true})">Last words, ${m.many ? (m.victimIds.length * 30) + " s (30 s each)" : "30 s"} on the TV</button></div>` : ""}${ghosts.length && !s.ghostIntroDone ? `<h3>The ghost lore</h3>` + say(SAY.ghostIntro(((s.voteLog || []).map(x => P(x.exiled)).find(p => p && !p.alive && !p.left) || (m.kind === "murder" && P(m.victimId)) || ghosts[0]).name)) + `<div class="row"><button onclick="act(s=>{s.ghostIntroDone=true})">Ghost lore said</button></div>` : ""}${ghostPanel(s)}${advicePanel()}${dinnerNow ? dir(`Dinner, by your plan. Serve it now, between rounds ${s.round} and ${s.round + 1}. The TV runs a timer, and the next round starts when you’re done.`) : ""}`;
+      body = `<h2>Morning</h2>${say(m.kind === "murder" ? (m.many ? SAY.morningMany(m.name, s.round, m.saved) : SAY.morningPoison(m.name, s.round)) : m.kind === "shield" ? SAY.morningShield(s.round) : SAY.morningQuiet(s.round))}${m.convert ? dir("Last night’s " + (m.refused ? "refusal" : "conversion") + " stays secret: this line is the same as any quiet night.") : ""}${m.kind === "murder" && !m.lastDone ? `<div class="row"><button onclick="act(s=>{s.morning.lastEnd=now()+30000*((s.morning.victimIds||[1]).length);s.morning.lastDone=true})">Last words, ${m.many ? (m.victimIds.length * 30) + " s (30 s each)" : "30 s"} on the TV</button></div>` : ""}${ghosts.length && !s.ghostIntroDone ? `<h3>The ghost lore</h3>` + say(SAY.ghostIntro(((s.voteLog || []).map(x => P(x.exiled)).find(p => p && !p.alive && !p.left) || (m.kind === "murder" && P(m.victimId)) || ghosts[0]).name)) + `<div class="row"><button onclick="act(s=>{s.ghostIntroDone=true})">Ghost lore said</button></div>` : ""}${ghostPanel(s)}${advicePanel()}${dinnerNow ? dir(`Dinner, by your plan. Serve it now, between rounds ${s.round} and ${s.round + 1}. The TV runs a timer, and the next round starts when you’re done.`) : ""}`;
       foot = (dinnerNow ? nextBtn("Not yet", adv ? "nextRound(true)" : "nextRound()", "ghost") + nextBtn(course ? course.name + " now · " + course.dur / 60000 + " min" : "Dinner now · 25 min", "startBreak('dinner','round')") : nextBtn(adv ? "Next round, as the final" : "Next round", adv ? "nextRound(true)" : "nextRound()")); break;
     }
     case "final":
@@ -4005,7 +3997,6 @@ function renderHost() {
   const upcoming = (s.plan || []).slice(s.planAt || 0, (s.planAt || 0) + 6).map(k => (MISSIONS.find(m => m.key === k) || {}).title).filter(Boolean);
   const plan = planOpen ? `<div class="sheet"><div class="sheethead"><h2>Your game plan</h2><button onclick="planOpen=false;renderHost()">Close</button></div><p class="note">Set before the game. The plan picks each Trial, its prizes, the night and the breaks, and anything can still be changed on the screen where it happens.</p><div class="planbox">${planLines(rulesIn(s), seated(s).length).map(l => `<p>${esc(l)}</p>`).join("")}</div>${upcoming.length ? `<h3>Coming up</h3><p class="note">${esc(upcoming.join(" → "))}</p>` : ""}</div>` : "";
   const sheet = ask ? `<div class="sheet mid"><h2>${esc(ask.title)}</h2>${ask.note ? `<p class="note">${esc(ask.note)}</p>` : ""}<div class="row"><button onclick="ask=null;renderHost()">Cancel</button><button class="${ask.cls}" onclick="askGo()">${esc(ask.label)}</button></div></div>` : "";
-  body = kw(body);
   patch(app, `<div id="host">${bar}<div class="bodywrap" data-k="${s.phase}">${body}</div>${logOpen ? `<h3>The log</h3><div class="log">${(s.log || []).map(l => `<div>${esc(l)}</div>`).join("")}</div><div class="row"><button class="ghost slim" onclick="logOpen=false;renderHost()">Hide the log</button></div>` : `<div class="row"><button class="ghost slim" onclick="logOpen=true;renderHost()">Show the log (${plural((s.log || []).length, "line")})</button></div>`}${hstamp()}<div class="foot">${foot}</div>${handoffScreen(s)}${bankOpen ? bankSheet() : ""}${seatSheet(s)}${ren}${left}${menu}${plan}${sheet}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`);
 }
 async function checkPin() { const el = $("#pin"), v = el ? el.value : ""; if (!v) return; const ok = await tryPin(v); if (ok !== true) { pinMsg = typeof ok === "string" ? ok : "Wrong PIN. Try again."; if (el) el.value = ""; renderHost() } else pinMsg = "" }
@@ -4037,7 +4028,7 @@ function prizeHost(s) {
   if (!s.prizeTo) return `<p class="note">The TV shows every role.</p>`;
   const r = s.rps, w = r && r.winner && P(r.winner);
   const pot = (s.prizeIds || []).length ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
-  if (!r) return say(SAY.prize(prizeOf(s), s.prizeTo)) + pot + dir("Hand it over. The TV shows the prize, the Purse and every role.");
+  if (!r) return say(SAY.prize(prizeName(s), s.prizeTo)) + pot + dir("Hand it over. The TV shows the prize, the Purse and every role.");
   const names = andList(r.ids.map(id => P(id)).filter(Boolean).map(p => p.name));
   return pot + say(SAY.prizeRps(prizeOf(s), names)) + (w ? say(SAY.prizeHome(w.name, prizeOf(s))) + dir("On the TV now. Wrong name? Undo.")
     : `<h3>Rock, paper, scissors: who won?</h3><p class="note">Pair them off, knockout, until one is left. Tap the winner and the TV announces them.</p><div class="plist">${r.ids.map(id => P(id)).filter(Boolean).map(p => pbtn(p, "", "rpsWin('" + p.id + "')")).join("")}</div>`);
@@ -4069,14 +4060,14 @@ const fil = t => String(t).replace(/\{F\}/g, "‹a Loyal player›");
 // the script, one line at a time: a spoken line has "Say" in the margin (and who it's to), a silent one is all stage direction
 function stepList(script, step) {
   const line = (raw, cls) => {
-    const l = norm(raw), text = esc(kw(l.say || l.tv)), tv = dir("TV: " + esc(fil(kw(l.tv))), "tv");
+    const l = norm(raw), text = esc(l.say || l.tv), tv = dir("TV: " + esc(fil(l.tv)), "tv");
     if (l.silent) return `<div class="step ${cls} sil"><span class="mn"></span>${dir(text)}${tv}</div>`;
     const to = l.who === H() ? "" : `<span class="to">To ${l.who === "Everyone" ? "the table" : l.who === "Forsworn" ? "the Forsworn" : esc(l.who)}:</span>`;
-    return `<div class="step ${cls}"><span class="mn">Say</span><div class="ln">${to}${cls === "cur" ? tvRead(kw(l.say || l.tv)) : ""}${text}</div>${tv}</div>`;
+    return `<div class="step ${cls}"><span class="mn">Say</span><div class="ln">${to}${cls === "cur" ? tvRead(l.say || l.tv) : ""}${text}</div>${tv}</div>`;
   };
   step = Math.min(step, script.length - 1);
   const nx = script[step + 1] && norm(script[step + 1]);
-  return `<p class="cue">Line ${step + 1} of ${script.length}</p>${line(script[step], "cur")}${nx ? `<div class="then"><span class="mn">Then</span><div class="ln">${esc(fil(kw(nx.tv)))}</div></div>` : ""}<div class="row"><button class="ghost slim" onclick="fullScript=!fullScript;renderHost()">${fullScript ? "Hide the full script" : "Show the full script"}</button></div>${fullScript ? script.map((r, i) => line(r, i === step ? "cur" : "")).join("") : ""}`;
+  return `<p class="cue">Line ${step + 1} of ${script.length}</p>${line(script[step], "cur")}${nx ? `<div class="then"><span class="mn">Then</span><div class="ln">${esc(fil(nx.tv))}</div></div>` : ""}<div class="row"><button class="ghost slim" onclick="fullScript=!fullScript;renderHost()">${fullScript ? "Hide the full script" : "Show the full script"}</button></div>${fullScript ? script.map((r, i) => line(r, i === step ? "cur" : "")).join("") : ""}`;
 }
 
 /* ---- the question bank: master switches for every game ---- */
@@ -4095,7 +4086,7 @@ function bankSheet() {
 // Every choice has a recommendation worked out from the choices before it. Until the host picks something themselves
 // (d.touched), a page follows its recommendation, so changing the table size or the evening's length re-plans the rest.
 const SETUP0 = () => ({ names: "", cloaks: "", title: "The Betrayal", host: "", keeper: "me", me: "", unit: "pts", potCap: "2000", wrong: "cloaks", prize: "", prize2: "", prize3: "", hours: "4", pin: "",
-  rounds: 0, perRound: 0, dinnerAfter: 1, courses: false, mingle: true, narrator: false, pool: null, kill: "poison", ghosts: true, convert: true, bargain: true, quests: true,
+  rounds: 0, perRound: 0, dinnerAfter: 1, courses: false, mingle: true, narrator: false, pool: null, ghosts: true, convert: true, bargain: true, quests: true,
   shield: "mix", blade: true, champion: true, witness: true, dilemma: true, step: "welcome", touched: [], back: null });
 // A first game is Classic: the twists stay off until a game has been played to the end on this phone ("your second night").
 const seasoned = () => { try { return localStorage.getItem("candle-played") === "1" } catch (e) { return false } };
@@ -4138,7 +4129,6 @@ const RECS = [
   ["dinnerAfter", () => 0],
   ["rounds", (d, n) => recRounds(d, n)],
   ["perRound", d => +d.hours <= 2.5 ? 1 : 0],
-  ["kill", () => "poison"],
   ["ghosts", () => true],
   ["shield", () => seasoned() ? "mix" : "public"],
   ["blade", () => seasoned()],
@@ -4204,11 +4194,11 @@ function timeline(d, n, mark) {
 }
 const WIZ = [
   { id: "welcome", core: true, sec: "Welcome", title: () => "Let’s plan your game", body: d => `
-${P_("Five questions, then you’re ready: who’s playing, how long you have, how the Forsworn kill, the prize, and who keeps the game.")}
+${P_("Four questions, then you’re ready: who’s playing, how long you have, the prize, and who keeps the game.")}
 ${P_("Everything else is planned for you from your answers, and the last page shows the whole game so you can change any of it. Nothing reaches the TV until you press <b>Start game</b>.")}
 ${ROOM ? `<div class="roombox"><b>Your Table: ${esc(ROOM)}</b>On the laptop you’ll show on the TV, open <b>${esc(location.host)}/t/${esc(ROOM)}</b>. Keep this phone on <b>${esc(location.host)}/t/${esc(ROOM)}#keeper</b> and bookmark it.${roomInfo ? "<br>Your Table is open until " + esc(until(roomInfo.expires)) + "." : ""}</div>` : ""}
 ${why("Before your guests arrive", `<ul><li>The TV showing the Table link above, from a laptop plugged in or cast to it. Turn the volume up: the game has music and sound effects.</li><li>This phone charged, with auto-lock set long or off. You’ll be tapping it all evening.</li><li>A small chalkboard and chalk (or a whiteboard and pen) for every guest. They write names on it to vote, and answers in the Trials.</li><li>A blindfold for every guest. Sleep masks are perfect. The Forsworn are chosen, and do their work, while everyone else can’t see.</li><li>A prize. Something worth lying to your friends for.</li></ul>`)}
-${why("What the Keeper does", "The Keeper runs the game like a presenter and doesn’t play: the phone shows them who the Forsworn are from the start, and gives them every line to read out, one tap at a time. The TV shows everyone else what they need to see. Want to play yourself? A friend can keep: that’s question five.")}` },
+${why("What the Keeper does", "The Keeper runs the game like a presenter and doesn’t play: the phone shows them who the Forsworn are from the start, and gives them every line to read out, one tap at a time. The TV shows everyone else what they need to see. Want to play yourself? A friend can keep: that’s question four.")}` },
   { id: "names", core: true, sec: "The table", title: () => "Who’s playing?", check: d => { const names = namesOf(d), long = names.find(x => x.length > NAMEMAX); return names.length < MINP ? "The game needs at least " + MINP + " players." : names.length > MAXP ? MAXP + " players at most." : long ? "“" + long + "” is too long for the TV. Use " + NAMEMAX + " characters at most." : new Set(names.map(x => x.toLowerCase())).size !== names.length ? "Two players have the same name. Add an initial so they’re different." : "" }, body: d => `
 ${P_("Type every player’s name, one per line, <b>in the order they’re sitting, going clockwise round the table</b>. Leave out the Keeper: they don’t play. If a friend is keeping so that you can play, put yourself in, in your seat.")}
 <label for="names">Players (${MINP} to ${MAXP})</label><textarea id="names" rows="10" oninput="draft()" placeholder="Annie&#10;Ben&#10;Chloe&#10;…">${esc(d.names)}</textarea>
@@ -4220,10 +4210,6 @@ ${P_("Tell us roughly how long you want the game to last, from sitting down to t
 <div class="wopts">${[["2", "Short game · " + aboutH(estMins(d, n, { rounds: roundsRange(n)[0], perRound: 1, mingle: false, dinnerAfter: 0, courses: false })), "One Trial a round, no Interval and no dinner break: the quickest the game can run for " + n + " players. Best for a weeknight, or eating before you play."], ["2.5", "2½ hours", "Short and sharp. Fewer rounds, so more players leave each round. Best for a weeknight."], ["3", "3 hours", "A full game, quick pace."], ["3.5", "3½ hours", "Room to breathe, and time to talk."], ["4", "4 hours", "The classic evening: long Reckonings, and room for dinner if you’re eating."], ["4.5", "4½ hours", "A long night, with slower rounds and more Trials. Good for 18 or more players."], ["5", "5 hours", "The full feast. Plenty of Trials, and a long, slow build to the end."], ["6", "6 hours", "A big table’s evening: twenty or more players need more rounds to reach the final."], ["7", "7 hours", "An all-nighter for a big table, every round at an easy pace."]].map(([v, t, x]) => wopt(d, "hours", v, t, x)).join("")}</div>
 ${why("This isn’t a hard stop", `Nothing cuts the game off. While you play, the phone keeps an eye on the clock. When Trials are set “by the clock” (you’ll see that later), it adds a second Trial to a round when you’re ahead of time and skips it when you’re behind. `)}
 ${why("For " + n + " players", "With our recommended settings, a game for " + n + " takes " + aboutH(estMins(settle(Object.assign({}, d, { touched: [] })), n)) + ". Bigger tables need more rounds to reach the final, so they run longer.")}` } },
-  { id: "kill", core: true, sec: "The night", title: () => "How do the Forsworn kill?", body: d => `
-${P_("Every night, everyone puts their blindfolds on. The Forsworn take theirs off, and silently point to who dies. This choice is about what happens to the victim next.")}
-<div class="wopts">${wopt(d, "kill", "poison", "Poison", "While everyone is still blindfolded, you quietly tell the victim. At dawn, the blindfolds come off and the victim stands up and announces they’ve been poisoned. They get thirty seconds of last words, then leave the table. Easy to run, and the last words are often the highlight of the round.")}${wopt(d, "kill", "murder", "Murder", "You tap the victim on the shoulder and lead them away from the table while everyone is still blindfolded. At dawn the blindfolds come off and the table finds an empty chair. More theatrical, but you have to move quietly, and the victim gets no last words.")}</div>
-${why("Either way", "The phone gives you every line and step, and the TV uses your choice’s words all night: poisoned or murdered.")}` },
   { id: "prize", core: true, sec: "The prize", title: () => "What’s the prize?", body: d => `
 ${P_("The prize goes to the winners at the end: the Loyal if they exiled every Forsworn, or the Forsworn if they survived. Choose something people will scheme for.")}
 ${P_("The Purse goes with it. The Loyal take what they built. The Forsworn take what it <b>fell short</b> of its target, so every point they sabotage is theirs.")}
@@ -4233,7 +4219,7 @@ ${P_("The Trials fill a shared <b>Purse</b>. Give the table something to fill it
 <label for="prize2">A better prize, if the Purse is half full</label><input id="prize2" value="${esc(d.prize2)}" placeholder="e.g. the good bottle, not the usual one" oninput="draft()">
 <label for="prize3">The best prize, if the Purse is full</label><input id="prize3" value="${esc(d.prize3)}" placeholder="e.g. a night out, paid for by the losers" oninput="draft()">
 ${why("It stays secret", "Nothing names the prize, not the TV and not your script, until the game is won. Tell your guests yourself if you want them to know. If two or more people win, the game has them play rock, paper, scissors for it.")}
-${why("If you leave it blank", "The game uses “" + PRIZE0 + "”.")}` },
+${why("If you leave it blank", "The game uses " + PRIZE0 + ": every 100 points in the Purse is one chocolate coin, so a Purse of 1500 wins 15 coins.")}` },
   { id: "keeper", core: true, sec: "The Keeper", title: () => "Who’s keeping tonight?", check: d => { if (d.keeper !== "friend") return ""; const me = d.me.trim().toLowerCase(), k = d.host.trim().toLowerCase(), names = namesOf(d).map(x => x.toLowerCase()); return !k ? "Type your Keeper’s name." : !me ? "Type your own name, as it is in the players." : !names.includes(me) ? "“" + d.me.trim() + "” isn’t in the players yet. Go back and add yourself, in your seat." : names.includes(k) ? d.host.trim() + " is in the players, but the Keeper can’t play. Take them out on the players page." : "" }, body: d => `
 ${P_("The <b>Keeper</b> runs the game like a presenter. They know who the Forsworn are from the start, so they don’t play.")}
 <div class="wopts">${wopt(d, "keeper", "me", "I’ll keep", "You run the game from this phone: every line to read and every secret, one tap at a time. The easiest way, and a lot of fun in its own right.")}${wopt(d, "keeper", "friend", "A friend will keep, and I’ll play", "You plan the game now, then hand this phone to your Keeper before anyone sits down. They press Start, so the roles are dealt on their watch and you never see them.")}</div>
@@ -4254,9 +4240,9 @@ ${!seasoned() && !tw ? `<p class="aside">First game? We’ve kept the twists off
 <div class="row"><button class="slim" onclick="wGo('${moreSteps(d)[0].id}')">Go through every choice, page by page</button></div>
 <h3>the table</h3>${line("names", names.length + " players", esc(names.join(", ")))}${line("keeper", d.keeper === "friend" ? "Kept by " + esc(d.host.trim() || "a friend") : "You keep", d.keeper === "friend" ? esc(d.me.trim()) + " plays" : esc(d.host.trim() ? d.host.trim() + " · doesn’t play" : "you run it and don’t play"))}${line("pin", "Keeper PIN", "set (" + d.pin.trim().length + " digits)")}${line("cloaks", plural(+d.cloaks, "Forsworn"), +d.cloaks === defaults(n).t ? "recommended for " + n : "we suggest " + defaults(n).t + " for " + n)}
 <h3>the evening</h3>${line("hours", +d.hours === 2 ? "Short game" : d.hours + " hours", "the target length · " + aboutH(estMins(d, n)))}${line("rounds", d.rounds + " rounds", "the last is the final")}${line("perRound", ["Trials by the clock", "One Trial a round", "Two Trials a round"][+d.perRound], "")}${line("dinner", d.courses ? "Dinner in three courses" : +d.dinnerAfter ? "Dinner after round " + d.dinnerAfter : "No dinner break", d.courses ? "starter, main course and dessert, between the rounds" : "")}${line("mingle", d.mingle ? "An Interval before each vote" : "No Interval", d.mingle ? "10 minutes" : "")}${line("narrator", d.narrator ? "The TV reads the lines" : "The Keeper reads the lines", "")}
-<h3>the night and the Trials</h3>${line("kill", d.kill === "murder" ? "Murder" : "Poison", d.kill === "murder" ? "the victim leaves in the night" : "the victim announces it at dawn")}${line("ghosts", d.ghosts ? "Ghosts on" : "No Ghosts", d.ghosts ? "the dead stay in the game" : "the dead are out")}${line("pool", pool.length + " of " + poolAll().length + " Trials", pool.length === poolAll().length ? "all of them" : esc(andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title))))}
+<h3>the night and the Trials</h3>${line("ghosts", d.ghosts ? "Ghosts on" : "No Ghosts", d.ghosts ? "the dead stay in the game" : "the dead are out")}${line("pool", pool.length + " of " + poolAll().length + " Trials", pool.length === poolAll().length ? "all of them" : esc(andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title))))}
 <h3>powers and twists</h3>${line("shield", sh, "the only power every round")}${line("blade", d.blade ? "The Casting Vote: once, round " + blades(d).blade : "No Casting Vote", d.blade ? "breaks a tie" : "")}${d.shield !== "off" ? line("champion", d.champion ? "The Crown: once, round " + blades(d).champion : "No Crown", "") + line("dilemma", d.dilemma ? "The Temptation: once, if nobody holds Sanctuary" : "No Temptation", "") : ""}${line("witness", d.witness ? "The Confessor: in the final, if one Forsworn is left" : "No Confessor", "")}${line("convert", d.convert ? "One Whisper" : "No Whisper", "")}${line("bargain", d.bargain ? "One Last Offer" : "No Last Offer", "")}${line("quests", d.quests ? "Errands for the Forsworn" : "No Errands", "")}
-<h3>the Purse and prize</h3>${line("prize", "Prize", esc(d.prize.trim() || PRIZE0) + (pz ? " · " + (pz === 2 ? "two better prizes" : "a better prize") + " for a fuller Purse" : ""))}${line("pot", "Purse target " + moneyOf({ potUnit: d.unit || "pts" }, d.potCap || 2000), "")}${line("wrong", d.wrong === "all" ? "Everyone’s wrong answers cost the Purse" : "Only the Forsworn’s wrong answers cost the Purse", "")}${line("title", "TV title", esc(d.title.trim() || "The Betrayal"))}
+<h3>the Purse and prize</h3>${line("prize", "Prize", esc(d.prize.trim() || PRIZE0) + (d.prize.trim() && d.prize.trim() !== PRIZE0 ? "" : ", one for every 100 points") + (pz ? " · " + (pz === 2 ? "two better prizes" : "a better prize") + " for a fuller Purse" : ""))}${line("pot", "Purse target " + moneyOf({ potUnit: d.unit || "pts" }, d.potCap || 2000), "")}${line("wrong", d.wrong === "all" ? "Everyone’s wrong answers cost the Purse" : "Only the Forsworn’s wrong answers cost the Purse", "")}${line("title", "TV title", esc(d.title.trim() || "The Betrayal"))}
 ${why("How the evening runs", timeline(d, n))}` } },
   { id: "cloaks", sec: "The table", title: () => "How many Forsworn?", body: d => { const n = tableOf(d), rec = defaults(n).t, opts = [...new Set([rec - 1, rec, rec + 1])].filter(x => x >= 1 && x <= maxCloaks(n)); return `
 ${P_(`The Forsworn are the secret killers. They’re chosen at random when the game starts, they learn who each other are, and every night they choose who dies. Everyone else is one of the <b>Loyal</b>, and the Loyal win by exiling every Forsworn before the end.`)}
@@ -4332,7 +4318,7 @@ ${why("Wrong answers cost the Purse", "In the shouting games, a wrong answer cos
 ${P_("In the Rapid Quiz, Snap and What Changed?, players shout out answers. Each wrong shout costs the Purse " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". The room hears the total at the end of the Trial, never who got it wrong.")}
 <div class="wopts">${wopt(d, "wrong", "cloaks", "Only the Forsworn’s wrong answers", "A Loyal player can guess freely. When the Purse loses points, the table knows a Forsworn shouted wrong, maybe on purpose, and starts wondering who.")}${wopt(d, "wrong", "all", "Everyone’s, and the Forsworn’s cost double", "Everyone has to be careful. The Purse is harder to fill, and a big loss is harder to pin on anyone.")}</div>` },
   { id: "title", sec: "The Purse and prize", title: () => "A name for your night", body: d => `
-${P_("This title appears at the top of the TV all evening. Keep “The Betrayal”, or make it yours: “Murder at Number 42”, “Sophie’s 40th”, “The Christmas Forsworn”.")}
+${P_("This title appears at the top of the TV all evening. Keep “The Betrayal”, or make it yours: “Poison at Number 42”, “Sophie’s 40th”, “The Christmas Forsworn”.")}
 <label for="title">Title on the TV</label><input id="title" value="${esc(d.title)}" oninput="draft()">
 ${why("Question bank", "The quiz, charades, songs and other games draw from a bank of " + BANKDEFS.reduce((a, b) => a + b.items().length, 0) + " questions and prompts. If some won’t suit your group (too hard, too British, a song nobody knows), you can switch them off here. This is optional. " + bankSummary() + ".<div class=\"row\"><button class=\"slim\" onclick=\"openBank()\">Open the question bank</button></div>")}` },
 ];
@@ -4382,7 +4368,7 @@ function submitSetup() {
   if (!wCheck(d)) return;
   const tn = Math.round(+d.cloaks), pc = Math.round(+d.potCap), pool = draftPool(d).filter(k => k !== "statue" || d.ghosts);
   const tr = Math.max(1, Math.min(tn || defaults(names.length).t, maxCloaks(names.length)));
-  const rules = { rounds: +d.rounds || 0, perRound: +d.perRound || 0, dinnerAfter: d.courses ? 0 : +d.dinnerAfter || 0, courses: !!d.courses && +d.rounds >= 4, narrator: !!d.narrator, mingle: !!d.mingle, pool: Array.isArray(d.pool) ? pool : null, kill: d.kill, ghosts: !!d.ghosts, convert: !!d.convert, bargain: !!d.bargain, quests: !!d.quests, shield: d.shield, blade: !!d.blade, champion: !!d.champion, witness: !!d.witness, dilemma: !!d.dilemma };
+  const rules = { rounds: +d.rounds || 0, perRound: +d.perRound || 0, dinnerAfter: d.courses ? 0 : +d.dinnerAfter || 0, courses: !!d.courses && +d.rounds >= 4, narrator: !!d.narrator, mingle: !!d.mingle, pool: Array.isArray(d.pool) ? pool : null, ghosts: !!d.ghosts, convert: !!d.convert, bargain: !!d.bargain, quests: !!d.quests, shield: d.shield, blade: !!d.blade, champion: !!d.champion, witness: !!d.witness, dilemma: !!d.dilemma };
   const prizes = [{ at: 0.5, what: d.prize2.trim() }, { at: 1, what: d.prize3.trim() }].filter(x => x.what);
   setupMsg = "";
   startGame({ names, cloaks: tr, title: d.title.trim(), host: d.host.trim(), potUnit: d.unit.replace(/[<>&"'`]/g, "").trim() || "pts", potCap: pc > 0 ? Math.max(100, Math.round(pc / 50) * 50) : 2000, wrongRule: d.wrong === "all" ? "all" : "cloaks", prize: d.prize.trim() || PRIZE0, prizes, hours: +d.hours || 4, pin: d.pin.trim(), rules });
@@ -4397,7 +4383,7 @@ function planLines(d, n) {
     r + " rounds, the last of them the final; " + per + ".",
     (d.courses ? "Dinner in three courses (starter, main course and dessert), between the rounds" : +d.dinnerAfter ? "Dinner after round " + d.dinnerAfter : "No dinner break") + (d.mingle ? "; a 10-minute Interval before each Reckoning." : "; straight from Trials to the Reckoning."),
     (pool.length === poolAll().length ? "Every Trial in the pool" : pool.length + " of " + poolAll().length + " Trials in the pool (" + andList(pool.map(k => (MISSIONS.find(m => m.key === k) || {}).title)) + ")") + ", dealt in a fresh order.",
-    (d.kill === "murder" ? "Murder: the victim is tapped in the night and leaves the table under blindfold" : "Poison: the victim is told in the night, announces it at dawn, then leaves the table") + ". " + (d.ghosts ? "The dead become Ghosts and judge from beyond the table." : "No Ghosts: the dead are out.") + " " + ([d.convert ? "Whisper" : null, d.bargain ? "Last Offer" : null].filter(Boolean).length ? cap1(andList([d.convert ? "a Whisper" : null, d.bargain ? "a Last Offer" : null].filter(Boolean))) + " (once each) when one Forsworn is left against four or more." : "Never a Whisper or a Last Offer.") + (d.quests ? " An Errand for the Forsworn each night." : ""),
+    "Poison: the victim is told in the night, announces it at dawn, then leaves the table. " + (d.ghosts ? "The dead become Ghosts and judge from beyond the table." : "No Ghosts: the dead are out.") + " " + ([d.convert ? "Whisper" : null, d.bargain ? "Last Offer" : null].filter(Boolean).length ? cap1(andList([d.convert ? "a Whisper" : null, d.bargain ? "a Last Offer" : null].filter(Boolean))) + " (once each) when one Forsworn is left against four or more." : "Never a Whisper or a Last Offer.") + (d.quests ? " An Errand for the Forsworn each night." : ""),
     "Sanctuaries: " + sh + ". " + (roles.length ? cap1(andList(roles)) + "." : "No other powers.")
   ];
 }
@@ -4421,7 +4407,7 @@ function missionHost(s) {
     else if (m.hasShield && !m.room) sh = `<p class="note">${fin ? "No Sanctuaries in the final: there is no night left to survive." : "No Sanctuary from this Trial. " + room}</p>`;
     else if (m.hasShield) {
       const u = mystOf(m), opts = [["none", "No Sanctuary", "mWin('none')"], ["public", "Overall winner · public", "mWin('public')"]].concat(rounded ? [["secret1", "Hidden · 1 " + u.unit, "mWin('secret',1)"]].concat(m.room >= 2 ? [["secret2", "Hidden · 2 " + u.units, "mWin('secret',2)"]] : []) : []);
-      sh = `<p class="ask">⛨ Sanctuary <small>(safe from tonight’s ${killOf(state) === "murder" ? "murder" : "poisoning"})</small></p><div class="row wrap">${opts.map(([k, l, fn]) => opt(cur === k, l, fn)).join("")}</div><p class="note">${rounded ? "Hidden: one " + u.unit + " only you know about. Whoever " + u.how + " takes it in secret, not the Trial’s winner, and you tap them at the end." : "Hidden prizes need a Trial played in rounds."} ${room}</p>`;
+      sh = `<p class="ask">⛨ Sanctuary <small>(safe from tonight’s poisoning)</small></p><div class="row wrap">${opts.map(([k, l, fn]) => opt(cur === k, l, fn)).join("")}</div><p class="note">${rounded ? "Hidden: one " + u.unit + " only you know about. Whoever " + u.how + " takes it in secret, not the Trial’s winner, and you tap them at the end." : "Hidden prizes need a Trial played in rounds."} ${room}</p>`;
     }
     const witness = m.hasShield && m.key !== "dilemma" && witnessOk(state) ? `<div class="row"><button class="${m.witnessOffer ? "sel" : ""}" aria-pressed="${!!m.witnessOffer}" onclick="mWitness()">${m.witnessOffer ? "Confessor on offer instead of Sanctuary (the TV says “a special prize”)" : "Offer the Confessor instead (TV: “a special prize”)"}</button></div>` : "";
     const wo = championOf(state);
@@ -4578,7 +4564,7 @@ function seatSheet(s) {
 function nightHost(s) {
   const n = s.night, script = nightScript(n, s), step = Math.min(n.step, script.length - 1);
   if (!n.confirmed) {
-    return `<h2>Night ${s.round}</h2>${dir("The TV shows a holding card. Nothing starts until you begin.")}${advicePanel()}<h3>Tonight, by your plan</h3>${Object.keys(MODES).filter(k => modeOn(s, k)).length > 1 ? `<div class="row">${Object.keys(MODES).filter(k => modeOn(s, k) || n.mode === k).map(k => `<button class="${n.mode === k ? "sel" : ""}" onclick="act(s=>{s.night.mode='${k}';s.night.answer=null})">${modeLabel(k, s)}</button>`).join("")}</div>` : ""}<p class="wp"><b>${modeLabel(n.mode, s)}.</b> ${esc(n.mode === "murder" && killOf(s) === "murder" ? "Forsworn choose a Loyal player to murder. You tap them; they read the screen and leave the table in silence while everyone is blindfolded. Sanctuary blocks it: tap nobody, and every chair is full at dawn. The normal night." : kw(MODES[n.mode].desc))}</p>${killsOf(n) > 1 ? dir(`<b>${cap1(numWord(killsOf(n)))} victims tonight.</b> With ${alive().length} at the table the Forsworn point once for each, one pass at a time, so the evening still reaches the final.`) : ""}${(n.questOpts || []).length ? `<h3>Errand</h3><p class="note">One is chosen for tonight. Tap another to change it. ‹a Loyal player› is named when they read it, and it is never tonight’s victim.</p><div class="mlist">${n.questOpts.filter(o => !o.poison || n.mode === "murder").map(o => `<button class="${n.quest === o.text ? "sel" : ""}" onclick="questPick(${o.i})">${o.target ? `<em>${esc(o.target)} only</em>` : ""}<small style="font-size:15.5px;color:var(--tallow)">${esc(o.text.replace(/\{F\}/g, "‹a Loyal player›"))}</small></button>`).join("")}</div>${n.quest ? `<div class="row"><button onclick="act(s=>{s.night.quest=null;s.night.questTarget=null})">No Errand tonight</button></div>` : ""}` : ""}`;
+    return `<h2>Night ${s.round}</h2>${dir("The TV shows a holding card. Nothing starts until you begin.")}${advicePanel()}<h3>Tonight, by your plan</h3>${Object.keys(MODES).filter(k => modeOn(s, k)).length > 1 ? `<div class="row">${Object.keys(MODES).filter(k => modeOn(s, k) || n.mode === k).map(k => `<button class="${n.mode === k ? "sel" : ""}" onclick="act(s=>{s.night.mode='${k}';s.night.answer=null})">${modeLabel(k, s)}</button>`).join("")}</div>` : ""}<p class="wp"><b>${modeLabel(n.mode, s)}.</b> ${esc(MODES[n.mode].desc)}</p>${killsOf(n) > 1 ? dir(`<b>${cap1(numWord(killsOf(n)))} victims tonight.</b> With ${alive().length} at the table the Forsworn point once for each, one pass at a time, so the evening still reaches the final.`) : ""}${(n.questOpts || []).length ? `<h3>Errand</h3><p class="note">One is chosen for tonight. Tap another to change it. ‹a Loyal player› is named when they read it, and it is never tonight’s victim.</p><div class="mlist">${n.questOpts.filter(o => !o.poison || n.mode === "murder").map(o => `<button class="${n.quest === o.text ? "sel" : ""}" onclick="questPick(${o.i})">${o.target ? `<em>${esc(o.target)} only</em>` : ""}<small style="font-size:15.5px;color:var(--tallow)">${esc(o.text.replace(/\{F\}/g, "‹a Loyal player›"))}</small></button>`).join("")}</div>${n.quest ? `<div class="row"><button onclick="act(s=>{s.night.quest=null;s.night.questTarget=null})">No Errand tonight</button></div>` : ""}` : ""}`;
   }
   // each control appears on the line it belongs to: the picker while they point, the answer while they nod or shake
   const cur = norm(script[step] || {}); let pick = "", tapNote = "";
@@ -4590,7 +4576,7 @@ function nightHost(s) {
   const vid = n.mode === "murder" ? n.victimId : n.targetId, vp = vid ? P(vid) : null;
   if (cur.tap === "victim") tapNote = `<div class="secret">${!vp ? "<b>Nobody picked yet.</b>" : vp.shield ? "<b>DO NOT TAP.</b> " + esc(vp.name) + " holds Sanctuary. Walk the full circle at the same pace, pause behind two or three people, tap nobody." : "<b>Tap " + esc(vp.name) + " now.</b> They read the screen, then blindfold back on. Walk the full circle either side of them."}</div>`;
   if (cur.tap === "target") tapNote = `<div class="secret">${n.targetId && P(n.targetId) ? "<b>Tap " + esc(P(n.targetId).name) + " now.</b> They read the screen." : "Pick the target first."}</div>`;
-  if (cur.murdered) tapNote = `<div class="secret">${vp && vp.shield ? "They hold Sanctuary, so nobody was tapped. Wait ten seconds so the room hears nothing, then next." : (killOf(s) === "murder" ? "They read it, stand and leave the table. Keep walking the circle at the same pace until they’re clear." : "They read it and blindfold up again. Nobody leaves until dawn.")}</div>`;
+  if (cur.poisoned) tapNote = `<div class="secret">${vp && vp.shield ? "They hold Sanctuary, so nobody was tapped. Wait ten seconds so the room hears nothing, then next." : "They read it and blindfold up again. Nobody leaves until dawn."}</div>`;
   if (cur.tap === "cloaks") tapNote = `<div class="secret"><b>Tap every Forsworn now:</b> ${esc(cloaks().filter(p => p.id !== n.targetId).map(p => p.name).join(", "))}.</div>`;
   if (cur.answer) tapNote = `<div class="secret"><b>Watch them.</b> Nod = accepted, shake = refused. Record below.</div>`;
   return `<h2>Night ${s.round}: ${modeLabel(n.mode, s)}${killsOf(n) > 1 ? " · " + ((n.pass || 0) + 1) + "/" + killsOf(n) : ""}</h2>${(n.victims || []).length ? `<p class="note">Already chosen tonight: ${esc(n.victims.map(id => P(id) ? P(id).name + (P(id).shield ? " ⛨" : "") : "?").join(", "))}.</p>` : ""}${stepList(script, step)}${tapNote}${pick}`;

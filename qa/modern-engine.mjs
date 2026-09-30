@@ -189,8 +189,16 @@ for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
   if (fw) check(`${n} players: the Forsworn can win, and Honour or Betray settles it (${r && r.how})`, r && r.winner === "forsworn" && (g.s.players.filter((p) => p.role === "f" && p.alive).length < 2 || r.how === "betrayed" || r.how === "nobody"));
   check(`${n} players: a whole game ends (${r && r.winner}, ${g.s.round} rounds, ${r && r.awards.length} awards, Purse ${g.s.pot})`, g.s.phase === "end" && r && r.awards.length <= 6 && (n < 8 || sawNight), { phase: g.s.phase, guard });
   check(`${n} players: ${g.s.opts.courses ? "dinner in courses was served" : "no courses, as chosen"}`, g.s.opts.courses ? g.s.done.starter && g.s.done.dessert : !g.s.done.starter && !g.s.done.main && !g.s.done.dessert);
+  check(`${n} players: the prize is chocolate coins, one for every 100 points won (${r && r.coins} for ${r && r.won})`, r && r.prize === "chocolate coins" && r.coins === Math.floor(r.won / 100));
   const v = viewFor(g.s, g.ids[2], g.now); check(`${n} players: at the end every role is shown`, v.players.every((p) => p.role));
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
+}
+{ // the prize in the lobby: chocolate coins by default, and the lobby explains them; a prize the host types has no coins
+  const g = setup(8), o = () => viewFor(g.s, g.dir, g.now).opts;
+  check("lobby: no kill option, and the default prize is chocolate coins", o().kill === undefined && o().prize === "chocolate coins" && o().coins === true && viewFor(g.s, g.ids[1], g.now).opts.coins === undefined);
+  A(g, g.dir, { a: "opts", opts: { prize: "a bottle of wine", kill: "murder" } });
+  check("…a prize of the host's own: no coins, and a kill option is ignored", o().prize === "a bottle of wine" && o().coins === false && g.s.opts.kill === undefined);
+  A(g, g.dir, { a: "opts", opts: { prize: "  " } }); check("…cleared, it goes back to chocolate coins", o().prize === "chocolate coins" && o().coins === true);
 }
 // 7. a test game: one person against bots; Trials score at random, every clock is ten seconds at most
 for (const n of [9, 16]) {
@@ -235,7 +243,7 @@ const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" })
   check("Most Likely To: the table's verdict is kept for the dawn", playTrial((A(g, g.dir, { a: "cont" }), g), "likely") === null && Object.values(s.stats.likely || {}).every((q) => /^Most likely to /.test(q)) && Object.keys(s.stats.likely || {}).length > 0, s.stats.likely);
 }
 {
-  const g = begin(10, { kill: "murder" }), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const g = begin(10, { kill: "murder" }), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" }); // an older room saved with kill "murder" plays as poison
   const X = exile(g, 6);
   check("last words: the exiled may type one line", s.phase === "reveal" && viewFor(s, X.id, g.now).me.words === "" && viewFor(s, g.ids[1], g.now).me.words === undefined);
   check("…nobody else may", !!A(g, g.ids[1], { a: "words", v: "not me" }).error);
@@ -246,11 +254,11 @@ const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" })
   check("…the other Forsworn sees it", JSON.stringify(viewFor(s, s.players[4].id, g.now).me.whispers) === JSON.stringify([["Annie" === s.players[3].name ? "Annie" : s.players[3].name, "Vote with me tomorrow"]]));
   const V1 = s.players[7]; s.stats.likely = { [V1.id]: "Most likely to cry at a wedding" };
   for (const p of alive(s)) A(g, p.id, p.role === "f" ? { a: "pick", v: V1.id } : { a: "sleep" }); run(g, 1000);
-  check("dawn: the murdered can't speak before the night is revealed", s.phase === "dawn" && !!A(g, V1.id, { a: "words", v: "x" }).error);
+  check("dawn: the poisoned can't speak before the night is revealed, and learn it on their phone", s.phase === "dawn" && !!A(g, V1.id, { a: "words", v: "x" }).error && viewFor(s, V1.id, g.now).me.victim === true);
   A(g, g.dir, { a: "cont" });
   const dv = viewFor(s, null, g.now).dawn;
   check("…then the table's verdict on them is read out", JSON.stringify(dv.likely) === JSON.stringify([[V1.name, "Most likely to cry at a wedding"]]));
-  check("…and they may type their last words", A(g, V1.id, { a: "words", v: "Tell my cat" }) === null && JSON.stringify(viewFor(s, null, g.now).dawn.words) === JSON.stringify([[V1.name, "Tell my cat"]]));
+  check("…and an old kill \"murder\" plays as poison: spoken last words on a clock, none typed", !!dv.lastEnd && !!A(g, V1.id, { a: "words", v: "Tell my cat" }).error && viewFor(s, null, g.now).dawn.words === undefined && viewFor(s, null, g.now).kill === undefined);
 }
 {
   const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });

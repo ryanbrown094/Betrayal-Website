@@ -83,7 +83,7 @@ with sync_playwright() as p:
     host.evaluate("()=>{act(s=>{s.night.victimId=s.players[2].id});finishNight()}"); sync(tv, h2)
     check("before dawn the TV still shows the victim alive", tv.evaluate("()=>state.players[2].alive===true && !state.morning.kind"))
     host.evaluate("()=>act(s=>{s.morning.revealed=true})"); sync(tv, h2)
-    check("after the reveal the TV shows the murder", tv.evaluate("()=>state.players[2].alive===false") and "Tom" in tv.inner_text("#stage"))
+    check("after the reveal the TV shows the poisoning", tv.evaluate("()=>state.players[2].alive===false") and "Tom" in tv.inner_text("#stage"))
     # ghosts judge: Tom and Oliver both name a Forsworn; then both Forsworn take -> Ghosts' own round
     host.evaluate("()=>{ghostGuess(state.players[2].id,state.players[1].id);ghostGuess(state.players[7].id,state.players[4].id);handoff=null;renderHost()}")
     before = host.evaluate("()=>state.ghosts[state.players[2].id].pick")

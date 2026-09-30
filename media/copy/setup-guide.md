@@ -15,9 +15,8 @@ Every Table can be played two ways, and the host chooses when they open it. **Mo
 
 | choice | options | pre-set / notes |
 |---|---|---|
-| How do the Forsworn kill? | Poison / Murder | poison. Poison: the victim finds out on their phone and gets last words at dawn. Murder: the victim finds out on their phone and leaves the table at dawn |
 | Sanctuary | Secret / Public | secret. Secret: only the winner knows they hold it (a Forsworn winner gets nothing, and learns so). Public: everyone sees who won it |
-| The prize | any words | the default is a box of chocolates; hosts set their own |
+| The prize | any words | the default is chocolate coins, one for every 100 points the winners take from the Purse (the lobby says so, and the end screens give the count); hosts set their own |
 | Better prizes for a fuller Purse | optional: one at a half-full Purse, one at a full Purse | if the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end |
 | Twists | On / Off | on. On: once each, the Casting Vote, the Crown, and the Confessor in the final. Off: Sanctuary and the Temptation only |
 | Dinner in courses | On / Off | off. For a Table that’s eating together: On serves a starter, a main and dessert between the rounds. Off: no set courses, and the host can still call a short break |
@@ -34,17 +33,16 @@ Screenshots: `04-screenshots/modern/`.
 
 ## Classic
 
-Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s. The Keeper sets the game up before guests arrive: **five questions and a PIN**, then a summary that’s ready to start. Every other choice is pre-set, worked out from those answers, and can be changed under **Customise**. Nothing reaches the TV until someone presses **Start**. You’ll need a TV and a laptop to cast to it, and a blindfold, a small chalkboard and chalk for each guest. Screenshots: `04-screenshots/classic/phone/phone-0*-setup-*.png`.
+Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s. The Keeper sets the game up before guests arrive: **four questions and a PIN**, then a summary that’s ready to start. Every other choice is pre-set, worked out from those answers, and can be changed under **Customise**. Nothing reaches the TV until someone presses **Start**. You’ll need a TV and a laptop to cast to it, and a blindfold, a small chalkboard and chalk for each guest. Screenshots: `04-screenshots/classic/phone/phone-0*-setup-*.png`.
 
-### The five questions
+### The four questions
 
 | # | question | choices | notes |
 |---|---|---|---|
 | 1 | Who’s playing? | 8 to 24 names, in seating order | seat order is the TV’s candle order and the order boards are turned. Best with 8 to 16 |
 | 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 4¼ hours for 16, and 5 to 6 for 20 and up), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
-| 3 | Murder or poison? | poison / murder | how the Forsworn kill. Poison: the victim is told in the night and announces it at dawn. Murder: the victim is led away under blindfold |
-| 4 | The prize | up to three prizes | the prize; a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
-| 5 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |
+| 3 | The prize | up to three prizes | the prize (chocolate coins if left blank, one for every 100 points won); a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
+| 4 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |
 | — | Keeper PIN | 4 to 8 digits | opens the Keeper screen on another phone if this one dies. A friend who keeps can change it when the phone is handed over |
 
 Then **Ready to start**: a summary of the game, with every pre-set choice listed and **Customise** to change any of them.

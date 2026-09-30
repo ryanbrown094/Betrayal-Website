@@ -23,13 +23,13 @@ Rules that carry over from the brand: never picture a face under the hood, never
 
 ### 3 · Host POV
 - A phone screen recording at speed, with a voiceover: *“Booking code. Modern. My name. Open the Table.”* Cut to the TV: the QR code, and names popping into the lobby as friends scan it.
-- *“Poison, not murder. Champagne for the prize. Start.”*
+- *“Secret Sanctuary. Champagne for the prize. Start.”*
 - Cut to the host, phone held close, reading their own secret role.
 - **Text:** *“I hosted twelve people and played all night. The game ran itself.”*
 - **Caption:** The easiest big party I’ve ever hosted.
 
 ### 4 · What you need (flat lay, no faces needed)
-- Overhead shot of a coffee table with drinks and snacks. On the beat, phones land by every glass, one after another, then a box of chocolates with a label reading “the prize”.
+- Overhead shot of a coffee table with drinks and snacks. On the beat, phones land by every glass, one after another, then a heap of chocolate coins with a label reading “the prize”.
 - **Text:** *“What you need to play:”* then *“a phone each, and a prize.”*
 - **End:** *“Under £2 a guest.”*
 - **Caption:** Best with 8 to 16. Book a Table for £10. You don’t need an app, an account or any props.

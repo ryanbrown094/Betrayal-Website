@@ -21,24 +21,24 @@ try:
             E("()=>act(s=>{s.players.forEach((p,i)=>p.role=[0,1].includes(i)?'cloak':'candle');s.phase='day'})"); h.wait_for_timeout(150)
         # setup screen: the accordion writes the plan into the game
         h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111'});renderHost()}", "\n".join(NAMES))
-        E("()=>{wSet('kill','murder');wSet('ghosts',false);wSet('blade',false);wSet('champion',false);wSet('rounds',4);wSet('perRound',2);poolD('quiz');poolD('statue')}")
+        E("()=>{wSet('ghosts',false);wSet('blade',false);wSet('champion',false);wSet('rounds',4);wSet('perRound',2);poolD('quiz');poolD('statue')}")
         check("the blade and the Champion are separate choices", E("()=>{wSet('champion',true);const c=setupDraft.champion&&!setupDraft.blade;wSet('champion',false);return c}"))
         E("()=>submitSetup()"); h.wait_for_timeout(300)
         r = E("()=>state.rules")
-        check("setup choices land in the game's rules", r["kill"] == "murder" and r["ghosts"] is False and r["blade"] is False and r["champion"] is False and r["rounds"] == 4 and r["perRound"] == 2 and "quiz" not in r["pool"], r)
+        check("setup choices land in the game's rules (and there's no kill choice: poison is the only one)", "kill" not in r and r["ghosts"] is False and r["blade"] is False and r["champion"] is False and r["rounds"] == 4 and r["perRound"] == 2 and "quiz" not in r["pool"], r)
         check("the plan only deals missions from the pool, and never the Statue without Ghosts", E("()=>state.plan.length>0 && state.plan.every(k=>state.rules.pool.includes(k)) && !state.plan.includes('statue')"), E("()=>state.plan"))
-        # murder, no Ghosts
+        # no Ghosts; an older game saved with kill "murder" plays as poison
         game({"kill": "murder", "ghosts": False})
         E("()=>{act(s=>{s.phase='table';s.table=newTable()});exile(state.players[9].id);if(ask)askGo();revealRole()}")
         check("no Ghost lore or verdicts without Ghosts", "ghost" not in body().lower(), body()[:300])
         E("()=>{startNight();act(s=>{s.night.mode='murder'});beginNight();act(s=>{s.night.victimId=s.players[5].id})}")
         sc = E("()=>nightScript(state.night,state).map(l=>norm(l).tv).join(' | ')")
-        check("murder night: the victim is told to leave the table now, and there are no Ghosts to join", "leave the table now" in sc and "Thank you for playing" in sc and "Ghost" not in sc, sc)
-        check("murder night never says poison", "poison" not in sc.lower() and "poison" not in body().lower())
+        check("old kill 'murder': the victim is poisoned, and leaves at dawn with no Ghosts to join", "You have been poisoned" in sc and "leave the table." in sc and "Ghost" not in sc, sc)
+        check("…and nothing says murder", "murder" not in sc.lower() and "murder" not in body().lower())
         E("()=>{act(s=>{s.night.step=nightScript(s.night,s).length-1});finishNight()}")
-        check("dawn, murder: the host is told about the empty chair", "empty chair" in body(), body()[:400])
+        check("dawn: the host waits for the victim to announce it", "announce it" in body() and "empty chair" not in body(), body()[:400])
         E("()=>act(s=>{s.morning.revealed=true})")
-        check("no last words for the murdered — they've already gone", "Last words" not in body())
+        check("…and the victim gets last words", "Last words" in body())
         # poison, Ghosts on: last words
         game({"kill": "poison", "ghosts": True})
         E("()=>{startNight();act(s=>{s.night.mode='murder';s.night.victimId=s.players[5].id});beginNight();act(s=>{s.night.step=nightScript(s.night,s).length-1});finishNight();act(s=>{s.morning.revealed=true})}")
@@ -106,11 +106,11 @@ try:
         check("dinner after round 2: not offered after round 1", "Dinner now" not in h.inner_text(".foot"))
         E("()=>{nextRound();startNight();act(s=>{s.night.mode='murder';s.night.victimId=s.players[6].id});beginNight();act(s=>{s.night.step=nightScript(s.night,s).length-1});finishNight();act(s=>{s.morning.revealed=true})}")
         check("…and served after round 2", "Dinner now" in h.inner_text(".foot"), h.inner_text(".foot"))
-        # the TV in a murder game
+        # the TV in an older game saved with kill "murder"
         game({"kill": "murder"})
         tv = ctx.new_page(); tv.set_viewport_size({"width": 1920, "height": 1080}); tv.goto(f"http://localhost:{PORT}/play.html"); tv.wait_for_timeout(1500)
         t = tv.evaluate("()=>{const s=publicView(state);s.tvRules=true;s.phase='lobby';const d=document.createElement('div');d.innerHTML=tvView(s).html;return d.textContent}")
-        check("TV rules card: murder, no poison", "murder" in t and "poison" not in t.lower(), t)
+        check("TV rules card: poison, never murder", "poison" in t and "murder" not in t.lower(), t)
         check("no page errors", not errs, errs[:3])
         b.close()
 finally:

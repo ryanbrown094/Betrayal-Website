@@ -198,7 +198,7 @@ pages.append(f"""<div class=page><div class=eb>09 · the words</div><h1>Two tier
     <p class=cap style="margin-top:2mm">One more in-game role is never named in public at all.</p>
     <div class=lab style="margin-top:5mm">never say → say</div>
     <table>{''.join(f'<tr><td style="color:#877E78">{a}</td><td style="color:#F4C9B7">{b}</td></tr>' for a, b in never)}</table></div></div>
-  <p class=cap style="margin-top:3mm">Plain words, lower case: exile, night, dawn, dinner, poison, murder, oath, seal, candle, blindfold, chalkboard; and the Interval. The full lists, awards included, are in <i>01-game/glossary-and-naming.md</i>.</p>
+  <p class=cap style="margin-top:3mm">Plain words, lower case: exile, night, dawn, dinner, poison, oath, seal, candle, blindfold, chalkboard; and the Interval. The full lists, awards included, are in <i>01-game/glossary-and-naming.md</i>.</p>
   {foot(10)}</div>""")
 
 pages.append(f"""<div class=page><div class=eb>10 · voice</div><h1>The voice at the head of the table</h1>
@@ -210,7 +210,7 @@ pages.append(f"""<div class=page><div class=eb>10 · voice</div><h1>The voice at
     <div class=q>“Look at the screen: there is a candle burning for every one of you.”</div>
     <div class=q>“Every Forsworn has been unmasked. The Loyal have won.”</div></div>
    <div><div class=lab>do</div><ul class=l><li>Address the room directly: you, your table, tonight.</li><li>Use British English and plain words: name who you exile, not submit a vote; the Interval, not a break-out.</li><li>Ask for the sale plainly: <b>Book a Table</b>, or <b>Become a Regular</b>.</li><li>Say the length honestly: best with 8 to 16. A big table or a long night is a fact, not a selling point.</li><li>Keep secrets in the copy too. Never hint who holds a role.</li></ul>
-    <div class=lab style="margin-top:5mm">don’t</div><ul class=l><li>Name, quote or allude to any TV programme, presenter, catchphrase, castle or theme tune.</li><li>Borrow another Betrayal game’s words or look.</li><li>Write gore or cruelty. Murder is a tap on the shoulder, not a crime scene.</li><li>Use tech words in front of guests: app, sync, user, click.</li></ul></div></div>
+    <div class=lab style="margin-top:5mm">don’t</div><ul class=l><li>Name, quote or allude to any TV programme, presenter, catchphrase, castle or theme tune.</li><li>Borrow another Betrayal game’s words or look.</li><li>Write gore or cruelty. A poisoning is a tap on the shoulder, not a crime scene.</li><li>Use tech words in front of guests: app, sync, user, click.</li></ul></div></div>
   {foot(11)}</div>""")
 
 def ad(p, w): return f'<img src="{img(p)}" style="width:{w};border-radius:2mm;border:1px solid rgba(230,165,140,.25);display:block">'

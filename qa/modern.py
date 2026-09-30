@@ -73,9 +73,9 @@ with sync_playwright() as p:
         phones.append(pg)
     check("seven friends join at /join", until(lambda: all("You’re in" in q.inner_text("#app") for q in phones[1:]), 25))
     check("the TV lists all eight", until(lambda: all(n in tv.inner_text("#tvapp") for n in NAMES)))
-    host.click("[data-a=opt][data-v=murder]")
+    check("no kill choice in the lobby (poison is the only kill), and the default prize explains its chocolate coins", host.locator("[data-a=opt][data-k=kill]").count() == 0 and host.input_value("#prize") == "chocolate coins" and "Every 100 points in the Purse is one chocolate coin" in host.inner_text("#app"))
     host.click("summary:has-text('Better prizes')"); host.fill("#tier1", "champagne"); host.locator("#tier1").dispatch_event("change")
-    check("the host's settings: murder, and a better prize for a half-full Purse", until(lambda: "Murdered players find out" in host.inner_text("#app") and host.input_value("#tier1") == "champagne"))
+    check("the host's settings: a better prize for a half-full Purse", until(lambda: host.input_value("#tier1") == "champagne"))
     check("twists on and dinner off by default", "Once each: the Casting Vote, the Crown" in host.inner_text("#app") and "No meal breaks" in host.inner_text("#app"))
     host.click("[data-a=opt][data-k=courses][data-v=true]")
     check("…and the host can switch dinner in courses on", until(lambda: "Dinner in courses: a starter" in host.inner_text("#app")))
@@ -152,7 +152,7 @@ with sync_playwright() as p:
     host.click("[data-a=cont]")
 
     # the night
-    check("night: the Forsworn choose on their phones", until(lambda: "Choose who is murdered tonight" in phones[F[0]].inner_text("#app")))
+    check("night: the Forsworn choose on their phones", until(lambda: "Choose who is poisoned tonight" in phones[F[0]].inner_text("#app")))
     check("…the host has no dawn button (it's in Tools)", host.locator("[data-a=dawnNow]").count() == 0)
     phones[F[0]].click("details.whisp summary"); phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
     check("…and whisper to each other, which nobody else sees", until(lambda: "Vote with me tomorrow" in phones[F[1]].inner_text("#app")) and "Vote with me" not in phones[L[0]].inner_text("#app") and "Vote with me" not in tv.inner_text("#tvapp"))
@@ -161,7 +161,7 @@ with sync_playwright() as p:
     for i, q in enumerate(phones):
         if i not in F and i != ti:
             if until(lambda: q.locator("[data-a=sleep]").count(), 10): q.click("[data-a=sleep] >> nth=0")
-    check("dawn: the victim learns first, in secret", until(lambda: "You were murdered" in phones[vi].inner_text("#app")) and victim not in tv.inner_text("#tvapp"))
+    check("dawn: the victim learns first, in secret", until(lambda: "You were poisoned" in phones[vi].inner_text("#app")) and victim not in tv.inner_text("#tvapp"))
     host.click("[data-a=cont]"); check("the host reveals the night", until(lambda: f"{victim} is dead" in tv.inner_text("#tvapp")))
     host.click("[data-a=cont]")
     check("round two opens with the Starter", until(lambda: "The Starter" in host.inner_text("#app")))

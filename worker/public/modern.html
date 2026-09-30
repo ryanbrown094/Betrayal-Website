@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930125918">
+<meta name="build" content="20260930150156">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -748,9 +748,10 @@ const alive = () => V.players.filter((p) => p.alive);
 const ico = (n) => ART.icon(n);
 const andList = (a) => (a.length < 2 ? a.join("") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1]);
 const plural = (n, w, ws) => n + " " + (n === 1 ? w : ws || w + "s");
+// the prize at the end: with the default prize, the Purse in chocolate coins (one per 100 points, worked out by the server)
+const prizeText = (r) => (r.coins == null ? r.prize : r.coins ? plural(r.coins, "chocolate coin") : "No chocolate coins");
 const clock = (end, from) => `<span class="clock" data-end="${end}"></span>` + (from ? `<div class="bar"><i data-from="${from}" data-end="${end}"></i></div>` : "");
 const btn = (label, a, v, cls, extra) => `<button class="btn ${cls || ""}" data-a="${a}"${v != null ? ` data-v="${esc(v)}"` : ""}${extra || ""}>${label}</button>`;
-const KILL = () => (V.kill === "murder" ? "murdered" : "poisoned");
 
 // ---------------------------------------------------------------------------------------------------------------
 async function api(path, body) {
@@ -954,11 +955,9 @@ function lobby(me) {
   if (V.test) h += `<div class="banner">Test game: the bots play themselves, Trials score at random, and every countdown is ten seconds.</div><div class="row" style="margin-bottom:14px">${btn("Add a bot", "bots", String(n + 1), "dark sm")}</div>`;
   const two = (k, a, b) => `<div class="grid2">${[a, b].map(([v, t]) => `<button class="btn ${o[k] === v ? "on" : "dark"} sm" data-a="opt" data-k="${k}" data-v="${v}">${t}</button>`).join("")}</div>`; // v may be true/false
   h += `<div class="card dir"><h2 class="sec">Before you start</h2>
-  <label class="l">How do the Forsworn kill?</label>${two("kill", ["poison", "Poison"], ["murder", "Murder"])}
-  <p class="small">${o.kill === "murder" ? "Murdered players find out on their phone, and leave the table at dawn." : "Poisoned players find out on their phone, and get last words at dawn."}</p>
   <label class="l">Sanctuary</label>${two("shield", ["secret", "Secret"], ["public", "Public"])}
   <p class="small">${o.shield === "public" ? "Everyone sees who won Sanctuary." : "Only the winner knows they hold Sanctuary. (A Forsworn winner gets nothing, and learns so.)"}</p>
-  <label class="l" for="prize">The prize</label><input class="f" id="prize" maxlength="80" value="${esc(o.prize || "")}" data-opt="prize">
+  <label class="l" for="prize">The prize</label><input class="f" id="prize" maxlength="80" value="${esc(o.prize || "")}" data-opt="prize">${o.coins ? `<p class="small">Every 100 points in the Purse is one chocolate coin.</p>` : ""}
   <details class="more"${(o.prizes || []).length ? " open" : ""}><summary>Better prizes for a fuller Purse</summary><p class="small">Optional. If the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end.</p>
   <label class="l" for="tier1">At a half-full Purse</label><input class="f" id="tier1" maxlength="80" placeholder="e.g. champagne" value="${esc(((o.prizes || []).find((x) => x.at === 0.5) || {}).what || "")}" data-tier="1">
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
@@ -1144,8 +1143,8 @@ function reveal(me) {
 }
 const lastWords = (name, w) => `<blockquote class="lastw say">“${esc(w)}”<cite>${esc(name)}’s last words</cite></blockquote>`;
 const wordsForm = (me) => (me.words == null ? "" : me.words ? "" : `<div class="card"><label class="l" for="lw">Your last words, for the whole table (optional, 140 characters)</label><input class="f" id="lw" maxlength="140" autocomplete="off" enterkeyhint="send" placeholder="One line for the table"><div style="height:10px"></div>${btn("Say it", "wordsf", "lw", "dark")}</div>`);
-// each victim in turn: what the table once voted them most likely to do, then their last words
-const epitaphs = (d) => (d.victims || []).map((n) => { const q = (d.likely || []).find((x) => x[0] === n), w = (d.words || []).find((x) => x[0] === n); return (q ? `<p class="epitaph say">The table voted ${esc(n)} ${esc(q[1].replace(/^most/i, "most"))}. Now we’ll never find out.</p>` : "") + (w ? lastWords(n, w[1]) : ""); }).join("");
+// each victim in turn: what the table once voted them most likely to do
+const epitaphs = (d) => (d.victims || []).map((n) => { const q = (d.likely || []).find((x) => x[0] === n); return q ? `<p class="epitaph say">The table voted ${esc(n)} ${esc(q[1].replace(/^most/i, "most"))}. Now we’ll never find out.</p>` : ""; }).join("");
 const nb = (n) => esc(n).replace(/ /g, "&nbsp;"); // a name never breaks across lines
 function night(me) {
   const n = V.night;
@@ -1153,7 +1152,7 @@ function night(me) {
   if (!me.alive) return `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">The Forsworn are choosing. Ghosts, watch in silence.</p>`;
   if (me.role === "f") {
     const votes = {}; for (const ps of Object.values(me.picks || {})) for (const nm of ps) votes[nm] = (votes[nm] || 0) + 1;
-    h += `<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". The " + n.kills + " chosen most by the Forsworn are " + KILL() + "." : "Choose who is " + KILL() + " tonight. The one chosen most goes."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
+    h += `<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". The " + n.kills + " chosen most by the Forsworn are poisoned." : "Choose who is poisoned tonight. The one chosen most goes."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
     ${Object.entries(me.picks || {}).filter(([nm]) => nm !== me.name).map(([nm, ps]) => `<p class="small">${esc(nm)}: ${ps.length ? esc(andList(ps)) : "not yet"}</p>`).join("")}<p class="small">${(me.mine || []).length} of ${n.kills} chosen</p></div>`;
     const wh = me.whispers ? `<details class="more whisp"${me.whispers.length ? " open" : ""}><summary>Whisper to the Forsworn${me.whispers.length ? " · " + me.whispers.length : ""}</summary>${me.whispers.length ? `<ul class="whispers">${me.whispers.map(([n, m]) => `<li><b>${esc(n)}</b> ${esc(m)}</li>`).join("")}</ul>` : `<p class="small">Only the Forsworn see these.</p>`}<div class="wh">${(me.whisperSay || []).map((m, i) => btn(esc(m), "whisper", i, "dark sm")).join("")}</div></details>` : "";
     return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">Chosen. You can change it until everyone’s done.</p>` : "") + wh;
@@ -1164,13 +1163,13 @@ function night(me) {
 function dawn(me) {
   const d = V.dawn;
   if (!d.revealed) {
-    if (me.victim) return `<div class="card hot center"><h1>You were ${me.victim === "murder" ? "murdered" : "poisoned"}</h1><p class="sub">${me.victim === "murder" ? "Say nothing. When the host reveals the night, you can leave a line of last words for the table, then leave quietly." : "Say nothing yet. When the host reveals the night, you get your last words."}</p></div>` + dirCard(btn("Reveal the night", "cont"));
+    if (me.victim) return `<div class="card hot center"><h1>You were poisoned</h1><p class="sub">Say nothing yet. When the host reveals the night, you get your last words.</p></div>` + dirCard(btn("Reveal the night", "cont"));
     return `<div class="eyebrow">dawn</div><h1>Heads up</h1><p class="sub">Who made it through the night?</p>` + dirCard(btn("Reveal the night", "cont")) + waitHost();
   }
   const v = d.victims || [];
-  if (v.includes(me.name) && d.lastEnd && V.kill !== "murder") return `<div class="card hot center"><h1>Your last words</h1><p class="sub">Stand up, tell the table you were poisoned, and say what you like. Then you’re a Ghost.</p><p class="bigclock">${clock(d.lastEnd)}</p></div>` + dirCard(btn("On to the next round", "cont"));
+  if (v.includes(me.name) && d.lastEnd) return `<div class="card hot center"><h1>Your last words</h1><p class="sub">Stand up, tell the table you were poisoned, and say what you like. Then you’re a Ghost.</p><p class="bigclock">${clock(d.lastEnd)}</p></div>` + dirCard(btn("On to the next round", "cont"));
   return `<div class="eyebrow">dawn</div><h1>${v.length ? andList(v.map(nb)) + (v.length > 1 ? " are" : " is") + " dead" : "Nobody died"}</h1>
-  <p class="sub">${v.length ? (V.kill === "murder" ? "Murdered in the night." : "Poisoned in the night. Last words" + (d.lastEnd ? ": " + clock(d.lastEnd) : ".")) : d.saved ? "Sanctuary held. The Forsworn struck, and failed." : "The night passed quietly."}</p>${v.includes(me.name) ? `<div class="banner ghost">${ico("ghost")}<span>You were ${KILL()}. You’re a Ghost now.</span></div>` : ""}${epitaphs(d)}${v.includes(me.name) ? wordsForm(me) : ""}` + dirCard(btn("On to the next round", "cont")) + waitHost();
+  <p class="sub">${v.length ? "Poisoned in the night. Last words" + (d.lastEnd ? ": " + clock(d.lastEnd) : ".") : d.saved ? "Sanctuary held. The Forsworn struck, and failed." : "The night passed quietly."}</p>${v.includes(me.name) ? `<div class="banner ghost">${ico("ghost")}<span>You were poisoned. You’re a Ghost now.</span></div>` : ""}${epitaphs(d)}` + dirCard(btn("On to the next round", "cont")) + waitHost();
 }
 function trust(me) {
   const t = V.trust;
@@ -1190,7 +1189,7 @@ function end(me) {
   const r = V.result, fw = r.winner === "forsworn";
   return `<h1 class="disp">${fw ? "The Forsworn win" : "The Loyal win"}</h1>
   <p class="sub">${r.how === "betrayed" ? andList(r.to.map(esc)) + " betrayed the others at the last, and takes it all." : r.how === "nobody" ? "Too many betrayed, so nobody takes the prize." : r.to.length ? "The prize goes to " + andList(r.to.map(esc)) + "." : ""}</p>
-  <div class="card center prize"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.pot <= 0 ? "an empty" : "a half-empty") : r.pot >= r.cap ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(r.prize)}</p><p class="small">${fw ? "The Loyal built " + r.pot + " of " + r.cap + ", so the Forsworn take the " + r.won + " it fell short." : "The Purse: " + r.pot + " of " + r.cap + "."}</p></div>
+  <div class="card center prize"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.pot <= 0 ? "an empty" : "a half-empty") : r.pot >= r.cap ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(prizeText(r))}</p><p class="small">${fw ? "The Loyal built " + r.pot + " of " + r.cap + ", so the Forsworn take the " + r.won + " it fell short." : "The Purse: " + r.pot + " of " + r.cap + "."}${r.coins != null ? " One coin for every 100 points." : ""}</p></div>
   ${me.won ? `<div class="banner sanct">${ico("crown")}<span>You won.</span></div>` : ""}
   ${r.peeked && r.peeked.length ? `<p class="small">The host opened the roles in round ${r.peeked.join(", ")} (Tools, for when something went wrong).</p>` : ""}
   <h2 class="sec">Who was who</h2><ul class="roster">${V.players.slice().sort((a, b) => (a.role === "f" ? 0 : 1) - (b.role === "f" ? 0 : 1)).map((p) => `<li class="${p.role === "f" ? "f" : "l"}">${ART.seal(p)}<span>${esc(p.name)}${p.alive ? "" : ` <i>out</i>`}</span><em>${p.role === "f" ? "Forsworn" : "Loyal"}</em></li>`).join("")}</ul>
@@ -1232,7 +1231,7 @@ function tvBody(url) {
     case "unmask": { const keep = V.players; V.players = V.unmask.order.map(P); const h = `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`; V.players = keep; return h; }
     case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p><p class="tvcount">${V.honour.made} of ${V.honour.of} chosen${V.honour.end ? " · " + clock(V.honour.end) : ""}</p>`;
     case "end": { const r = V.result, fw = r.winner === "forsworn";
-      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}">${fw ? "The Forsworn win" : "The Loyal win"}</h1><div class="prizecard"><span>the prize</span><h2>${esc(r.prize)}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
+      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}">${fw ? "The Forsworn win" : "The Loyal win"}</h1><div class="prizecard"><span>the prize</span><h2>${esc(prizeText(r))}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
       <div class="endr">${tvPeople(null, true, "end")}${r.awards && r.awards.length ? `<ul class="tvawards">${r.awards.slice(0, V.players.length > 16 ? 2 : 4).map((a) => `<li>${seal(a.id)}<span><b>${esc(a.title)}</b>${esc(a.name)} ${esc(a.why)}</span></li>`).join("")}</ul>` : ""}</div></div>`; }
   }
   return "";
@@ -1263,7 +1262,7 @@ function cue() {
   else if (V.phase === "talk" || V.phase === "vote") sfx("beat");
   else if (V.phase === "reveal") sfx(V.reveal.role ? "reveal" : "seal");
   else if (V.phase === "night") sfx("snuff");
-  else if (V.phase === "dawn" && V.dawn.revealed) { sfx("dawn"); if (V.kill !== "murder" && V.dawn.victims && V.dawn.victims.length) setTimeout(() => sfx("poison"), 1200); }
+  else if (V.phase === "dawn" && V.dawn.revealed) { sfx("dawn"); if (V.dawn.victims && V.dawn.victims.length) setTimeout(() => sfx("poison"), 1200); }
   else if (V.phase === "end") sfx("win");
 }
 function tickSound() {
