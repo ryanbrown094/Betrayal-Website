@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930074408">
+<meta name="build" content="20260930075610">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -183,7 +183,7 @@ h1.gold:not(.fx-title):not(.fx-slam) { animation: shimmer 8s ease-in-out 1.5s in
 .rule::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(1px, .1vh); background: linear-gradient(90deg, transparent, var(--brass), transparent) }
 .rule::after { content: ""; position: absolute; left: 50%; top: 50%; width: .9vh; height: .9vh; background: var(--brass2); transform: translate(-50%, -50%) rotate(45deg) }
 .rules { font-family: var(--book); font-size: 3.7vh; line-height: 1.3; max-width: 66vw; color: var(--tallow); text-wrap: pretty }
-.tag { display: inline-flex; align-items: center; gap: 1vh; padding: .7vh 2.2vh; border: max(1px, .1vh) solid rgba(174,98,73,.6); font-family: var(--sc); font-size: 2.3vh; letter-spacing: .3em; color: var(--brass2); background: rgba(174,98,73,.08) }
+.tag { display: inline-flex; align-items: center; gap: 1vh; padding: .7vh .4vh; border-top: max(1px, .1vh) solid rgba(174,98,73,.55); border-bottom: max(1px, .1vh) solid rgba(174,98,73,.55); font-family: var(--sc); font-size: 2.3vh; letter-spacing: .12em; color: var(--brass2) }
 .q { font-family: var(--book); font-size: 6vh; line-height: 1.14; max-width: 68vw; color: var(--tallow); text-wrap: balance }
 .a { font-family: var(--disp); font-weight: 600; font-size: 9vh; line-height: 1 }
 .letters { display: flex; gap: .9vh; justify-content: center }
@@ -348,7 +348,7 @@ h1.gold:not(.fx-title):not(.fx-slam) { animation: shimmer 8s ease-in-out 1.5s in
 @media (max-aspect-ratio: 3/2) { .rulelist { gap: 1.1vh 3vw; font-size: 2.6vh } }
 .rulelist.ghostrules { grid-template-columns: 1fr; max-width: 64vw; margin: 1vh auto 0; font-size: 3.2vh }
 .quizpart { display: flex; gap: 2vh; justify-content: center; align-items: baseline; font-family: var(--sc); font-weight: 700; letter-spacing: .16em; font-size: 2.1vh; color: var(--tallow2); animation: rise .6s both }
-.quizpart .pt { color: var(--brass2); padding: .4vh 1.6vh; border: max(1px, .12vh) solid rgba(230,165,140,.45); border-radius: 99px; background: rgba(174,98,73,.12) }
+.quizpart .pt { color: var(--brass2) }
 .rulelist div { padding-left: 1.6vh; border-left: max(1px, .1vh) solid rgba(174,98,73,.45); animation: rise .7s both; animation-delay: calc(var(--i) * 70ms) }
 
 /* night slides */
@@ -426,10 +426,9 @@ h1.gold:not(.fx-title):not(.fx-slam) { animation: shimmer 8s ease-in-out 1.5s in
 @keyframes flashred { 0% { opacity: .85; background: radial-gradient(circle, rgba(194,41,97,.85), rgba(122,20,57,.4)) } 100% { opacity: 0; background: radial-gradient(circle, rgba(194,41,97,.85), rgba(122,20,57,.4)) } }
 @keyframes flashgold { 0% { opacity: .6; background: radial-gradient(circle, rgba(230,165,140,.8), rgba(174,98,73,.25)) } 100% { opacity: 0; background: radial-gradient(circle, rgba(230,165,140,.8), rgba(174,98,73,.25)) } }
 #soundbtn { position: absolute; right: 1.2vw; bottom: 1.2vh; z-index: 10; width: 4.4vh; height: 4.4vh; padding: 0; overflow: hidden; font-family: var(--sc); font-size: 1.5vh; letter-spacing: .1em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.35); border-radius: 50%; opacity: .45 }
-#soundbtn.ask { top: 9.6vh; bottom: auto; right: auto; left: calc(3.2vw + 17vh); width: auto; height: auto; padding: 1.2vh 3vh; border-radius: .4vh; font-size: 2.2vh; letter-spacing: .3em; opacity: 1; color: #170c18; background: linear-gradient(180deg, var(--brass2), var(--brass)); border-color: var(--brass2); font-weight: 700; animation: askglow 2s ease-in-out infinite }
-@keyframes askglow { 50% { box-shadow: 0 0 3.4vh rgba(230,165,140,.75) } }
+#soundbtn.ask { top: 9.6vh; bottom: auto; right: auto; left: calc(3.2vw + 17vh); width: auto; height: auto; padding: 1.2vh 3vh; border-radius: .4vh; font-size: 2.2vh; letter-spacing: .12em; opacity: 1; color: #fff6f1; background: var(--brass); border-color: var(--brass); font-weight: 700 }
 /* full screen: beside the sound button until the sound is on, then small in the corner; gone while full screen */
-#fsbtn { position: absolute; right: calc(1.2vw + 5.6vh); bottom: 1.2vh; z-index: 10; height: 4.4vh; padding: 0 2vh; display: flex; align-items: center; gap: 1.2vh; font-family: var(--sc); font-weight: 700; font-size: 1.6vh; letter-spacing: .24em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.35); border-radius: 2.2vh; opacity: .55; cursor: pointer; transition: opacity .4s }
+#fsbtn { position: absolute; right: calc(1.2vw + 5.6vh); bottom: 1.2vh; z-index: 10; height: 4.4vh; padding: 0 2vh; display: flex; align-items: center; gap: 1.2vh; font-family: var(--sc); font-weight: 700; font-size: 1.6vh; letter-spacing: .1em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.35); border-radius: .4vh; opacity: .55; cursor: pointer; transition: opacity .4s }
 #fsbtn small { font-weight: 500; letter-spacing: .12em; opacity: .7 }
 #fsbtn.withsound { top: 16.2vh; bottom: auto; right: auto; left: calc(3.2vw + 17vh); height: auto; padding: 1.1vh 3vh; border-radius: .4vh; font-size: 2.1vh; opacity: 1; color: var(--brass2); border-color: var(--brass2); background: rgba(9,7,10,.75) }
 #fsbtn.off { display: none }
@@ -474,111 +473,156 @@ body.nocursor, body.nocursor * { cursor: none !important }
 .hint { font-family: var(--ui); font-size: 2vh; color: var(--mist) } .hint b { color: var(--brass2) }
 
 /* ===================== HOST PHONE ===================== */
-/* the phone is a working tool: plain system type throughout, the castle look stays on the TV */
-#host { --hui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-family: var(--hui); --gut: max(14px, env(safe-area-inset-left), env(safe-area-inset-right)); max-width: 560px; margin: 0 auto; padding: 0 var(--gut) calc(120px + env(safe-area-inset-bottom)); font-size: 17px; line-height: 1.4; min-height: 100vh; min-height: 100dvh;
-  background: radial-gradient(90% 40% at 50% 0, rgba(174,98,73,.10), transparent), var(--soot) }
-#host h2 { font-family: var(--book); font-weight: 400; font-size: 30px; line-height: 1.12; letter-spacing: -.005em; margin: 18px 0 10px; color: #f4ddd4; text-wrap: balance }
-#host h3 { font-family: var(--hui); font-weight: 700; font-size: 13px; letter-spacing: .08em; color: var(--brass2); margin: 22px 0 8px; text-transform: uppercase }
-#host .eyebrow { font-family: var(--hui); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-indent: 0; margin-top: 22px; text-transform: uppercase }
-#host .step-head { margin: 4px 0 10px; font-size: 15px; font-weight: 700; color: var(--brass2); font-variant-numeric: tabular-nums }
-#host .ask { margin: 10px 0 4px; font-size: 17px; font-weight: 600; color: var(--tallow) }
-#host .vote.setrow > span { white-space: normal; overflow: visible; font-size: 16px; line-height: 1.25; padding: 4px 0 }
-#host p.note, #host .note { color: var(--tallow2); font-size: 15.5px; margin: 8px 0 }
+/* The Keeper's phone is a prompter's script, like a theatre prompt book: the lines to read are set large in the book face
+   with a note in the left margin ("Say", "Next", "Then"), private reminders are stage directions in italics and brackets,
+   choices and tools are ruled rows, and the one action that moves the game on is a plain copper button. No boxes,
+   no glows: the candlelight belongs to the TV. */
+#host { --mg: 50px; --rule: rgba(174,98,73,.26); --rule2: rgba(174,98,73,.5); --ink: #f6e2d9; --gut: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+  font-family: var(--ui); max-width: 560px; margin: 0 auto; padding: 0 var(--gut) calc(120px + env(safe-area-inset-bottom)); font-size: 18px; line-height: 1.42; min-height: 100vh; min-height: 100dvh; background: var(--soot) }
+#host h2 { font-family: var(--book); font-weight: 400; font-size: 31px; line-height: 1.12; margin: 22px 0 12px; color: var(--ink); text-wrap: balance }
+#host h3 { font-family: var(--book); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--tallow); margin: 26px 0 8px; padding-top: 12px; border-top: 1px solid var(--rule) }
+#host h3::first-letter { text-transform: uppercase }
+#host h3 small { font-family: var(--book); font-style: italic; font-size: 16px; color: var(--tallow2) }
+#host .step-head { margin: 6px 0 10px; font-family: var(--book); font-style: italic; font-size: 17px; color: var(--brass2); font-variant-numeric: tabular-nums }
+#host .ask { margin: 14px 0 4px; font-size: 18px; font-weight: 700; color: var(--tallow) } #host .ask small { font-weight: 400; color: var(--tallow2) }
+#host p.note, #host .note { color: var(--tallow2); font-size: 17px; margin: 8px 0 }
 #host .note b { color: var(--tallow) }
-#host button { min-height: 54px; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(174,98,73,.38); background: #150e16; color: var(--tallow); font-weight: 500; font-size: 16.5px; line-height: 1.15; touch-action: manipulation }
-#host button:active { transform: scale(.98); filter: brightness(1.15); background-color: rgba(230,165,140,.16); border-color: var(--brass2) }
-#host button.hold.holding { box-shadow: 0 0 0 3px rgba(230,165,140,.5), 0 0 22px rgba(230,165,140,.55); animation: holdpulse .8s ease-in-out infinite alternate } @keyframes holdpulse { to { box-shadow: 0 0 0 5px rgba(230,165,140,.25), 0 0 32px rgba(230,165,140,.7) } }
-#host button:disabled { opacity: .38 }
-#host button.primary { min-height: 58px; border-color: var(--brass2); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17; font-weight: 700 }
-#host button.danger { border-color: var(--blood); background: linear-gradient(180deg, #a81f51, #6d1233); color: #ffffff; font-weight: 700 }
-#host button.good { border-color: #8fe0c0; background: linear-gradient(180deg, #6fc4a4, #2e6b57); color: #06140f; font-weight: 700 }
-#host button.ghost { background: transparent; color: var(--tallow2) }
-#host button.sel { border-color: var(--brass2); background: rgba(174,98,73,.22); box-shadow: inset 0 0 0 1px var(--brass2) }
-#host button.dim { opacity: 1; border-style: dashed; color: var(--tallow2) } #host .mlist button.dim em, #host .mlist button.dim small { color: var(--mist) }
-#host button.slim { min-height: 44px; font-size: 15px; padding: 6px 12px }
-#host .row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap } #host .row > * { flex: 1 1 0; min-width: 0 }
-#host label { display: block; font-family: var(--hui); font-weight: 600; font-size: 14px; letter-spacing: .02em; color: var(--brass2); margin: 12px 0 5px }
-#host input, #host textarea { -webkit-appearance: none; appearance: none; width: 100%; padding: 12px; font: inherit; font-size: 17px; color: var(--tallow); background: #100b11; border: 1px solid rgba(174,98,73,.38); border-radius: 8px }
+#host .cue { margin: 18px 0 0; font-family: var(--book); font-style: italic; font-size: 16px; color: var(--tallow2); font-variant-numeric: tabular-nums }
+
+/* the script: a margin note, then the line */
+#host .say, #host .step, #host .next, #host .then { display: grid; grid-template-columns: var(--mg) minmax(0, 1fr); align-items: baseline; margin: 16px 0 }
+#host .mn { grid-column: 1; font-family: var(--book); font-style: italic; font-size: 16px; line-height: 1.2; color: var(--brass2); padding-right: 8px }
+#host .mn small { display: block; margin-top: 3px; font-size: 13.5px; color: var(--tallow2); font-variant-numeric: tabular-nums }
+#host .ln { grid-column: 2; min-width: 0 }
+#host .say .ln, #host .step.cur:not(.sil) .ln { font-family: var(--book); font-size: 22.5px; line-height: 1.4; color: var(--ink); hanging-punctuation: first }
+#host .say.nudge .ln { font-size: 20px; color: var(--tallow) }
+#host .ln .to { display: block; margin-bottom: 2px; font-style: italic; font-size: 16px; color: var(--tallow2) }
+#host .tvread { float: right; min-height: 44px; margin: -8px 0 4px 12px; padding: 0 2px; font-family: var(--ui); font-size: 15px; font-weight: 700; color: var(--brass2) }
+
+/* stage directions: the private reminders, in italics and brackets, under the line they belong to */
+#host .dir, #host .secret, #host .advice { margin: 6px 0 14px var(--mg); font-family: var(--book); font-style: italic; font-size: 17px; line-height: 1.42; color: var(--tallow2) }
+#host .dir::before { content: "(" } #host .dir::after { content: ")" }
+#host .dir b, #host .secret b, #host .advice b { font-weight: 400; color: var(--tallow); font-style: normal }
+#host .dir.end { color: #f3b7cb }
+#host .secret { color: #f3b7cb } #host .secret b { color: #ffe3ed }
+#host .secret:not(:has(.row, .plist, br))::before { content: "(" } #host .secret:not(:has(.row, .plist, br))::after { content: ")" }
+#host .secret .row, #host .advice .row, #host .dir + .row { font-style: normal }
+#host .step.sil .dir, #host .step .dir { grid-column: 2; margin: 0 }
+#host .step .tv { grid-column: 2; margin-top: 6px }
+#host .step:not(.cur) { opacity: .62 } #host .step:not(.cur) .ln { font-family: var(--book); font-size: 18px; color: var(--tallow) }
+#host .then .ln { font-family: var(--book); font-size: 17px; color: var(--tallow2) }
+
+/* next in the plan: a ruled row */
+#host .next { margin: 22px 0 6px; padding: 14px 0 12px; border-top: 1px solid var(--rule2); border-bottom: 1px solid var(--rule) }
+#host .next .tt { display: block; font-family: var(--book); font-weight: 400; font-size: 25px; line-height: 1.15; color: var(--ink); margin-bottom: 4px }
+#host .next .ln > span { display: block; font-size: 16.5px; color: var(--tallow2) }
+
+/* buttons: secondary actions are plain words, the main one is solid copper */
+#host button { min-height: 44px; padding: 8px 6px; border: 0; border-radius: 3px; background: none; color: var(--brass2); font-family: var(--ui); font-weight: 500; font-size: 17.5px; line-height: 1.2; touch-action: manipulation }
+#host .row > button:not(.primary, .danger, .good), #host .foot button.ghost, #host .foot button.back, #host .bar button, #host .sheet > button:not(.primary, .danger, .good), #host .sheethead button:not(.primary) { text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-decoration-thickness: 1px; text-underline-offset: 5px }
+#host button:active { background-color: rgba(230,165,140,.12) }
+#host button:disabled { opacity: .4 }
+#host button.primary, #host button.danger, #host button.good { min-height: 52px; padding: 10px 16px; font-family: var(--sc); font-weight: 700; font-size: 19px; letter-spacing: .03em; color: #fff6f1; background: var(--brass); text-decoration: none }
+#host button.danger { background: var(--ox) } #host button.good { background: var(--verd2) }
+#host button.primary:active, #host button.danger:active, #host button.good:active { filter: brightness(1.12) }
+#host button.primary small, #host button.danger small { font-family: var(--ui) }
+#host button.ghost { color: var(--tallow2) }
+#host button.sel { color: var(--tallow); text-decoration: underline; text-decoration-color: var(--brass2); text-decoration-thickness: 2px; text-underline-offset: 6px }
+#host .row > button.sel::before { content: "✓\00a0"; color: var(--brass2) }
+#host button.dim { opacity: .55 }
+#host button.slim { font-size: 16.5px }
+#host button.hold { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none } #host button.hold small { display: block; margin-top: 3px; font-size: 13.5px; font-weight: 500; letter-spacing: 0; opacity: .9 }
+#host button.hold.holding { outline: 2px solid var(--brass2); outline-offset: 2px; animation: holdpulse .8s ease-in-out infinite alternate } @keyframes holdpulse { to { outline-offset: 5px } }
+#host .row { display: flex; gap: 4px 14px; margin: 8px 0; flex-wrap: wrap; align-items: center } #host .row > * { flex: 1 1 0; min-width: 0 }
+#host .row.wrap { flex-wrap: wrap } #host .row.wrap > button { flex: 1 1 calc(50% - 14px) }
+#host .row button small { display: block; margin-top: 3px; font-size: 13.5px; font-weight: 400; color: var(--tallow2); line-height: 1.25 }
+#host .dir + .row, #host .advice .row, #host .secret .row { justify-content: flex-start } #host .dir + .row > button, #host .secret .row > button, #host .advice .row > button { flex: 0 1 auto; text-align: left }
+#host button.linkish { display: inline; min-height: 0; padding: 0; background: none; color: inherit; font: inherit; text-decoration: underline; letter-spacing: inherit }
+#host label { display: block; font-family: var(--ui); font-weight: 700; font-size: 16px; color: var(--tallow); margin: 16px 0 6px } #host label small { font-weight: 400; color: var(--tallow2) }
+#host input, #host textarea { -webkit-appearance: none; appearance: none; width: 100%; padding: 11px 12px; font: inherit; font-size: 18px; color: var(--tallow); background: #110c12; border: 1px solid var(--rule2); border-radius: 3px }
 #host input:focus, #host textarea:focus, #host button:focus-visible { outline: 2px solid var(--brass2); outline-offset: 1px }
-#host .bar { position: sticky; top: 0; z-index: 5; margin: 0 calc(-1 * var(--gut)); padding: calc(8px + env(safe-area-inset-top)) var(--gut) 0; background: rgba(9,7,10,.94); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(174,98,73,.3) }
-#host .bar .l1 { display: flex; align-items: center; justify-content: space-between; gap: 8px }
-#host .bar .ph { font-weight: 600; letter-spacing: .02em; font-size: 14px; color: var(--tallow2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-#host .bar .pot { font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--brass2); white-space: nowrap }
-#host .bar .nosync { margin: 6px 0 0; color: var(--blood2); font-size: 12px; font-weight: 700; letter-spacing: .08em }
-#host .bar button { min-height: 44px; padding: 4px 14px; font-size: 15px } #host .bar .l1 > span:last-child { flex: none; white-space: nowrap; display: flex; gap: 8px }
-#host .spoil { margin: 8px calc(-1 * var(--gut)) 0; padding: 12px var(--gut); min-height: 44px; font-size: 14px; color: var(--blood2); background: rgba(122,20,57,.22); border-top: 1px dashed rgba(194,41,97,.5) }
-#host .spoil b { letter-spacing: .1em; font-size: 12px; margin-right: 6px }
-#host .say { position: relative; margin: 12px 0; padding: 14px 14px 14px 18px; font-family: var(--hui); font-style: normal; font-weight: 500; font-size: 19px; line-height: 1.42; color: #f4ddd4; background: linear-gradient(180deg, rgba(230,165,140,.13), rgba(230,165,140,.06)); border: 1px solid rgba(230,165,140,.4); border-left: 4px solid var(--brass2); border-radius: 4px 10px 10px 4px }
-#host .say.nudge::before { content: "THE COUNT — SAY IT IF YOU LIKE" } #host .say.nudge { border-style: dashed }
-#host .tvread { float: right; min-height: 40px; margin: -4px -4px 6px 10px; padding: 4px 12px; font-size: 14px; font-weight: 700; color: var(--brass2); border-color: rgba(230,165,140,.5); background: rgba(9,7,10,.4) }
-#host .step .tvread { margin-top: -2px }
-#host .say::before { content: "SAY THIS"; display: block; font-family: var(--hui); font-style: normal; font-weight: 700; font-size: 12px; letter-spacing: .12em; color: var(--brass2); margin-bottom: 6px }
-#host .secret { margin: 12px 0; padding: 12px 14px; font-size: 16px; color: #ffd9e7; background: rgba(122,20,57,.22); border: 1.5px dashed var(--blood); border-radius: 10px }
-#host .secret b { color: #ffffff }
-#host .advice { margin: 12px 0; padding: 12px 14px; font-size: 15.5px; color: var(--tallow2); border: 1.5px dashed rgba(143,163,184,.55); border-radius: 10px; background: rgba(143,163,184,.07) }
-#host .advice::before { content: "PRIVATE — CONTEXT"; display: block; font-weight: 700; font-size: 12px; letter-spacing: .12em; color: var(--steel); margin-bottom: 4px }
-#host .advice.end { border-color: var(--blood); color: #ffd9e7; background: rgba(122,20,57,.2) }
-#host .advice.offer { border-style: solid; border-color: var(--brass); color: var(--tallow); background: rgba(174,98,73,.08) } #host .advice.offer::before { content: "SUGGESTION"; color: var(--brass2) }
-#host .plist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 }
-#host .plist button { display: flex; align-items: center; gap: 9px; text-align: left; padding: 6px 10px; min-width: 0 }
-#host .plist button .nm { flex: 1; min-width: 0; white-space: normal; overflow-wrap: break-word; hyphens: auto; font-size: 15.5px; line-height: 1.15 }
-#host .plist .tagx { font-size: 13px; color: var(--blood2); font-weight: 700 }
-#host .seal { width: 34px; height: 34px; flex: none }
-#host .vote { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 4px 4px 4px 8px; border: 1px solid rgba(174,98,73,.2); border-radius: 10px; background: #100b11 }
-#host .vote > span { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
-#host .vote button { width: 58px; flex: none; font-size: 24px; padding: 0 } #host .vote button.wide { width: auto; font-size: 15px; padding: 0 14px }
-#host .vote b.n { width: 38px; text-align: center; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--brass2); flex: none }
+
+/* the top bar: one quiet line */
+#host .bar { position: sticky; top: 0; z-index: 5; margin: 0 calc(-1 * var(--gut)); padding: env(safe-area-inset-top) var(--gut) 0; background: rgba(9,7,10,.97); border-bottom: 1px solid var(--rule) }
+#host .bar .l1 { display: flex; align-items: center; gap: 14px; min-height: 48px }
+#host .bar .ph { flex: 1; min-width: 0; font-family: var(--book); font-style: italic; font-size: 17px; color: var(--tallow2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+#host .bar .pot { font-family: var(--book); font-size: 20px; font-variant-numeric: tabular-nums lining-nums; color: var(--brass2); white-space: nowrap }
+#host .bar button { padding: 0 2px; font-size: 16.5px; color: var(--tallow) }
+#host .bar .nosync { margin: 0 0 6px; color: #f3b7cb; font-size: 15px; font-weight: 700 }
+#host .spoil { margin: 0 calc(-1 * var(--gut)); padding: 10px var(--gut); min-height: 44px; font-size: 15.5px; color: var(--tallow2); border-top: 1px solid var(--rule); cursor: pointer }
+#host .spoil b { font-weight: 700; color: #f3b7cb; margin-right: 6px }
+#host .spoil.on { color: #ffe3ed; background: rgba(122,20,57,.28) }
+
+/* ruled lists: players, scores, choices */
+#host .plist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; margin: 6px 0 10px }
+#host .plist button { display: flex; align-items: center; gap: 10px; min-height: 54px; text-align: left; padding: 6px 4px; min-width: 0; color: var(--tallow); border-bottom: 1px solid var(--rule); border-radius: 0 }
+#host .plist button.sel { background: rgba(174,98,73,.2); border-bottom-color: var(--brass2); text-decoration: none }
+#host .plist button .nm { flex: 1; min-width: 0; white-space: normal; overflow-wrap: break-word; hyphens: auto; font-size: 17px; line-height: 1.15 }
+#host .plist .tagx { font-size: 14px; color: #f3b7cb; font-weight: 700 }
+#host .seal { width: 32px; height: 32px; flex: none }
+#host .vote { display: flex; align-items: center; gap: 6px; min-height: 52px; margin: 0; padding: 2px 0; border-bottom: 1px solid var(--rule) }
+#host .vote > span { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--tallow) }
+#host .vote.setrow > span { white-space: normal; overflow: visible; font-size: 17px; line-height: 1.25; padding: 4px 0 }
+#host .vote button { width: 48px; flex: none; font-size: 26px; font-weight: 400; padding: 0; color: var(--brass2) } #host .vote button.wide { width: auto; font-size: 16.5px; padding: 0 4px; text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-underline-offset: 5px }
+#host .vote b.n { width: 40px; text-align: center; font-family: var(--book); font-weight: 400; font-size: 24px; font-variant-numeric: tabular-nums lining-nums; color: var(--ink); flex: none }
+#host .vote b.n.wide { width: auto; min-width: 40px; padding: 0 6px; font-size: 17px; white-space: nowrap }
 #host .vote input { width: 86px; flex: none; text-align: center }
-#host .mlist { display: grid; gap: 8px } #host .mlist button { text-align: left; padding: 11px 14px; font-weight: 700 }
-#host .mlist em { display: block; font-style: normal; font-weight: 500; font-size: 13px; letter-spacing: .04em; color: var(--brass2); margin-top: 2px }
-#host .mlist small { display: block; font-weight: 400; font-size: 14px; color: var(--tallow2); margin-top: 4px; line-height: 1.3 }
-#host .step { margin: 10px 0; padding: 12px 14px; border: 1px solid rgba(174,98,73,.25); border-radius: 10px; background: #100b11; font-size: 16px; color: var(--tallow2) }
-#host .step.cur { border-color: var(--brass2); background: rgba(230,165,140,.09); font-weight: 500; font-size: 19px; line-height: 1.42; color: #f4ddd4 }
-#host .step.cur.sil { font-size: 17px; color: var(--tallow); border-color: var(--steel); background: rgba(143,163,184,.1) }
-#host .step b { display: block; font-weight: 700; font-size: 12px; letter-spacing: .12em; color: var(--brass2); margin-bottom: 6px; text-transform: uppercase }
-#host .step.sil b { color: var(--steel) }
-#host .step .tvline { margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(174,98,73,.2); font-weight: 400; font-size: 14px; color: var(--mist) }
-#host .log { font-size: 13px; color: var(--tallow2); display: grid; gap: 3px; font-variant-numeric: tabular-nums }
-#host .foot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; gap: 8px; padding: 10px max(var(--gut), calc(50vw - 266px)) calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(9,7,10,0), rgba(9,7,10,.97) 10px) }
-#host .foot button.ghost { background: #0e0a0e } #host .foot button:disabled { opacity: 1; background: #201522; border-color: rgba(174,98,73,.3); color: rgba(232,208,200,.62) }
+#host .vote > b:not(.n) { font-weight: 400; font-style: italic; font-family: var(--book) }
+#host .mlist { display: grid; gap: 0; border-top: 1px solid var(--rule) } #host .mlist button { display: block; width: 100%; text-align: left; padding: 12px 2px; color: var(--tallow); font-weight: 700; border-bottom: 1px solid var(--rule); border-radius: 0 }
+#host .mlist button.sel { background: rgba(174,98,73,.16); text-decoration: none }
+#host .mlist em { display: block; font-family: var(--book); font-style: italic; font-weight: 400; font-size: 15.5px; color: var(--brass2); margin-top: 2px }
+#host .mlist small { display: block; font-weight: 400; font-size: 15.5px; color: var(--tallow2); margin-top: 3px; line-height: 1.35 }
+#host .log { font-size: 14.5px; color: var(--tallow2); display: grid; gap: 3px; font-variant-numeric: tabular-nums }
+#host .kv { color: var(--brass2) } #host .lettersrow { font-family: var(--book); font-size: 30px; letter-spacing: .22em; color: var(--ink) }
+
+/* the foot: the next step, always in reach */
+#host .foot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 10px max(var(--gut), calc(50vw - 264px)) calc(10px + env(safe-area-inset-bottom)); background: rgba(9,7,10,.97); border-top: 1px solid var(--rule) }
 #host .foot button { flex: 1 1 0; min-width: 0 }
-#host button.hold { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none } #host button.hold small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 600; opacity: .9 } #host .foot button.back { flex: 0 0 58px }
+#host .foot button.ghost, #host .foot button.back { flex: 0 1 auto; padding: 0 8px }
+#host .foot button.primary:disabled, #host .foot button.danger:disabled { opacity: 1; background: #231920; color: rgba(232,208,200,.6) }
 #host .foot:empty { display: none }
-#host .sheet { position: fixed; inset: 0; z-index: 20; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: calc(22px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right), calc(50vw - 380px)) calc(40px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left), calc(50vw - 380px)); background: var(--soot); display: flex; flex-direction: column; gap: 10px }
-#host .sheet.mid { justify-content: center; text-align: center }
-#host .sheet h2 { margin-top: 4px } #host .sheet .big button { min-height: 96px; font-size: 22px; font-weight: 800; letter-spacing: .12em }
-#host > .eyebrow:first-child { margin-top: calc(22px + env(safe-area-inset-top)) }
-#host .pinwrap { padding-top: env(safe-area-inset-top); min-height: 80vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center }
-#host .hstamp { margin-top: 26px; font-size: 12px; color: rgba(232,208,200,.62); letter-spacing: .08em } #host .hstamp button.linkish { padding: 14px 6px; margin: -14px -6px }
-#host .toast { position: fixed; left: 14px; right: 14px; margin: 0 auto; width: max-content; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30; max-width: calc(100vw - 28px); padding: 12px 16px; font-size: 15.5px; color: #150b17; background: var(--brass2); border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.6); animation: rise .3s both }
+
+/* sheets: the menu, pickers, confirmations */
+#host .sheet { position: fixed; inset: 0; z-index: 20; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: calc(18px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right), calc(50vw - 380px)) calc(40px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left), calc(50vw - 380px)); background: var(--soot); display: flex; flex-direction: column; gap: 6px }
+#host .sheet.mid { justify-content: center; text-align: center } #host .sheet.mid .row { justify-content: center }
+#host .sheet h2 { margin-top: 4px } #host .sheet .big button { min-height: 96px; font-size: 26px }
+#host .sheet .sheethead { position: sticky; top: calc(-18px - env(safe-area-inset-top)); z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: calc(-18px - env(safe-area-inset-top)) calc(-1 * max(16px, env(safe-area-inset-left))) 6px; padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-left)) 4px; background: rgba(9,7,10,.97); border-bottom: 1px solid var(--rule) }
+#host .sheet .sheethead h2 { margin: 0 } #host .sheet .sheethead button { flex: none }
+#host .sheet h3 { margin-top: 18px }
+#host .mrow { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 52px; padding: 8px 2px; text-align: left; color: var(--tallow); border-bottom: 1px solid var(--rule); border-radius: 0 }
+#host h3 + .mrow, #host h2 + .mrow, #host .sheethead + .mrow { border-top: 1px solid var(--rule) }
+#host .mrow > span { min-width: 0 } #host .mrow > i { flex: none; font-style: normal; font-size: 16px; color: var(--brass2); text-align: right }
+#host .mrow.danger { background: none; color: #f3b7cb; font-family: var(--ui); font-weight: 500; font-size: 17.5px; letter-spacing: 0; min-height: 52px; padding: 8px 2px }
+#host > .pinwrap:first-child, #host .pinwrap { padding-top: env(safe-area-inset-top); min-height: 80vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; text-align: center }
+#host .hstamp { margin-top: 30px; font-size: 13.5px; color: rgba(232,208,200,.6) } #host .hstamp button.linkish { padding: 14px 6px; margin: -14px -6px }
+#host .toast { position: fixed; left: 16px; right: 16px; margin: 0 auto; width: max-content; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 30; max-width: calc(100vw - 32px); padding: 12px 16px; font-size: 16.5px; color: #150b17; background: var(--brass2); border-radius: 3px; animation: rise .3s both }
 #host .sheet input { font-size: 20px; text-align: center; margin: 12px 0 }
 /* the question bank */
-#host .sheet.bank { gap: 6px; padding-bottom: calc(96px + env(safe-area-inset-bottom)) }
-#host .sheet.bank .eyebrow { margin-top: 4px }
-#host .banktabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 2px }
-#host .banktabs button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px }
-#host .banktabs .cnt { font-size: 12.5px; color: var(--tallow2); font-weight: 500 }
-#host .sheet.bank input { text-align: left; font-size: 17px; margin: 6px 0 0 }
+#host .sheet.bank { gap: 4px; padding-bottom: calc(96px + env(safe-area-inset-bottom)) }
+#host .banktabs { display: flex; flex-wrap: wrap; gap: 0 16px; margin: 4px 0 2px }
+#host .banktabs button { flex: 0 0 auto; display: inline-flex; align-items: baseline; gap: 6px; color: var(--tallow2) }
+#host .banktabs button.sel { color: var(--tallow) } #host .banktabs button.sel::before { content: none }
+#host .banktabs .cnt { font-size: 13.5px; color: var(--tallow2); font-weight: 400 }
+#host .sheet.bank input { text-align: left; font-size: 18px; margin: 6px 0 0 }
 #host .bankbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px }
 #host .bankbar .note { margin: 0 } #host .bankbar button { flex: 0 0 auto }
-#host .banklist { display: grid; gap: 6px }
-#host .bankrow { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; font-weight: 500; font-size: 15.5px; line-height: 1.3 }
-#host .bankrow .tick { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 15px; font-weight: 700; color: #150b17; background: var(--brass2) }
-#host .bankrow .bt small { display: block; margin-top: 3px; font-size: 14px; color: var(--brass2) }
-#host .bankrow .st { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tallow2) }
-#host .bankrow.off { opacity: .7; border-style: dashed }
+#host .banklist { display: grid; border-top: 1px solid var(--rule) }
+#host .bankrow { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px; text-align: left; padding: 10px 2px; font-weight: 400; font-size: 16.5px; line-height: 1.3; color: var(--tallow); border-bottom: 1px solid var(--rule); border-radius: 0 }
+#host .bankrow .tick { width: 18px; height: 18px; border-radius: 2px; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--soot); background: var(--brass2) }
+#host .bankrow .bt small { display: block; margin-top: 2px; font-size: 15px; color: var(--brass2) }
+#host .bankrow .st { font-family: var(--book); font-style: italic; font-size: 15px; color: var(--tallow2) }
+#host .bankrow.off { color: var(--tallow2) }
 #host .bankrow.off .tick { background: transparent; border: 1.5px solid var(--mist) }
 #host .bankrow.off .bt { text-decoration: line-through; text-decoration-color: rgba(232,208,200,.45) }
 #host .bankrow.off .bt small { color: var(--tallow2) }
-#host .kv { color: var(--brass2) } #host .lettersrow { font-weight: 700; font-size: 26px; letter-spacing: .22em; color: var(--brass2); font-variant-numeric: tabular-nums }
 
 /* host on a tablet (iPad Pro 11": 834 wide upright, 1210 on its side) or a phone on its side: a wider column, more per row */
 @media (min-width: 700px) {
-  #host { --gut: max(24px, env(safe-area-inset-left), env(safe-area-inset-right)); max-width: 760px; font-size: 18px }
+  #host { --gut: max(24px, env(safe-area-inset-left), env(safe-area-inset-right)); --mg: 64px; max-width: 760px; font-size: 19px }
   #host .foot { padding-left: max(var(--gut), calc(50vw - 356px)); padding-right: max(var(--gut), calc(50vw - 356px)) }
   #host .plist { grid-template-columns: repeat(3, minmax(0, 1fr)) }
-  #host .mlist { grid-template-columns: repeat(2, minmax(0, 1fr)) }
-  #host .say, #host .step.cur { font-size: 20.5px }
+  #host .mlist { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px }
+  #host .say .ln, #host .step.cur:not(.sil) .ln { font-size: 25px }
 }
 @media (min-width: 1100px) {
   #host { max-width: 980px }
@@ -588,67 +632,62 @@ body.nocursor, body.nocursor * { cursor: none !important }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important }
   .rolling, .vcard.rolling { animation: none !important } #card.on { animation: none !important; opacity: 1 } }
 
-/* sheets with a long list keep their way out in view */
-#host .sheet .sheethead { position: sticky; top: calc(-22px - env(safe-area-inset-top)); z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: calc(-22px - env(safe-area-inset-top)) calc(-1 * max(16px, env(safe-area-inset-left))) 8px; padding: calc(14px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-left)) 10px; background: rgba(9,7,10,.97); border-bottom: 1px solid rgba(174,98,73,.3) }
-#host .sheet .sheethead h2 { margin: 0 } #host .sheet .sheethead button { flex: none }
-
-#host .row.wrap { flex-wrap: wrap } #host .row.wrap button { flex: 1 1 40% }
-
 /* ===================== HOST: game plan setup ===================== */
 #host .wiz { padding-bottom: 110px }
-#host details.adv { margin: 10px 0; border: 1px solid rgba(174,98,73,.32); border-radius: 10px; padding: 0 12px } #host details.adv[open] { padding-bottom: 10px }
-#host details.adv > summary { list-style: none; min-height: 48px; display: flex; align-items: center; font-weight: 600; font-size: 15.5px; color: var(--brass2); cursor: pointer } #host details.adv > summary::-webkit-details-marker { display: none }
-#host details.adv > summary::after { content: "+"; margin-left: auto; font-size: 20px } #host details.adv[open] > summary::after { content: "–" }
-#host .wbar { display: flex; justify-content: space-between; gap: 10px; margin-top: calc(18px + env(safe-area-inset-top)); font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brass2) }
-#host .wprog { height: 4px; margin: 8px 0 4px; border-radius: 2px; background: rgba(174,98,73,.25); overflow: hidden } #host .wprog i { display: block; height: 100%; background: var(--brass2); transition: width .3s }
-#host .wp { margin: 10px 0; font-size: 17px; line-height: 1.5; color: var(--tallow) } #host .wp b { color: #fff3ee }
-#host .wopts, #host .mpool { display: grid; gap: 10px; margin: 16px 0 }
-#host button.wopt { display: flex; flex-direction: column; align-items: stretch; gap: 6px; width: 100%; text-align: left; padding: 14px 16px; border-radius: 12px; line-height: 1.35 }
-#host button.wopt .wt { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 700; font-size: 18px; color: var(--tallow) }
-#host button.wopt .wt em { font-style: normal; font-size: 11.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; color: #150b17; background: var(--brass2) }
-#host button.wopt .wd { font-size: 15.5px; font-weight: 400; color: var(--tallow2); line-height: 1.45 }
-#host button.wopt .wn { font-size: 13.5px; font-weight: 600; color: var(--brass2) }
-#host button.wopt.sel { border-width: 2px; border-color: var(--brass2); background: rgba(174,98,73,.2); box-shadow: none } #host button.wopt.sel .wd { color: var(--tallow) }
-#host .mpool button.wopt { opacity: .74 } #host .mpool button.wopt.sel { opacity: 1 }
-#host button.wopt .tk { flex: none; width: 24px; height: 24px; border-radius: 6px; border: 1.5px solid rgba(230,165,140,.6); display: grid; place-items: center; font-size: 15px; font-weight: 800; color: #150b17 }
-#host button.wopt.sel .tk { background: var(--brass2); border-color: var(--brass2) }
-#host .why { margin: 14px 0; padding: 12px 14px; border-radius: 10px; border-left: 3px solid var(--brass); background: rgba(174,98,73,.08); font-size: 15.5px; line-height: 1.5; color: var(--tallow2) }
-#host .why > b:first-child { display: block; margin-bottom: 4px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--brass2) }
-#host .why ul { margin: 6px 0 0; padding-left: 20px } #host .why li { margin: 4px 0 }
-#host .tline { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px } #host .tline li { padding: 6px 10px; border-radius: 8px; background: #100b11; color: var(--tallow2); font-size: 14.5px; line-height: 1.4 }
-#host .tline b { color: var(--tallow) } #host .tline i { font-style: normal; color: var(--brass2) } #host .tline .din { background: rgba(174,98,73,.18) } #host .tline .fin { border: 1px solid rgba(230,165,140,.45) }
-#host button.rv { display: flex; align-items: center; gap: 10px; width: 100%; margin: 6px 0; text-align: left; padding: 10px 14px; min-height: 52px } #host button.rv > span:first-child { flex: 1; min-width: 0; font-size: 14.5px; color: var(--tallow2); line-height: 1.35; overflow-wrap: anywhere }
-#host button.rv b { display: block; font-size: 16px; color: var(--tallow) } #host button.rv .ch { flex: none; font-size: 13px; font-weight: 700; color: var(--brass2) }
-#host .row.wrap > button { flex: 1 1 calc(50% - 8px) } #host .row button small { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 400; color: var(--tallow2); line-height: 1.25 }
-#host .vote b.n.wide { width: auto; min-width: 38px; padding: 0 6px; font-size: 16px; white-space: nowrap }
-#host .planbox { margin: 16px 0 90px; padding: 14px; border-radius: 12px; border: 1px solid rgba(230,165,140,.4); background: linear-gradient(180deg, rgba(230,165,140,.1), rgba(230,165,140,.03)) }
+#host details.adv { margin: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule) } #host details.adv[open] { padding-bottom: 10px }
+#host details.adv > summary { list-style: none; min-height: 48px; display: flex; align-items: center; font-weight: 500; font-size: 17.5px; color: var(--tallow); cursor: pointer } #host details.adv > summary::-webkit-details-marker { display: none }
+#host details.adv > summary::after { content: "+"; margin-left: auto; font-size: 22px; color: var(--brass2) } #host details.adv[open] > summary::after { content: "–" }
+#host details.adv + details.adv { margin-top: -9px }
+#host .wbar { display: flex; justify-content: space-between; gap: 10px; margin-top: calc(18px + env(safe-area-inset-top)); font-family: var(--book); font-style: italic; font-size: 16px; color: var(--tallow2) }
+#host .wprog { height: 2px; margin: 8px 0 4px; background: var(--rule); overflow: hidden } #host .wprog i { display: block; height: 100%; background: var(--brass); transition: width .3s }
+#host .wp { margin: 10px 0; font-size: 18px; line-height: 1.5; color: var(--tallow) } #host .wp b { font-weight: 700; color: #fff3ee }
+#host .wopts, #host .mpool { display: grid; gap: 0; margin: 18px 0; border-top: 1px solid var(--rule) }
+#host button.wopt { display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: baseline; row-gap: 4px; width: 100%; text-align: left; padding: 14px 2px 14px 0; border-bottom: 1px solid var(--rule); border-radius: 0; line-height: 1.35; color: var(--tallow) }
+#host button.wopt::before { content: ""; grid-column: 1; grid-row: 1; justify-self: start; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(230,165,140,.55); transform: translateY(2px) }
+#host button.wopt.sel::before { background: var(--brass2); border-color: var(--brass2); box-shadow: inset 0 0 0 3px var(--soot) }
+#host button.wopt > span { grid-column: 2 }
+#host button.wopt .wt { font-family: var(--book); font-weight: 400; font-size: 21px; line-height: 1.2; color: var(--tallow) }
+#host button.wopt .wt em { font-style: italic; font-size: 16px; color: var(--brass2); white-space: nowrap }
+#host button.wopt .wd { font-size: 16.5px; font-weight: 400; color: var(--tallow2); line-height: 1.45 }
+#host button.wopt .wn { font-size: 15px; font-weight: 500; color: var(--brass2) }
+#host button.wopt.sel { background: none; text-decoration: none } #host button.wopt.sel .wt { color: var(--ink) } #host button.wopt.sel .wd { color: var(--tallow) }
+#host .mpool button.wopt::before { content: none } #host .mpool button.wopt { color: var(--tallow2) }
+#host button.wopt > .tk { grid-column: 1; grid-row: 1; width: 18px; height: 18px; border-radius: 2px; border: 1.5px solid rgba(230,165,140,.55); display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--soot); transform: translateY(2px) }
+#host button.wopt.sel > .tk { background: var(--brass2); border-color: var(--brass2) }
+#host .why { margin: 26px 0 14px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 16.5px; line-height: 1.5; color: var(--tallow2) }
+#host .why > b:first-child { display: block; margin-bottom: 6px; font-family: var(--book); font-weight: 400; font-size: 20px; line-height: 1.2; color: var(--tallow) }
+#host .why ul { margin: 6px 0 0; padding-left: 20px } #host .why li { margin: 5px 0 } #host .why li::marker { color: var(--brass) }
+#host .tline { margin: 8px 0 0; padding: 0; list-style: none; display: grid; border-top: 1px solid var(--rule) } #host .tline li { padding: 8px 2px; border-bottom: 1px solid var(--rule); color: var(--tallow2); font-size: 15.5px; line-height: 1.4 }
+#host .tline b { color: var(--tallow) } #host .tline i { font-family: var(--book); color: var(--brass2) } #host .tline .din b { color: var(--brass2) } #host .tline .fin b { color: var(--ink) }
+#host button.rv { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; text-align: left; padding: 10px 2px; min-height: 54px; border-bottom: 1px solid var(--rule); border-radius: 0 } #host h3 + button.rv { border-top: 0 }
+#host button.rv > span:first-child { flex: 1; min-width: 0; font-size: 15.5px; color: var(--tallow2); line-height: 1.35; overflow-wrap: anywhere }
+#host button.rv b { display: block; font-size: 17.5px; font-weight: 500; color: var(--tallow) } #host button.rv .ch { flex: none; font-size: 15.5px; color: var(--brass2) }
+#host .planbox { margin: 12px 0 90px; padding: 4px 0; border-top: 1px solid var(--rule2); border-bottom: 1px solid var(--rule) }
 #host .sheet .planbox { margin-bottom: 16px }
-#host .planbox .eyebrow { margin: 0 0 6px; color: var(--brass2) } #host .planbox p { margin: 6px 0; font-size: 15.5px; line-height: 1.4; color: var(--tallow) } #host .planbox p.note { color: var(--tallow2) }
-#host .plannext { margin: 14px 0 6px; padding: 14px; border-radius: 12px; border: 1.5px solid var(--brass2); background: rgba(230,165,140,.08) }
-#host .plannext .eyebrow { margin: 0; color: var(--brass2) } #host .plannext h3 { margin: 6px 0 4px; font-size: 24px; letter-spacing: 0; text-transform: none; color: var(--tallow) }
+#host .planbox p { margin: 10px 0; font-size: 17px; line-height: 1.45; color: var(--tallow) } #host .planbox p.note { color: var(--tallow2) }
+#host .roombox { margin: 18px 0; padding: 12px 0; border-top: 1px solid var(--rule2); border-bottom: 1px solid var(--rule2); font-size: 17px; color: var(--tallow2) } #host .roombox b { color: var(--tallow) } #host .roombox > b:first-child { display: block; font-family: var(--book); font-weight: 400; font-size: 24px; color: var(--ink); margin-bottom: 4px }
 /* the TV before a game: the room code, big enough to read across a room */
 .roomjoin { margin-top: 4vh; display: flex; flex-direction: column; align-items: center; gap: .6vh; font-family: var(--ui) }
 .roomjoin span { font-family: var(--sc); letter-spacing: .4em; font-size: 2vh; color: var(--brass2); text-transform: uppercase }
 .roomjoin b { font-size: 9vh; letter-spacing: .18em; color: var(--tallow); line-height: 1 }
 .roomjoin em { font-style: normal; font-size: 2.3vh; color: var(--tallow2) } .roomjoin u { text-decoration: none; color: var(--tallow) }
-#host .advice.offer.roombox::before { content: "THIS PARTY" }
 /* 17 to 24 players on the final roll: six across, no seals, small type */
 #tv .rolls.huge { gap: .5vh .7vh; max-width: none } #tv .rolls.huge > div { gap: 0; padding: .45vh .8vh } #tv .rolls.huge .seal { display: none }
 #tv .rolls.huge b, #tv.big .rolls.huge b { font-size: 1.8vh; letter-spacing: .02em; overflow-wrap: anywhere } #tv .rolls.huge small, #tv.big .rolls.huge small { font-size: 1.5vh }
 #stage:has(.rolls.huge) { gap: .7vh } #tv #stage:has(.rolls.huge) h1, #tv.big #stage:has(.rolls.huge) h1 { font-size: 6vh } #tv #stage:has(.rolls.huge) .prizeline b, #tv.big #stage:has(.rolls.huge) .prizeline b { font-size: 4vh } #tv #stage:has(.rolls.huge) .prizeline em, #tv.big #stage:has(.rolls.huge) .prizeline em { font-size: 2.3vh }
 
 /* ===================== Report a problem (TV and phone) ===================== */
-#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); overscroll-behavior: contain; background: rgba(5,3,6,.82); overflow: auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif }
-#report .rp { width: min(520px, 100%); padding: 22px; border-radius: 14px; background: #150e16; border: 1px solid rgba(230,165,140,.45); color: var(--tallow); box-shadow: 0 20px 60px rgba(0,0,0,.6) }
-#report h2 { margin: 0 0 8px; font-size: 24px; font-weight: 700; color: var(--tallow) } #report p { margin: 6px 0 12px; font-size: 15.5px; line-height: 1.45; color: var(--tallow2) } #report b { color: #fff }
+#report { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); overscroll-behavior: contain; background: rgba(5,3,6,.82); overflow: auto; font-family: "Alegreya Sans", "Segoe UI", system-ui, sans-serif }
+#report .rp { width: min(520px, 100%); padding: 22px; border-radius: 4px; background: #130d14; border: 1px solid rgba(230,165,140,.35); color: var(--tallow) }
+#report h2 { margin: 0 0 8px; font-family: var(--book); font-size: 27px; font-weight: 400; color: var(--tallow) } #report p { margin: 6px 0 12px; font-size: 15.5px; line-height: 1.45; color: var(--tallow2) } #report b { color: #fff }
 #report label { display: block; margin: 12px 0 5px; font-size: 14px; font-weight: 600; color: var(--brass2) } #report label small { font-weight: 400; color: var(--tallow2) }
-#report textarea, #report input[type=email] { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(174,98,73,.5); background: #0d090e; color: var(--tallow); font: inherit; font-size: 16px }
+#report textarea, #report input[type=email] { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 3px; border: 1px solid rgba(174,98,73,.5); background: #0d090e; color: var(--tallow); font: inherit; font-size: 16px }
 #report .rp-chk { display: flex; gap: 10px; align-items: flex-start; font-weight: 500; color: var(--tallow2) } #report .rp-chk input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--brass2); flex: none }
 #report .rp-msg { min-height: 1.3em; color: #ffb3cc } #report .rp-row { display: flex; gap: 10px; margin-top: 8px }
-#report button { flex: 1; min-height: 50px; border-radius: 8px; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer; border: 1px solid rgba(174,98,73,.5); background: transparent; color: var(--tallow2) }
-#report button.rp-send { border-color: var(--brass2); background: linear-gradient(180deg, #eaac93, #b5664b 55%, #8a4731); color: #150b17 } #report button:disabled { opacity: .5 }
+#report button { flex: 1; min-height: 50px; border-radius: 3px; font: inherit; font-size: 16px; font-weight: 500; cursor: pointer; border: 0; background: transparent; color: var(--brass2); text-decoration: underline; text-decoration-color: rgba(230,165,140,.35); text-underline-offset: 5px }
+#report button.rp-send { font-family: "Alegreya Sans SC", "Alegreya Sans", sans-serif; font-weight: 700; font-size: 17px; letter-spacing: .03em; background: var(--brass); color: #fff6f1; text-decoration: none } #report button:disabled { opacity: .5 }
 #host button.linkish { display: inline; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; letter-spacing: inherit }
-#repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .14em; color: var(--tallow2); background: rgba(9,7,10,.6); border: max(1px, .1vh) solid rgba(174,98,73,.3); border-radius: 1.8vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }
+#repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .06em; color: var(--tallow2); background: none; border: 0; border-radius: 0; text-decoration: underline; text-decoration-color: rgba(174,98,73,.5); text-underline-offset: .4vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }
 /* the Reckoning table on a 4:3 screen: room for the side name plates, so they neither overlap the words nor get cut */
 @media (max-aspect-ratio: 3/2) { .rtwrap { gap: 10vh } .rtcopy { width: 26vw } .rtcopy .eyebrow { letter-spacing: .1em; white-space: nowrap } .rt .nm { letter-spacing: .07em } .rt .nm.side { max-width: 19vh } }
 </style>
@@ -3838,11 +3877,13 @@ function askGo() { const a = ask; ask = null; if (a) a.fn() }
 // the TV narrator: with it on, every line to read has a ▶ TV button that has the TV speak it instead
 const narrOn = () => !!(state && rulesIn(state).narrator && typeof REPLAY !== "undefined" && !REPLAY);
 const tvRead = t => narrOn() && t ? `<button class="tvread" data-t="${esc(t)}" onclick="narrate(this)" aria-label="Read this line on the TV">▶ TV</button>` : "";
-const say = text => `<div class="say">${tvRead(kw(text))}${esc(kw(text))}</div>`;
+const say = text => `<div class="say"><span class="mn">Say</span><div class="ln">${tvRead(kw(text))}${esc(kw(text))}</div></div>`;
+// a stage direction: a private reminder, in italics and brackets, under the line it belongs to (html: already escaped)
+const dir = (html, cls) => `<p class="dir${cls ? " " + cls : ""}">${html}</p>`;
 const pbtn = (p, cls, fn, tag) => `<button class="${cls || ""}" onclick="${fn}">${ART.seal(p)}<span class="nm">${esc(p.name)}</span><span class="tagx">${tag || ""}</span></button>`;
 const nextBtn = (label, fn, cls) => `<button class="${cls || "primary"}" onclick="${fn}">${label}</button>`;
-const holdBtn = (label, kind, id, cls) => `<button class="${cls || "primary"} hold ${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "holding" : ""}" onpointerdown="holdStart('${kind}','${id || ""}',event)" onclick="holdClick('${kind}','${id || ""}')" oncontextmenu="return false">${label}<small>${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "drumroll on the TV — let go to reveal" : "hold for the drumroll · let go to reveal"}</small></button>`;
-const backBtn = fn => `<button class="ghost back" onclick="${fn}" aria-label="Back one line">◀</button>`;
+const holdBtn = (label, kind, id, cls) => `<button class="${cls || "primary"} hold ${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "holding" : ""}" onpointerdown="holdStart('${kind}','${id || ""}',event)" onclick="holdClick('${kind}','${id || ""}')" oncontextmenu="return false">${label}<small>${(state && ((kind === "reveal" && state.table && state.table.roll) || (kind === "seal" && state.final2 && state.final2.roll))) ? "drumroll on the TV, let go to reveal" : "hold for the drumroll, let go to reveal"}</small></button>`;
+const backBtn = fn => `<button class="ghost back" onclick="${fn}" aria-label="Back one line">Back</button>`;
 const until = t => new Date(t).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" });
 const hstamp = () => `<div class="hstamp">${ROOM ? "Table " + ROOM + (roomInfo ? (roomExpired ? " · this Table has closed" : " · open until " + until(roomInfo.expires)) : "") + " · " : ""}${APPV} · ${BUILD ? BUILD.slice(-6) : "local"}${remote ? "" : db ? " · artifact storage" : " · this browser only"} · <button class="linkish" onclick="openReport()">Report a problem</button></div>`;
 const elapsed = s => s.startedAt ? (x => Math.floor(x / 60) + "h" + String(Math.floor(x % 60)).padStart(2, "0"))((now() - s.startedAt) / 60000) : "";
@@ -3851,24 +3892,24 @@ const PHASE_NAME = { lobby: "Welcome", intro: "Titles", night0: "The Oath", day:
 function renderHost() {
   if (state && state.phase === "final") try { localStorage.setItem("candle-played", "1") } catch (e) {} // a game played to the end: the next one recommends the twists
   const app = $("#app");
-  if (connecting) { patch(app, `<div id="host"><div class="pinwrap"><div class="eyebrow">one moment</div><h2>Connecting to the house…</h2><p class="note">If this doesn’t clear in a few seconds, check the phone is online.</p></div>${hstamp()}</div>`); return }
-  if (roomMissing) { patch(app, `<div id="host"><div class="pinwrap"><div class="eyebrow">the betrayal</div><h2>No game at this code</h2><p class="note">Table codes are six letters and numbers. Start again from the home page with your booking code — entering it again brings back the same Table.</p><button class="primary" onclick="location.href='/'">Go to the home page</button></div>${hstamp()}</div>`); return }
-  if (roomExpired && !state) { patch(app, `<div id="host"><div class="pinwrap"><div class="eyebrow">the betrayal</div><h2>This Table has closed</h2><p class="note">Each booking runs one party for ${esc(String(48))} hours. Buy another to play again.</p><button class="primary" onclick="location.href='/'">Book another Table</button></div>${hstamp()}</div>`); return }
+  if (connecting) { patch(app, `<div id="host"><div class="pinwrap"><h2>Connecting to the house…</h2><p class="note">If this doesn’t clear in a few seconds, check the phone is online.</p></div>${hstamp()}</div>`); return }
+  if (roomMissing) { patch(app, `<div id="host"><div class="pinwrap"><h2>No game at this code</h2><p class="note">Table codes are six letters and numbers. Start again from the home page with your booking code: entering it again brings back the same Table.</p><button class="primary" onclick="location.href='/'">Go to the home page</button></div>${hstamp()}</div>`); return }
+  if (roomExpired && !state) { patch(app, `<div id="host"><div class="pinwrap"><h2>This Table has closed</h2><p class="note">Each booking runs one party for ${esc(String(48))} hours. Buy another to play again.</p><button class="primary" onclick="location.href='/'">Book another Table</button></div>${hstamp()}</div>`); return }
   if (!state || !authed) {
-    if (serverHasGame || (state && !authed)) { patch(app, `<div id="host"><div class="pinwrap"><div class="eyebrow">Keeper only</div><h2>Enter the Keeper PIN</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Keeper PIN" onkeydown="if(event.key==='Enter')checkPin()"><button class="primary" onclick="checkPin()">Unlock</button><p class="note">${esc(pinMsg || (limitedNow ? "Too many wrong PINs have been tried — wait a minute, then enter it." : "A game is in progress. The PIN was set when it was created."))}</p></div>${hstamp()}</div>`); return }
+    if (serverHasGame || (state && !authed)) { patch(app, `<div id="host"><div class="pinwrap"><h2>Enter the Keeper PIN</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Keeper PIN" onkeydown="if(event.key==='Enter')checkPin()"><button class="primary" onclick="checkPin()">Unlock</button><p class="note">${esc(pinMsg || (limitedNow ? "Too many wrong PINs have been tried. Wait a minute, then enter it." : "A game is in progress. The PIN was set when it was created."))}</p></div>${hstamp()}</div>`); return }
     patch(app, `<div id="host">${setupForm()}${hstamp()}${bankOpen ? bankSheet() : ""}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`); return;
   }
-  if (state.v !== SCHEMA) { patch(app, `<div id="host"><div class="pinwrap"><div class="eyebrow">Keeper only</div><h2>A game from an older version is saved here</h2><p class="note">It can’t be continued in ${APPV}. Wipe it to set up a new game.</p><button class="danger" onclick="confirmNew()">Wipe the old game</button></div>${hstamp()}</div>`); return }
+  if (state.v !== SCHEMA) { patch(app, `<div id="host"><div class="pinwrap"><h2>A game from an older version is saved here</h2><p class="note">It can’t be continued in ${APPV}. Wipe it to set up a new game.</p><button class="danger" onclick="confirmNew()">Wipe the old game</button></div>${hstamp()}</div>`); return }
   const s = state, fin = isFinal(s);
   if (setupDraft && serverHasGame && authed) { setupDraft = null; try { sessionStorage.removeItem("candle-draft") } catch (e) {} } // the game exists now
-  const bar = `<div class="bar"><div class="l1"><span class="ph">R${s.round}${fin ? " final" : ""} · ${PHASE_NAME[s.phase] || s.phase}${s.startedAt ? " · " + elapsed(s) : ""}</span><span class="pot num">${money(s.pot)}</span><span><button class="ghost" onclick="undo()" ${canUndo() ? "" : "disabled"}>Undo</button> <button class="ghost" onclick="menuOpen=true;renderHost()">Menu</button></span></div>${syncErr ? '<div class="nosync" role="status">NOT SYNCED · retrying by itself, keep going</div>' : offline() ? '<div class="nosync" role="status">OFFLINE · every change is kept on this phone</div>' : ""}${secretLine()}</div>`;
+  const bar = `<div class="bar"><div class="l1"><span class="ph">${fin ? "Final round" : "Round " + s.round} · ${PHASE_NAME[s.phase] || s.phase}${s.startedAt ? " · " + elapsed(s) : ""}</span><span class="pot num">${money(s.pot)}</span><button onclick="undo()" ${canUndo() ? "" : "disabled"}>Undo</button><button onclick="menuOpen=true;renderHost()">Menu</button></div>${syncErr ? '<div class="nosync" role="status">Not synced. It retries by itself, so keep going.</div>' : offline() ? '<div class="nosync" role="status">Offline. Every change is kept on this phone.</div>' : ""}${secretLine()}</div>`;
   let body = "", foot = "";
   switch (s.phase) {
     case "lobby":
-      body = `<h2>Everyone seated?</h2>${say(SAY.lobbyWait)}<div class="row"><button class="${s.tvRules ? "sel" : ""}" onclick="act(s=>{s.tvRules=!s.tvRules})">${s.tvRules ? "TV: rules shown — back to names" : "Show the rules on TV"}</button></div><p class="note">On the TV, tap <b>Enable sound</b> once before you start (browsers insist on a tap). Next rolls the titles; after that comes the blindfold script where you tap the Forsworn on the shoulder.</p>`;
-      foot = nextBtn("Begin — roll the titles", "act(s=>{s.phase='intro';s.tvRules=false;s.startedAt=s.startedAt||now()},'Titles rolling')"); break;
+      body = `<h2>Everyone seated?</h2>${say(SAY.lobbyWait)}<div class="row"><button class="${s.tvRules ? "sel" : ""}" onclick="act(s=>{s.tvRules=!s.tvRules})">${s.tvRules ? "Rules on the TV. Back to the names" : "Show the rules on the TV"}</button></div>${dir("On the TV, tap <b>Enable sound</b> once before you start: browsers insist on a tap. Next rolls the titles, then the blindfold script where you tap the Forsworn on the shoulder.")}`;
+      foot = nextBtn("Roll the titles", "act(s=>{s.phase='intro';s.tvRules=false;s.startedAt=s.startedAt||now()},'Titles rolling')"); break;
     case "intro":
-      body = `<h2>Titles rolling on TV</h2><p class="note">About ${5 + s.players.length}s: the crest, the name, then one candle lit for each guest. When the last candle is burning, go.</p>${say(SAY.lobby)}`;
+      body = `<h2>Titles rolling on the TV</h2>${dir("About " + (5 + s.players.length) + " seconds: the crest, the name, then a candle lit for each guest. Begin when the last one is burning.")}${say(SAY.lobby)}`;
       foot = nextBtn("Choose the Forsworn", "act(s=>{s.phase='night0';s.night={step:0}},'Night 0 started')"); break;
     case "night0": {
       const sc = NIGHT0_(H()), st = s.night.step;
@@ -3877,61 +3918,61 @@ function renderHost() {
     }
     case "day": {
       const nx = nextPlanned(s), nd = MISSIONS.find(m => m.key === nx) || MISSIONS[0], want = perRoundOf(s), k = (s.roundMissions || 0) + 1;
-      body = `<h2>Round ${s.round}${fin ? " — the final" : ""}</h2>${say(fin && s.fiveMission && s.roundMissions > 0 ? SAY.lastMission : (s.roundMissions || 0) > 0 ? SAY.secondMission(s.round) : fin ? SAY.final : SAY.day(s.round))}${advicePanel()}<div class="plannext"><div class="eyebrow">Trial ${k}${want > 1 && k <= want ? " of " + want : ""} this round · next in your plan</div><h3>${esc(nd.title)}</h3><p class="note">${esc(defRules(nd))}</p></div><div class="row"><button class="ghost slim" onclick="swapOpen=!swapOpen;renderHost()">${swapOpen ? "Keep the plan" : "Swap for a different Trial"}</button></div>`;
+      body = `<h2>${fin ? "The final round" : "Round " + s.round}</h2>${say(fin && s.fiveMission && s.roundMissions > 0 ? SAY.lastMission : (s.roundMissions || 0) > 0 ? SAY.secondMission(s.round) : fin ? SAY.final : SAY.day(s.round))}${advicePanel()}<div class="next"><span class="mn">Next${want > 1 && k <= want ? `<small>${k} of ${want}</small>` : ""}</span><div class="ln"><b class="tt">${esc(nd.title)}</b><span>${esc(defRules(nd))}</span></div></div><div class="row"><button class="ghost slim" onclick="swapOpen=!swapOpen;renderHost()">${swapOpen ? "Keep the plan" : "Swap it"}</button></div>`;
       foot = nextBtn("Start " + esc(nd.title), "swapOpen=false;pickMission('" + nx + "')");
       if (!swapOpen) break;
-      body += `<h3>swap — pick any Trial</h3><div class="mlist">${MISSIONS.map(m => { const noRoom = m.key === "dilemma" && (shieldRoom(s) === 0 || !!(s.done || {}).dilemma); return `<button class="${(s.done || {})[m.key] ? "dim" : ""}" onclick="swapOpen=false;pickMission('${m.key}')" ${noRoom ? "disabled" : ""}>${esc(m.title)}<em>${esc(m.when)} · ${m.kind === "screen" ? "on screen" : "up from the table"}${(s.done || {})[m.key] ? " · played ×" + s.done[m.key] : ""}${noRoom ? " · no Sanctuary left to give" + (fin ? " in the final" : "") : ""}${m.key === "statue" && !ghostsOf(s).length ? " · no Ghosts yet" : ""}</em><small>${esc(defRules(m))}</small></button>` }).join("")}</div>`; break;
+      body += `<h3>Pick another Trial</h3><div class="mlist">${MISSIONS.map(m => { const noRoom = m.key === "dilemma" && (shieldRoom(s) === 0 || !!(s.done || {}).dilemma); return `<button class="${(s.done || {})[m.key] ? "dim" : ""}" onclick="swapOpen=false;pickMission('${m.key}')" ${noRoom ? "disabled" : ""}>${esc(m.title)}<em>${esc(m.when)} · ${m.kind === "screen" ? "on screen" : "up from the table"}${(s.done || {})[m.key] ? " · played ×" + s.done[m.key] : ""}${noRoom ? " · no Sanctuary left to give" + (fin ? " in the final" : "") : ""}${m.key === "statue" && !ghostsOf(s).length ? " · no Ghosts yet" : ""}</em><small>${esc(defRules(m))}</small></button>` }).join("")}</div>`; break;
     }
     case "mission": { const r = missionHost(s); body = r.body; foot = r.foot; break }
     case "shield": {
       const c = s.shieldCard, g = ghostsOf(s).length > 0, cer = c.mode === "witness" ? WITNESSNOW_(H(), g, c) : CEREMONY_(H(), g, c);
       if ((c.mode === "secret" || c.mode === "witness") && c.step < cer.length) {
-        const taps = c.mode === "witness" ? (c.fake ? `<b>Line 2 — tap ${esc(c.witnessName)}.</b> They’re the Forsworn: the ceremony is for show.<br><b>Line 4 — walk the table and tap nobody.</b> Keep the same pace, so nobody hears a difference.` : `<b>Line 2 — tap ${esc(c.witnessName)}</b> (they won it).<br><b>Line 4 — tap ${esc(c.metName)}</b>, the Forsworn they meet.`) : cer.map((l, i) => l.tap ? `<b>Line ${i + 1} — ${l.tap === "champion" ? "the Crown" : l.tap === "shield" ? "shield" : "blade"}:</b> tap ${esc(l.tap === "champion" ? c.warName : l.tap === "blade" ? c.dagName : andList(c.secNames))}` : "").filter(Boolean).join("<br>");
+        const taps = c.mode === "witness" ? (c.fake ? `At line 2, tap <b>${esc(c.witnessName)}</b>. They’re the Forsworn, so the ceremony is for show.<br>At line 4, walk the table and tap nobody, at the same pace, so nobody hears a difference.` : `At line 2, tap <b>${esc(c.witnessName)}</b>: they won it.<br>At line 4, tap <b>${esc(c.metName)}</b>, the Forsworn they meet.`) : cer.map((l, i) => l.tap ? `At line ${i + 1}, for ${l.tap === "champion" ? "the Crown" : l.tap === "shield" ? "Sanctuary" : "the Casting Vote"}, tap <b>${esc(l.tap === "champion" ? c.warName : l.tap === "blade" ? c.dagName : andList(c.secNames))}</b>` : "").filter(Boolean).join("<br>");
         body = `<h2>${c.mode === "witness" ? "The special prize" : "Secret ceremony"}</h2><div class="secret">${taps}</div>` + stepList(cer, c.step);
-        foot = (c.step > 0 ? backBtn("act(s=>{s.shieldCard.step--})") : "") + nextBtn(c.step < cer.length - 1 ? "Next line" : "Done — show the card", "act(s=>{s.shieldCard.step++})");
+        foot = (c.step > 0 ? backBtn("act(s=>{s.shieldCard.step--})") : "") + nextBtn(c.step < cer.length - 1 ? "Next line" : "Show the card", "act(s=>{s.shieldCard.step++})");
       } else {
         const noSh = c.mode === "none", held = s.players.filter(p => p.shield && p.alive), pub = c.pubNames || [], tvb = [];
-        if (c.mode === "witness") tvb.push("“the special prize has been claimed” — " + esc(c.witnessName) + (c.fake ? " (a Forsworn: nothing happens)" : " is the Confessor, and can’t be poisoned"));
-        if (pub.length) tvb.push(esc(pub.join(", ")) + (c.champion ? " named tonight’s Crown — Sanctuary and Casting Vote" : " shown with Sanctuary"));
+        if (c.mode === "witness") tvb.push("“the special prize has been claimed”. " + esc(c.witnessName) + (c.fake ? " is a Forsworn, so nothing happens" : " is the Confessor, and can’t be poisoned"));
+        if (pub.length) tvb.push(esc(pub.join(", ")) + (c.champion ? " named tonight’s Crown, with Sanctuary and the Casting Vote" : " shown with Sanctuary"));
         if (c.championName && !c.champion) tvb.push(esc(c.championName) + " named with the Casting Vote");
-        if (c.secWar) tvb.push("“the Crown was chosen in secret” — " + esc(c.warName));
-        if (c.secCount) tvb.push("“" + (c.secCount > 1 ? c.secCount + " Sanctuaries" : "Sanctuary") + " claimed in secret” — " + esc(andList(c.secNames)));
-        if (c.secDag) tvb.push("“the Casting Vote was claimed in secret” — " + esc(c.dagName));
+        if (c.secWar) tvb.push("“the Crown was chosen in secret” (" + esc(c.warName) + ")");
+        if (c.secCount) tvb.push("“" + (c.secCount > 1 ? c.secCount + " Sanctuaries" : "Sanctuary") + " claimed in secret” (" + esc(andList(c.secNames)) + ")");
+        if (c.secDag) tvb.push("“the Casting Vote was claimed in secret” (" + esc(c.dagName) + ")");
         if (!tvb.length) tvb.push("“the Trial is over”");
-        body = `<h2>${c.mode === "witness" ? "Confessor chosen" : noSh && !c.championName ? "No Sanctuary from this Trial" : "Prizes given"}</h2>${noSh && held.length ? `<p class="note">Still holding Sanctuary from earlier: ${esc(held.map(p => p.name).join(", "))}.</p>` : ""}${c.champion ? say(SAY.championFull(c.championName)) : pub.length ? say(SAY.shieldPublic(andList(pub))) : say(c.mode === "secret" || c.mode === "witness" ? SAY.afterCeremony : SAY.missionDone(s.round))}${c.championName && !c.champion ? say(SAY.blade(c.championName)) : ""}${(c.wasted || []).length ? `<p class="note">${esc(andList(c.wasted))} won a mystery round as a Forsworn — no Sanctuary, and no ceremony for it. Say nothing.</p>` : ""}<p class="note">TV: ${tvb.join("; ")}.</p>${dilemmaOffer(s, noSh && !c.addon, "The Temptation is the fix — play it now, or after the Interval.")}`;
+        body = `<h2>${c.mode === "witness" ? "Confessor chosen" : noSh && !c.championName ? "No Sanctuary from this Trial" : "Prizes given"}</h2>${noSh && held.length ? dir("Still holding Sanctuary from earlier: " + esc(held.map(p => p.name).join(", ")) + ".") : ""}${c.champion ? say(SAY.championFull(c.championName)) : pub.length ? say(SAY.shieldPublic(andList(pub))) : say(c.mode === "secret" || c.mode === "witness" ? SAY.afterCeremony : SAY.missionDone(s.round))}${c.championName && !c.champion ? say(SAY.blade(c.championName)) : ""}${(c.wasted || []).length ? dir(esc(andList(c.wasted)) + " won a mystery round as a Forsworn, so there is no Sanctuary and no ceremony for it. Say nothing.") : ""}${dir("On the TV: " + tvb.join("; ") + ".")}${dilemmaOffer(s, noSh && !c.addon, "Play the Temptation now, or after the Interval.")}`;
         // the plan picks what comes next; the others stay one tap away
         const more = (s.roundMissions || 0) < perRoundOf(s), questOn = s.quest && !s.quest.resolved, mingle = rulesIn(s).mingle || questOn;
         const nx = MISSIONS.find(m => m.key === nextPlanned(s)) || {};
-        const alt = [more ? "" : `<button onclick="act(s=>{s.phase='day';s.mission=null},'Extra Trial')">Another Trial first</button>`, !more && mingle ? `<button onclick="openTable()">Skip the Interval — Reckoning</button>` : !more ? `<button onclick="startBreak('mingle')">Interval · 10 min</button>` : `<button onclick="${mingle ? "startBreak('mingle')" : "openTable()"}">${mingle ? "Interval, then the table" : "Straight to the Reckoning"}</button>`, s.dinnerDone || rulesIn(s).dinnerAfter ? "" : `<button onclick="startBreak('dinner')">Dinner · 25 min</button>`].filter(Boolean).join("");
-        body += `<h3>next, by your plan</h3><p class="note">${more ? "Another Trial this round: " + esc(nx.title || "the next in the plan") + "." : mingle ? (questOn ? "An Errand is in play, so an Interval before the Reckoning." : "A 10-minute Interval, then the Reckoning.") : "Straight to the Reckoning."}</p><div class="row wrap">${alt}</div>`;
-        foot = more ? nextBtn("Next Trial — " + esc(nx.title || ""), "act(s=>{s.phase='day';s.mission=null},'Second Trial')") : mingle ? nextBtn("Interval · 10 min", "startBreak('mingle')") : nextBtn("To the Reckoning", "openTable()");
+        const alt = [more ? "" : `<button onclick="act(s=>{s.phase='day';s.mission=null},'Extra Trial')">Another Trial first</button>`, !more && mingle ? `<button onclick="openTable()">Skip the Interval</button>` : !more ? `<button onclick="startBreak('mingle')">Interval · 10 min</button>` : `<button onclick="${mingle ? "startBreak('mingle')" : "openTable()"}">${mingle ? "Interval first" : "Straight to the Reckoning"}</button>`, s.dinnerDone || rulesIn(s).dinnerAfter ? "" : `<button onclick="startBreak('dinner')">Dinner · 25 min</button>`].filter(Boolean).join("");
+        body += `<div class="then"><span class="mn">Then</span><div class="ln">${more ? "Another Trial this round: " + esc(nx.title || "the next in the plan") + "." : mingle ? (questOn ? "An Errand is in play, so an Interval before the Reckoning." : "A ten-minute Interval, then the Reckoning.") : "Straight to the Reckoning."}</div></div><div class="row wrap">${alt}</div>`;
+        foot = more ? nextBtn("Next Trial: " + esc(nx.title || ""), "act(s=>{s.phase='day';s.mission=null},'Second Trial')") : mingle ? nextBtn("Interval · 10 min", "startBreak('mingle')") : nextBtn("To the Reckoning", "openTable()");
       }
       break;
     }
     case "mingle": {
       const g = s.mingle, din = g.kind === "dinner", stp = din ? 300000 : 120000, adv = advice().lvl === "final" && !s.finalRound, cs = g.course && COURSES.find(c => c.k === g.course);
       body = `<h2>${cs ? cs.name : din ? "Dinner" : "Interval"}</h2>${say(cs ? SAY.course(g.course, Math.round(g.dur / 60000)) : din ? SAY.dinner(Math.round(g.dur / 60000)) : SAY.mingle(Math.round(g.dur / 60000), s.round))}<div class="row"><button onclick="act(s=>{s.mingle.dur=Math.max(120000,s.mingle.dur-${stp});if(s.mingle.end)s.mingle.end-=${stp}})">−${stp / 60000} min</button><button class="${g.end ? "" : "primary"}" onclick="act(s=>{s.mingle.end=now()+s.mingle.dur})" ${g.end ? "disabled" : ""}>${g.end ? "Running on TV" : "Start " + Math.round(g.dur / 60000) + " min"}</button><button onclick="act(s=>{s.mingle.dur+=${stp};if(s.mingle.end)s.mingle.end+=${stp}})">+${stp / 60000} min</button></div>${questBox(s, "Forsworn Errand in play:")}${g.then === "round" ? "" : dilemmaOffer(s, true, "Play The Temptation before the table so one is in play.")}`;
-      foot = g.then === "round" ? nextBtn((cs ? cs.name.replace(/^The /, "") : "Dinner") + "’s done — round " + (s.round + 1) + (adv ? ", the final" : ""), adv ? "nextRound(true)" : "nextRound()") : nextBtn("Another Trial", "act(s=>{s.phase='day';s.mingle=null;s.mission=null},'Trial after the " + (din ? "dinner" : "mingle") + "')", "ghost") + nextBtn("Reckoning", "openTable()"); break;
+      foot = g.then === "round" ? nextBtn((cs ? cs.name.replace(/^The /, "") : "Dinner") + "’s done. Round " + (s.round + 1) + (adv ? ", the final" : ""), adv ? "nextRound(true)" : "nextRound()") : nextBtn("Another Trial", "act(s=>{s.phase='day';s.mingle=null;s.mission=null},'Trial after the " + (din ? "dinner" : "mingle") + "')", "ghost") + nextBtn("Reckoning", "openTable()"); break;
     }
     case "table": { const r = tableHost(s); body = r.body; foot = r.foot; break }
     case "reveal": {
       const p = P(s.table.exiled), st = s.table.step;
       // the first Ghost is made here, so this is where the table hears what Ghosts may and may not do
       const lore = st === 1 && !fin && !s.ghostIntroDone && ghostsOf(s).length > 0 && !endCheck() && alive().length > 2;
-      body = `<h2>${esc(p.name)} exiled</h2>${st === 0 ? (banter(s, "margin") ? say(banter(s, "margin")) : "") + say(fin ? SAY.revealFinal(p.name, s.round) : SAY.reveal(p.name, s.round)) : ""}${st === 1 && !fin && banter(s, "role") ? say(banter(s, "role")) : ""}${st === 0 && s.table.bladeKill ? `<p class="note">⚔ The Casting Vote decided this one: the boards were tied, and it broke the tie against ${esc(p.name)}. The TV shows the Casting Vote.</p>` : ""}${st === 2 ? `<h3>the ghost lore</h3>` + say(SAY.ghostIntro(p.name)) + `<p class="note">TV shows the Ghosts’ rules while you speak.</p>` : `<div class="secret">Their role: <b>${p.role === "cloak" ? "Forsworn" : "Loyal"}</b>. ${fin ? "No reveal in the final — they leave without a word." : st === 0 ? "Let them answer out loud, then reveal on TV." : "Shown on the TV."}</div>`}${(st === 1 && !lore) || st === 2 ? ghostPanel(s) : ""}${st >= 1 && !lore ? advicePanel() : ""}`;
+      body = `<h2>${esc(p.name)} exiled</h2>${st === 0 ? (banter(s, "margin") ? say(banter(s, "margin")) : "") + say(fin ? SAY.revealFinal(p.name, s.round) : SAY.reveal(p.name, s.round)) : ""}${st === 1 && !fin && banter(s, "role") ? say(banter(s, "role")) : ""}${st === 0 && s.table.bladeKill ? dir("The Casting Vote decided this one: the boards were tied, and it broke the tie against " + esc(p.name) + ". The TV shows the Casting Vote.") : ""}${st === 2 ? `<h3>The ghost lore</h3>` + say(SAY.ghostIntro(p.name)) + dir("The TV shows the Ghosts’ rules while you speak.") : `<div class="secret">Their role: <b>${p.role === "cloak" ? "Forsworn" : "Loyal"}</b>. ${fin ? "No reveal in the final: they leave without a word." : st === 0 ? "Let them answer out loud, then reveal it on the TV." : "Shown on the TV."}</div>`}${(st === 1 && !lore) || st === 2 ? ghostPanel(s) : ""}${st >= 1 && !lore ? advicePanel() : ""}`;
       const callers = st === 1 && !s.table.second ? ghostsOf(s).filter(g => g.id !== p.id) : [], called = (s.calls || {})[callKey(s)] || [];
-      if (callers.length) body += `<h3>the Ghosts’ call</h3><p class="note">Which Ghosts chalked ${esc(p.name)}? Tap each one who called it, and the TV names them.</p><div class="plist">${callers.map(g => pbtn(g, called.includes(g.id) ? "sel" : "", "ghostCall('" + g.id + "')", called.includes(g.id) ? "✓" : "")).join("")}</div>`;
-      if (st === 0) foot = fin ? nextBtn("They’ve left the table", "revealRole()") : nextBtn("They’ve said it — show it on TV", "revealRole()");
-      else if (lore) foot = nextBtn("Next: " + esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
+      if (callers.length) body += `<h3>The Ghosts’ call</h3><p class="note">Which Ghosts chalked ${esc(p.name)}? Tap each one who called it, and the TV names them.</p><div class="plist">${callers.map(g => pbtn(g, called.includes(g.id) ? "sel" : "", "ghostCall('" + g.id + "')", called.includes(g.id) ? "✓" : "")).join("")}</div>`;
+      if (st === 0) foot = fin ? nextBtn("They’ve left the table", "revealRole()") : nextBtn("Show it on the TV", "revealRole()");
+      else if (lore) foot = nextBtn(esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
       // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
       // the end game always starts with four left: they vote End or Exile, whoever is left
-      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt — " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("Five left — one more Trial, then the last vote", "fiveMission()", "danger") : fin ? nextBtn("Another vote — " + numWord(alive().length - 4) + " more to go before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left — straight to the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five — the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote — boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
+      else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("One more Trial, then the last vote", "fiveMission()", "danger") : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
     }
     case "endvote": {
       const v = s.endvote, A = alive(), done = A.filter(p => v.votes[p.id]).length;
-      body = `<h2>Trust or Doubt?</h2>${v.order && v.revealed >= v.order.length && v.result !== "end" ? say(SAY.endvoteExile(v.count || 1)) : say(SAY.endvote)}` + (v.order ? `<p class="note">Revealing on TV: ${v.revealed}/${v.order.length}.</p>` : `<p class="note">Hand the phone round. ${done}/${A.length} voted.</p><div class="plist">${A.map(p => pbtn(p, v.votes[p.id] ? "dim" : "", "handoff={kind:'endvote',id:'" + p.id + "'};renderHost()", v.votes[p.id] ? "✓" : "")).join("")}</div>`);
-      foot = v.order ? (v.revealed < v.order.length ? nextBtn("Reveal next vote", "act(s=>{s.endvote.revealed++})") : v.result === "end" ? nextBtn("The final ceremony", "startCeremony()", "danger") : nextBtn("Another Reckoning", "openTable('Final: extra Reckoning')")) : `<button class="${done === A.length ? "primary" : "ghost"}" onclick="startEndReveal()" ${done === A.length ? "" : "disabled"}>${done === A.length ? "All voted — reveal on TV" : "Waiting for " + (A.length - done) + " more"}</button>`;
+      body = `<h2>Trust or Doubt?</h2>${v.order && v.revealed >= v.order.length && v.result !== "end" ? say(SAY.endvoteExile(v.count || 1)) : say(SAY.endvote)}` + (v.order ? dir(`Revealing on the TV: ${v.revealed} of ${v.order.length}.`) : `${dir("Hand the phone round. " + done + " of " + A.length + " voted.")}<div class="plist">${A.map(p => pbtn(p, v.votes[p.id] ? "dim" : "", "handoff={kind:'endvote',id:'" + p.id + "'};renderHost()", v.votes[p.id] ? "✓" : "")).join("")}</div>`);
+      foot = v.order ? (v.revealed < v.order.length ? nextBtn("Reveal next vote", "act(s=>{s.endvote.revealed++})") : v.result === "end" ? nextBtn("The final ceremony", "startCeremony()", "danger") : nextBtn("Another Reckoning", "openTable('Final: extra Reckoning')")) : `<button class="${done === A.length ? "primary" : "ghost"}" onclick="startEndReveal()" ${done === A.length ? "" : "disabled"}>${done === A.length ? "All voted. Reveal on the TV" : "Waiting for " + (A.length - done) + " more"}</button>`;
       break;
     }
     case "final2": { const r = final2Host(s); body = r.body; foot = r.foot; break }
@@ -3939,27 +3980,27 @@ function renderHost() {
     case "morning": {
       const ghosts = ghostsOf(s), m = s.morning;
       const mu = killOf(s) === "murder";
-      if (!m.revealed) { body = `<h2>Dawn</h2>${say(SAY.dawnAsk(s.round))}<div class="secret">${m.kind === "murder" ? (mu ? "<b>" + esc(m.name) + "</b> left the table in the night. Let the room find the empty chair, then reveal." : "<b>" + esc(m.name) + "</b> " + (m.many ? "were" : "was") + " poisoned. Wait for " + (m.many ? "each of them" : "them") + " to stand and announce it, then reveal.") : mu ? "Nobody was murdered — every chair is full. Let it sink in, then reveal." : "Nobody was poisoned. Let the silence sit, then reveal."}</div>`; foot = nextBtn(m.kind === "murder" ? (mu ? "Reveal on TV" : "They’ve announced — reveal on TV") : "Reveal: nobody died", "act(s=>{s.morning.revealed=true})"); break }
+      if (!m.revealed) { body = `<h2>Dawn</h2>${say(SAY.dawnAsk(s.round))}<div class="secret">${m.kind === "murder" ? (mu ? "<b>" + esc(m.name) + "</b> left the table in the night. Let the room find the empty chair, then reveal." : "<b>" + esc(m.name) + "</b> " + (m.many ? "were" : "was") + " poisoned. Wait for " + (m.many ? "each of them" : "them") + " to stand and announce it, then reveal.") : mu ? "Nobody was murdered and every chair is full. Let it sink in, then reveal." : "Nobody was poisoned. Let the silence sit, then reveal."}</div>`; foot = nextBtn(m.kind === "murder" ? (mu ? "Reveal on the TV" : "They’ve announced it. Reveal on the TV") : "Reveal: nobody died", "act(s=>{s.morning.revealed=true})"); break }
       const adv = advice().lvl === "final" && !s.finalRound, course = !endCheck() && courseDue(s), dinnerNow = course || (!s.dinnerDone && !endCheck() && rulesIn(s).dinnerAfter && rulesIn(s).dinnerAfter <= s.round);
-      body = `<h2>Morning</h2>${say(m.kind === "murder" ? (m.many ? SAY.morningMany(m.name, s.round, m.saved) : SAY.morningMurder(m.name, s.round)) : m.kind === "shield" ? SAY.morningShield(s.round) : SAY.morningQuiet(s.round))}${m.convert ? `<p class="note">Last night’s ${m.refused ? "refusal" : "conversion"} stays secret — this line is the same as any quiet night.</p>` : ""}${m.kind === "murder" && !m.lastDone && !mu ? `<div class="row"><button onclick="act(s=>{s.morning.lastEnd=now()+30000*((s.morning.victimIds||[1]).length);s.morning.lastDone=true})">Last words — ${m.many ? (m.victimIds.length * 30) + " s (30 s each)" : "30 s"} on TV</button></div>` : ""}${ghosts.length && !s.ghostIntroDone ? `<h3>the ghost lore</h3>` + say(SAY.ghostIntro(((s.voteLog || []).map(x => P(x.exiled)).find(p => p && !p.alive && !p.left) || (m.kind === "murder" && P(m.victimId)) || ghosts[0]).name)) + `<div class="row"><button onclick="act(s=>{s.ghostIntroDone=true})">Ghost lore said</button></div>` : ""}${ghostPanel(s)}${advicePanel()}${dinnerNow ? `<div class="advice offer"><b>Dinner, by your plan.</b> Serve it now, between rounds ${s.round} and ${s.round + 1}. The TV runs a dinner timer; the next round starts when you’re done.</div>` : ""}`;
-      foot = (dinnerNow ? nextBtn("Not yet — next round", adv ? "nextRound(true)" : "nextRound()", "ghost") + nextBtn(course ? course.name + " now · " + course.dur / 60000 + " min" : "Dinner now · 25 min", "startBreak('dinner','round')") : nextBtn(adv ? "Next round — make it the final" : "Next round", adv ? "nextRound(true)" : "nextRound()")); break;
+      body = `<h2>Morning</h2>${say(m.kind === "murder" ? (m.many ? SAY.morningMany(m.name, s.round, m.saved) : SAY.morningMurder(m.name, s.round)) : m.kind === "shield" ? SAY.morningShield(s.round) : SAY.morningQuiet(s.round))}${m.convert ? dir("Last night’s " + (m.refused ? "refusal" : "conversion") + " stays secret: this line is the same as any quiet night.") : ""}${m.kind === "murder" && !m.lastDone && !mu ? `<div class="row"><button onclick="act(s=>{s.morning.lastEnd=now()+30000*((s.morning.victimIds||[1]).length);s.morning.lastDone=true})">Last words, ${m.many ? (m.victimIds.length * 30) + " s (30 s each)" : "30 s"} on the TV</button></div>` : ""}${ghosts.length && !s.ghostIntroDone ? `<h3>The ghost lore</h3>` + say(SAY.ghostIntro(((s.voteLog || []).map(x => P(x.exiled)).find(p => p && !p.alive && !p.left) || (m.kind === "murder" && P(m.victimId)) || ghosts[0]).name)) + `<div class="row"><button onclick="act(s=>{s.ghostIntroDone=true})">Ghost lore said</button></div>` : ""}${ghostPanel(s)}${advicePanel()}${dinnerNow ? dir(`Dinner, by your plan. Serve it now, between rounds ${s.round} and ${s.round + 1}. The TV runs a timer, and the next round starts when you’re done.`) : ""}`;
+      foot = (dinnerNow ? nextBtn("Not yet", adv ? "nextRound(true)" : "nextRound()", "ghost") + nextBtn(course ? course.name + " now · " + course.dur / 60000 + " min" : "Dinner now · 25 min", "startBreak('dinner','round')") : nextBtn(adv ? "Next round, as the final" : "Next round", adv ? "nextRound(true)" : "nextRound()")); break;
     }
     case "final":
       body = `<h2>${s.winner === "cloaks" ? "The Forsworn win" : "The Loyal win"}</h2>${say(s.winner === "cloaks" ? SAY.endCloaks(s.players.filter(p => p.alive && p.role === "cloak").length) : SAY.endCandle)}${prizeHost(s)}`;
       const aw = s.awards || [], k = s.awardShown || 0;
-      if (s.finalStep === 1) { const a = aw[k - 1]; body += `<h3>the awards — ${k} of ${aw.length} on the TV</h3>${!aw.length ? say("No awards tonight — nobody stood out. Which, at this table, is an achievement.") : !k ? say("And before anyone leaves — the awards. " + cap1(numWord(aw.length)) + " of them.") : say(a.title + ". " + andList(a.names) + " — who " + a.why + ".")}${aw[k] ? `<p class="note">Next: ${esc(aw[k].title)} — ${esc(andList(aw[k].names))}.</p>` : ""}` }
+      if (s.finalStep === 1) { const a = aw[k - 1]; body += `<h3>The awards <small>${k} of ${aw.length} on the TV</small></h3>${!aw.length ? say("No awards tonight. Nobody stood out, which at this table is an achievement.") : !k ? say("And before anyone leaves, the awards. " + cap1(numWord(aw.length)) + " of them.") : say(a.title + ". " + andList(a.names) + ", who " + a.why + ".")}${aw[k] ? `<div class="then"><span class="mn">Then</span><div class="ln">${esc(aw[k].title)}: ${esc(andList(aw[k].names))}</div></div>` : ""}` }
       foot = (s.finalStep === 1 ? backBtn(k ? "act(s=>{s.awardShown=Math.max(0,(s.awardShown||0)-1)})" : "act(s=>{s.finalStep=0})") + (k < aw.length ? (k && k < aw.length - 1 ? nextBtn("Show the rest", "act(s=>{s.awardShown=" + aw.length + "},'Awards: the rest at once')", "ghost") : "") + nextBtn(k ? "Next award" : "The first award", "act(s=>{s.awardShown=(s.awardShown||0)+1},'Award " + (k + 1) + "')") : "") : nextBtn("The awards", "act(s=>{s.finalStep=1;s.awardShown=0},'Awards')")) + nextBtn("New game", "confirmNew()", s.finalStep === 1 && k >= aw.length ? "danger" : "ghost"); break;
   }
-  const M = (label, fn, cls) => `<button class="${cls || ""}" onclick="menuOpen=false;${fn}">${label}</button>`;
-  const menu = menuOpen ? `<div class="sheet"><h2>Menu</h2>${M("Close", "renderHost()", "primary")}${M("Your game plan", "planOpen=true;renderHost()")}${M(rulesIn(s).narrator ? "TV narrator: on · switch off" : "TV narrator: off · switch on", "menuOpen=false;toggleNarr()")}${M("Report a problem", "menuOpen=false;renderHost();openReport()")}<h3>jump</h3>${M("Pick a Trial", "act(s=>{s.phase='day';s.mission=null},'Jumped to Trial pick')")}${M("Reckoning", "openTable('Jumped to Reckoning')")}${M("Night", "startNight()")}${M("Skip to next round", "nextRound()")}${s.roundSnap && s.roundSnap.round === s.round && !["final2", "final"].includes(s.phase) ? M("Rewind to the start of round " + s.round, "confirmSheet('Rewind to the start of round " + s.round + "?', 'Every Trial, vote and night since this round began is undone. Undo brings it all back.', 'Rewind', rewindRound)") : ""}${M(s.finalRound ? "Cancel the final round" : (s.phase === "day" && !(s.roundMissions || 0) ? "Make this round the final" : "Make the next round the final"), s.finalRound ? "act(s=>{s.finalRound=null},'Final round cancelled')" : "declareFinal()")}<h3>players</h3>${s.phase === "final" ? "" : M("A player has left the party", "leftPicker=true;renderHost()")}${M("Rename a player", "renamePicker=true;renderHost()")}${M("Seating order", "seatOpen=true;renderHost()")}<h3>tv</h3>${M(s.tvBlack ? "Un-black the screen" : "Black screen (panic)", "act(s=>{s.tvBlack=!s.tvBlack})")}${M(s.tvPause ? "Remove pause card" : "Pause card", "act(s=>{s.tvPause=!s.tvPause})")}${M("Replay last sound", "act(s=>{s.replaySfx=now()})")}${M(s.tvText === "standard" ? "TV text: standard — make it large" : "TV text: large — back to standard", "act(s=>{s.tvText=s.tvText==='standard'?'large':'standard'},'TV text size')")}<h3>game</h3>${M(s.questsOn === false ? "Forsworn Errands: off — turn on" : "Forsworn Errands: on — turn off", "act(s=>{s.questsOn=s.questsOn===false;if(s.rules)s.rules.quests=s.questsOn})")}${M(s.wrongRule === "all" ? "Wrong shouts: everyone’s cost — make it Forsworn’s only" : "Wrong shouts: Forsworn’s only cost — make it everyone’s", "act(s=>{s.wrongRule=s.wrongRule==='all'?'cloaks':'all'},'Wrong-shout rule changed')")}${s.phase === "final2" || s.phase === "final" ? "" : M("End game now", "confirmSheet('End the game now?', 'The TV goes to the final ceremony. Nothing is revealed until you turn each seal.', 'End the game', startCeremony)")}${M("Question bank — switch items on or off", "openBank()")}${M("New game (wipe)", "confirmNew()", "danger")}</div>` : "";
+  const M = (label, fn, cls, val) => `<button class="mrow ${cls || ""}" onclick="menuOpen=false;${fn}"><span>${label}</span><i>${val || "›"}</i></button>`;
+  const menu = menuOpen ? `<div class="sheet"><div class="sheethead"><h2>Menu</h2><button onclick="menuOpen=false;renderHost()">Close</button></div>${M("Your game plan", "planOpen=true;renderHost()")}${M("The TV reads the lines", "menuOpen=false;toggleNarr()", "", rulesIn(s).narrator ? "On" : "Off")}${M("Report a problem", "menuOpen=false;renderHost();openReport()")}<h3>Jump to</h3>${M("Pick a Trial", "act(s=>{s.phase='day';s.mission=null},'Jumped to Trial pick')")}${M("The Reckoning", "openTable('Jumped to Reckoning')")}${M("The night", "startNight()")}${M("The next round", "nextRound()")}${s.roundSnap && s.roundSnap.round === s.round && !["final2", "final"].includes(s.phase) ? M("Rewind to the start of round " + s.round, "confirmSheet('Rewind to the start of round " + s.round + "?', 'Every Trial, vote and night since this round began is undone. Undo brings it all back.', 'Rewind', rewindRound)") : ""}${M(s.finalRound ? "Cancel the final round" : (s.phase === "day" && !(s.roundMissions || 0) ? "Make this round the final" : "Make the next round the final"), s.finalRound ? "act(s=>{s.finalRound=null},'Final round cancelled')" : "declareFinal()")}<h3>Players</h3>${s.phase === "final" ? "" : M("A player has left the party", "leftPicker=true;renderHost()")}${M("Rename a player", "renamePicker=true;renderHost()")}${M("Seating order", "seatOpen=true;renderHost()")}<h3>The TV</h3>${M("Black screen, for emergencies", "act(s=>{s.tvBlack=!s.tvBlack})", "", s.tvBlack ? "On" : "Off")}${M("Pause card", "act(s=>{s.tvPause=!s.tvPause})", "", s.tvPause ? "On" : "Off")}${M("Replay the last sound", "act(s=>{s.replaySfx=now()})")}${M("Text size", "act(s=>{s.tvText=s.tvText==='standard'?'large':'standard'},'TV text size')", "", s.tvText === "standard" ? "Standard" : "Large")}<h3>The game</h3>${M("Forsworn Errands", "act(s=>{s.questsOn=s.questsOn===false;if(s.rules)s.rules.quests=s.questsOn})", "", s.questsOn === false ? "Off" : "On")}${M("Wrong shouts cost the Purse", "act(s=>{s.wrongRule=s.wrongRule==='all'?'cloaks':'all'},'Wrong-shout rule changed')", "", s.wrongRule === "all" ? "Everyone’s" : "Forsworn’s only")}${M("Question bank", "openBank()", "", "Switch items off")}${s.phase === "final2" || s.phase === "final" ? "" : M("End the game now", "confirmSheet('End the game now?', 'The TV goes to the final ceremony. Nothing is revealed until you turn each seal.', 'End the game', startCeremony)")}${M("New game", "confirmNew()", "danger", "Wipe")}</div>` : "";
   if (renameId && !P(renameId)) renameId = null; // a sheet left open from a game that has since been wiped
   const ren = renamePicker ? (renameId ? `<div class="sheet mid"><h2>Rename ${esc(P(renameId).name)}</h2><input id="rn" value="${esc(P(renameId).name)}" maxlength="${NAMEMAX}" autocomplete="off" aria-label="New name" onkeydown="if(event.key==='Enter')renameGo()"><div class="row"><button onclick="renamePicker=false;renameId=null;renderHost()">Cancel</button><button class="primary" onclick="renameGo()">Save name</button></div></div>` : `<div class="sheet"><h2>Rename who?</h2><div class="plist">${s.players.map(p => pbtn(p, "", "renameId='" + p.id + "';renderHost()")).join("")}</div><button onclick="renamePicker=false;renderHost()">Cancel</button></div>`) : "";
-  const left = leftPicker ? `<div class="sheet"><h2>Who left?</h2><p class="note">They’re removed from the game. Roles and counts update.</p><div class="plist">${alive().map(p => pbtn(p, "", "leftAsk('" + p.id + "')", p.role === "cloak" ? "F" : "")).join("")}</div><button onclick="leftPicker=false;renderHost()">Cancel</button></div>` : "";
+  const left = leftPicker ? `<div class="sheet"><h2>Who left?</h2><p class="note">They come out of the game, and the roles and counts update.</p><div class="plist">${alive().map(p => pbtn(p, "", "leftAsk('" + p.id + "')", p.role === "cloak" ? "F" : "")).join("")}</div><button onclick="leftPicker=false;renderHost()">Cancel</button></div>` : "";
   const upcoming = (s.plan || []).slice(s.planAt || 0, (s.planAt || 0) + 6).map(k => (MISSIONS.find(m => m.key === k) || {}).title).filter(Boolean);
-  const plan = planOpen ? `<div class="sheet"><div class="eyebrow">set before the game</div><h2>Your game plan</h2><div class="planbox">${planLines(rulesIn(s), seated(s).length).map(l => `<p>${esc(l)}</p>`).join("")}</div>${upcoming.length ? `<h3>coming up</h3><p class="note">${esc(upcoming.join(" → "))}</p>` : ""}<p class="note">The plan picks each Trial, its prizes, the night and the breaks. Anything can still be changed on the screen where it happens.</p><button class="primary" onclick="planOpen=false;renderHost()">Close</button></div>` : "";
-  const sheet = ask ? `<div class="sheet mid"><div class="eyebrow">are you sure?</div><h2>${esc(ask.title)}</h2>${ask.note ? `<p class="note">${esc(ask.note)}</p>` : ""}<div class="row"><button onclick="ask=null;renderHost()">Cancel</button><button class="${ask.cls}" onclick="askGo()">${esc(ask.label)}</button></div></div>` : "";
+  const plan = planOpen ? `<div class="sheet"><div class="sheethead"><h2>Your game plan</h2><button onclick="planOpen=false;renderHost()">Close</button></div><p class="note">Set before the game. The plan picks each Trial, its prizes, the night and the breaks, and anything can still be changed on the screen where it happens.</p><div class="planbox">${planLines(rulesIn(s), seated(s).length).map(l => `<p>${esc(l)}</p>`).join("")}</div>${upcoming.length ? `<h3>Coming up</h3><p class="note">${esc(upcoming.join(" → "))}</p>` : ""}</div>` : "";
+  const sheet = ask ? `<div class="sheet mid"><h2>${esc(ask.title)}</h2>${ask.note ? `<p class="note">${esc(ask.note)}</p>` : ""}<div class="row"><button onclick="ask=null;renderHost()">Cancel</button><button class="${ask.cls}" onclick="askGo()">${esc(ask.label)}</button></div></div>` : "";
   body = kw(body);
-  patch(app, `<div id="host">${bar}<div class="bodywrap" data-k="${s.phase}">${body}</div><h3>log</h3>${logOpen ? `<div class="log">${(s.log || []).map(l => `<div>${esc(l)}</div>`).join("")}</div><div class="row"><button class="ghost slim" onclick="logOpen=false;renderHost()">Hide the log</button></div>` : `<div class="row"><button class="ghost slim" onclick="logOpen=true;renderHost()">Show the log (${plural((s.log || []).length, "line")})</button></div>`}${hstamp()}<div class="foot">${foot}</div>${handoffScreen(s)}${bankOpen ? bankSheet() : ""}${seatSheet(s)}${ren}${left}${menu}${plan}${sheet}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`);
+  patch(app, `<div id="host">${bar}<div class="bodywrap" data-k="${s.phase}">${body}</div>${logOpen ? `<h3>The log</h3><div class="log">${(s.log || []).map(l => `<div>${esc(l)}</div>`).join("")}</div><div class="row"><button class="ghost slim" onclick="logOpen=false;renderHost()">Hide the log</button></div>` : `<div class="row"><button class="ghost slim" onclick="logOpen=true;renderHost()">Show the log (${plural((s.log || []).length, "line")})</button></div>`}${hstamp()}<div class="foot">${foot}</div>${handoffScreen(s)}${bankOpen ? bankSheet() : ""}${seatSheet(s)}${ren}${left}${menu}${plan}${sheet}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`);
 }
 async function checkPin() { const el = $("#pin"), v = el ? el.value : ""; if (!v) return; const ok = await tryPin(v); if (ok !== true) { pinMsg = typeof ok === "string" ? ok : "Wrong PIN. Try again."; if (el) el.value = ""; renderHost() } else pinMsg = "" }
 function confirmNew() { menuOpen = false; confirmSheet("Wipe this game and start over?", "Everything from tonight is deleted on the TV and the phone. There is no undo.", "Wipe the game", () => { setupDraft = null; try { sessionStorage.removeItem("candle-draft") } catch (e) {} renamePicker = leftPicker = false; renameId = null; handoff = null; newGame() }) }

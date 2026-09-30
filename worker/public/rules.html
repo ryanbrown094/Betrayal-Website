@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930074408">
-<title>How to play — The Betrayal</title>
+<meta name="build" content="20260930075610">
+<title>How to play · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away.">
 <link rel="canonical" href="https://thebetrayal.co.uk/rules">
-<meta property="og:title" content="How to play — The Betrayal"><meta property="og:description" content="How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/rules">
+<meta property="og:title" content="How to play · The Betrayal"><meta property="og:description" content="How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/rules">
 <meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -46,15 +46,14 @@ nav.top .links { display: flex; align-items: center; gap: 4px 18px } nav.top .li
 nav.top .links .btn[aria-current] { display: none }
 nav.top .links .btn, nav.top .home span { white-space: nowrap } @media (max-width: 360px) { nav.top .home { font-size: 22px } nav.top .links .btn { padding: 8px 14px } }
 @media (max-width: 600px) { nav.top .links a:not(.btn) { display: none } }
-.eyebrow { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose); margin-top: 34px }
-h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 10px 0 8px; text-wrap: balance }
+h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 44px 0 10px; text-wrap: balance }
 h2 { font: 400 31px/1.15 var(--book); margin: 36px 0 8px; color: var(--ivory); text-wrap: balance; scroll-margin-top: 16px }
 p { text-wrap: pretty } .lede { font-size: 19px; color: var(--ivory2); max-width: 36em }
 h3 { font: 700 17px/1.3 var(--ui); margin: 20px 0 4px; color: var(--rose) }
 p, li { color: var(--ivory2) } strong, b { color: var(--ivory) }
 .updated { color: #877e78; font-size: 15px; margin: 0 }
-.ph { background: rgba(230,165,140,.16); color: var(--rose); border-radius: 4px; padding: 0 4px; font-weight: 600 }
-.note { padding: 4px 0 4px 18px; border-left: 2px solid var(--copper); margin: 18px 0 }
+.ph { color: var(--rose); font-weight: 600 }
+.note { margin: 14px 0; font-size: 16px; color: #877e78 }
 table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 } th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid rgba(230,165,140,.18) } th { color: var(--ivory); font-weight: 700 } td { color: var(--ivory2) }
 .table-scroll { overflow-x: auto }
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 12px 24px; border-radius: 3px; border: 1px solid var(--rose); background: var(--rose); color: #150b17; font: 700 16px/1 var(--sc); letter-spacing: .06em; text-decoration: none; cursor: pointer; touch-action: manipulation; transition: background .15s ease }
@@ -67,9 +66,9 @@ table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 10px 0 
 .panel { padding: 22px 0; border-top: 1px solid rgba(230,165,140,.3); border-bottom: 1px solid rgba(230,165,140,.3); margin: 20px 0 } .panel > ul:first-child { margin-top: 0 }
 label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; color: var(--ivory2); font-size: 16.5px; cursor: pointer } label.check input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--rose) } label.check input[aria-invalid] { outline: 2px solid #ff9dbf; outline-offset: 2px }
 .price { display: block; font: 400 44px/1.1 var(--book); color: var(--ivory); margin: 4px 0 6px } .price em { font: 400 18px/1 var(--ui); color: var(--ivory2) }
-.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 20px 0; padding: 0; border: 0; min-width: 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
-.plan { display: flex; gap: 12px; padding: 18px; border-radius: 3px; background: transparent; border: 1px solid rgba(230,165,140,.3); cursor: pointer; transition: border-color .15s ease, background-color .15s ease } .plan:hover { border-color: rgba(230,165,140,.6) } .plan:has(input:checked) { border-color: var(--rose); box-shadow: 0 0 0 1px var(--rose); background: linear-gradient(180deg, rgba(230,165,140,.1), var(--plum)) }
-.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 700 13px/1 var(--sc); letter-spacing: .2em; text-transform: uppercase; color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
+.plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; margin: 24px 0 8px; padding: 0; border: 0; min-width: 0 } @media (max-width: 600px) { .plans { grid-template-columns: 1fr } }
+.plan { display: flex; gap: 14px; padding: 18px 0 20px; border-top: 1px solid rgba(230,165,140,.3); cursor: pointer; transition: border-color .15s ease } .plan:hover { border-top-color: rgba(230,165,140,.6) } .plan:has(input:checked) { border-top: 2px solid var(--rose); padding-top: 17px }
+.plan input { width: 22px; height: 22px; margin-top: 4px; flex: none; accent-color: var(--rose) } .plan b { font: 400 24px/1.1 var(--book); color: var(--ivory) } .plan:has(input:checked) b { color: var(--rose) } .plan small { display: block; color: var(--ivory2); font-size: 16px; line-height: 1.45 }
 footer { margin: 72px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px }
 footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
 </style>
@@ -81,15 +80,11 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <main id="main">
 <style>
 .toc { display: flex; flex-wrap: wrap; gap: 0; margin: 20px 0 6px; padding: 12px 0; list-style: none; border-top: 1px solid rgba(230,165,140,.22); border-bottom: 1px solid rgba(230,165,140,.22); font: 15px/1 var(--sc); letter-spacing: .05em } .toc li + li::before { content: "·"; color: var(--copper); padding: 0 10px } .toc a { display: inline-block; padding: 8px 0; color: var(--ivory2); text-decoration: none } .toc a:hover { color: var(--ivory) }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0 }
-.card { padding: 4px 0 4px 18px; border-left: 2px solid var(--copper) } .card b { display: block; font: 400 24px/1.1 var(--book); color: var(--ivory); margin-bottom: 6px } .card p { margin: 0; font-size: 16.5px; line-height: 1.5 }
 ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:first-child { color: var(--ivory) }
-.once { display: inline-block; font: 700 11px/1 var(--sc); letter-spacing: .14em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; background: rgba(230,165,140,.16); color: var(--rose); vertical-align: middle; margin-left: 6px }
 dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.missions dd { margin: 2px 0 0; color: var(--ivory2) }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 }
 .btn.ghost { background: transparent; color: var(--ivory) }
 </style>
-<div class="eyebrow">the rules</div>
 <h1>How to play</h1>
 <p>Everything that happens at a night of The Betrayal, from the first oath to the last betrayal. You don’t need to learn any of it before the night: every phone tells its player what to do, when. But if you like to know what you’re buying, here is the whole game.</p>
 <p>This page describes the game as most people play it: everyone on their own phone. If your group would rather put phones away, there’s <a href="#classic">Classic</a>, with a Keeper, blindfolds and chalk.</p>
@@ -103,11 +98,9 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 <p>The host opens the Table with their booking code and types their name. Everyone else scans the QR code on the TV, or goes to <strong>thebetrayal.co.uk/join</strong> and types the six-character Table code and their name. There’s nothing to install and no account to make. The TV is optional: without one, the host just reads the code out. When everyone’s in, the host taps Start.</p>
 
 <h2 id="roles">Who’s who</h2>
-<div class="cards">
-<div class="card"><b>The Loyal</b><p>Most of the table. They don’t know who anyone else is. Their job is to work out who the Forsworn are and vote them out, using nothing but conversation, voting patterns and gut feeling.</p></div>
-<div class="card"><b>The Forsworn</b><p>About one guest in four or five. Their phones tell them who the others are. Each night they choose who dies. By day they act like the Loyal, steer the vote, and quietly sabotage the Trials.</p></div>
-<div class="card"><b>The host</b><p>Plays like everyone else and never sees anyone’s role. Their phone also moves the evening on: begin the next part, call a break. The game plans its own Trials and Reckonings (and courses, if you’re eating).</p></div>
-</div>
+<p><strong>The Loyal</strong> are most of the table. They don’t know who anyone else is. Their job is to work out who the Forsworn are and vote them out, with nothing to go on but conversation, voting patterns and gut feeling.</p>
+<p><strong>The Forsworn</strong> are about one guest in four or five, and their phones tell them who the others are. Each night they choose who dies. By day they act like the Loyal, steer the vote, and quietly sabotage the Trials.</p>
+<p><strong>The host</strong> plays like everyone else and never sees anyone’s role. Their phone also moves the evening on, beginning the next part or calling a break. The game plans its own Trials and Reckonings (and courses, if you’re eating).</p>
 <p>The night begins with <strong>the Oath</strong>. Every phone asks its player, privately: would you like to be Forsworn? Yes, make me Forsworn; I’d rather be Loyal; or Either way. The roles are dealt from the answers (volunteers first), though nobody is promised what they asked for. Then each player looks at their role with their phone held close.</p>
 <p>Nobody is told how many Forsworn there are. Players only find out as Forsworn are exiled and revealed.</p>
 
@@ -155,7 +148,7 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 <h2 id="missions">Trials</h2>
 <p>The game deals them in a random order, so no two evenings run the same.</p>
 <dl class="missions">
-<dt>Most Likely To</dt><dd>A prompt on every phone. Vote for the person it fits best, and see the verdict. No prize: just a reputation.</dd>
+<dt>Most Likely To</dt><dd>A prompt on every phone. Vote for the person it fits best, and see the verdict. There’s no prize, only a reputation.</dd>
 <dt>Rapid Quiz</dt><dd>Eight questions, easy to brutal. Type your answer before the clock runs out: a point for every right answer, and one more for the fastest.</dd>
 <dt>Longest Word</dt><dd>Twelve letters. Type the longest real word you can make from them.</dd>
 <dt>Closest Guess</dt><dd>A question with a number for an answer. The closest guesses score.</dd>

@@ -135,17 +135,17 @@ export class GameState {
     const ip = req.headers.get("CF-Connecting-IP") || "?";
     const authed = !!current && current.hostPin === pin;
 
-    if (current && pin && !authed && this.limited(ip)) return text("Too many wrong PINs — try again in a minute", 429);
+    if (current && pin && !authed && this.limited(ip)) return text("Too many wrong PINs. Try again in a minute.", 429);
     // a page still running the previous build must reload before it writes (reads are fine)
     const clientBuild = req.headers.get("X-Build");
     const oldBuild = this.env.BUILD && clientBuild && clientBuild !== this.env.BUILD;
-    const readOnly = () => json({ error: "This Table has closed — the game is now read-only.", expired: true, room }, 423);
+    const readOnly = () => json({ error: "This Table has closed, and the game is now read-only.", expired: true, room }, 423);
 
     // The question bank's on/off switches outlive any one game in this room (a wipe keeps them).
     if (path === "/api/settings") {
       if (req.method === "GET") return json({ settings: (await this.storage.get("settings")) ?? null });
       if (req.method !== "PUT") return text("Method not allowed", 405);
-      if (oldBuild) return text("A new version is live — reload", 426);
+      if (oldBuild) return text("A new version is live. Reload the page.", 426);
       if (expired) return readOnly();
       if (current && !authed) return text("Wrong Keeper PIN", 403);
       let body;
@@ -164,7 +164,7 @@ export class GameState {
       if (req.headers.get("X-Have") === tag) return json({ same: true, tag });
       return json(authed ? { state: current, auth: true, tag, room } : { state: publicView(current), auth: false, tag, room });
     }
-    if (oldBuild) return text("A new version is live — reload", 426);
+    if (oldBuild) return text("A new version is live. Reload the page.", 426);
     if (expired) return readOnly();
     if (current && !authed) return text("Wrong Keeper PIN", 403);
 
@@ -327,7 +327,7 @@ export class Registry {
     const ip = req.headers.get("CF-Connecting-IP") || "?";
     if (url.pathname === "/mint") return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind)).map(shownPass) });
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
-    if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts — try again in an hour." }, 429) : json({ ok: true });
+    if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts. Try again in an hour." }, 429) : json({ ok: true });
     if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
     // the master error log, the Stripe webhook log, issue reports
     if (url.pathname === "/err") {
@@ -339,7 +339,7 @@ export class Registry {
     if (url.pathname === "/hooks") return json({ hooks: await this.newest("hook:", 500) });
     if (url.pathname === "/report") {
       const rec = (this.reps = (this.reps || new Map())).get(ip) || [], t = Date.now(), fresh = rec.filter((x) => t - x < 3600000);
-      if (fresh.length >= 10) return json({ error: "Too many reports from here — try again in an hour, or email us." }, 429);
+      if (fresh.length >= 10) return json({ error: "Too many reports from here. Try again in an hour, or email us." }, 429);
       fresh.push(t); this.reps.set(ip, fresh); if (this.reps.size > 2000) this.reps.clear();
       let id; do id = "R-" + Math.random().toString(36).slice(2, 8).toUpperCase(); while (await this.storage.get("rep:" + id));
       const snap = typeof b.snap === "string" && b.snap.length <= 4000000 ? b.snap : "", parts = Math.ceil(snap.length / 100000);
@@ -385,7 +385,7 @@ export class Registry {
     // Stripe's invoice. Ten checkouts an hour per address, so nobody can fill the registry with pending passes.
     if (url.pathname === "/pending") {
       const t = Date.now(), k = "co:" + ip, rec = ((await this.storage.get(k)) || []).filter((x) => t - x < 3600000);
-      if (rec.length >= 10) return json({ error: "Too many checkouts from here — try again in an hour." }, 429);
+      if (rec.length >= 10) return json({ error: "Too many checkouts from here. Try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
       await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one" });
@@ -453,13 +453,13 @@ export class Registry {
     }
     // the Stripe customer behind a subscription code, for the billing portal (wrong codes count as failed guesses)
     if (url.pathname === "/customer") {
-      if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
+      if (this.tooMany(ip)) return json({ error: "Too many wrong codes. Try again in an hour." }, 429);
       const v = isPass(b.pass) && (await this.storage.get("pass:" + passKey(b.pass)));
       if (!v || v.kind !== "sub" || !v.customer) { this.failed(ip); return json({ error: "That isn’t a Regular’s booking code we recognise." }, 404); }
       return json({ customer: v.customer });
     }
     if (url.pathname === "/redeem") {
-      if (this.tooMany(ip)) return json({ error: "Too many wrong codes — try again in an hour." }, 429);
+      if (this.tooMany(ip)) return json({ error: "Too many wrong codes. Try again in an hour." }, 429);
       if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a booking code. It looks like OATH-XXXX-XXXX." }, 400); }
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
       if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
@@ -468,7 +468,7 @@ export class Registry {
       // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
       // back; asking for a fresh one closes that room and opens another.
       if (v.kind === "sub") {
-        if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? " — the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
+        if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
         const live = v.room && Date.now() < v.expires;
         if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
         if (live) await env.GAME.get(env.GAME.idFromName("room:" + v.room)).fetch("https://game/_close", { method: "POST", body: "{}" });
