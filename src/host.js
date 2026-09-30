@@ -159,7 +159,7 @@ function advicePanel() {
 function prizeHost(s) {
   if (!s.prizeTo) return `<p class="note">The TV shows every role.</p>`;
   const r = s.rps, w = r && r.winner && P(r.winner);
-  const pot = (s.prizeIds || []).length ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
+  const pot = (s.prizeIds || []).length && wonPot(s) ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
   if (!r) return say(SAY.prize(prizeName(s), s.prizeTo)) + pot + dir("Hand it over. The TV shows the prize, the Purse and every role.");
   const names = andList(r.ids.map(id => P(id)).filter(Boolean).map(p => p.name));
   return pot + say(SAY.prizeRps(prizeOf(s), names)) + (w ? say(SAY.prizeHome(w.name, prizeOf(s))) + dir("On the TV now. Wrong name? Undo.")

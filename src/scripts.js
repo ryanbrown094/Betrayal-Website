@@ -79,7 +79,7 @@ const CEREMONY_=(h,g,c)=>{
   return L;
 };
 const SAY={
-  lobbyWait:"Take your seats, everyone, and fill your glasses. When the titles roll on the screen, the game begins.",
+  lobbyWait:"Take your seats, everyone, and get comfortable. When the titles roll on the screen, the game begins.",
   lobby:"Welcome to The Betrayal. Look at the screen: there is a candle burning for every one of you. Tonight, around this table, sit the Loyal, and the Forsworn, who swore the same oath and meant none of it. Each night the Forsworn will poison one of you, and a candle will go out. Each day the Loyal must find them and exile them. Trust no one, not even the person who poured your wine.",
   day:r=>r>1?vr(["Round "+numWord(r)+". The table is smaller, and the Purse is still hungry. Before you can point fingers, you must earn the right. Today’s Trial…","Round "+numWord(r)+". Fewer chairs, longer memories. The Purse won’t fill itself, and a Forsworn would quite like it to stay empty. Today’s Trial…","Round "+numWord(r)+". You know each other a little better now. That should worry you. First, the Purse. Today’s Trial…"],r-1):"Good morning, and welcome to round one. Before you can point fingers, you must earn the right. The Purse only grows if you work together, which is a strange thing to ask of a table with Forsworn on it. Today’s Trial…",
   lastMission:"Five of you left. Before the last vote, one more Trial. Whatever it is worth, it may be the last thing any of you wins tonight.",

@@ -34,7 +34,7 @@ Everything about the game and the brand, in one place, for building ads, social 
 - **Book a Table:** £10, one party. **Become a Regular:** £20 a month, a new Table whenever you like, one at a time.
 - **You need** a phone each and a prize (chocolate coins, one for every 100 points in the Purse, unless the host sets their own). A TV is optional. No app, no accounts, no props.
 - **Setup:** open your Table, choose Modern, type your name, share the code, Start. The game plans its own Trials and Reckonings, and, if the host switches dinner in courses on, when each course is served.
-- **Classic**, for groups who’d rather put their phones away: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 hours for 8 to 10.
+- **Classic**, for groups who’d rather put their phones away: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 to 2½ hours for 8 to 10.
 
 Screenshots use invented names; the TV title and player names can be anything.
 

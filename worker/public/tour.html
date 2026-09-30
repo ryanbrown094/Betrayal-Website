@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930160405">
+<meta name="build" content="20260930164125">
 <title>See a game of The Betrayal, screen by screen</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="A night of The Betrayal in pictures: every phone screen and the TV, from the Oath to the Unmasking. And Classic, with a Keeper and blindfolds.">
@@ -199,7 +199,7 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
 <p>The host can call a short break between parts, and the game serves dinner in courses if you’ve switched it on. If the doorbell goes, the host can pause: every clock stops until they carry on.</p>
 <div class="phones two">
 <figure class="shot"><img src="/media/tour-modern-phone-break.jpg?v=5bc91f89" width="780" height="1688" loading="lazy" alt="A phone: a break with a large countdown"><figcaption><span class="tag ph">phone</span>A break, with its clock on every phone.</figcaption></figure>
-<figure class="shot"><img src="/media/tour-modern-phone-pause.jpg?v=22102df4" width="780" height="1688" loading="lazy" alt="A phone: the game is paused"><figcaption><span class="tag ph">phone</span>Paused. Nothing moves until the host carries on.</figcaption></figure>
+<figure class="shot"><img src="/media/tour-modern-phone-pause.jpg?v=677f169b" width="780" height="1688" loading="lazy" alt="A phone: the game is paused"><figcaption><span class="tag ph">phone</span>Paused. Nothing moves until the host carries on.</figcaption></figure>
 </div>
 
 <h2 id="reckoning">The Reckoning</h2>
@@ -213,8 +213,8 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
 <figure class="shot"><img src="/media/tour-modern-phone-vote.jpg?v=3b251714" width="780" height="1688" loading="lazy" alt="A phone: choosing who to exile"><figcaption><span class="tag ph">phone</span>Vote in secret. You can change it until everyone’s in.</figcaption></figure>
 </div>
 <div class="mix">
-<figure class="shot"><img src="/media/tour-modern-tv-reveal.jpg?v=c4ae670d" width="1280" height="720" loading="lazy" alt="The TV: a player exiled, their role shown, and their last words"><figcaption><span class="tag tv">tv</span>The exile, their role, and their last words.</figcaption></figure>
-<figure class="shot"><img src="/media/tour-modern-phone-words.jpg?v=8864ddff" width="780" height="1688" loading="lazy" alt="A phone: the exiled player writing their last words"><figcaption><span class="tag ph">phone</span>The exiled type one line for the table.</figcaption></figure>
+<figure class="shot"><img src="/media/tour-modern-tv-reveal.jpg?v=48f1b2be" width="1280" height="720" loading="lazy" alt="The TV: a player exiled, their role shown, and their last words"><figcaption><span class="tag tv">tv</span>The exile, their role, and their last words.</figcaption></figure>
+<figure class="shot"><img src="/media/tour-modern-phone-words.jpg?v=f8f10d5d" width="780" height="1688" loading="lazy" alt="A phone: the exiled player writing their last words"><figcaption><span class="tag ph">phone</span>The exiled type one line for the table.</figcaption></figure>
 </div>
 
 <h2 id="night">Night</h2>
@@ -348,7 +348,7 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
   // tap a TV screenshot to see it bigger (on a phone held upright, it turns sideways to fill the screen)
   if (typeof HTMLDialogElement === "function") {
     const dlg = document.createElement("dialog"), big = document.createElement("img"), x = document.createElement("button"); let opener = null;
-    dlg.className = "lb"; dlg.setAttribute("aria-label", "Screenshot, enlarged"); x.type = "button"; x.className = "lbx"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
+    dlg.className = "lb"; big.alt = ""; dlg.setAttribute("aria-label", "Screenshot, enlarged"); x.type = "button"; x.className = "lbx"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
     dlg.append(big, x); document.body.append(dlg);
     dlg.addEventListener("click", () => dlg.close());
     dlg.addEventListener("close", () => { big.removeAttribute("src"); if (opener) opener.focus(); });

@@ -40,7 +40,7 @@ Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s
 | # | question | choices | notes |
 |---|---|---|---|
 | 1 | Who’s playing? | 8 to 24 names, in seating order | seat order is the TV’s candle order and the order boards are turned. Best with 8 to 16 |
-| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 4¼ hours for 16, and 5 to 6 for 20 and up), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
+| 2 | How long? | the Short game, or a full evening | the Short game takes about 2 to 2½ hours for 8 to 10 players: one Trial a round, no Interval, no dinner break. A full evening is about 3 to 3½ hours for 8 to 12 players, longer for bigger tables (about 4¼ hours for 16, and 5 to 6 for 20 and up), and dinner adds half an hour to an hour if you choose it under Customise; the phone estimates it for the table |
 | 3 | The prize | up to three prizes | the prize (chocolate coins if left blank, one for every 100 points won); a better one if the Purse reaches half its target; the best if it’s full. They stay secret until the end |
 | 4 | Who’s keeping? | the host keeps / “A friend will keep, and I’ll play” | with the second, the host includes themselves in the players and names the Keeper. The host hands the phone to the friend, who presses Start, so the host never sees the roles |
 | — | Keeper PIN | 4 to 8 digits | opens the Keeper screen on another phone if this one dies. A friend who keeps can change it when the phone is handed over |

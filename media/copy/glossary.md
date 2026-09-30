@@ -79,7 +79,7 @@ These belong to the game. Each phone (and the TV, if there is one) explains each
 | the code on the TV (Modern) | **the QR code** | product | shown on the TV (and the host’s phone shows the Table code); scanning it opens the join page with the Table code filled in |
 | everyone on their own phone | **Modern** | product | the headline way to play. Capitalised |
 | a TV, one phone for a Keeper, blindfolds | **Classic** | product | for groups who’d rather put their phones away. Capitalised. In Classic, a first game keeps the twists off until the second night |
-| the quick game | **the Short game** | product | Classic: about 2 hours for 8 to 10 players |
+| the quick game | **the Short game** | product | Classic: about 2 to 2½ hours for 8 to 10 players |
 
 ## Capitals
 
@@ -93,7 +93,7 @@ What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 
 - **Best at 8 to 16 players.** The game takes 8 to 24.
 - **8 to 12 players:** about 3 to 3½ hours. Stopping for dinner adds half an hour (one break) to an hour (three courses).
-- **The Short game** (Classic): about 2 hours for 8 to 10 players (one Trial a round, no Interval, no dinner break).
+- **The Short game** (Classic): about 2 to 2½ hours for 8 to 10 players (one Trial a round, no Interval, no dinner break).
 - **Bigger tables run longer:** about 4¼ hours for 16, and 5 to 6 for 20 and up.
 - State the capacity as a fact; never sell it as a benefit. No “up to 24 players, one very long night”.
 

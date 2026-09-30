@@ -269,7 +269,7 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
   // tap a TV screenshot to see it bigger (on a phone held upright, it turns sideways to fill the screen)
   if (typeof HTMLDialogElement === "function") {
     const dlg = document.createElement("dialog"), big = document.createElement("img"), x = document.createElement("button"); let opener = null;
-    dlg.className = "lb"; dlg.setAttribute("aria-label", "Screenshot, enlarged"); x.type = "button"; x.className = "lbx"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
+    dlg.className = "lb"; big.alt = ""; dlg.setAttribute("aria-label", "Screenshot, enlarged"); x.type = "button"; x.className = "lbx"; x.setAttribute("aria-label", "Close"); x.textContent = "×";
     dlg.append(big, x); document.body.append(dlg);
     dlg.addEventListener("click", () => dlg.close());
     dlg.addEventListener("close", () => { big.removeAttribute("src"); if (opener) opener.focus(); });

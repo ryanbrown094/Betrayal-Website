@@ -453,6 +453,7 @@ body.nocursor #fsbtn:not(.withsound) { opacity: 0; pointer-events: none }
   .rolls.many > div { gap: .8vh; padding: .8vh .9vh } .rolls.many .seal { width: 5vh; height: 5vh } #tv .rolls.many b { font-size: 2.1vh; overflow-wrap: anywhere } #tv .rolls.many small { font-size: 2vh } }
 @media (max-aspect-ratio: 17/10) { #tv.big .rulelist { font-size: 2.85vh } #tv.big .rtcopy .sub { font-size: 3.5vh } #tv.big .rtcopy .rtag { font-size: 1.9vh } #tv.big .rtcopy .eyebrow { font-size: 2.5vh } }
 @media (max-aspect-ratio: 3/2) { #tv.big .rulelist { font-size: 2.6vh } #tv.big .rulelist.ghostrules { font-size: 3.1vh; max-width: 80vw } #tv.big .sub, #tv.big .rules, #tv.big .q { max-width: 80vw } #tv.big .q { font-size: 5.8vh } #tv.big .a { font-size: 8.6vh } #tv.big .a.long { font-size: 6vh } #tv.big .hilo b { font-size: 8.6vh } }
+@media (max-aspect-ratio: 3/2) { #tv.big .q:has(+ .hilo) { font-size: 5vh } #tv.big .hilo span { font-size: 2.4vh } #tv.big .hilo b { font-size: 7vh } #tv.big .hilo + .a { font-size: 7vh } } /* Higher or Lower on a 4:3 TV: the answer clears the candles */
 #net { position: absolute; left: 50%; bottom: 1.4vh; transform: translateX(-50%); z-index: 10; padding: .7vh 2vh; font-family: var(--sc); font-size: 1.8vh; letter-spacing: .3em; color: var(--blood2); background: rgba(9,7,10,.8); border: max(1px, .1vh) solid rgba(194,41,97,.6); border-radius: .4vh; display: none } #net.on { display: block; animation: pulse 1.6s ease-in-out infinite }
 body.nocursor, body.nocursor * { cursor: none !important }
 .stamp { position: absolute; left: 1.2vw; bottom: 1vh; z-index: 10; font-family: var(--ui); font-size: max(11px, 1.1vh); letter-spacing: .08em; color: rgba(232,208,200,.28) }
@@ -1254,7 +1255,7 @@ const CEREMONY_=(h,g,c)=>{
   return L;
 };
 const SAY={
-  lobbyWait:"Take your seats, everyone, and fill your glasses. When the titles roll on the screen, the game begins.",
+  lobbyWait:"Take your seats, everyone, and get comfortable. When the titles roll on the screen, the game begins.",
   lobby:"Welcome to The Betrayal. Look at the screen: there is a candle burning for every one of you. Tonight, around this table, sit the Loyal, and the Forsworn, who swore the same oath and meant none of it. Each night the Forsworn will poison one of you, and a candle will go out. Each day the Loyal must find them and exile them. Trust no one, not even the person who poured your wine.",
   day:r=>r>1?vr(["Round "+numWord(r)+". The table is smaller, and the Purse is still hungry. Before you can point fingers, you must earn the right. Today’s Trial…","Round "+numWord(r)+". Fewer chairs, longer memories. The Purse won’t fill itself, and a Forsworn would quite like it to stay empty. Today’s Trial…","Round "+numWord(r)+". You know each other a little better now. That should worry you. First, the Purse. Today’s Trial…"],r-1):"Good morning, and welcome to round one. Before you can point fingers, you must earn the right. The Purse only grows if you work together, which is a strange thing to ask of a table with Forsworn on it. Today’s Trial…",
   lastMission:"Five of you left. Before the last vote, one more Trial. Whatever it is worth, it may be the last thing any of you wins tonight.",
@@ -4025,7 +4026,7 @@ function advicePanel() {
 function prizeHost(s) {
   if (!s.prizeTo) return `<p class="note">The TV shows every role.</p>`;
   const r = s.rps, w = r && r.winner && P(r.winner);
-  const pot = (s.prizeIds || []).length ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
+  const pot = (s.prizeIds || []).length && wonPot(s) ? say(SAY.potSplit(money(wonPot(s)), (s.prizeIds || []).map(id => P(id)).filter(Boolean).map(p => p.name), money(s.potEach || 0))) : "";
   if (!r) return say(SAY.prize(prizeName(s), s.prizeTo)) + pot + dir("Hand it over. The TV shows the prize, the Purse and every role.");
   const names = andList(r.ids.map(id => P(id)).filter(Boolean).map(p => p.name));
   return pot + say(SAY.prizeRps(prizeOf(s), names)) + (w ? say(SAY.prizeHome(w.name, prizeOf(s))) + dir("On the TV now. Wrong name? Undo.")
