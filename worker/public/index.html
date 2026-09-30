@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260929211252">
+<meta name="build" content="20260930074408">
 <title>The Betrayal — the party game of loyalty and lies</title>
 <meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
@@ -79,10 +79,9 @@ h2 { font: 400 clamp(32px, 4.6vw, 48px)/1.08 var(--book); margin: 0 0 22px; colo
 /* an evening, by the clock */
 .evening { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 20px 56px; align-items: start }
 ol.clock { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule) }
-ol.clock li { display: grid; grid-template-columns: 5.2em 1fr; gap: 0 18px; padding: 0 0 22px; position: relative }
-ol.clock li::before { content: ""; position: absolute; left: -4px; top: .55em; width: 7px; height: 7px; border-radius: 50%; background: var(--copper) }
+ol.clock li { padding: 0 0 22px 24px; position: relative }
+ol.clock li::before { content: ""; position: absolute; left: -4px; top: .6em; width: 7px; height: 7px; border-radius: 50%; background: var(--copper) }
 ol.clock li.night::before { background: var(--blood) }
-ol.clock time { padding-left: 18px; font: 500 16px/1.6 var(--sc); letter-spacing: .06em; color: var(--rose); font-variant-numeric: tabular-nums lining-nums }
 ol.clock b { display: block; font: 400 23px/1.25 var(--book); color: var(--ivory); margin-bottom: 2px }
 ol.clock span { color: var(--ivory2); font-size: 17px }
 .clocknote { margin: 4px 0 0 18px; font: italic 16px/1.4 var(--book); color: var(--dim) }
@@ -136,7 +135,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
   .evening { grid-template-columns: 1fr } .screens { position: static; max-width: 560px }
   .forms { grid-template-columns: 1fr } .forms .panel + .panel { padding-left: 0; margin-left: 0; border-left: 0; border-top: 1px solid var(--rule) }
 }
-@media (max-width: 480px) { .row { flex-direction: column } .row > .btn { width: 100% } ol.clock li { grid-template-columns: 4.4em 1fr; gap: 0 10px } ol.clock time { padding-left: 14px; font-size: 15px } .bill .item { font-size: 23px } nav.topnav .home { font-size: 24px } }
+@media (max-width: 480px) { .row { flex-direction: column } .row > .btn { width: 100% } .bill .item { font-size: 23px } nav.topnav .home { font-size: 24px } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
 </style>
 </head>
@@ -160,15 +159,15 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
     <div class="evening">
       <div>
         <ol class="clock">
-          <li><time>7:30</time><div><b>You open your Table</b><span>Your booking code, your name, murder or poison, and the prize. That’s the setup.</span></div></li>
-          <li><time>7:40</time><div><b>Everyone scans in</b><span>The code on the TV, or <a href="/join">thebetrayal.co.uk/join</a>. No app, no accounts, just a name.</span></div></li>
-          <li><time>7:50</time><div><b>The Oath</b><span>Each phone asks, privately: would you like to be Forsworn? Then the roles arrive, one screen at a time.</span></div></li>
-          <li><time>8:00</time><div><b>The Trials</b><span>Quizzes and games on the phones, timed and scored for you. They fill the Purse. The Forsworn lose them on purpose, quietly.</span></div></li>
-          <li><time>9:00</time><div><b>The Reckoning</b><span>Talk, accuse, defend, then vote in secret. Someone is exiled, and the table learns what they were.</span></div></li>
-          <li class="night"><time>9:10</time><div><b>Night</b><span>Heads down. Everyone taps a name so nobody can tell who’s choosing. By dawn, someone is dead.</span></div></li>
-          <li><time>10:30</time><div><b>The masks come off</b><span>Five left, then fewer. When the table trusts everyone who remains, every role is shown and the prize is won.</span></div></li>
+          <li><div><b>You open your Table</b><span>Your booking code, your name, murder or poison, and the prize. That’s the setup.</span></div></li>
+          <li><div><b>Everyone scans in</b><span>The code on the TV, or <a href="/join">thebetrayal.co.uk/join</a>. No app, no accounts, just a name.</span></div></li>
+          <li><div><b>The Oath</b><span>Each phone asks, privately: would you like to be Forsworn? Then the roles arrive, one screen at a time.</span></div></li>
+          <li><div><b>The Trials</b><span>Quizzes and games on the phones, timed and scored for you. They fill the Purse. The Forsworn lose them on purpose, quietly.</span></div></li>
+          <li><div><b>The Reckoning</b><span>Talk, accuse, defend, then vote in secret. Someone is exiled, and the table learns what they were.</span></div></li>
+          <li class="night"><div><b>Night</b><span>Heads down. Everyone taps a name so nobody can tell who’s choosing. By dawn, someone is dead.</span></div></li>
+          <li><div><b>The masks come off</b><span>Five left, then fewer. When the table trusts everyone who remains, every role is shown and the prize is won.</span></div></li>
         </ol>
-        <p class="clocknote">A table of ten, roughly. Your phone only says when to begin the next part; the game does the rest.</p>
+        <p class="clocknote">Your phone only says when to begin the next part; the game does the rest.</p>
       </div>
       <div class="screens">
         <figure><img src="/media/tour-modern-tv-quiz.jpg" width="1280" height="720" loading="lazy" alt="The TV: a quiz question with a countdown, and each player's seal lighting up as they answer on their phone"></figure>

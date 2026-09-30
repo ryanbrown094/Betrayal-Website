@@ -4,17 +4,26 @@
 .wrap { max-width: 1000px }
 .shot { margin: 18px 0 30px } .shot img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(230,165,140,.25); background: #130d14 }
 .shot figcaption { margin-top: 10px; color: var(--ivory2); font-size: 16.5px; line-height: 1.55 } .shot figcaption b { color: var(--ivory) }
-.tag { display: inline-block; font: 700 11px/1 var(--sc); letter-spacing: .16em; text-transform: uppercase; padding: 4px 8px; border-radius: 99px; margin-right: 6px; vertical-align: 2px }
-.tag.tv { background: rgba(230,165,140,.16); color: var(--rose) } .tag.ph { background: rgba(143,163,184,.16); color: #b9c8d6 }
+.tag { font: 700 13px/1 var(--sc); letter-spacing: .06em; margin-right: 8px } .tag::after { content: " ·"; color: var(--copper) }
+.tag.tv { color: var(--rose) } .tag.ph { color: #b9c8d6 }
+/* Modern or Classic: one version at a time, like the tabs of a book (both show without JavaScript) */
+.vtabs { display: flex; gap: 28px; margin: 26px 0 8px; border-bottom: 1px solid rgba(230,165,140,.22) }
+.vtabs button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 8px 0 10px; font: 400 26px/1 var(--book); color: #877e78; cursor: pointer }
+.vtabs button[aria-pressed="true"] { color: var(--ivory); border-bottom-color: var(--copper) } .vtabs button:hover { color: var(--ivory) }
+.vtabs + .vnote { margin: 10px 0 0; color: var(--ivory2); font-size: 16.5px }
+.js .ver:not(.on) { display: none }
 .phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 18px 0 30px } .phones .shot { margin: 0 } .phones img { border-radius: 18px }
 .phones.four { grid-template-columns: repeat(4, minmax(0, 1fr)) } @media (max-width: 900px) and (min-width: 701px) { .phones.four { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
 @media (max-width: 700px) { .phones, .phones.four { grid-template-columns: 1fr; gap: 26px; max-width: 340px; margin-left: auto; margin-right: auto } }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px } @media (max-width: 700px) { .pair { grid-template-columns: 1fr } }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 30px 0 } .btn.ghost { background: transparent; color: var(--ivory) }
 </style>
-<div class="eyebrow">see it in action</div>
 <h1>A night of The Betrayal</h1>
-<p>Real screenshots from a game. Everyone plays on their own phone; the TV, if you use one, puts on the show. Further down: <a href="#classic">Classic</a>, the old-fashioned way, with a Keeper, blindfolds and chalk.</p>
+<p>Real screenshots from a game, in the version you choose.</p>
+<div class="vtabs" role="group" aria-label="Which version to show"><button type="button" data-v="modern" aria-pressed="true">Modern</button><button type="button" data-v="classic" aria-pressed="false">Classic</button></div>
+
+<div class="ver on" data-v="modern">
+<p class="vnote">Everyone plays on their own phone; the TV, if you use one, puts on the show.</p>
 
 <h2 id="join">Everyone joins</h2>
 <p>Guests scan the code on the TV, or go to thebetrayal.co.uk/join, type the Table code and their name, and they’re in. From then on it’s all on their own phones: the Oath, their secret role, every Trial, the vote and the night. The host plays too; their phone only moves the evening on.</p>
@@ -31,7 +40,10 @@
 <figure class="shot"><img src="/media/tour-modern-tv-quiz.jpg" width="1280" height="720" loading="lazy" alt="The TV: a quiz question, a countdown, and the seals of those who have answered lighting up"><figcaption><span class="tag tv">tv</span>A question for everyone at once. Seals light up as people answer.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-modern-tv-reveal.jpg" width="1280" height="720" loading="lazy" alt="The TV: a player exiled at the Reckoning, and their role revealed"><figcaption><span class="tag tv">tv</span>The Reckoning’s verdict, and the moment the role is turned over.</figcaption></figure>
 </div>
-<h2 id="classic">Classic: the old-fashioned way</h2>
+</div>
+
+<div class="ver" data-v="classic" id="classic">
+<h2>Classic: the old-fashioned way</h2>
 <p>Prefer phones away? In Classic, one phone runs the game: the Keeper reads every line and doesn’t play, guests wear blindfolds at night and chalk their votes, and the TV puts on the show. The rest of this page is a Classic night.</p>
 <h3>Before the guests arrive</h3>
 <p>The Keeper sets the game up on their phone: five questions (who’s playing, how long, murder or poison, the prize, who keeps), and the rest is planned from the answers. Every choice is explained, and any of it can be changed before the game starts. A first game keeps the twists off, so everyone learns the game itself.</p>
@@ -75,4 +87,15 @@
 <figure class="shot"><img src="/media/tour-tv-13-final.jpg" width="1280" height="720" loading="lazy" alt="The TV: the final result and the full roll of who was who"><figcaption><span class="tag tv">tv</span>The final always starts with five. When the last four vote unanimously to end it, every seal is turned and everyone finally sees who they were sitting beside all night.</figcaption></figure>
 <figure class="shot"><img src="/media/tour-tv-14-awards.jpg" width="1280" height="720" loading="lazy" alt="The TV: end-of-game awards"><figcaption><span class="tag tv">tv</span>Then the awards: The Grand Deceiver, The Sharpest Eye, Barking Up the Wrong Tree, and more.</figcaption></figure>
 </div>
+</div>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/rules">Read the full rules</a></div>
+<script>
+(() => {
+  document.documentElement.classList.add("js");
+  const btns = [...document.querySelectorAll(".vtabs button")], vers = [...document.querySelectorAll(".ver")];
+  const show = (v, push) => { btns.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v))); vers.forEach((x) => x.classList.toggle("on", x.dataset.v === v)); if (push) history.replaceState(null, "", v === "classic" ? "#classic" : location.pathname); };
+  btns.forEach((b) => (b.onclick = () => show(b.dataset.v, true)));
+  const fromHash = () => show(location.hash === "#classic" ? "classic" : "modern");
+  addEventListener("hashchange", fromHash); fromHash();
+})();
+</script>
