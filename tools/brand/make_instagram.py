@@ -101,62 +101,68 @@ FOOT = f'<b>Book a Table, £10</b> &nbsp;·&nbsp; {SITE}'
 W, H, SH = 1080, 1350, 1920
 
 # ---- feed post 1: the launch post ----
-def post1():
-    return f"""<div class=c style="width:{W}px;height:{H}px;padding:70px 70px 60px">
-      {crest(150)}<div style="height:18px"></div>{word(470)}
-      <div class=say style="font-size:44px;margin-top:26px">Everyone swore an oath. Not everyone meant it.</div>
-      <div style="height:40px"></div>{duo(shot('tv-reveal'), shot('phone-role'), tvw=800, phh=480)}
-      <div class=body style="font-size:29px;margin-top:40px;max-width:900px">A party game where a few of your friends are secretly <b>Forsworn</b>, and the rest of the table has one evening to find them.</div>
+def post1(h=1350):
+    q = h < 1200
+    return f"""<div class=c style="width:{W}px;height:{h}px;padding:{'50px 60px 44px' if q else '70px 70px 60px'}">
+      {crest(100 if q else 150)}<div style="height:{12 if q else 18}px"></div>{word(360 if q else 470)}
+      <div class=say style="font-size:{36 if q else 44}px;margin-top:{16 if q else 26}px">Everyone swore an oath. Not everyone meant it.</div>
+      <div style="height:{24 if q else 40}px"></div>{duo(shot('tv-reveal'), shot('phone-role'), W=800, tvw=680, phw=200, phh=390) if q else duo(shot('tv-reveal'), shot('phone-role'), tvw=800, phh=480)}
+      <div class=body style="font-size:{25 if q else 29}px;margin-top:{22 if q else 40}px;max-width:900px">A party game where a few of your friends are secretly <b>Forsworn</b>, and the rest of the table has one evening to find them.</div>
       <div style="flex:1"></div>
-      <div class=facts style="font-size:27px">{''.join(f'<span>{x}</span>' for x in ('8 to 24 players', 'A phone each, no app', 'About 3 hours'))}</div>
-      <div class=rule style="width:620px;margin:26px 0 22px"></div><div class=foot style="font-size:28px">{FOOT}</div></div>"""
+      <div class=facts style="font-size:{24 if q else 27}px">{''.join(f'<span>{x}</span>' for x in ('8 to 24 players', 'A phone each, no app', 'About 3 hours'))}</div>
+      <div class=rule style="width:620px;margin:{18 if q else 26}px 0 {16 if q else 22}px"></div><div class=foot style="font-size:{25 if q else 28}px">{FOOT}</div></div>"""
 
 # ---- feed post 2: the carousel ----
-def slide(n, total, eyebrow, title, text, visual):
-    return f"""<div class=c style="width:{W}px;height:{H}px;padding:70px 70px 60px">
+def slide(n, total, eyebrow, title, text, visual, h=1350):
+    q = h < 1200
+    return f"""<div class=c style="width:{W}px;height:{h}px;padding:{'54px 64px 44px' if q else '70px 70px 60px'}">
       <div class=num>{n} / {total}</div>
-      <div class=eyebrow style="font-size:24px;margin-top:6px">{eyebrow}</div>
-      <div class=h style="font-size:86px;margin-top:14px">{title}</div>
-      <div class=body style="font-size:31px;margin-top:18px;max-width:900px">{text}</div>
+      <div class=eyebrow style="font-size:{22 if q else 24}px;margin-top:6px">{eyebrow}</div>
+      <div class=h style="font-size:{70 if q else 86}px;margin-top:{10 if q else 14}px">{title}</div>
+      <div class=body style="font-size:{27 if q else 31}px;margin-top:{12 if q else 18}px;max-width:900px">{text}</div>
       <div style="flex:1"></div>{visual}<div style="flex:1"></div>
       <div class=foot style="font-size:24px;color:#877E78">{'Swipe for more &nbsp;→' if n < total else SITE}</div></div>"""
 
+def V(q, t, p):
+    return duo(shot(t), shot(p), W=840, tvw=760, phw=210, phh=420) if q else duo(shot(t), shot(p))
+
 STEPS = [
     ('everyone joins', 'Scan the code', 'Guests scan the QR code on the TV, or go to <b>thebetrayal.co.uk/join</b> and type the Table code. No app and no accounts, just a name.',
-     lambda: duo(shot('tv-lobby'), shot('phone-join'))),
+     lambda q: V(q, 'tv-lobby', 'phone-join')),
     ('the oath', 'A secret for every phone', 'Each phone asks, privately, whether you’d like to be <b>Forsworn</b>. Then the roles arrive. A few of you are Forsworn; everyone else is <b>Loyal</b>.',
-     lambda: pair(shot('phone-oath'), shot('phone-role'))),
+     lambda q: pair(shot('phone-oath'), shot('phone-role'), 250, 440, 36) if q else pair(shot('phone-oath'), shot('phone-role'))),
     ('the trials', 'Play for the Purse', 'Quizzes, word games, charades and more, timed and scored on your phones. Every win fills the <b>Purse</b>. The Forsworn lose on purpose, quietly.',
-     lambda: duo(shot('tv-quiz'), shot('phone-quiz'))),
+     lambda q: V(q, 'tv-quiz', 'phone-quiz')),
     ('the reckoning', 'Argue it out', 'Accuse whoever you like, then vote in secret on your phone. The exiled player’s role is shown to the whole table.',
-     lambda: duo(shot('tv-vote'), shot('phone-vote'))),
+     lambda q: V(q, 'tv-vote', 'phone-vote')),
     ('night and dawn', 'Heads down', 'Everyone taps a name, so nobody can tell who’s choosing. Only the Forsworn’s choice counts. By morning, someone is gone.',
-     lambda: duo(shot('tv-dawn'), shot('phone-night-loyal'))),
+     lambda q: V(q, 'tv-dawn', 'phone-night-loyal')),
     ('the end', 'The masks come off', 'When the last few trust each other, every role is shown. The Loyal win the Purse, or the Forsworn take what it fell short.',
-     lambda: duo(shot('tv-end'), shot('phone-end'))),
+     lambda q: V(q, 'tv-end', 'phone-end')),
 ]
 
-def carousel():
+def carousel(h=1350):
+    q = h < 1200
     total = len(STEPS) + 2
-    cover = f"""<div class=c style="width:{W}px;height:{H}px;padding:110px 70px 0">
-      <div class=num>1 / {total}</div>{crest(260)}
-      <div class=eyebrow style="font-size:26px;margin-top:40px">a party game for 8 to 24</div>
-      <div class=h style="font-size:98px;margin-top:18px">How a night of<br>The Betrayal works</div>
-      <div class=say style="font-size:38px;margin-top:24px">From the first scan to the last reveal.</div>
-      <div class=foot style="font-size:26px;margin-top:34px;color:#877E78">Swipe &nbsp;→</div>
-      <div style="flex:1"></div><div style="margin-bottom:-6px">{candles(9, (5,), 130, 32)}</div>
+    cover = f"""<div class=c style="width:{W}px;height:{h}px;padding:{'70px 70px 0' if q else '110px 70px 0'}">
+      <div class=num>1 / {total}</div>{crest(190 if q else 260)}
+      <div class=eyebrow style="font-size:{24 if q else 26}px;margin-top:{26 if q else 40}px">a party game for 8 to 24</div>
+      <div class=h style="font-size:{84 if q else 98}px;margin-top:{12 if q else 18}px">How a night of<br>The Betrayal works</div>
+      <div class=say style="font-size:{34 if q else 38}px;margin-top:{16 if q else 24}px">From the first scan to the last reveal.</div>
+      <div class=foot style="font-size:{24 if q else 26}px;margin-top:{22 if q else 34}px;color:#877E78">Swipe &nbsp;→</div>
+      <div style="flex:1"></div><div style="margin-bottom:-6px">{candles(9, (5,), 100 if q else 130, 32)}</div>
       <div style="width:calc(100% + 140px);height:36px;background:linear-gradient(#251428,#130D14);border-top:2px solid #763C29"></div></div>"""
-    slides = [cover] + [slide(i + 2, total, e, t, x, v()) for i, (e, t, x, v) in enumerate(STEPS)]
-    slides.append(f"""<div class=c style="width:{W}px;height:{H}px;padding:120px 80px 70px">
-      <div class=num>{total} / {total}</div>{crest(200)}
-      <div class=h style="font-size:104px;margin-top:40px">Book a Table</div>
-      <div class=say style="font-size:44px;margin-top:10px">£10 for one party of 8 to 24</div>
-      <div class=body style="font-size:31px;margin-top:40px;max-width:820px;text-align:left">
+    slides = [cover] + [slide(i + 2, total, e, t, x, v(q), h) for i, (e, t, x, v) in enumerate(STEPS)]
+    slides.append(f"""<div class=c style="width:{W}px;height:{h}px;padding:{'70px 80px 50px' if q else '120px 80px 70px'}">
+      <div class=num>{total} / {total}</div>{crest(130 if q else 200)}
+      <div class=h style="font-size:{88 if q else 104}px;margin-top:{24 if q else 40}px">Book a Table</div>
+      <div class=say style="font-size:{38 if q else 44}px;margin-top:10px">£10 for one party of 8 to 24</div>
+      <div class=body style="font-size:{27 if q else 31}px;margin-top:{26 if q else 40}px;max-width:820px;text-align:left">
         <p style="margin-bottom:16px">Open it whenever you’re ready: it lasts 48 hours from the moment you start.</p>
         <p style="margin-bottom:16px">Everyone plays on their own phone. A TV is optional and puts on the show.</p>
         <p>Hosting often? Become a Regular for £20 a month and open a new Table whenever you like.</p></div>
-      <div style="flex:1"></div>{word(420)}
-      <div class=foot style="font-size:34px;margin-top:22px;color:#E8D0C8">{SITE}</div>
+      <div style="flex:1"></div>{word(330 if q else 420)}
+      <div class=foot style="font-size:{30 if q else 34}px;margin-top:{14 if q else 22}px;color:#E8D0C8">{SITE}</div>
       <div class=foot style="font-size:24px;margin-top:10px;color:#877E78">link in bio</div></div>""")
     return slides
 
@@ -197,7 +203,7 @@ def avatar():
       <img src="{CREST}" style="height:{W * .86:.0f}px;display:block"></div>"""
 
 # ---- the guide ----
-TAGS = '#partygames #gamesnight #partyideas #murdermysteryparty #hostingideas #birthdayideas #partygame #socialdeduction'
+TAGS = '#partygames #gamesnight #socialdeduction #murdermysteryparty #partyideas #whodunnit #hostingideas #birthdayideas #mafiagame #werewolfgame #henpartyideas #christmaspartyideas'
 CAP1 = f"""Everyone at the table swears an oath. A few of them don’t mean it.
 
 The Betrayal is a party game for 8 to 24 people, played on your own phones. Each of you gets a secret role. A few of you are Forsworn, quietly working against everyone else, and the rest of the table has one evening to find them.
@@ -221,15 +227,20 @@ GUIDE = [
         ('Bio', 'The party game of loyalty and lies 🕯️<br>8 to 24 players, played on your phones<br>A few of you are secretly Forsworn<br>Book a Table ↓'),
         ('Website', SITE)]),
     ('Feed post 1: the launch post', [
-        ('Image', '<code>1-feed/post-1.png</code> (one image)'),
+        ('Image', '<code>post-1.png</code> (one image), from <code>1-feed-4x5</code> or <code>1-feed-1x1</code>'),
         ('Caption', CAP1.replace('\n', '<br>')),
         ('Alt text', 'The Betrayal crest above a TV showing an exile being revealed, and a phone showing a secret Forsworn role card.'),
         ('When', 'First, on launch day. An evening post (around 7 to 9pm) does best for party content.')]),
     ('Feed post 2: how a night works (carousel)', [
-        ('Images', '<code>1-feed/post-2-slide-1.png</code> to <code>post-2-slide-8.png</code>, in number order, as one post'),
+        ('Images', '<code>post-2-slide-1.png</code> to <code>post-2-slide-8.png</code>, in number order, as one post, all from the same folder'),
         ('Caption', CAP2.replace('\n', '<br>')),
         ('Alt text', 'Eight slides walking through a game of The Betrayal, with real screens from the TV and the phones: joining, the Oath, the Trials, the Reckoning, night, the end, and the price.'),
         ('When', 'A day or two after post 1. Pin both posts to the top of your profile (tap ⋯ on the post, then Pin to your profile).')]),
+    ('Hashtags', [
+        ('Use', 'Each caption already ends with twelve. Keep the first five first: if Instagram limits how many you can add, keep those.'),
+        ('By season', 'Swap in #halloweenparty (October), #christmasparty and #officechristmasparty (November and December), #newyearseve (late December).'),
+        ('By occasion', '#henparty #stagdo #birthdayparty #housewarming #uniparty #familygamesnight'),
+        ('Avoid', 'Other brands’ names, above all TV shows such as The Traitors, and other games’ trade marks (Among Us, Cluedo). The Betrayal isn’t connected to any of them, and the tags invite takedowns.')]),
     ('Stories, in order', [
         ('Story 1', '<code>2-stories/story-1.png</code>. Add a poll sticker in the space below the picture: “Could you lie to your friends all night?” Yes / Absolutely not.'),
         ('Story 2', '<code>2-stories/story-2.png</code>. No stickers needed.'),
@@ -250,15 +261,19 @@ def guide_html():
       <img src="{(LOGOS / 'the-betrayal-lockup-horizontal-ink.svg').as_uri()}" style="height:13mm">
       <h1>Instagram launch pack</h1>
       <p class=lede>What to post, in what order, and the words to go with each. Every image is in this folder at Instagram’s full size (1440 pixels wide).</p>
+      <div class=order><b>Sizes:</b> every feed image comes in two shapes. <code>1-feed-4x5</code> is portrait and takes up more of the screen, so use it unless you prefer square. <code>1-feed-1x1</code> is square. Pick one shape per post: a carousel must use the same shape for every slide. Stories are 9:16, the full phone screen.</div>
       <div class=order><b>The order:</b> set up the profile → feed post 1 → stories 1, 2, 3 on the same day → feed post 2 a day or two later.</div>
       {secs}"""
 
 def render():
     if OUT.exists():
         shutil.rmtree(OUT)
-    (OUT / '1-feed').mkdir(parents=True); (OUT / '2-stories').mkdir()
-    jobs = [(OUT / 'profile-picture.png', avatar(), W, W), (OUT / '1-feed' / 'post-1.png', post1(), W, H)]
-    jobs += [(OUT / '1-feed' / f'post-2-slide-{i + 1}.png', s, W, H) for i, s in enumerate(carousel())]
+    (OUT / '2-stories').mkdir(parents=True)
+    jobs = [(OUT / 'profile-picture.png', avatar(), W, W)]
+    for d, h in (('1-feed-4x5', H), ('1-feed-1x1', W)):
+        (OUT / d).mkdir()
+        jobs += [(OUT / d / 'post-1.png', post1(h), W, h)]
+        jobs += [(OUT / d / f'post-2-slide-{i + 1}.png', s, W, h) for i, s in enumerate(carousel(h))]
     jobs += [(OUT / '2-stories' / f'story-{i + 1}.png', fn(), W, SH) for i, fn in enumerate((story1, story2, story3))]
     with tempfile.TemporaryDirectory() as td, sync_playwright() as p:
         tmp = pathlib.Path(td) / 'r.html'; b = p.chromium.launch()
