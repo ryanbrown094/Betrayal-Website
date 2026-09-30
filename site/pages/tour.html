@@ -39,16 +39,18 @@ dialog.lb img { position: absolute; left: 50%; top: 50%; width: min(96vw, calc(9
 dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(230,165,140,.45); background: rgba(9,7,10,.7); color: var(--rose); font: 400 28px/1 var(--ui); cursor: pointer }
 /* phones and iPads upright: each group of screenshots is a strip you swipe, edge to edge, with the next one peeking in */
 @media (max-width: 900px) {
-  .phones, .phones.four, .phones.two, .mix, .pair { display: flex; align-items: flex-start; gap: 14px; max-width: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
+  .phones, .phones.four, .phones.two, .mix, .pair, .run { display: flex; align-items: flex-start; gap: 14px; max-width: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
     margin: 18px calc(-1 * max(20px, env(safe-area-inset-right))) 30px calc(-1 * max(20px, env(safe-area-inset-left))); padding: 0 max(20px, env(safe-area-inset-right)) 2px max(20px, env(safe-area-inset-left));
     scroll-padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
-  :is(.phones, .mix, .pair)::-webkit-scrollbar { display: none }
-  :is(.phones, .mix, .pair) > .shot, .mix .shot:last-child { flex: none; width: min(62vw, 260px); max-width: none; margin: 0; scroll-snap-align: start }
-  :is(.phones, .mix, .pair) > .shot:has(img[width="1280"]) { width: 86vw }
-  .js :is(.phones, .mix, .pair).strip { margin-bottom: 0 }
-  .dots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 30px } .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(230,165,140,.28); transition: background .2s ease } .dots i.on { background: var(--rose) }
+  :is(.phones, .mix, .pair, .run)::-webkit-scrollbar { display: none }
+  .run { display: flex; align-items: flex-start; gap: 14px }
+  .run > :is(.phones, .mix, .pair) { display: contents }
+  :is(.phones, .mix, .pair, .run) .shot, .mix .shot:last-child { flex: none; width: min(62vw, 260px); max-width: none; margin: 0; scroll-snap-align: start }
+  :is(.phones, .mix, .pair, .run) .shot:has(img[width="1280"]) { width: 86vw }
+  .js :is(.phones, .mix, .pair, .run).strip { margin-bottom: 0 }
+  .dots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 26px } .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(230,165,140,.28); transition: background .2s ease } .dots i.on { background: var(--rose) }
 }
-@media (min-width: 901px) { .dots { display: none } }
+@media (min-width: 901px) { .dots { display: none } .run { display: contents } }
 </style>
 <h1>A night of The Betrayal</h1>
 <p>Real screenshots from a game, played whichever way you choose.</p>
@@ -229,13 +231,14 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
     if (chips.scrollWidth > chips.clientWidth) { const r = a.getBoundingClientRect(), c = chips.getBoundingClientRect(); chips.scrollTo({ left: chips.scrollLeft + r.left - c.left - (c.width - r.width) / 2, behavior: smooth() }); }
   };
   // a strip of screenshots: one dot per shot, lit while that shot is (mostly) on screen
-  const lit = (s, d) => { const r = s.getBoundingClientRect(); [...s.children].forEach((f, i) => { const b = f.getBoundingClientRect(), seen = Math.min(b.right, r.right) - Math.max(b.left, r.left); d.children[i].classList.toggle("on", seen >= b.width * 0.6); }); };
+  const shotsOf = (s) => $$(".shot", s);
+  const lit = (s, d) => { const r = s.getBoundingClientRect(); shotsOf(s).forEach((f, i) => { const b = f.getBoundingClientRect(), seen = Math.min(b.right, r.right) - Math.max(b.left, r.left); d.children[i].classList.toggle("on", seen >= b.width * 0.6); }); };
   const strips = () => {
-    for (const s of $$(".ver.on :is(.phones, .mix, .pair)")) {
+    for (const s of $$(".ver.on :is(.run, .phones, .mix, .pair)").filter((x) => !x.parentElement.closest(".run"))) {
       let d = s.nextElementSibling;
       if (!d || !d.classList.contains("dots")) {
         d = document.createElement("div"); d.className = "dots"; d.setAttribute("aria-hidden", "true");
-        for (let i = 0; i < s.children.length; i++) d.append(document.createElement("i"));
+        for (let i = 0; i < shotsOf(s).length; i++) d.append(document.createElement("i"));
         s.after(d); let t = 0; s.addEventListener("scroll", () => { if (!t) t = requestAnimationFrame(() => { t = 0; lit(s, d); }); }, { passive: true });
       }
       const over = s.scrollWidth > s.clientWidth + 4;
@@ -255,6 +258,14 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
     setBar(); strips(); spy();
   };
   btns.forEach((b) => (b.onclick = () => show(b.dataset.v, true)));
+  // screenshots with no words between them make one run: one strip on a phone (on a wide screen the run's box vanishes and nothing moves)
+  const pic = (e) => e && (e.matches("figure.shot") || e.matches(".phones, .mix, .pair"));
+  for (const ver of vers) for (let e = ver.firstElementChild; e; e = e.nextElementSibling) {
+    if (!pic(e) || !pic(e.nextElementSibling)) continue;
+    const run = document.createElement("div"); run.className = "run"; e.before(run);
+    while (pic(run.nextElementSibling)) run.append(run.nextElementSibling);
+    e = run;
+  }
   // tap a TV screenshot to see it bigger (on a phone held upright, it turns sideways to fill the screen)
   if (typeof HTMLDialogElement === "function") {
     const dlg = document.createElement("dialog"), big = document.createElement("img"), x = document.createElement("button"); let opener = null;
