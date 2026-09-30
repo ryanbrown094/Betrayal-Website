@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930113052">
+<meta name="build" content="20260930125918">
 <title>The Betrayal · the party game of loyalty and lies</title>
-<meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app, no props, and the host plays too.">
+<meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight murders, played on everyone’s phones. No app to install, and nothing to learn in advance.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
 <meta name="theme-color" content="#09070a">
 <meta property="og:title" content="The Betrayal · the party game of loyalty and lies">
@@ -147,7 +147,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
   <header class="hero">
     <h1><span class="oath">Everyone swore an oath.</span> <span class="crack" data-t="Not everyone meant it.">Not everyone meant it.</span></h1>
     <div>
-      <p class="lede"><b>The Betrayal</b> is a party game for 8 to 24, played on everyone’s own phone. Scan the code, get a secret role, and trust nobody. The host plays too.</p>
+      <p class="lede"><b>The Betrayal</b> is a party game for 8 to 24, played on everyone’s own phone. Scan the code, get a secret role, and trust nobody.</p>
       <div class="ctas"><a class="btn" id="buy" href="#start">Book a Table</a><a class="more-link" href="#start">I have a booking</a></div>
       <div class="price" id="price"></div>
     </div>
@@ -179,7 +179,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
   </section>
 
   <section>
-    <p class="aside">Rather keep phones away? Every Table can also be played <b>Classic</b>: one phone runs it, a Keeper reads the script like a presenter, guests wear blindfolds at night and chalk their votes. Same game, same price. You choose when you open your Table.</p>
+    <p class="aside">For groups who’d rather keep phones away, every Table can also be played <b>Classic</b>: one phone runs it, a Keeper reads the script like a presenter, guests wear blindfolds at night and chalk their votes. Same game, same price. You choose when you open your Table.</p>
   </section>
 
   <section>
@@ -255,7 +255,7 @@ async function go(pass, room, test) {
   const card = (h, p, cta, fn, cls) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode " + (cls || ""); c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
   // Modern is the game we lead with; Classic is there for groups who'd rather put their phones away
   row.append(
-    card("Modern <i>(recommended)</i>", "Everyone plays on their own phone, from the secret roles to the votes, the nights and every Trial. You play too, and the TV is optional.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
+    card("Modern <i>(recommended)</i>", "Everyone plays on their own phone, you included, from the secret roles to the votes, the nights and every Trial. The TV is optional.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
     card("Classic", "Phones away: a Keeper runs it from one phone and doesn’t play; blindfolds at night, votes chalked on boards, the TV puts on the show.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }, "quiet"));
   // the master code opens a test room: Modern can be played against bots there
   if (test) row.append(card("Modern test", "You against bots that swear, vote, choose at night and trust by themselves. Trials give random scores; every countdown is ten seconds.", "Play against bots", () => { try { sessionStorage.setItem("bt-test-" + room, "1") } catch (e) {} location.href = "/m/" + room + "#create-bots" }));

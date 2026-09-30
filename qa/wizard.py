@@ -89,10 +89,10 @@ try:
         h.fill("#pinset", "8642"); nxt(); h.wait_for_timeout(400)
         st = E("()=>state&&{n:state.players.length,t:state.players.filter(p=>p.role==='cloak').length,rules:state.rules,pin:state.hostPin,host:state.brand.host,prizes:state.prizes,prize:state.prize}")
         check("Start game: twelve players, three Forsworn, the plan as chosen, the Keeper's PIN", bool(st) and st["n"] == 12 and st["t"] == 3 and st["pin"] == "8642" and st["host"] == "Sam" and st["rules"]["rounds"] == 5 and st["rules"]["shield"] == "mix" and st["rules"]["courses"] and st["prize"] == "a bottle of wine" and st["prizes"] == [{"at": 1, "what": "a night out"}], [st, errs, E("()=>[setupMsg,setupDraft&&setupDraft.step]")])
-        # an old draft on the quick-path page lands on the summary
+        # a draft saved on the summary opens there
         E(reset); h.wait_for_timeout(80)
-        E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{NAMES!r}.join('\\n'),pin:'9999',step:'fast'}});renderHost()}}"); h.wait_for_timeout(60)
-        check("an old quick-path draft lands on the summary", step() == "review")
+        E(f"()=>{{setupDraft=Object.assign(SETUP0(),{{names:{NAMES!r}.join('\\n'),pin:'9999',step:'review'}});renderHost()}}"); h.wait_for_timeout(60)
+        check("a draft saved on the summary opens there", step() == "review")
         E("()=>{setupDraft.pin='';renderHost()}"); nxt(); h.wait_for_timeout(100)
         check("Start with a missing PIN goes to the PIN page", step() == "pin" and not E("()=>!!state"))
         h.fill("#pinset", "9999"); nxt(); h.wait_for_timeout(100); nxt(); h.wait_for_timeout(300)

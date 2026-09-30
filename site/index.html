@@ -242,7 +242,7 @@ async function go(pass, room, test) {
   const card = (h, p, cta, fn, cls) => { const c = document.createElement("button"); c.type = "button"; c.className = "mode " + (cls || ""); c.innerHTML = "<b>" + h + "</b><span>" + p + "</span><em>" + cta + "</em>"; c.onclick = fn; return c };
   // Modern is the game we lead with; Classic is there for groups who'd rather put their phones away
   row.append(
-    card("Modern <i>(recommended)</i>", "Everyone plays on their own phone, from the secret roles to the votes, the nights and every Trial. You play too, and the TV is optional.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
+    card("Modern <i>(recommended)</i>", "Everyone plays on their own phone, you included, from the secret roles to the votes, the nights and every Trial. The TV is optional.", "Play Modern", () => { try { sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room + "#create" }, "primary"),
     card("Classic", "Phones away: a Keeper runs it from one phone and doesn’t play; blindfolds at night, votes chalked on boards, the TV puts on the show.", "Play Classic", () => { location.href = "/t/" + room + "#keeper" }, "quiet"));
   // the master code opens a test room: Modern can be played against bots there
   if (test) row.append(card("Modern test", "You against bots that swear, vote, choose at night and trust by themselves. Trials give random scores; every countdown is ten seconds.", "Play against bots", () => { try { sessionStorage.setItem("bt-test-" + room, "1") } catch (e) {} location.href = "/m/" + room + "#create-bots" }));

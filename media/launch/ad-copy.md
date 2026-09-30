@@ -2,7 +2,7 @@
 
 Pair each set with the matching image in `ads/`: the `feed-1080x1350` file for feeds, the `story-1080x1920` file for Stories and Reels. Meta shows about 125 characters of primary text before “See more”, so the first line has to work on its own. Headlines stay under 40 characters and descriptions under 30.
 
-Every line follows `01-game/glossary-and-naming.md`: public words only, no TV programme or its words, no Hasbro Betrayal words, and the twists are never named or explained. Sell Modern: everyone plays on their own phone, nothing to buy, and the host plays too. Classic (a Keeper, blindfolds and chalk) gets a line at most. Say the table size and the length honestly; never sell a big table or a long night.
+Every line follows `01-game/glossary-and-naming.md`: public words only, no TV programme or its words, no Hasbro Betrayal words, and the twists are never named or explained. Sell Modern: everyone plays on their own phone, and there’s nothing to buy. Classic (a Keeper, blindfolds and chalkboards) gets a line at most, as the choice for groups who’d rather put their phones away. Say the table size and the length honestly; never sell a big table or a long night.
 
 ---
 
@@ -20,10 +20,10 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 **Primary text**
 - A: Scan the code and type your name to join. Your role arrives on your phone, and nobody else sees it.
-- B: If you’re hosting, you play too. The game plans its own Trials and votes, and your phone just says when to begin.
+- B: Whoever hosts gets a secret role like everyone else. The game plans its own Trials and votes, and your phone just says when to begin.
 - C: Would you like to be Forsworn? The question arrives on every phone at once. Nobody sees your answer.
 
-**Headline:** Everyone plays on their phone · or · The host plays too
+**Headline:** Everyone plays on their phone · or · Nobody else sees your role
 **Description:** No app · no accounts
 
 ## 3 · Under £2 a guest (`03-under-2-a-guest`)
@@ -51,7 +51,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - Charades, but only the actor’s phone knows the word.
 - If you’re eating together, switch on dinner in courses and the game stops for each course between the rounds.
 - The Loyal build the Purse, and the Forsworn, if they win, take whatever it falls short, so they sabotage it quietly.
-- If you’d rather play the old-fashioned way, Classic has a Keeper, blindfolds and chalk.
+- For a night with the phones put away, Classic has a Keeper, blindfolds and chalkboards.
 
 ## Seasonal lines (weeks 3 and 4)
 

@@ -1,6 +1,6 @@
 # The Betrayal: words, names and naming
 
-Locked in 28 September 2026, updated 29 September 2026 (the Table, the Oath, the Casting Vote, PURSE or SELF, two tiers of words, and **Modern first**: everyone plays on their own phone, and the one-phone game with a Keeper is now Classic, the old-fashioned way). This replaces the Cloak & Candle vocabulary. The **The Betrayal** column of the rename table is what the game, the site and every piece of marketing move to.
+The words the game, the site and every piece of marketing use, how to write them, and the words never to use.
 
 ## The name
 
@@ -20,24 +20,10 @@ Everyone at the table swears an oath. A few of them are lying. They are the **Fo
 
 ## Two ways to play: Modern first
 
-Every Table can be played two ways, chosen when it’s opened. **Modern is the headline**: lead with it everywhere. Classic is the secondary option, for anyone who’d “prefer it the old-fashioned way”, and gets a line or a clearly marked section, never the lead.
+Every Table can be played two ways, chosen when it’s opened. **Modern is the headline**: lead with it everywhere. Classic is the other way to play, for groups who’d rather put their phones away. It gets a line or a clearly marked section, never the lead.
 
-- **Modern:** everyone plays on their own phone. Guests scan the QR code on the TV, or go to **thebetrayal.co.uk/join** and type the **Table code** and their name, like a pub-quiz app. The Oath is a question on every phone; roles, votes, the night and poisonings arrive in secret on each phone; every Trial is played there. The **host** plays too: their phone only moves the evening on. No blindfolds, no chalkboards, no Keeper, and the TV is optional.
-- **Classic:** one phone runs the game. **The Keeper** reads the script and doesn’t play; guests wear blindfolds at night and chalk their votes on small boards; the TV puts on the show.
-
-## What changed on 29 September: was → now
-
-| was | now | how to use it |
-|---|---|---|
-| an Invitation (£10) | **a Table** (£10, one party) | Call to action: **Book a Table**. “Invitation” clashed with hosts inviting their guests, so “invite your friends” is now free to use in copy. |
-| an Invitation code | **a booking code** | OATH-XXXX-XXXX (older CNDL- codes still work). It opens one Table for one party of 8 to 24, open 48 hours from first use. |
-| a Standing Invitation (£20 a month) | **a Regular** (£20 a month) | Call to action: **Become a Regular**. A Regular’s booking code opens a new Table whenever they like, one at a time. Cancel any time. |
-| the room code | **the Table code** | the six characters guests join with at /join (Modern), and the TV joins with |
-| the Sacrament | **the Oath** | the opening. Modern: a question on every phone, “Would you like to be Forsworn?”, and the game deals the roles. Classic: every guest, blindfolded, swears the oath and the Keeper’s tap on the shoulder makes a few of them Forsworn |
-| the Casting Vote counts twice | the Casting Vote **breaks a tie** | at one Reckoning, once a game. The Crown is still Sanctuary and the Casting Vote together, and its holder can still lay it down to be immune from that vote (and unprotected that night). |
-| the Temptation: PURSE or SANCTUARY | the Temptation: **PURSE or SELF** | Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse loses points. |
-| one list of game words | **two tiers**: public words and in-game words | see below |
-| one way to play, with a Keeper | **Modern** first, **Classic** as the option | Modern: a phone each, the host plays. Classic: one phone, a Keeper, blindfolds and chalk |
+- **Modern:** everyone plays on their own phone. Guests scan the QR code on the TV, or go to **thebetrayal.co.uk/join** and type the **Table code** and their name, like a pub-quiz app. The Oath is a question on every phone; roles, votes, the night and poisonings arrive in secret on each phone; every Trial is played there. The **host** plays like everyone else; their phone also moves the evening on. There’s no Keeper and nothing to buy, and the TV is optional.
+- **Classic:** a TV with a laptop, and one phone runs the game. **The Keeper** reads the script and doesn’t play (a friend can keep so the host can play); guests wear blindfolds at night and chalk their votes on small boards; the TV puts on the show.
 
 ## Two tiers of words
 
@@ -55,45 +41,45 @@ Plus plain words (the host, exile, night, dawn, dinner, the Interval, oath, cand
 
 These belong to the game. Each phone (and the TV, if there is one) explains each one when it happens, and the internal game guide explains them all. In public copy, never name them: call them **twists the game explains when they happen**. The Confessor is never named or described in public, not even as a hint.
 
-## The rename, term by term
+## Every term
 
-| What it is | Cloak & Candle | **The Betrayal** | tier | Notes |
-|---|---|---|---|---|
-| the product | Cloak & Candle | **The Betrayal** | public | |
-| the hidden killers | Cloaks | **the Forsworn** | public | singular “a Forsworn”; the reveal card just says *Forsworn* |
-| everyone else | Candles | **the Loyal** | public | singular “one of the Loyal”; the reveal card says *Loyal* |
-| players who are out | Ghosts | **Ghosts** | public | unchanged |
-| the person who opens the Table (Modern) | host | **the host** | plain | plays like everyone else; their phone also moves the evening on (begins the next step, calls the breaks) and never shows a role. Lower case |
-| the person running it (Classic) | host | **the Keeper** | public | Classic only: reads the script and doesn’t play. The host can play instead: a friend keeps. Never say “Keeper” about Modern |
-| the opening ceremony | the Cloaks are chosen | **the Oath** | public | was “the Sacrament” until 29 September. Modern: a question on every phone. Classic: blindfolds and a tap on the shoulder |
-| the party games | — | **Trials** | public | the Cloak & Candle word is on the Never list |
-| the vote | the Reckoning | **the Reckoning** | public | unchanged. Modern: everyone votes on their phone. Classic: names chalked on boards |
-| voted out | exiled | **exiled** | plain | unchanged |
-| the break before the vote | the mingle | **the Interval** | plain | ten minutes up from the table |
-| safe from tonight’s kill | — | **Sanctuary** | public | “she won Sanctuary”; the Cloak & Candle word is on the Never list |
-| the shared winnings | the pot | **the Purse** | public | the Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it fell short of its target. It also decides which prize is won |
-| the final reveal | the ceremony, seals turned | **the Unmasking** | public | the seals still turn one by one |
-| night and morning | night, dawn | **night, dawn** | plain | unchanged |
-| ways to kill | poison, murder | **poison, murder** | plain | unchanged |
-| a tie-breaker, once a game | the blade | **the Casting Vote** | in-game | breaks a tie at one Reckoning (it counted twice until 29 September) |
-| both together | the Champion | **the Crown** | in-game | Sanctuary and the Casting Vote |
-| Purse or protection gamble | the Dilemma | **the Temptation** | in-game | everyone chooses PURSE or SELF (on their phone in Modern, chalked in Classic) |
-| the secret role in the final | the Witness | **the Confessor** | in-game, never public | |
-| a lone Forsworn invites a Loyal to join | Conversion | **the Whisper** | in-game | Classic only |
-| join or die | the Bargain | **the Last Offer** | in-game | Classic only |
-| the Forsworn’s secret tasks | side-quests | **Errands** | in-game | Classic only |
-| the last secret vote | End or Exile | **Trust or Doubt** | in-game | TRUST if every Forsworn is gone, DOUBT if one is still here |
-| the surviving Forsworn’s last choice | share or take | **Honour or Betray** | in-game | the name pays off in the last minute of the night |
-| what you buy | party pass, £10 | **a Table**, £10 | product | one party of 8 to 24, open 48 hours from first use; was “an Invitation” |
-| the code you’re sent | pass | **a booking code** | product | OATH-XXXX-XXXX; CNDL- codes still work |
-| the subscription | £20 a month | **a Regular**, £20 a month | product | a new Table whenever you like, one at a time; was “a Standing Invitation” |
-| a game’s room | room | **the Table** | product | Modern: each phone at /m/CODE, the TV (optional) at /t/CODE. Classic: the TV at /t/CODE, the Keeper at /t/CODE#keeper |
-| the code guests and the TV join with | room code | **the Table code** | product | six letters and numbers |
-| where guests join (Modern) | — | **/join** | product | write it in full in public: **thebetrayal.co.uk/join**. Guests type the Table code and their name |
-| the code on the TV (Modern) | — | **the QR code** | product | shown on the TV (and the host’s phone shows the Table code); scanning it opens the join page with the Table code filled in |
-| everyone on their own phone | — | **Modern** | product | the headline way to play. Capitalised |
-| one phone, a Keeper, blindfolds | — | **Classic** | product | the old-fashioned way. Capitalised. In Classic, a first game keeps the twists off until the second night |
-| the quick game | — | **the Short game** | product | Classic: about 2 hours for 8 to 10 players |
+| what it is | the word | tier | notes |
+|---|---|---|---|
+| the product | **The Betrayal** | public | always with “The” |
+| the hidden killers | **the Forsworn** | public | singular “a Forsworn”; the reveal card just says *Forsworn* |
+| everyone else | **the Loyal** | public | singular “one of the Loyal”; the reveal card says *Loyal* |
+| players who are out | **Ghosts** | public | |
+| the person who opens the Table (Modern) | **the host** | plain | plays like everyone else; their phone also moves the evening on (begins the next step, calls the breaks) and never shows a role. Lower case |
+| the person running it (Classic) | **the Keeper** | public | Classic only: reads the script and doesn’t play. The host can play instead: a friend keeps. Never say “Keeper” about Modern |
+| the opening ceremony | **the Oath** | public | Modern: a question on every phone, “Would you like to be Forsworn?”, and the game deals the roles. Classic: every guest, blindfolded, swears the oath, and the Keeper’s tap on the shoulder makes a few of them Forsworn |
+| the party games | **Trials** | public | |
+| the vote | **the Reckoning** | public | Modern: everyone votes on their phone. Classic: names chalked on boards |
+| voted out | **exiled** | plain | |
+| the break before the vote | **the Interval** | plain | ten minutes up from the table |
+| safe from tonight’s kill | **Sanctuary** | public | “she won Sanctuary” |
+| the shared winnings | **the Purse** | public | the Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it fell short of its target. It also decides which prize is won |
+| the final reveal | **the Unmasking** | public | the seals turn one by one |
+| night and morning | **night, dawn** | plain | |
+| ways to kill | **poison, murder** | plain | |
+| a tie-breaker, once a game | **the Casting Vote** | in-game | breaks a tie at one Reckoning |
+| both together | **the Crown** | in-game | Sanctuary and the Casting Vote together; its holder can lay it down to be immune from that vote (and unprotected that night) |
+| Purse or protection gamble | **the Temptation** | in-game | everyone chooses PURSE or SELF (on their phone in Modern, chalked in Classic). Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse loses points |
+| the secret role in the final | **the Confessor** | in-game, never public | |
+| a lone Forsworn invites a Loyal to join | **the Whisper** | in-game | Classic only |
+| join or die | **the Last Offer** | in-game | Classic only |
+| the Forsworn’s secret tasks | **Errands** | in-game | Classic only |
+| the last secret vote | **Trust or Doubt** | in-game | TRUST if every Forsworn is gone, DOUBT if one is still here |
+| the surviving Forsworn’s last choice | **Honour or Betray** | in-game | the name pays off in the last minute of the night |
+| what you buy | **a Table**, £10 | product | one party of 8 to 24, open 48 hours from first use. Call to action: **Book a Table** |
+| the code you’re sent | **a booking code** | product | OATH-XXXX-XXXX. It opens one Table |
+| the subscription | **a Regular**, £20 a month | product | a Regular’s booking code opens a new Table whenever they like, one at a time. Cancel any time. Call to action: **Become a Regular** |
+| a game’s room | **the Table** | product | Modern: each phone at /m/CODE, the TV (optional) at /t/CODE. Classic: the TV at /t/CODE, the Keeper at /t/CODE#keeper |
+| the code guests and the TV join with | **the Table code** | product | six letters and numbers; guests type it at /join (Modern), and the TV joins with it |
+| where guests join (Modern) | **/join** | product | write it in full in public: **thebetrayal.co.uk/join**. Guests type the Table code and their name |
+| the code on the TV (Modern) | **the QR code** | product | shown on the TV (and the host’s phone shows the Table code); scanning it opens the join page with the Table code filled in |
+| everyone on their own phone | **Modern** | product | the headline way to play. Capitalised |
+| a TV, one phone for a Keeper, blindfolds | **Classic** | product | for groups who’d rather put their phones away. Capitalised. In Classic, a first game keeps the twists off until the second night |
+| the quick game | **the Short game** | product | Classic: about 2 hours for 8 to 10 players |
 
 ## Capitals
 
@@ -115,7 +101,7 @@ What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 
 The brand guidelines have the detail; in brief:
 
-- **The primary lockup** (the hooded figure and the wordmark) is unchanged. It signs everything where the name needs to be said.
+- **The primary lockup** (the hooded figure and the wordmark) signs everything where the name needs to be said.
 - **The secondary mark** is the cracked wax seal, *the broken oath*: `the-betrayal-seal.svg` / `.png` in full colour (wine wax, a candle embossed, a rose crack) and `the-betrayal-seal-mono-rose.svg`, `-ivory.svg` and `-ink.svg` in one colour. Use it for the favicon and app icon, social avatars, stickers and packaging seals. It never replaces the lockup.
 - **Type:** Grenze Gotisch (blackletter) only for the wordmark and the big TV moments. Headings in IM Fell DW Pica. Body and UI in Alegreya Sans; eyebrows in Alegreya Sans SC.
 
@@ -127,7 +113,7 @@ The Sharpest Eye · The Grand Deceiver · The Deciding Vote · The Turncoat · C
 
 ## Voice
 
-Candlelit, dry, a little theatrical, never gory. Short sentences. The game speaks to the table like someone who knows more than they’re saying: “Everyone here swore an oath tonight. Not everyone meant it.” Use British spelling and British words (Interval, not intermission; queue, not line). The calls to action are **Book a Table** and **Become a Regular**. Sell Modern first: a phone each, nothing to buy or learn, and the host plays too.
+Candlelit, dry, a little theatrical, never gory. Short sentences. The game speaks to the table like someone who knows more than they’re saying: “Everyone here swore an oath tonight. Not everyone meant it.” Use British spelling and British words (Interval, not intermission; queue, not line). The calls to action are **Book a Table** and **Become a Regular**. Sell Modern first: everyone plays on their own phone, and there’s nothing to buy or learn.
 
 ## The Oath
 
@@ -138,8 +124,24 @@ The Oath is the opening scene and the brand’s most theatrical moment. Keep it 
 - Use the name, logo, music, catchphrases, presenter, set or format words of any TV programme. That includes “traitor”, “faithful”, “round table”, “banishment”, “shield”, “dagger”, “seer”, “recruit”, “ultimatum” and “mission” as game terms.
 - Use Hasbro’s Betrayal vocabulary (“haunt”, “omen”, “heroes”, “the house on the hill”), and never write “Betrayal at…”.
 - Name an in-game word in public material, or reveal the Confessor anywhere public.
-- Call the product an Invitation or a Standing Invitation, or the opening the Sacrament.
+- Use the words in the “never say” list below.
 - Call the Modern host a Keeper, or lead any public piece with Classic.
+- Call Classic old, old-fashioned or the original version. It’s a choice of style, for groups who’d rather put their phones away.
 - Sell the table size or the length of the night as a benefit.
 - Show a face under the hood.
 - Call it “a dinner-party game”, or sell dinner as the point of the evening. Dinner is an option.
+
+### Never say
+
+| never say | say instead |
+|---|---|
+| Betrayal (without “The”) | The Betrayal |
+| a dinner-party game | a party game |
+| an Invitation, a pass (what you buy) | a Table |
+| a Standing Invitation (the monthly option) | a Regular |
+| an invitation code | a booking code |
+| a room code | the Table code |
+| the Sacrament | the Oath |
+| the pot | the Purse |
+| the mingle, intermission | the Interval |
+| the Keeper (in Modern) | the host |

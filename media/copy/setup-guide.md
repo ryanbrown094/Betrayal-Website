@@ -1,13 +1,13 @@
 # Setting up a game: Modern first, then Classic
 
-Every Table can be played two ways, and the host chooses when they open it. **Modern** is the headline: everyone plays on their own phone, and the host plays too. **Classic** is for anyone who’d prefer it the old-fashioned way: one phone, a Keeper who doesn’t play, blindfolds and chalkboards. Nothing is dealt until someone presses **Start**.
+Every Table can be played two ways, and the host chooses when they open it. **Modern** is the headline: everyone, the host included, plays on their own phone. **Classic** is for groups who’d rather put their phones away: a TV and laptop, one phone for a Keeper who doesn’t play, blindfolds and chalkboards. Nothing is dealt until someone presses **Start**.
 
 ## Modern: six steps
 
 1. **Book a Table** (£10, one party) or use a Regular’s booking code.
 2. **Open your Table:** enter the booking code at thebetrayal.co.uk, on the phone you’ll play on. It opens one Table for one party of 8 to 24, open for 48 hours from first use.
 3. **Choose Modern.** (“Your Table is open. How will you play?”)
-4. **Type your name** and tap **Open the Table**. You’re the host, and you play too: your phone runs the evening (you begin each Trial and call the breaks and the Reckoning), everything else runs itself, and you never see anyone’s role.
+4. **Type your name** and tap **Open the Table**. You’re the host, and you play like everyone else: your phone runs the evening (you begin each Trial and call the breaks and the Reckoning), everything else runs itself, and you never see anyone’s role.
 5. **Share the code.** Guests go to **thebetrayal.co.uk/join** and type the six-character **Table code** and their name, or scan the **QR code** on the TV (open `thebetrayal.co.uk/t/CODE` on a laptop and cast it; the TV is optional). The lobby fills with names as they join.
 6. **Press Start** when everyone’s in (“Start with 12 players”). Then the Oath arrives on every phone.
 
@@ -32,7 +32,7 @@ Screenshots: `04-screenshots/modern/`.
 
 ---
 
-## Classic: the old-fashioned way
+## Classic
 
 Enter the booking code, choose **Classic**, and the phone becomes the Keeper’s. The Keeper sets the game up before guests arrive: **five questions and a PIN**, then a summary that’s ready to start. Every other choice is pre-set, worked out from those answers, and can be changed under **Customise**. Nothing reaches the TV until someone presses **Start**. You’ll need a TV and a laptop to cast to it, and a blindfold, a small chalkboard and chalk for each guest. Screenshots: `04-screenshots/classic/phone/phone-0*-setup-*.png`.
 

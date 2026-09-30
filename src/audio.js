@@ -174,8 +174,8 @@ const CQ = { M: [0, 4, 7], m: [0, 3, 7], m7: [0, 3, 7, 10], M7: [0, 4, 7, 11], d
 const MODES_ = { minor: [0, 2, 3, 5, 7, 8, 10], dorian: [0, 2, 3, 5, 7, 9, 10], major: [0, 2, 4, 5, 7, 9, 11] };
 const chord = c => { const r = parseInt(c, 10); return { root: r, iv: CQ[c.replace(/^\d+/, "")] } };
 // key: tonic (MIDI); prog: one chord a bar; wind: the draught through the hall (night and lobby only)
-// Morning, the Reckoning and the night are unchanged; the rest is one darker score in D minor, the A major chord
-// (harmonic minor) giving each turn of the progression its pull.
+// Every scene but the morning (F major) plays in D minor, the A major chord (harmonic minor) giving each turn of the
+// progression its pull.
 const SCENES = {
   lobby: { bpm: 66, key: 50, mode: "minor", prog: ["50m", "46M", "43m", "45M"], wind: 0.035 },
   day: { bpm: 84, key: 50, mode: "minor", prog: ["50m", "46M", "48M", "45M"], wind: 0.012 },

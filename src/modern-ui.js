@@ -296,10 +296,9 @@ function trial(me) {
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
   const head = `<div class="ihead"><div class="eyebrow">${esc(t.title)} · ${it.part ? esc(it.part) + " · " : ""}${it.stage === "reveal" ? t.i : t.i + 1}</div>${it.stage === "open" || it.stage === "study" || it.stage === "prep" ? clock(it.end) : ""}</div>${["open", "study", "prep", "blank"].includes(it.stage) && it.end && it.from ? `<div class="bar sticky"><i data-from="${it.from}" data-end="${it.end}"></i></div>` : ""}`;
-  const ctl = "";
   const watching = !me.alive && !(it.k === "survive" && t.key === "statue");
   if (!me.alive && it.k === "survive" && t.key === "statue" && it.stage === "open") return head + `<p class="q">You’re a Ghost, so haunt them.</p><p class="sub">Make the statues move or laugh, anything short of touching. Still standing: ${esc(andList(alive().filter((p) => !it.out.includes(p.id)).map((p) => p.name)))}.</p>`;
-  return head + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it)) + ctl;
+  return head + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it));
 }
 function sent(v) { return `<div class="done">${ico("handshake")}<div>Locked in${v != null && v !== "" ? `: <b>${esc(v)}</b>` : ""}.<br><span class="small">${it().answered} of ${it().of || "?"} in</span></div></div>`; }
 const it = () => V.trial.item;

@@ -2,9 +2,9 @@
 
 Everything about the game and the brand, in one place, for building ads, social posts, a press release, a store listing or a pitch. Start with **01-game/game-guide-INTERNAL.md** to understand the game, then **02-brand/The-Betrayal-Brand-Guidelines.pdf** for how it should look.
 
-> **Modern first.** The Betrayal is sold as a game everyone plays on their own phone: guests scan the QR code on the TV or go to thebetrayal.co.uk/join, the Oath, roles, Trials, votes and nights are all on phones, and the host plays too. No blindfolds, no chalkboards, no Keeper, and the TV is optional. **Classic** (one phone, a Keeper who doesn’t play, blindfolds and chalk) is the secondary option: “prefer it the old-fashioned way?”. Lead every piece with Modern.
+> **Modern first.** The Betrayal is sold as a game everyone plays on their own phone: guests scan the QR code on the TV or go to thebetrayal.co.uk/join, and the Oath, roles, Trials, votes and nights are all on phones. Everyone plays, the host included. There are no props and no Keeper, and the TV is optional. **Classic** (a TV and laptop, the phone of a Keeper who doesn’t play, blindfolds and chalkboards) is the other way to play, for groups who’d rather put their phones away. Lead every piece with Modern.
 
-> **The words rule.** Public material uses only the public words: the Forsworn, the Loyal, the Oath, Trial, the Reckoning, Sanctuary, the Purse, Ghost, the Unmasking, and the Keeper (Classic only), plus plain words like the host, exile, night, dawn, dinner and the Interval. Every other game word is one of the “twists the game explains when they happen”. The internal game guide names and explains them all; `01-game/glossary-and-naming.md` has both lists, and the “was → now” list of what changed on 29 September 2026.
+> **The words rule.** Public material uses only the public words: the Forsworn, the Loyal, the Oath, Trial, the Reckoning, Sanctuary, the Purse, Ghost, the Unmasking, and the Keeper (Classic only), plus plain words like the host, exile, night, dawn, dinner and the Interval. Every other game word is one of the “twists the game explains when they happen”. The internal game guide names and explains them all; `01-game/glossary-and-naming.md` has both lists and the words never to use.
 
 | folder | what’s in it |
 |---|---|
@@ -14,7 +14,7 @@ Everything about the game and the brand, in one place, for building ads, social 
 | `01-game/trials-modern.csv` | the 15 Trials and the Temptation as they’re played on phones in Modern: rules, whether they carry Sanctuary |
 | `01-game/trials.csv` | the 15 Trials and the Temptation add-on in Classic: rules, what the room needs, whether they carry a prize |
 | `01-game/question-banks.md` | how many questions and prompts each game draws on, with samples |
-| `01-game/glossary-and-naming.md` | the name, the two tiers of game words, capitalisation, honest length, marks and type, voice, and words to never use |
+| `01-game/glossary-and-naming.md` | the name, the two tiers of game words, capitalisation, honest length, marks and type, voice, and the words never to use (with what to say instead) |
 | `02-brand/` | brand guidelines (PDF); logos: the primary mark, wordmark and lockups in six colours, and the secondary mark, the cracked wax seal (“the broken oath”), in full colour and in rose, ivory and ink (SVG and PNG); palette (swatches, CSS, JSON, GIMP/Inkscape); fonts (web files, licence, where to get the full families); app icons (the seal) |
 | `03-copy/press-kit.md` | taglines (the descriptor: “The party game of loyalty and lies”), calls to action, one-line / short / long descriptions, key facts, feature bullets, boilerplate |
 | `03-copy/website-copy.md` | every word on the public site: home page, FAQ, How to play, the screenshot tour |
@@ -28,13 +28,13 @@ Everything about the game and the brand, in one place, for building ads, social 
 
 ## Key facts at a glance
 
-- **Everyone plays on their own phone (Modern).** Guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. The host plays too; their phone only moves the evening on.
+- **Everyone plays on their own phone (Modern).** Guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. Everyone plays, the host included; the host’s phone also moves the evening on.
 - **Best with 8 to 16 players**; the game takes 8 to 24.
 - **About 3 to 3½ hours** for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer (about 4¼ hours for 16, and 5 to 6 for 20 and up).
 - **Book a Table:** £10, one party. **Become a Regular:** £20 a month, a new Table whenever you like, one at a time.
 - **You need** a phone each and a prize (a box of chocolates, unless the host sets their own). A TV is optional. No app, no accounts, no props.
 - **Setup:** open your Table, choose Modern, type your name, share the code, Start. The game plans its own Trials and Reckonings, and, if the host switches dinner in courses on, when each course is served.
-- **Classic**, for anyone who’d prefer it the old-fashioned way: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 hours for 8 to 10.
+- **Classic**, for groups who’d rather put their phones away: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 hours for 8 to 10.
 
 Screenshots use invented names; the TV title and player names can be anything.
 

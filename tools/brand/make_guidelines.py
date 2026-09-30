@@ -80,7 +80,7 @@ pages.append(f"""<div class=page><div class=eb>01 · the brand</div><h1>Candleli
    <div class=box><h3>mischievous</h3><p>We enjoy the lie. We wink at the Forsworn and tease the Loyal. Never mean, never crude.</p></div>
    <div class=box><h3>premium</h3><p>One idea per screen, generous space, careful words. It should feel like the good napkins came out.</p></div></div>
   <div class=cols style="grid-template-columns:1fr 1fr;margin-top:9mm">
-   <div><div class=lab>what we are</div><ul class=l><li><b>Our own world.</b> An original game with its own look, sound and words.</li><li><b>For hosts.</b> The host plays too: we make the evening run itself.</li><li><b>For one room.</b> Faces across a table, a secret on every phone. The TV is the stage, not the game.</li></ul></div>
+   <div><div class=lab>what we are</div><ul class=l><li><b>Our own world.</b> An original game with its own look, sound and words.</li><li><b>For hosts.</b> The evening runs itself, so whoever hosts gets to enjoy it.</li><li><b>For one room.</b> Faces across a table, a secret on every phone. The TV is the stage, not the game.</li></ul></div>
    <div><div class=lab>what we are not</div><ul class=l><li><b>Not a TV tie-in.</b> We never name, quote, imitate or allude to a television programme, its presenters, its castle, its music or its words.</li><li><b>Not another company’s Betrayal.</b> We never borrow the vocabulary or look of other games that use the word.</li><li><b>Not horror.</b> No gore, no jump-scares. A drop of wine-red, not blood spatter.</li><li><b>Not a gadget.</b> No apps to install, no accounts: scan a code, type a name, play.</li></ul></div></div>
   {foot(2)}</div>""")
 
@@ -179,7 +179,7 @@ pages.append(f"""<div class=page><div class=eb>08 · the world</div><h1>Oaths, c
   {foot(9)}</div>""")
 
 public = [('The Betrayal', 'the product'), ('the Forsworn', 'the hidden killers'), ('the Loyal', 'everyone else'),
-          ('Ghosts', 'players who are out'), ('the host', 'opens the Table and plays too'), ('the Keeper', 'runs a Classic game and doesn’t play'), ('the Oath', 'the opening promise'),
+          ('Ghosts', 'players who are out'), ('the host', 'opens the Table and moves the evening on'), ('the Keeper', 'runs a Classic game and doesn’t play'), ('the Oath', 'the opening promise'),
           ('Trials', 'the party games'), ('the Reckoning', 'the vote; the loser is exiled'), ('Sanctuary', 'safe from tonight’s kill'),
           ('the Purse', 'the shared winnings; it decides the prize'), ('the Unmasking', 'the final reveal'),
           ('a Table', '£10, one party · Book a Table'), ('a booking code', 'what the buyer is sent: OATH-XXXX-XXXX'),
@@ -188,8 +188,7 @@ ingame = [('the Casting Vote', 'breaks a tie at one Reckoning'), ('the Crown', '
           ('the Temptation', 'everyone chalks PURSE or SELF'), ('the Whisper', 'a lone Forsworn invites a Loyal to join'),
           ('the Last Offer', 'join or die'), ('Errands', 'the Forsworn’s secret tasks'),
           ('Trust or Doubt', 'the last secret vote'), ('Honour or Betray', 'the survivors’ last choice')]
-was = [('an Invitation', 'a Table'), ('a Standing Invitation', 'a Regular'), ('the Sacrament', 'the Oath'),
-       ('the Casting Vote counts twice', 'it breaks a tie'), ('PURSE or SANCTUARY', 'PURSE or SELF')]
+never = [('Betrayal (without “The”)', 'The Betrayal'), ('a dinner-party game', 'a party game'), ('an Invitation, a pass', 'a Table'), ('a room code', 'the Table code'), ('the pot', 'the Purse')]
 def tbl(rs, head):
     return f'<table><tr><th>{head}</th><th>what it is</th></tr>' + ''.join(f'<tr><td class=t>{a}</td><td>{b}</td></tr>' for a, b in rs) + '</table>'
 pages.append(f"""<div class=page><div class=eb>09 · the words</div><h1>Two tiers of words</h1>
@@ -197,8 +196,8 @@ pages.append(f"""<div class=page><div class=eb>09 · the words</div><h1>Two tier
    <div><div class=lab>public: ads, press, posts, outreach</div>{tbl(public, 'say')}</div>
    <div><div class=lab>in-game: in public, “twists the TV explains when they happen”</div>{tbl(ingame, 'the game says')}
     <p class=cap style="margin-top:2mm">One more in-game role is never named in public at all.</p>
-    <div class=lab style="margin-top:5mm">was → now, 29 september 2026</div>
-    <table>{''.join(f'<tr><td style="color:#877E78">{a}</td><td style="color:#F4C9B7">{b}</td></tr>' for a, b in was)}</table></div></div>
+    <div class=lab style="margin-top:5mm">never say → say</div>
+    <table>{''.join(f'<tr><td style="color:#877E78">{a}</td><td style="color:#F4C9B7">{b}</td></tr>' for a, b in never)}</table></div></div>
   <p class=cap style="margin-top:3mm">Plain words, lower case: exile, night, dawn, dinner, poison, murder, oath, seal, candle, blindfold, chalkboard; and the Interval. The full lists, awards included, are in <i>01-game/glossary-and-naming.md</i>.</p>
   {foot(10)}</div>""")
 

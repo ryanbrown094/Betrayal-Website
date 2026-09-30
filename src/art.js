@@ -49,7 +49,7 @@ const ART = {
     const c = { t: "#8e1b45", f: "#ae6249", good: "#2e7a62", steel: "#51657c" }[kind] || "#ae6249";
     return `<svg viewBox="0 0 100 100" style="--c:${c}" aria-hidden="true"><ellipse cx="51" cy="56" rx="45" ry="43" fill="#000000" opacity=".55"/><path d="${this.blob2}" style="fill:var(--c)"/><path d="${this.blob2}" fill="url(#g-wax)"/><circle cx="50.8" cy="51" r="33" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.4"/><circle cx="50" cy="50" r="33" fill="#000000" fill-opacity=".1" stroke="#000000" stroke-opacity=".35" stroke-width="2.6"/><g transform="translate(29.6 30.6) scale(.64)" fill="none" stroke="#ffffff" stroke-opacity=".32" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">${(ICONS[icon] || "").replace(/class="f"/g, 'fill="#ffffff" fill-opacity=".3" stroke="none"')}</g><g transform="translate(29 30) scale(.64)" fill="none" stroke="#000000" stroke-opacity=".58" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">${(ICONS[icon] || "").replace(/class="f"/g, 'fill="#000000" fill-opacity=".55" stroke="none"')}</g><ellipse cx="31" cy="23" rx="14" ry="5" fill="#ffffff" opacity=".2" transform="rotate(-32 31 23)"/></svg>`;
   },
-  // the Cloak & Candle mark: a cloaked figure in a lozenge, a candle flame where the face should be
+  // the house crest: a cloaked figure in a lozenge, a candle flame where the face should be
   crest(draw) {
     const p = 'pathLength="1"';
     return `<svg class="${draw ? "draw" : ""}" viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

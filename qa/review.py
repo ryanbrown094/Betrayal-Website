@@ -50,7 +50,7 @@ with sync_playwright() as p:
     check("the public view carries no secret shield names", tv.evaluate("()=>!('secIds' in state.shieldCard) && !('secNames' in state.shieldCard) && !('witnessName' in state.shieldCard)"))
     check("setShieldMode and the silent mode are gone from the code", host.evaluate("()=>typeof setShieldMode==='undefined' && !/silent/.test(JSON.stringify(state.shieldCard))"))
 
-    # night: the Cloaks pick the shielded player; dawn says the shield held
+    # night: the Forsworn pick the shielded player; dawn says the shield held
     host.evaluate("()=>{openTable();}"); host.evaluate("()=>{exile(state.players.find(p=>p.role==='candle'&&p.id!==state.players[3].id).id);askGo();revealRole();act(s=>{s.table.step=2;s.ghostIntroDone=true});startNight();beginNight();act(s=>{s.night.victimId=s.players[3].id});finishNight();act(s=>{s.morning.revealed=true})}"); sync()
     check("shielded morning uses the shield line", host.evaluate("()=>state.morning.kind==='shield' && !('silent' in state.morning)") and "it met a shield" in host.inner_text("#host"))
     check("TV at dawn: the shield held", "The shield held" in tv.inner_text("#stage"))
@@ -68,7 +68,7 @@ with sync_playwright() as p:
     host.evaluate("()=>{pickMission('snap');startMission();startMission();act(s=>finishPlay(s));endMission()}"); host.wait_for_timeout(300)
     check("no second dinner offered once served", "Dinner · 25 min" not in host.inner_text("#host"))
 
-    # final round with no Cloak left: the table still votes
+    # final round with no Forsworn left: the table still votes
     host.evaluate("()=>{act(s=>{s.players.forEach(p=>{if(p.role==='cloak'){p.alive=false}});s.finalRound=s.round;s.phase='day'});openTable();exile(aliveOf(state)[0].id);askGo();revealRole()}"); host.wait_for_timeout(400)
     foot = host.inner_text("#host .foot")
     check("final round, no Cloaks left: End-game vote is offered first", "End-game vote" in foot and "Skip the vote" in foot, foot)
@@ -149,7 +149,7 @@ with sync_playwright() as p:
     check("during a game only the host PIN can change the bank", codes == [403, 200], codes)
     check("TV never needs the switches (public state carries none)", tv.evaluate("()=>!('bankOff' in (state||{}))"))
 
-    # ---- v15 final-review regressions ----
+    # ---- final-review regressions ----
     fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,cloaks:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", NAMES[:n])
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
     su = host.evaluate("""()=>{const t=[defaults(4).t,defaults(5).t,defaults(11).t,maxCloaks(5)];
@@ -241,7 +241,7 @@ with sync_playwright() as p:
     k4.close()
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
-    # ---- v16: settings before a mission, the 25% shield cap, tiered quiz, countdown clock, the linear host, ghost lore ----
+    # ---- settings before a mission, the 25% shield cap, tiered quiz, countdown clock, the linear host, ghost lore ----
     fresh = lambda n=8, extra="": host.evaluate("(n)=>{newGame();startGame({names:n,cloaks:2,title:'T',host:'H',potUnit:'pts',potPer:100,prize:'p',hours:4,pin:'4321'});act(s=>{s.phase='day'" + extra + "})}", (NAMES + ["Hannah", "Dev", "Ben", "Zoe", "Kit", "Max"])[:n])
     fresh(14)
     cap = host.evaluate("""()=>{const c=[shieldCap(state)];act(s=>{s.players.slice(0,7).forEach(p=>p.alive=false)});c.push(shieldCap(state));act(s=>{s.players.forEach(p=>p.alive=true)});
@@ -303,7 +303,7 @@ with sync_playwright() as p:
     check("the Dilemma's lone SHIELD is public (the TV already named them)", dl["mode"] == "public" and dl["pub"] == [dl["name"]] and dl["sh"] == "public", dl)
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
-    # ---- v16.1: every board recorded, the Champion, shields shown at the table, banter, drumroll, new missions, seats, undo ----
+    # ---- every board recorded, the Champion, shields shown at the table, banter, drumroll, new missions, seats, undo ----
     fresh(8)
     wr = host.evaluate("""()=>{pickMission('estimate');renderHost();const h=document.querySelector('#host').innerText;mWin('public');mChampion();const pz=prizeOf_(state.mission).tv.join(' ');startMission();startMission();const A=aliveOf(state);
       act(s=>{s.mission.scores={[A[2].id]:5,[A[3].id]:1};finishPlay(s)});const win=state.mission.winId===A[2].id;endMission();renderHost();const hs=document.querySelector('#host').innerText;
@@ -391,7 +391,7 @@ with sync_playwright() as p:
     check("rewind to the start of the round: back to that morning, log kept, and undo returns", rw["can"] and rw["back"]["phase"] == "day" and rw["back"]["round"] == rw["r"] and rw["back"]["pot"] == rw["pot"] and rw["back"]["mission"] is None and rw["back"]["log"] and rw["after"] == "table", rw)
     host.evaluate("()=>{newGame()}"); host.wait_for_timeout(500)
 
-    # ---- v16.2: rules without the Witness or the host's numbers, a mission after a break, tie revotes, the drumroll name ----
+    # ---- rules without the Witness or the host's numbers, a mission after a break, tie revotes, the drumroll name ----
     fresh(8)
     rn = host.evaluate("""()=>{const out={};for(const d of MISSIONS){if(!MSET[d.key])continue;pickMission(d.key);const r0=state.mission.rules;for(const [f] of MSET[d.key]){mSet(f,1);mSet(f,1)}out[d.key]={same:state.mission.rules===r0,digits:/[0-9]/.test(r0.replace('1, 2 or 3',''))};act(s=>{s.phase='day';s.mission=null})}return out}""")
     check("ticking a mission's numbers up never changes the rules on the TV, and they show no numbers", all(v["same"] and not v["digits"] for v in rn.values()), rn)
@@ -428,7 +428,7 @@ with sync_playwright() as p:
     mp.close()
     check("the floor mist has no hard vertical edges", max(jumps) < 0.8, jumps)
 
-    # ---- v16.5: the count, the final at five, the awards, the turned Cloaks, variation ----
+    # ---- the count, the final at five, the awards, the turned Forsworn, variation ----
     fresh(8)
     nd = host.evaluate("""()=>{openTable();act(s=>{s.table.stage='votes'});const A=aliveOf(state),a=A[6],b=A[7];
       castBallot(A[0].id,a.id);castBallot(A[1].id,b.id);castBallot(A[2].id,a.id);castBallot(A[3].id,b.id);renderHost();const h=document.querySelector('#host').innerText;

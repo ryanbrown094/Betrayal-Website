@@ -413,7 +413,7 @@ def part2(b):
         f += A.errs + T1.errs; A.close(); T1.close(); return f
 
     # ---- holds, with a real mouse (pointer events)
-    # the exile reveal is a plain tap now; the final ceremony's seals keep the hold-for-drumroll
+    # the exile reveal is a plain tap; the final ceremony's seals keep the hold-for-drumroll
     def to_reveal(A):
         A.ev("()=>{startCeremony()}")
         A.pg.wait_for_timeout(600)

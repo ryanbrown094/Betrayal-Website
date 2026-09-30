@@ -89,7 +89,7 @@ async ({games, budget}) => {
     renderHost();
     const n = R() < .6 ? 8 + Math.floor(R() * 9) : 17 + Math.floor(R() * 8), names = [...POOL].sort(() => R() - .5).slice(0, n);
     document.querySelector("#names").value = names.join(R() < .5 ? "\n" : ", "); document.querySelector("#pinset").value = "1";
-    document.querySelector("#cloaks").value = R() < .3 ? 1 + Math.floor(R() * maxCloaks(n)) : ""; // setup refuses as many Cloaks as Candle
+    document.querySelector("#cloaks").value = R() < .3 ? 1 + Math.floor(R() * maxCloaks(n)) : ""; // setup refuses as many Forsworn as Loyal
     if (R() < .3) document.querySelector("#unit").value = pick(["£", "pts", "gold"]);
     // a random game plan: every setup switch gets exercised
     Object.assign(setupDraft, { rounds: pick([0, 0, 2, 3, 4, 6]), perRound: pick([0, 1, 2]), dinnerAfter: pick([0, 1, 2]), mingle: R() < .6, kill: pick(["murder", "poison"]), ghosts: R() < .7,

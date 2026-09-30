@@ -1,6 +1,6 @@
 // Local stand-in for the Worker: same API contract, same redaction, static files from worker/public.
-// Rooms live in memory: /api/g/CODE/state for a room, and /api/state for a default room so the older harnesses
-// (which open the game at /) keep working. POST /api/games makes a room with no pass (like OPEN_ACCESS).
+// Rooms live in memory: /api/g/CODE/state for a room, and /api/state for a default room, for the harnesses
+// that open the game at /. POST /api/games makes a room with no pass (like OPEN_ACCESS).
 // The home page is at /home here (at / on the real Worker). For the real thing locally use `npx wrangler dev` (README).
 import http from "node:http"; import fs from "node:fs"; import path from "node:path";
 import { publicView } from "../worker/src/public-view.js";

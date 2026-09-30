@@ -1,156 +1,24 @@
-# The Betrayal — handover (1.1, 28 September 2026)
+# The Betrayal: developer and operator handover
 
-Written for whoever picks the project up next — most likely an LLM coding assistant working with Ryan. Read this, then `README.md`, then the code. Where something is untested or assumed, it says so.
+For whoever runs or changes the product next, most likely an LLM coding assistant working with Ryan. Read this, then `README.md`, then the code. Values of vars live in `wrangler.toml` and `wrangler.staging.toml`; secrets are only ever named here.
 
 ---
 
 ## 1. What it is
 
-**The Betrayal** is a commercial, hosted dinner-party game for 8–24 guests in one room. Guests have no phones in play; the props are blindfolds, chalkboards and chalk. Two screens run it:
+**The Betrayal** is a hosted party game of loyalty and lies for 8 to 24 players in one room. A few players are secretly **the Forsworn**; the rest are **the Loyal**. Each day the table plays **Trials** to fill **the Purse**, then meets at **the Reckoning** to exile someone. Each night the Forsworn kill. It runs on a Cloudflare Worker at **thebetrayal.co.uk**.
 
-- **The TV** — `/g/ROOMCD` on a laptop cast to the TV. It never receives secrets (§4.5).
-- **The Keeper phone** — `/g/ROOMCD#host`. The Keeper plans the game up front (§5.0), then taps through it reading the lines it gives them.
+There are two ways to play, chosen once per Table on the home page after the booking code is entered (Modern is offered first, marked recommended):
 
-It is sold as **a Table** (£10; a **booking code**, `OATH-XXXX-XXXX`, the first ones `CNDL-`) or as **a Regular** (£20 a month): redeeming a code opens a room (a Table) for 48 hours. Every room is its own Cloudflare Durable Object, so any number of parties play at once.
+- **Modern:** everyone plays on their own phone and the server runs the game. The first to join is **the host**, a player whose phone also moves the evening on. The TV is optional. Phones join at `/join` or `/m/ROOMCD`; the TV is `/t/ROOMCD`.
+- **Classic:** phones away. **The Keeper** runs the game from one phone at `/t/ROOMCD#keeper` and reads the lines it gives them; the TV (a laptop cast to it) is `/t/ROOMCD`. Props: blindfolds, chalkboards, chalk.
 
-It grew out of a private party build ("v17", played 26 September 2026). For the product it was re-dressed so it stands on its own: new name and mark (a cloaked figure with a candle flame for a face), a plum / rose-gold palette, the setting is "the house", no default Keeper name, the letters game is **Longest Word**, and every party-only file (guest guide, invite, the old prize) was removed. On 28 Sep 2026 every term borrowed from TV formats was replaced with original ones (§5.9).
+It is sold as:
 
-**Status (28 Sep 2026):** built and tested locally, including the real Worker under `wrangler dev`. Domain `cloakandcandle.co.uk` bought through Cloudflare; the repo is meant to deploy through Cloudflare's GitHub integration from the repo root (`wrangler.toml`). The whole site sits behind a pre-launch password (`SITE_PASSWORD` in `wrangler.toml`). Payments: code path written and unit-tested with Stripe stubbed; not tried against real Stripe.
+- **a Table:** £10, one party. The buyer gets a **booking code**, `OATH-XXXX-XXXX`. Entering it opens a Table (a room) that stays writable for 48 hours (`PASS_HOURS`).
+- **a Regular:** £20 a month (a Stripe subscription). One code opens a new Table whenever its owner likes, one at a time, while the subscription is active.
 
-**1.1 (28 Sep 2026):** every term borrowed from TV formats replaced (§5.9); 8–24 players, with bigger tables losing more a round (§5.10); legal pages and a placeholder checkout (§6.1); a master passcode for testing (§4.1); the TV final roll and Ghost rules fit 4:3 screens.
-
-**1.2 (28 Sep 2026):** the end game always starts with four, with the Keeper choosing the rounds within what the table allows (§5.6); Stripe Checkout wired end to end, tested against a stub only (§6.2).
-
-**1.3 (28 Sep 2026), for sale:** setup is a step-by-step wizard, one decision a page with a full explanation and a recommendation that follows the earlier choices (§5.0); only Sanctuary comes every round, and the Casting Vote, Crown, Confessor and Temptation come once a game (§5.3); Trial prize and setting overrides fold away on the brief; the site has `/rules` and `/tour` (real screenshots); the question banks are roughly three times bigger (§7).
-
-**1.3.1 (28 Sep 2026), diagnostics:** Stripe's webhook is exempt from the site password (it was being refused with 401 while `SITE_PASSWORD` was set, so refunds and subscription changes never arrived; checkout only worked through the thank-you page). Refunds are matched however Stripe reports them (§6.2). Every game is recorded save by save; each TV and phone sends a trail of taps, screens, sync trouble and errors; "Report a problem" (Keeper: footer and Menu; TV: bottom-left) files a report with a snapshot of the screen; /admin has Rooms (config, full log, a replay of TV and phone, device trails), Reports, Errors (the master log) and Stripe events (§4.7).
-
-**1.4 (28 September 2026), rebrand: Cloak & Candle → The Betrayal** (thebetrayal.co.uk). Every word players, hosts and buyers see moved to the vocabulary in `media/copy/glossary.md` (the Forsworn and the Loyal, the Keeper, Trials, the Interval, Sanctuary, the Casting Vote, the Crown, the Temptation, the Confessor, the Whisper, the Last Offer, Errands, the Purse, Trust or Doubt, Honour or Betray, the Sacrament, the Unmasking, Invitations, the Table). **Code, keys and saved games did not change:** roles are still `"cloak"`/`"candle"`, prizes `shield`/`dag`, phases `mission`/`mingle`, votes `end`/`exile`/`share`/`take`, so games in progress load. The rename was done with `tools/rebrand.py` (visible text only), `tools/rebrand_fixes.py` and `tools/rebrand_site.py` (the lines that needed writing: the Sacrament oath, the endings, the Crown being worn). The quiz, memory walls, songs and pictures banks were left alone (they are facts and objects). Tables are at `/t/CODE` and `/t/CODE#keeper`; `/g/CODE` and `#host` still work. `SITE_HOST` makes thebetrayal.co.uk the one address: `www.` and `OLD_HOSTS` (cloakandcandle.co.uk) redirect every page there with a 301, but the API answers on every domain so Stripe's webhook and open Tables keep working. **The Worker keeps its name `cloak-and-candle`:** renaming a Worker creates a new one with empty Durable Objects, which would lose every pass and room. Pass codes keep their `CNDL-` prefix for the same reason. Brand assets are from The Betrayal Brand Pack 2.0 (`media/`, `tools/brand/`).
-
-**1.4.1 (29 Sep 2026), failed payments and polish:**
-
-- **Admin passes**: a checkout nobody paid for or tried to pay for is never listed (it is dropped when Stripe says the checkout expired, and anything left over is cleared after 48 hours). A refused payment is kept as **Payment failed** with Stripe's reason (`payment_intent.payment_failed`, `async_payment_failed`, or an expiry whose payment carries a refusal), counted on the dashboard and filterable. `invoice.payment_failed` notes a refused renewal on a subscription code. **Add `payment_intent.payment_failed` and `invoice.payment_failed` to the Stripe webhook's events.** A checkout Stripe refuses to start now goes in the error log too.
-- **Site**: a nav with a Buy button on every page; the home page leads with the pitch, a TV-and-phone showcase and the prices, and puts the code boxes after the FAQ; the code boxes stack on phones so the whole code shows; hover, focus and pressed states on every button; the brand font preloaded; skip links, live regions, safe areas. The buy page names the price on the button, explains instead of greying out when a box is unticked, and uses Invitation/Table throughout (the terms now say a “pass” is an Invitation and a “room” a Table). Fixed: the rules page showed the Sacrament paragraph three times; “a The Betrayal Invitation”, “The The Betrayal name”.
-- **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
-
-
-**1.6.11 (30 Sep 2026), ready for a soft launch:**
-- **The password gate is off** in production (`SITE_PASSWORD` removed from `[vars]`; previews and staging keep it).
-- **Alert emails:**
-  - Every contact message and problem report is emailed to `ALERT_TO` (info@thebetrayal.co.uk), from alerts@thebetrayal.co.uk, with Reply-To set to the customer.
-  - It uses the `MAIL` send_email binding (`[[send_email]]` in `wrangler.toml`; `alertMail` in `index.js`). That needs Email Routing on for thebetrayal.co.uk and ALERT_TO verified under Email Routing → Destination addresses.
-  - Without them, or if sending fails, the report is still saved and the failure goes to the error log (`src: "mail"`).
-  - Locally, wrangler dev writes each email to `.wrangler/tmp/email/`.
-- **Contact details:** info@thebetrayal.co.uk is on the contact, terms and privacy pages.
-- **404:** unknown pages get `site/pages/404.html` with status 404. `/api/*` still answers JSON.
-- **Sitemap:** `worker/public/sitemap.xml`, listed in `robots.txt`.
-- **Classic TV:** the Reckoning name plates are flat (dark ground, copper hairline), and "Accuse. Defend. Deflect." is rewritten. The Classic tour and media screenshots are regenerated.
-- **Lengths:** big tables are now "about 4¼ hours for 16, and 5 to 6 for 20 and up" everywhere, from Classic's planner without dinner. The old figures included dinner.
-- **Marketing copy:** the ads, outreach, video scripts and press kit had a pass for stock phrasing.
-- **Marketing pack:** `tools/marketing-pack.py` no longer depends on a home-page heading removed in 1.6.9.
-
-**1.6.10 (30 Sep 2026), the Modern tour covers a whole evening:** `/tour` walks through opening the Table, joining, the Oath, roles, a day, a Trial from intro to result (and six more on phones), breaks and the pause, the Reckoning with last words, night, dawn and the end, with 39 screenshots.
-- **Generator:** `tools/modern-shots.mjs` plays the evening through the engine and `tools/modern-shots.py` photographs it in replay mode. Twists are off in that game, so no secret prize, Temptation or final Honour/Betray appears; keep it that way (no spoilers). The final is forced to a Loyal win so the end screens are stable.
-
-**1.6.9 (30 Sep 2026), the whole codebase de-templated:** follows the design doc "tour toggle, evening list and de-templating pass".
-- **Tour page:** Modern / Classic toggle (Modern by default; `/tour#classic` opens Classic; both show without JavaScript).
-- **Home page:** the evening list has no clock times.
-- **Seals:** jewel-toned colours in `COLORS`, with a brighter highlight and lighter shadow in the wax gradient (`src/art.js`).
-- **Classic Keeper phone:** a prompt book. The lines to read are the page, with "Say", "Next" and "Then" as margin notes. Private notes are italic stage directions. Buttons are flat (one solid main action, the rest plain words). The setup choices are ruled lists with "(we'd pick this)". The menus are ruled rows.
-- **Everywhere:** small spaced-capital labels removed except where they carry information; no gradient buttons, pills, dashed boxes or glow (candlelight on the TVs aside).
-- **Copy:** em dashes removed from all visible copy and scripts; stock phrasing rewritten. Deliberately left: admin's "—" empty-cell marker, code comments, and en dashes in ranges.
-- **Testing note:** `qa/resilience.py` locks the local stand-in server's PINs on purpose at its last step, so restart `qa/server.mjs` before running it twice.
-
-**1.6.8 (29 Sep 2026), a less templated look:** the brand stays (palette, blackletter wordmark, IM Fell, the cracked seal); the stock landing-page devices went.
-- **Home page:**
-  - The hero is the Oath: "Everyone swore an oath." with "Not everyone meant it." set as a line that cracks. The two halves are `.crack::before/::after` clip-paths, and they part once on load (off with reduced motion).
-  - The wordmark moves to the masthead.
-  - "How an evening goes" runs by the clock (7:30 to 10:30, a table of ten, roughly) instead of three numbered cards.
-  - The prices are a bill of fare with dotted leaders.
-  - "What you need" is one sentence.
-  - Classic is an aside.
-  - No labels over the headings.
-- **Buttons and boxes:** flat, square-shouldered buttons with small-caps labels; quieter links for secondary actions; rules and left borders instead of glowing rounded panels. This applies on every page and, more gently, in the game (6px radius, no gradients).
-- **Rules page:** the contents are one line of links.
-- **Game:** the Reckoning's talk and the breaks show a big clock.
-
-**1.6.7 (29 Sep 2026), QA sweep:** three reviews (the engine and server, fuzzed with 1,300 games including pauses and removals; every Modern screen at seven sizes; the site and the copy), and their fixes.
-- **Engine:**
-  - A host tool used while paused acts from the moment of the pause.
-  - A revote whose candidates were all taken out goes back to the whole table instead of ending the game.
-  - Most Likely To opens every game, at 8 and 9 players too.
-  - Someone taken out mid-Trial drops out of it (actor, teller, the RPS bracket), and the winner is taken from the living.
-  - The final starts clean, with no stale Trial or break.
-  - Snap's sequence doesn't run ahead while paused.
-  - Trust and Honour send their clocks.
-  - The Purse change shown is the real one.
-- **Screens:**
-  - The host's bar shortens a long name, and "host" is a badge (hidden under 380px).
-  - The TV dawn shows last words instead of the seat grid, so nothing is cut off.
-  - TV names wrap onto two lines instead of being cut.
-  - The Forsworn's whispers sit below their targets.
-  - Votes are in name order and stay two columns.
-  - The victims' copy is consistent.
-  - Trust and Honour show countdowns and say what happens if you don't choose.
-  - Unmasking uses role colours, and the TV shows only the survivors.
-- **Site:**
-  - `[hidden]` works on pages, so /seal hides Claim when the discount is off.
-  - The buy page shows £9 only once the server confirms it, and says the Regular plan isn't discounted.
-  - `bt-egg` is cleared after a one-party purchase and is listed in the cookie notice.
-  - The terms state the £10 price, cover discounts and are Modern-first.
-  - Privacy, contact, refunds and rules are updated for Modern; the lengths agree everywhere.
-  - The nav doesn't wrap at 320px.
-  - `robots.txt` added.
-- **Marketing copy:** long-game lengths and promo-code notes updated; the new features added.
-
-**1.6.6 (29 Sep 2026), the broken seal, and dinner made optional:**
-- **The broken seal:** the QR code in the marketing pictures (the home page's hero and the tour's TV lobby) now leads to `/seal`. `tools/modern-shots.mjs` passes `qr`, and `replayShow` draws it. The page gives 10% off one party. It's remembered in `localStorage` (`bt-egg`), and the buy page shows £9. Checkout then applies the Stripe promotion code `STRIPE_EGG_PROMO` (code QR10, `promo_1UL5tM9eT91BoTqdS0J7RLMs`) through `discounts`, so the buyer types nothing. Whether Managed Payments accepts discounts is unverified. If Stripe refuses the code, the checkout opens at full price and the error log says so. The seal is for one party only, never the subscription. `/api/egg` says whether it's on, and `/seal` is sent `noindex`.
-- **Dinner is optional:**
-  - Modern's "Dinner in courses" is off by default; the lobby asks "Eating as you play?".
-  - Classic's wizard no longer recommends a dinner break or courses; both are still options.
-  - The site says "a party game" and describes dinner as something the game can fit in.
-  - The marketing pack uses the tagline "the party game of loyalty and lies" (see `glossary.md`).
-  - `table-sizes.csv` in the marketing pack is regenerated without dinner (1.6.11).
-
-**1.6.5 (29 Sep 2026), ease of use and atmosphere (Modern):**
-- **Pause:** the host's top bar has Pause, which stops every clock (`s.paused`; `tick` does nothing, and every other action is refused). Carry on moves each deadline, and each answer's time, on by the length of the pause (`shiftClocks`). Host tools stay open while paused.
-- **Phones:** they stay awake (Wake Lock, and the TV too). They buzz (`navigator.vibrate`, Android only; iPhones can't) when something needs that player: their role, a Trial starting, their turn, the vote, the night, being killed, Trust, Honour. They buzz again 10 seconds before a clock closes while they still owe an answer.
-- **Last words:** an exiled player (not in the final) and a murdered player each get one optional typed line of up to 140 characters. It appears on the TV and the narrator reads it. Poison already gets spoken last words.
-- **Forsworn whispers:** at night, when two or more Forsworn are alive, they can send set phrases (`WHISPERS`, up to 8 each a night). Only the Forsworn see them.
-- **Dawn:** when a victim topped a Most Likely To prompt (`stats.likely`), the TV says so ("voted most likely to …. We’ll never know now.").
-- **Taking someone out** (Tools, for illness): their phone says they've left, and they can't ask to rejoin. At the Oath, the roles are dealt once everyone else has sworn. If no Forsworn is left, the final begins (a dawn or reveal already under way plays out first). A Casting Vote or Crown they held is spent.
-
-**1.6.4 (29 Sep 2026):** the Table is £10 (new `STRIPE_PRICE_ID`). Modern takes any number from 8 to 24, the same as Classic; its minimum was 6. The test game against bots offers every count from 8 to 24, and the engine tests now play odd-sized tables.
-
-**1.6.3 (29 Sep 2026), Modern first:** everything we publish now sells Modern, with Classic as the alternative.
-- **Home page:** the pitch is phones-first. The hero is `media/hero-modern.jpg` (made by `tools/hero-modern.py` from the tour screenshots). "How it works" covers open, join and play. A short "There's Classic, too" section follows, and the FAQ covers phones, the host playing, and Wi-Fi. After a booking, the Modern card comes first, marked recommended.
-- **Rules page:** explains Modern, with a `#classic` section listing what changes. **Tour page:** shows Modern screens first, then the Classic walk-through under `#classic`. **Buy page:** the copy is phones-first.
-- **Marketing pack** (`media/copy`, `media/launch`): rewritten the same way.
-
-**1.6.2 (29 Sep 2026), QA sweep:** three reviews (the Modern engine and server, fuzzed with 3,000 random games; every Modern screen at five sizes, 734 screenshots; the site and Classic) and their fixes.
-- **Modern engine:**
-  - Players who leave no longer block the Oath or get dealt a role, and Play again keeps a test game.
-  - An empty revote draws from the tie, and a vote with nobody to exile ends the game instead of failing. A rules error is logged and can't lock the room.
-  - The host can't take over a phone that is still connected (a 20-second window), and a refused let-in keeps the request.
-  - The Confessor now comes whenever five remain, so it no longer shows how many Forsworn are left. The Casting Vote's winner stays secret.
-  - Tokens come from `crypto`, the body size is capped at 64 KB, and the dictionary loads once into a `Set`.
-- **Modern screens:**
-  - Long names get one column instead of breaking mid-word.
-  - Holdings are shown as chips, and questions have a countdown bar.
-  - Every reveal says something to each player, and the exile is a stamped seal.
-  - The end has a who-was-who roster, and the Purse is a meter.
-  - The TV lights up the seals of those who've answered, and its end screen is two columns (awards capped).
-  - Also: a Ghost screen for The Statue, the Temptation's three outcomes, the night's vote counts and Sanctuary tags, a last-words card for the poisoned, a vote clock, and grain and a vignette on the background.
-- **Site:**
-  - A Classic-or-Modern section on the rules page, a Modern section with screenshots on the tour page (`tools/modern-shots.py`), and Modern in the buy page, FAQ, terms, privacy and cookie list.
-  - Per-page descriptions, canonical and social tags (`<!-- desc: -->` in site/pages), media cached for a week, and nav and tap-target fixes.
-- **Classic:** the TV's end screen names the Purse at any size, and the Reckoning table fits 4:3 with long names.
-
-**1.6.1 (29 Sep 2026):** the default prize is **a box of chocolates** (was a bottle of champagne). **The Forsworn's incentive to sabotage:** in both versions, the winners take the Purse the Loyal built, or, if the Forsworn win, what it **fell short** of its target (`wonPot` in core.js, `won` in modern.js). Prize tiers follow the same amount, so an empty Purse wins the Forsworn the best prize. Fixed along the way: the Keeper phone's screen patcher (`morph` in tv.js) reused an input with a different id, so something typed on one setup page could land in a box on the next (the prize ended up as the Keeper's name). Elements with a different id are now replaced.
-
-**1.6 (29 Sep 2026), Modern:** a second way to play. After the booking code the home page asks **Classic** (as before: a Keeper, blindfolds, chalk, the TV) or **Modern** (everyone on their own phone). The choice is made once per Table. In Modern **the server runs the game**: `worker/src/modern.js` is a pure rules engine (`newGame`, `join`, `act`, `tick`, `viewFor`), stored under the `modern` key in the same GameState Durable Object. It is served at `/api/g/CODE/m` (GET, what this phone may see; `X-Tok` identifies the phone), `m/create` (the booker proves the booking code; master and open rooms need none), `m/join` (by name; after the start, a lost phone asks by name and the host lets it back in) and `m/act`. Every request calls `tick` first, so the timers move on without a background process. The page is `worker/public/modern.html`, built from `src/modern-ui.js` and `src/modern.css`, and served at `/join`, `/m/CODE`, and `/t/CODE` when the room is Modern (the TV is optional, and a phone at /t/ is offered "join as a player"). The content banks reach the Worker as `worker/src/content.gen.js`, which build.sh generates (commit it: the Git deploy doesn't run build.sh). The first to join is the **host (director)**. They play too and never see a role. **The evening plans itself** (`planDay`): each day is a list of steps (a course, the Trial(s), the Reckoning), and the host's phone has one button, **Begin: <next step>**, plus "a short break first", "+5 minutes"/"end the break", and "continue" after each result, reveal and dawn. The host can't choose Trials, call the Temptation or call the Reckoning early. Round one opens with Most Likely To as a warm-up. **Dinner in courses** (on by default): the Starter before round two, the Main mid-game, and Dessert before the final. **Twists** (on by default, once a game each): the **Casting Vote** about halfway (that round's Trial gives it instead of Sanctuary, told only to the winner; a tie the holder voted in is settled by their vote, and the table sees that it was used, never by whom). The **Temptation** follows it. The **Crown** comes on the last round before the final: it's named on the TV, carries Sanctuary for that night, and can be laid down once at a Reckoning to be safe from that exile. The **Confessor** comes in the final when five remain with one Forsworn: that Trial's Loyal winner is told the Forsworn's name, privately. **Prize tiers** (a better prize at a half-full and a full Purse) are set in the lobby. **Host tools** (the Tools button) are for when something goes wrong: start the Trial now, close a question, end a Trial, skip a step, open or close the vote, end the night, deal or begin for stragglers, someone has left the party, hand the host role to someone else, and music on this phone. None of them shows a role, except the last resort, **Show me the roles**: two confirmations, then typing SHOW THE ROLES. The server only returns the roles in that one reply, and the end screen, the TV and /admin all say the host looked. The **TV** has a QR code for the join link (`src/qr.js`, our own encoder, checked against jsQR), a narrator (the browser's voice reads each new screen) and the Classic music and sounds (`src/audio.js`). **/admin** shows a Modern room (every role, the log, whether the host looked) and replays it on a TV and the host's phone, recorded on each new screen and at most every 15 seconds otherwise. Master-code rooms (testing) may fix the Trials' order at `m/create` (`plan`), which `qa/modern.py` uses. **Test games against bots:** the master code on the home page shows a third card, *Modern test*, and the admin's *Open a test room* links *Modern against bots* (`/m/CODE#create-bots`). The room is created with `test: true` (master-code rooms only): bots fill it to the chosen size (`addBots`); `botsMove` makes them swear, look at their role, vote (the Forsworn bots vote for the Loyal), choose at night, answer the Temptation, trust and honour; Trials skip straight to random scores after the introduction; and every countdown is at most ten seconds (`T()`).
-
-**1.5 (29 Sep 2026), brand and flow review:** the product is **a Table** (“Book a Table”, a booking code, `OATH-`) and the subscription **a Regular**; “Invitation” is gone (it clashed with inviting guests) and the terms define a pass as a booking code and a room as a Table. **The Sacrament** is **the Oath**. **The Casting Vote breaks a tie** instead of counting twice. **The Temptation** is PURSE or SELF. Setup is **five questions** then a ready summary, with **Customise** for the rest (§5.0); a **Short game**; a **Classic first game** (twists off until a game has been played on the phone); **a friend can keep** so the host plays. **Dinner in three courses** (`courses`: the starter after round one, the main mid-game, dessert before the final; `courseDue`, `COURSES`); **prizes that follow the Purse** (`s.prizes` at half and full, `prizeTier`; the TV only hears `tiers`); the **Ghosts’ call** (at each Reckoning the Ghosts chalk who goes; the Keeper taps who called it, `s.calls`, and the TV names them); **awards capped at six**; an optional **TV narrator** (▶ TV beside every line; the TV speaks it with the browser’s voice, `narrTV`, once, never replayed by an undo or a reload). Public copy uses the **core words** only (Forsworn, Loyal, Keeper, the Oath, Trial, Reckoning, Sanctuary, Purse, Ghost, the Unmasking); the other names are the TV’s to explain when they happen. Headings on the site and the Keeper’s phone are in **IM Fell DW Pica**; Grenze Gotisch is kept for the wordmark and the TV’s big moments. The **cracked wax seal** is the secondary mark (`tools/brand/make_seal.py`: `media/logos/the-betrayal-seal*`, the favicon and app icons). Fixed: the Unmasking cards said CLOAK / CANDLE; the Trust or Doubt result said “chose to exile”; the Ghost rules card overflowed a 4:3 TV. New test: `qa/flow.py`. The marketing pack, glossary and brand guidelines follow all of it.
+Every Table is its own Durable Object, so any number of parties play at once.
 
 ---
 
@@ -158,19 +26,23 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 
 ```sh
 ./build.sh
-python3 qa/smoke166.py && python3 qa/plan.py && node qa/claim.mjs
-npm i && npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var SITE_PASSWORD: --var BUILD:$(cat worker/public/build.txt) &
-ADMIN_TOKEN=dev python3 qa/e2e.py http://127.0.0.1:8790/     # add MASTER_PASS=… (and --var MASTER_PASS:… above) to test it
-python3 qa/big.py                                            # 8–24 players, second vote, many-victim nights, 24-player TV at 3 sizes
+python3 qa/smoke166.py && python3 qa/plan.py && node qa/claim.mjs && node qa/admin.mjs && node qa/modern-engine.mjs
+npm i
+npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var MASTER_PASS:MASTERTEST --var SITE_PASSWORD: --var BUILD:$(cat worker/public/build.txt) &
+ADMIN_TOKEN=dev python3 qa/e2e.py http://127.0.0.1:8790/
+python3 qa/big.py
 ```
+
+The Python harnesses need Playwright with Chromium; some tools also need Pillow. Section 8 lists every harness.
 
 **Rules of the road:**
 
-- **Never write the Cloudflare API token, `ADMIN_TOKEN` or `STRIPE_SECRET_KEY` into any file, zip or commit.** Pass the Cloudflare token as an environment variable at deploy time; the other two are Worker secrets (`wrangler secret put`). The Cloudflare token used during the party build was shared in chat — rotating it is recommended.
-- **Deploys no longer wipe games** — customers may be mid-party. So: never change the saved game's shape in a way an in-progress game can't load. Add fields with defaults (read them through `rulesIn`-style helpers); bump `SCHEMA` only with a migration. A phone on an old build gets 426 and reloads onto the new build, keeping its game.
-- Deploy to **staging** first, wait a minute, run `ADMIN_TOKEN=… qa/e2e.py https://staging.cloakandcandle.co.uk/`, then production.
-- **Stay original.** No names, logos, music, catchphrases, presenter names or set pieces from any TV programme — in code, copy, art or commit messages. All art is original inline SVG; fonts are OFL.
-- Ryan's style preferences: answer first; surgical changes; match file conventions; mark verified versus assumed; never report something done that wasn't run.
+- **Never write the Cloudflare API token, `ADMIN_TOKEN`, `ADMIN_PASSWORD`, `MASTER_PASS`, `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` into any file, zip or commit.** The Cloudflare token goes in the environment at deploy time (`CLOUDFLARE_API_TOKEN`); the rest are Worker secrets (`wrangler secret put`).
+- **Deploys must not break games in progress.** Customers may be mid-party. Never change a saved game's shape in a way a running game can't load: add fields with defaults and read them through helpers such as `rulesIn` (Classic). Classic's Keeper phone and TV refuse a saved game whose `v` differs from `SCHEMA` in `src/core.js` ("A game from an older version"), so bumping `SCHEMA` strands every Classic game in progress.
+- **Run `./build.sh` before committing.** The built pages in `worker/public` and `worker/src/content.gen.js` are committed; the Git deploy does not run `build.sh`.
+- Deploy to **staging** first, run `qa/e2e.py` against it, then production.
+- **Stay original.** No names, logos, music, catchphrases, presenter names or set pieces from any TV programme, in code, copy, art or commit messages. All art is original inline SVG; the fonts are OFL. Public wording follows `media/copy/glossary.md`.
+- Ryan's preferences: answer first; surgical changes; match file conventions; mark verified versus assumed; never report something done that wasn't run.
 
 ---
 
@@ -178,300 +50,452 @@ python3 qa/big.py                                            # 8–24 players, s
 
 ```
 HANDOVER.md, README.md
-build.sh           src/ → index.html (standalone game) + worker/public/play.html; site/index.html → worker/public/index.html
-                   (fonts inlined); media/web → worker/public/media; build.txt
-deploy.sh          build + wrangler deploy (staging | production)
-src/               the game page (§4)
-site/index.html    the home page: SHOP settings (price, contact) at the bottom
-site/page.html     the shell for the legal and checkout pages; site/pages/NAME.html → worker/public/NAME.html, served at /NAME
-                   (terms, privacy, cookies, refunds, contact, buy, admin, rules, tour — BUY price display at the bottom of buy.html)
-tools/marketing-pack.py  builds dist/The-Betrayal-Marketing-Pack.zip: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social (sources in media/copy/)
-tools/webshots.py      web-sized copies of media/screenshots for the /tour page (run after qa/media.py)
-tools/stripe-setup.sh  creates the Stripe product, price and webhook endpoint for one environment (§6.2)
-worker/src/        index.js (router, GameState, Registry), codes.js, rules.js, public-view.js
-worker/public/     build output + fonts, icons, words.txt (Longest Word dictionary), _headers, media/
-media/             logos/, screenshots/, social/, palette/, copy/press-kit.md, src/guidelines.html, The-Betrayal-Brand-Guidelines.pdf
-tools/             brand.py, mediapack.py, icons.py, passes.sh, recolour.py (the one-off palette move, kept for reference)
-qa/                harnesses (§8)
+build.sh              src/ → index.html (standalone game) and worker/public/play.html (Classic);
+                      src/modern-ui.js, modern.css, qr.js, art.js, audio.js → worker/public/modern.html (Modern);
+                      site/index.html → worker/public/index.html; site/pages/NAME.html in site/page.html → worker/public/NAME.html;
+                      src/content.js → worker/src/content.gen.js; media/web/* → worker/public/media/; worker/public/build.txt
+deploy.sh             build, then wrangler deploy: ./deploy.sh staging | production
+wrangler.toml         production Worker (also read by Cloudflare's Git integration and by `wrangler preview`)
+wrangler.staging.toml staging Worker
+package.json          wrangler as a dev dependency
+src/                  the game pages (no framework, no bundler)
+  content.js          Trial definitions (MISSIONS, MSET) and the content banks (append-only, §7)
+  scripts.js          every Keeper line, the night and ceremony scripts
+  core.js             Classic: store and sync, the game plan (RULES0), every rule, awards
+  host.js             Classic Keeper phone: the setup wizard (WIZ, RECS), then every phase
+  tv.js               Classic TV renderer
+  art.js, audio.js    inline SVG drawings; synthesised sound and score (both pages)
+  diag.js             device trail, "Report a problem", the admin replay hooks
+  boot.js             start-up, build auto-reload, wake lock
+  modern-ui.js        Modern's page: every phone, the host and the TV
+  qr.js               the join QR code encoder
+  style.css, modern.css, fonts.css
+site/index.html       the home page (sell, redeem a code, choose Modern or Classic, join, claim after checkout); SHOP price text near the bottom
+site/page.html        the shell for every other page; each site/pages/NAME.html starts with <!-- title: … --> and <!-- desc: … -->
+site/pages/           404, admin, buy, contact, cookies, privacy, refunds, rules, seal, terms, tour
+worker/src/
+  index.js            router, GameState (one per room), Registry (booking codes, logs, reports), Stripe, admin, alert email
+  codes.js            room and booking-code formats
+  rules.js            Classic save rules and poll tag (shared with qa/server.mjs)
+  public-view.js      what Classic's TV may see (shared with the page)
+  modern.js           Modern's rules engine
+  content.gen.js      generated by build.sh; commit it
+worker/public/        build output, fonts/, icons, words.txt (Longest Word dictionary), _headers, robots.txt, sitemap.xml, media/
+media/                logos/, palette/, screenshots/ (Classic), web/ (site images), social/, copy/, launch/, brand guidelines PDF
+tools/                see §6.8
+qa/                   test harnesses (§8)
 ```
 
 ---
 
 ## 4. Architecture
 
-### 4.1 Rooms and passes (Worker)
-- **Routes:** `/` home page · `/g/ROOMCD` game page (`play.html`) · `/api/g/ROOMCD/state|settings` a room's API · `POST /api/games {pass}` redeem · `POST /api/checkout {terms, supply}` → Stripe Checkout URL · `GET /api/claim?session_id=` · `POST /api/stripe/webhook` (signed) · `/api/admin/*` (Bearer `ADMIN_TOKEN`): `POST passes {count,note}`, `GET passes`, `POST revoke {pass}`.
-- **Registry** (one Durable Object, `idFromName("registry")`): passes `pass:CNDL-…` → `{created, note, source, room?, expires?, redeemed?, revoked?}`, rooms `room:CODE`, Stripe claims `claim:<session>` and `pi:<payment_intent>` → pass, checkout rate `co:<ip>`. A pass bought through Checkout is `pending` until paid; a pending pass is refused with 402. Redeeming again returns the same room until it expires (a Keeper who lost the link). 20 failed redemptions an hour per address, then 429.
-- **GameState** (one per room, `idFromName("room:CODE")`): `meta {room, expires, pass}` set by the Registry on creation; unknown rooms are 404. After `expires` the room is read-only (writes get **423**); an alarm deletes it `KEEP_DAYS` later. Otherwise unchanged from the party build: PIN, wrong-PIN limiting, 409/410 save rules, poll tags, question-bank switches (now per room).
-- **Vars:** `PASS_HOURS` (48), `KEEP_DAYS` (7), `BUILD` (set by deploy.sh), `SITE_PASSWORD` (the pre-launch gate). **Secrets:** `ADMIN_TOKEN`, `STRIPE_SECRET_KEY`, `MASTER_PASS`.
-- **Master passcode** (`MASTER_PASS`, a secret): entered in the home page's pass box (any case, spaces trimmed) it opens a **fresh room every time**, recorded with `pass: "MASTER"`. For testing; unset it to switch it off. Wrong guesses count against the same 20-an-hour limit as passes.
-- **Pages:** `/terms`, `/privacy`, `/cookies`, `/refunds`, `/contact`, `/buy` are served from `worker/public/NAME.html`. `OPEN_ACCESS=1` lets `POST /api/games` with no pass make a room — development only.
-- Codes avoid 0/O/1/I/L. Rooms: 6 characters. Passes: 8 characters, shown as `OATH-XXXX-XXXX` (`shownPass` in `codes.js`); stored under `pass:CNDL-…` as they always were, and `normPass` accepts either prefix or none, so codes sold before 1.5 keep working.
+### 4.1 Routing and domains (`worker/src/index.js`)
 
-### 4.2 The page
-`build.sh` concatenates `fonts.css`, `style.css`, `content.js`, `scripts.js`, `public-view.js`, `core.js`, `audio.js`, `art.js`, `tv.js`, `host.js`, `boot.js`. `isHost` = `#host`. `ROOM` comes from the path; `API` is `/api/g/ROOM` (or `/api` with no room — the local test server's default room). The standalone `index.html` still runs on localStorage with no server.
+- **One address.** `SITE_HOST` (thebetrayal.co.uk) is canonical. `www.` and every host in `OLD_HOSTS` (cloakandcandle.co.uk and its `www.`, attached as custom domains) get a 301 to `SITE_HOST` for every page, with `/g/` paths sent to `/t/`. `/api/*` answers on every attached domain without redirecting, so a webhook or open Table pointed at an old host keeps working.
+- **Password gate.** With `SITE_PASSWORD` set, every page, asset and API call needs the `cc_gate` cookie (30 days) from a small password page. `/api/admin/*` (own auth) and `/api/stripe/webhook` (signed) are exempt. Production has no `SITE_PASSWORD`; staging and previews set one.
+- **Pages:** `/` and `/claim` → `index.html`; `/terms`, `/privacy`, `/cookies`, `/refunds`, `/contact`, `/buy`, `/admin`, `/rules`, `/tour`, `/seal` → `NAME.html` (`/admin` and `/seal` are sent `noindex`; `/admin` also `X-Frame-Options: DENY`). `/join` → `modern.html`.
+- **A Table:** `/t/CODE`, `/g/CODE` and `/m/CODE` (six characters; lower case is redirected to upper). `/m/` always serves `modern.html`; `/t/` and `/g/` ask the room which mode it is in (`/_mode`) and serve `modern.html` for a Modern room, otherwise `play.html`.
+- **Unknown pages** get `404.html` with status 404; unknown `/api/*` gets JSON 404.
+- **Static files** (`[assets]`, `run_worker_first = true`) pass through the Worker, so the gate covers them. Cache policy is in `worker/public/_headers` (fonts and `words.txt` immutable, `/media/*` a week, HTML and `build.txt` no-cache).
+- **API:**
+  - `GET|PUT|DELETE /api/g/CODE/state`, `GET|PUT /api/g/CODE/settings` (Classic), `POST /api/g/CODE/events` (device trail), `GET /api/g/CODE/m`, `POST /api/g/CODE/m/create|m/join|m/act` (Modern)
+  - `POST /api/games {pass, fresh?}` redeem a booking code (or the master passcode)
+  - `POST /api/checkout {terms, supply, plan?, egg?}`, `GET /api/claim?session_id=`, `POST /api/stripe/webhook`, `POST /api/portal {pass}`, `GET /api/egg`
+  - `POST /api/report` (problem reports and contact messages)
+  - `/api/admin/*` (§6.6)
 
-### 4.3 State and actions
-One JSON `state`; `SCHEMA = 12`, `APPV = "1.2"` (12: role keys became `cloak`/`candle`; a game saved by 1.0 is refused with "a game from an older version" — nothing was live). Every change goes through `act(fn, logline)` (clone, run, stamp, log, save; stale taps dropped). Undo: 30 local snapshots plus a short `prev` chain; `rewindRound` restores `roundSnap`. New in 1.0: `rules` (§5.0), `plan`, `planAt`.
+### 4.2 Booking codes and rooms (Registry)
 
-### 4.4 Sync
-Both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:true}`). The phone queues saves and rebases after lost replies. GET bodies carry `room {code, expires, expired}`. Status handling in `flushSaves`: 426 reload, 403 wrong PIN, 410 wiped elsewhere, 409 another phone moved, **423 pass expired** (read-only toast).
+- One Durable Object for the whole service (`idFromName("registry")`). Keys: `pass:CNDL-XXXX-XXXX` → `{created, note, source, kind?, room?, expires?, redeemed?, revoked?, pending?, paid?, failed?, refunded?, session?, pi?, subId?, customer?, subActive?, subStatus?, games?}`; `room:CODE`; `claim:<checkout session>` and `pi:<payment intent>` → pass; `co:<ip>` checkout rate; `err:` master log; `hook:` webhook log; `rep:` / `repx:` reports.
+- **Code formats** (`codes.js`): the alphabet avoids 0/O and 1/I/L. Rooms are 6 characters. Booking codes are 8 characters, **stored under a `CNDL-` key and shown as `OATH-`** (`shownPass`). `normPass` strips either prefix or none, so `CNDL-…`, `OATH-…` and the bare 8 characters all find the same record.
+- **Redeeming** a one-party code creates a room good for `PASS_HOURS`; redeeming it again returns the same room until it expires (a host who lost the link), then 410. Pending (unpaid) codes get 402, cancelled ones 410. A Regular's code returns the open room ("Carry on") or, with `fresh: true`, closes it (GameState `/_close`) and opens a new one; it works only while `subActive` (Stripe status `active` or `trialing`), otherwise 402.
+- **Limits:** 20 failed redemptions an hour per address, then 429 (admin sign-in failures and billing-portal lookups count too). Checkouts: 10 an hour per address.
+- **Master passcode** (`MASTER_PASS` secret): entered in the home page's code box (any case, trimmed) it opens a fresh room every time, recorded as `pass: "MASTER"`, and the home page offers a third card, *Modern test*. Unset, it does nothing.
+- `OPEN_ACCESS=1` lets `POST /api/games` with no pass make a room. Development only.
 
-### 4.5 Secrets and the public view
-`worker/src/public-view.js` is the single source of truth for what the TV may know (roles, PIN, log, undo chain, Confessor, secret Casting Vote holders, Trial secrets, quiz answers, the night's victim until its line, Errands, unrevealed votes, the prize and stats until the final phase). **When you add a secret field, add it there.** `rules`, `plan` and `planAt` are not secret.
+### 4.3 GameState (one per room)
 
-### 4.7 Diagnostics
-- **Recording** (`GameState.record`): every accepted PUT stores `recl:<n>` (time, kind start/save/wipe, the newest log line, phase, round, version) and `recs:<n>` (the whole state, gzipped). Up to `RECMAX` (20,000) a room; deleted with the room.
-- **Device trail** (`src/diag.js`): taps (button labels only), screen changes, visibility, network, sync failures (`crumb()` calls in `core.js`), errors and unhandled rejections. Sent every 15 s (errors at once, and on pagehide) to `POST /api/g/CODE/events`, stored as `ev:<n>` batches (up to `EVMAX` = 2,000 of at most 32 KB). Errors are copied to the master log.
-- **Reports** (10 an hour per address): `POST /api/report` {room, what, expected, email, snap (gzipped base64 HTML of the page without scripts), crumbs…}. The Registry keeps `rep:<R-XXXXXX>` and the snapshot in 100 KB chunks (`repx:`); the room gets `keepUntil` = +90 days (its alarm waits for it) and notes the report. A report also goes in the master log.
-- **Master log** (Registry `err:<time>`, newest 3,000): `src` browser / server (every Worker and GameState exception is caught and logged, then 500) / stripe (bad signatures, refunds that match no pass) / report. **Webhook log** `hook:<time>` (newest 1,000): every verified Stripe event and what it did.
-- **Replay:** `/play.html#replay-tv` and `#replay-host` start nothing (no polling, no saves) and expose `replayShow(state)`; the TV side gets `publicView(state)`, as the real TV would. `/admin` loads both in iframes and feeds them recorded states.
-- **Admin API** (session or Bearer): `GET rooms`, `room/CODE/room|recs|rec?n=|events`, `errors`, `hooks`, `reports`, `report?id=`, `POST report {id, status, note}`.
-- Workers Logs (`[observability]` in wrangler.toml) also keep console output in the Cloudflare dashboard.
+- `idFromName("room:CODE")`. `meta {room, expires, pass, created, keepUntil?, reports?}` is set by the Registry; a room without it is 404.
+- After `expires` the room is read-only: writes get **423**. An alarm deletes the whole room `KEEP_DAYS` later (or at `keepUntil`, if a problem report asked to keep it).
+- Keys: `state` (Classic game), `modern` (Modern game), `settings` (question-bank switches), `wiped`, `recN`/`recl:`/`recs:` (recording), `evN`/`ev:` (device trail). A room holds one mode: Classic writes are refused once a Modern game exists and vice versa.
+- **Classic writes** need the Keeper PIN (`X-Pin`; the first PUT sets it). Reads without it get `publicView`. Wrong PINs: more than 8 a minute from one address (IPv6 per /64), or 30 a minute in total, get 429.
+- **Save rules** (`rules.js`, `writeVerdict`): 410 for a wiped game coming back; 409 (with the stored game) for a different game or a save not built on the stored version; the PIN can't change mid-game. Bodies over 900 KB get 413.
+- **Build check:** when the `BUILD` var is set (`deploy.sh` sets it), a write from a page on another build gets 426 and the page reloads. Every page also polls `/build.txt` and reloads onto a new build. A Git-integration deploy does not set `BUILD`, so only the poll applies there.
 
-### 4.6 TV
-`tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; large text by default; tuned for 16:9/16:10. Everything passes through `kw()` for the kill style. Before a game, the TV shows the room code and the Keeper link.
+### 4.4 Classic page
+
+- `build.sh` concatenates `fonts.css`, `style.css`, `content.js`, `scripts.js`, `public-view.js`, `core.js`, `audio.js`, `art.js`, `tv.js`, `host.js`, `diag.js`, `boot.js` into `index.html` (which also runs standalone on `localStorage`) and wraps it as `play.html`.
+- `isHost` is true for `#keeper` or `#host` (the same page). `ROOM` comes from the path; `API` is `/api/g/ROOM` (or `/api` with no room: the local test server's default room).
+- **State:** one JSON `state`, `SCHEMA = 12`. Every change goes through `act(fn, logline)` (clone, run, stamp, log, save; stale taps dropped). Undo: 30 local snapshots plus a short `prev` chain; `rewindRound` restores `roundSnap`.
+- **Sync:** both screens poll `GET …/state` about once a second (`X-Have` tag → `{same:true}`). The phone queues saves and rebases after lost replies. `flushSaves` handles 426 (reload), 403 (wrong PIN), 410 (wiped elsewhere), 409 (another phone moved), 423 (Table closed, read-only).
+- **What the TV may see:** `worker/src/public-view.js` is the single source of truth: it strips roles, the PIN, the log, the undo chain, the Confessor, secret Casting Vote and Crown holders, Trial secrets, quiz answers, the night's victim until its line, Errands, unrevealed votes, and the prize and stats until the final phase. **Add any new secret field there.** `rules`, `plan` and `planAt` are not secret.
+- **TV:** `tvView(s)` → `{key, html, scene, sfx…}`; title cards on phase changes; tuned for 16:9 and 16:10, with 4:3 checked. `kw()` swaps murder/poison wording everywhere. Before a game the TV shows the room code and the Keeper link. F toggles full screen.
+
+### 4.5 Modern
+
+- **Engine:** `worker/src/modern.js` is pure: `newGame`, `join`, `act`, `tick`, `viewFor`. Stored under `modern` in the room's GameState. Every request calls `tick` first, so clocks move on without a background process. A rules exception during `tick` is logged and the room keeps answering.
+- **API:** `GET /api/g/CODE/m` returns what this phone may see (`X-Tok` identifies the phone; `?v=&me=` returns `{same:true}` when nothing changed). `m/create` makes the game and joins its creator as host: the booker proves the booking code; master and open rooms need none. `m/join` joins by name in the lobby; after the start, a lost phone asks by name and the host lets it back in (refused while the original phone polled in the last 20 seconds). `m/act` takes every input. Bodies are capped at 64 KB; tokens come from `crypto`.
+- **Page:** `worker/public/modern.html` (built from `src/modern-ui.js`, `src/modern.css`, `qr.js`, `art.js`, `audio.js`). The TV shows a QR code for the join link, a narrator (the browser's voice reads each new screen) and the Classic music and sounds. Phones keep awake (Wake Lock) and vibrate when something needs that player, and again 10 seconds before a clock closes while they still owe an answer (Android only; iPhones don't support it).
+- **Content** reaches the Worker as `worker/src/content.gen.js`, generated by `build.sh`. The Longest Word dictionary (`words.txt`) is loaded once per room instance into a `Set`.
+- **Master-code rooms** may fix the Trial order at `m/create` (`plan`, used by `qa/modern.py`) and create a **test game against bots** (`test: true`, `/m/CODE#create-bots`): bots fill the table (`addBots`) and swear, look at their role, vote (Forsworn bots vote for the Loyal), choose at night, answer the Temptation, and trust and honour (`botsMove`); Trials skip to random scores; every countdown is at most 10 seconds (`T()`).
+
+### 4.6 Diagnostics
+
+- **Recording** (`GameState.record`): every accepted Classic save stores `recl:<n>` (time, kind start/save/wipe, the newest log line, phase, round, version) and `recs:<n>` (the whole state, gzipped). Modern is recorded on every new screen and at most every 15 seconds otherwise, with the TV's and host's views. Up to `RECMAX` (20,000) a room; deleted with the room.
+- **Device trail** (`src/diag.js`): taps (button labels only), screen changes, visibility, network, sync failures (`crumb()`), errors and unhandled rejections. Sent every 15 s (errors at once, and on pagehide) to `POST /api/g/CODE/events`, stored as `ev:<n>` batches (up to `EVMAX` = 2,000, each at most 32 KB). Errors are copied to the master log.
+- **Reports** (10 an hour per address): `POST /api/report {room, what, expected, email, snap, crumbs…}`, where `snap` is the page without scripts, gzipped and base64. The Registry keeps `rep:<R-XXXXXX>` and the snapshot in 100 KB chunks (`repx:`). The room is kept 90 days for its replay. The contact form posts here too. Every report is emailed (§6.4).
+- **Master log** (Registry `err:`, newest 3,000): `src` = `browser`, `server` (every Worker and GameState exception is caught, logged, then 500), `stripe` (bad signatures, unmatched refunds, refused checkouts or discounts), `report`, `mail` (failed alert emails). **Webhook log** `hook:` (newest 1,000): every verified Stripe event and what it did.
+- **Replay:** `/play.html#replay-tv` and `#replay-host` (and the same hashes on `modern.html`) start nothing and expose `replayShow(state)`. `/admin` loads both in iframes and feeds them recorded states.
+- **Workers Logs** (`[observability]` in `wrangler.toml`): console output and uncaught exceptions, under Workers → cloak-and-candle → Logs.
+
+### 4.7 Internal names
+
+The code keeps its own identifiers; players only see the public words. Saved games use these keys, so don't rename them.
+
+| in the code | public word |
+|---|---|
+| role `"cloak"` / `"candle"` (Classic), `"f"` / `"l"` (Modern); `cloaks()`, `candles()`; winner `"cloaks"` / `"candles"` | the Forsworn / the Loyal |
+| `isHost`, `#host`, "host" in Classic code | the Keeper (Classic) |
+| `director` (Modern) | the host |
+| pass, `pass:` | booking code |
+| room | Table |
+| `mission`, `MISSIONS`, phase `"mission"` | Trial |
+| `countdown` (Trial key) | Longest Word |
+| `shield` | Sanctuary |
+| `blade`, `dag` (Classic), `cast` (Modern) | the Casting Vote |
+| `champion`, `championOf` (Classic), `crown` (Modern) | the Crown |
+| `witness`, `WITNESSNOW_` (Classic), `confess` (Modern) | the Confessor |
+| `dilemma` (Classic), `tempt` (Modern) | the Temptation |
+| `convert` / `bargain` | the Whisper / the Last Offer |
+| `quests`, `QUESTS` | Errands |
+| `mingle` | the Interval (or a dinner break) |
+| `pot` | the Purse |
+| `table` | the Reckoning |
+| `morning` | dawn |
+| phase `endvote`, votes `"end"` / `"exile"` | Trust or Doubt (TRUST / DOUBT) |
+| phase `final2`, `castTake`, votes `"share"` / `"take"` | Honour or Betray |
+| Worker `cloak-and-candle`, `cloak-and-candle-staging` | production and staging Workers |
+| `candle-pin`, `candle-played`, `candle-draft`, `candle-settings` (browser storage); `cc_admin`, `cc_gate` (cookies) | storage keys and cookies |
+
+The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's hash prefix (`cloak-and-candle-gate:`) are bound to live data: renaming a Worker creates a new one with empty Durable Objects (every booking code and room lost), and renaming a cookie signs everyone out.
 
 ---
 
 ## 5. The game
 
-### 5.0 The game plan (setup)
-A wizard on the phone (`WIZ` in `host.js`). **Five questions** (`core: true`: players, how long, murder or poison, the prize, who keeps) and the PIN lead to **Ready**, a summary with every other choice already made; each line has **Change** (back with **Done**), and **Go through every choice** walks the **Customise** pages (the rest of `WIZ`) and returns to the summary. **Who keeps:** the host, or “a friend will keep, and I’ll play” (the host must be in the players, the Keeper must not); then Ready's button is **Hand over to …**, a handover page where the Keeper can change the PIN and presses **Start game**. The **Short game** (2 hours) recommends one Trial a round, no Interval, no dinner. A **first game is Classic**: `RECS` recommends every twist off and Sanctuary public until `localStorage['candle-played']` is set, which happens when a game reaches its final screen on that phone. `RECS` gives every choice a recommendation worked out from the ones before it (e.g. rounds from table size and hours via `estMins`, dinner mid-game, Errands only with an Interval). Until the Keeper picks something themselves (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped (no Sanctuaries → no Crown or Temptation page). The draft lives in `sessionStorage` (`candle-draft`); tests drive it by setting `setupDraft` and calling `submitSetup()`. Saved in `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
+### 5.1 Common to both
+
+- **8 to 24 players** (`MINP`, `MAXP`). Forsworn: 2 (8 to 10), 3 (11 to 15), 4 (16 to 22), 5 (23 to 24).
+- **Exiles:** two a Reckoning while more than 16 are at the table (`exilesAt`). **Night victims:** 2 from 12 alive, 3 from 20 (`killsAt`), never taking the table below five.
+- **The final** begins when five or fewer remain, or no Forsworn is left.
+- **The Purse** is capped at its target (2000 by default). The winners take the Purse the Loyal built; if the Forsworn win, they take what it **fell short** of its target (`wonPot` in `core.js`, `won` in `modern.js`), so sabotage pays. **Prize tiers** (a better prize at a half-full and a full Purse) follow the same amount. The default prize is a box of chocolates.
+- **Ghosts:** the exiled and the dead. They stay in the game.
+
+### 5.2 Modern
+
+- **Lobby:** the host sets the kill (poison, the default, or murder), Sanctuary (secret or public), the prize and up to two prize tiers, the title, **twists** (on by default) and **dinner in courses** (off by default; the lobby asks "Eating as you play?"). Start needs 8 players.
+- **The Oath:** each player says whether they'd like to be Forsworn (yes, no, either way); roles are dealt to volunteers first, then "either way", then whoever must. Then each player sees their role.
+- **The evening plans itself** (`planDay`): each day is a list of steps and the host's phone has one button, **Begin: <next step>**, plus a short break (the 10-minute Interval), "+5 minutes" / "end the break", and "continue" after each result, reveal and dawn. The host can't choose Trials, call the Temptation or open the Reckoning early.
+  - Round one opens with **Most Likely To** (no prize).
+  - **Courses** (if on): the Starter (15 min) before round two's Trial, the Main Course (25 min) mid-game, Dessert (15 min) in the final.
+  - **Twists** (if on, once a game each): the **Casting Vote** about halfway (that Trial's winner gets it instead of Sanctuary, privately), followed the same day by **the Temptation**; the **Crown** on the last round before the final (it carries Sanctuary that night); the **Confessor** in the final Trial when five remain (its winner is privately told one Forsworn's name).
+- **Trials on phones:** Rapid Quiz, Closest Guess, Higher or Lower, Most Likely To, Longest Word, Memory Wall, What Changed?, Snap, Rock Paper Scissors Royale, One Leg, The Statue (only once there are Ghosts), Screen Charades, Hum It, Pictionary, Two Truths and a Lie. Each has a 12-second introduction. The order is shuffled at the start and doesn't repeat until used up.
+- **Sanctuary:** a Trial's top scorer (a tie settled by lot) is safe that night. At most a quarter of the living (at least one) hold it at once, and none is given in the final. With secret Sanctuary, a Forsworn winner gets nothing.
+- **The Purse:** each Trial offers a share of what's left; the table's success fills it, and each wrong answer from a Forsworn takes 50 back (up to half the offer). Everything moves in 50s.
+- **The Temptation:** everyone answers PURSE or SELF in secret. Exactly one SELF takes Sanctuary and the Purse grows; nobody: the Purse grows double; two or more: nobody gets it and the Purse shrinks.
+- **The Reckoning:** talk (4 minutes by default), then a 2-minute vote. Ghosts vote too, as "calls" that don't count but are named. A tie goes to a 90-second revote between the tied; the **Casting Vote** settles a tie its holder voted in (the table sees it was used, never by whom); a second tie, or no votes, is settled by lot. The exile's role is shown five seconds later (not in the final). The **Crown** holder may lay it down once, during the talk or the vote, to be safe from that exile. Above 16 players a second Reckoning follows the first.
+- **Last words:** an exiled player (not in the final) and a murdered player each get one optional typed line of up to 140 characters; the TV shows it and the narrator reads it. Poison gives 30 seconds of spoken last words per victim at dawn.
+- **Night** (2 minutes): the Forsworn choose on their phones; the Loyal tap to sleep. With two or more Forsworn alive they can send set phrases (`WHISPERS`, up to 8 each a night), seen only by the Forsworn. If they choose nobody, the house chooses. Sanctuary saves its holder.
+- **Dawn:** names the victims; if one topped a Most Likely To prompt, the TV says so.
+- **The final:** one Trial, then Reckonings with no role reveal until four or fewer remain; then **Trust or Doubt**: only a unanimous TRUST ends the game, otherwise another Reckoning. At two left the game ends. **The Unmasking** shows every survivor's role. With two or more Forsworn among the survivors comes **Honour or Betray**: all honour, they share; exactly one betrays, they take it all; two or more betray, nobody wins it.
+- **The end:** winner, prize, Purse, a who-was-who roster, and up to six awards.
+- **Pause:** the host's top bar has Pause. Every clock stops (`tick` does nothing; every action but the host's tools is refused). Carry on moves each deadline and each answer's time on by the length of the pause (`shiftClocks`). A tool used while paused acts from the moment of the pause.
+- **Host tools** (the Tools button), for when something goes wrong: start the Trial now, close a question, end a Trial, skip a step, open or close the vote, end the night, deal or begin for stragglers, take someone out (illness: their phone says they've left; a Casting Vote or Crown they held is spent; if no Forsworn is left, the final begins), hand the host role to someone else, music on this phone. None shows a role except the last resort, **Show me the roles**: two confirmations, then typing SHOW THE ROLES. The server returns the roles only in that one reply, and the end screen, the TV and `/admin` all say the host looked.
+
+### 5.3 Classic: the game plan (setup)
+
+A wizard on the Keeper phone (`WIZ` in `host.js`).
+
+- **Six core pages** (`core: true`): who's playing, how long, murder or poison, the prize, who keeps, and the Keeper PIN (4 to 8 digits), then **Ready**: a summary with every other choice made. Each line has **Change** (back with **Done**); **Go through every choice** walks the Customise pages and returns.
+- **Who keeps:** the host, or "a friend will keep, and I'll play" (the host must be among the players, the Keeper must not). Ready's button becomes **Hand over to …**, where the Keeper can change the PIN and presses **Start game**.
+- **Recommendations** (`RECS`) follow earlier choices (rounds from table size and hours via `estMins`, an Interval from 3 hours, one Trial a round at 2.5 hours or less). The **Short game** (2 hours) is one Trial a round, no Interval, no dinner. Dinner is never recommended. **A first game is kept plain:** every twist off and Sanctuary public until `localStorage['candle-played']` is set, which happens when a game reaches its final screen on that phone. Until the Keeper picks something (`d.touched`), `settle()` keeps each choice on its recommendation. Pages that don't apply are skipped.
+- The draft lives in `sessionStorage` (`candle-draft`); tests set `setupDraft` and call `submitSetup()`. The result is `state.rules` (`RULES0` in `core.js` has the defaults; `cleanRules` validates):
 
 | rule | values | effect |
 |---|---|---|
-| `rounds` | 0 = by table size, or 1–10 | fixed: round N becomes the final (`nextRound`). The five-left rule still applies |
+| `rounds` | 0 = by table size, or 1 to 10 | round N is the final (`nextRound`); clamped to `roundsRange` |
 | `perRound` | 0 = by the clock, 1, 2 | Trials a round (`perRoundOf`) |
-| `dinnerAfter` | 0–10 | the morning after that round offers dinner as the main button |
+| `dinnerAfter` | 0 to 10 | the morning after that round offers dinner as the main button |
+| `courses` | on/off | dinner in three courses: starter after round one, main mid-game, dessert before the final (`courseDue`, `COURSES`) |
 | `mingle` | on/off | a 10-minute Interval before each Reckoning |
-| `pool` | Trial keys or null (all) | `planMissions` deals them: the icebreaker first, Ghost games after Trial two, no repeats until used up. `state.plan`/`planAt` hold the order; `nextPlanned` skips the Statue until there are Ghosts |
-| `kill` | `murder` / `poison` | murder: the victim is tapped and leaves the table under blindfold; poison: told at night, announces at dawn, last words, leaves. Wording swapped by `kw()` everywhere (Keeper, TV, scripts) |
-| `ghosts` | on/off | off: `ghostsOf` returns nobody — no lore, verdicts, Ghost round, Statue |
-| `convert`, `bargain` | on/off | `autoMode` picks the night: one Whisper, then one Last Offer, only for a lone Forsworn v 4+ Loyal |
+| `pool` | Trial keys or null (all) | `planMissions` deals them: the icebreaker first, Ghost games after Trial two, no repeats until used up; `state.plan`/`planAt` hold the order; `nextPlanned` skips the Statue until there are Ghosts |
+| `kill` | `murder` / `poison` | murder: the victim is tapped and leaves under blindfold; poison: told at night, announces at dawn, last words. `kw()` swaps the wording everywhere |
+| `ghosts` | on/off | off: `ghostsOf` returns nobody (no lore, verdicts, Ghost round or Statue) |
+| `convert`, `bargain` | on/off | `autoMode` picks the night: one Whisper, then one Last Offer, only for a lone Forsworn against 4 or more Loyal |
 | `quests` | on/off | one Errand pre-chosen each night |
 | `shield` | mix / public / secret / off | `autoPrize`; mix = hidden in round-by-round Trials, public elsewhere |
-| `blade`, `champion`, `witness`, `dilemma` | on/off | Casting Vote and Crown once a game each (`onceRound`: the Casting Vote about halfway to the final, the Crown later; `state.gave` records them); Confessor only at five with one Forsworn; the Temptation once, offered when nobody holds Sanctuary |
+| `blade`, `champion`, `witness`, `dilemma` | on/off | the Casting Vote, Crown, Confessor, Temptation (§5.5) |
+| `narrator` | on/off | the TV reads the Keeper's lines aloud (`narrTV`; once, never replayed by an undo or reload) |
 
-The Menu has **Your game plan** (the summary and the next six Trials).
+Setup also takes the Purse target and whether a Loyal wrong shout costs anything (`wrongRule`). The Menu has **Your game plan** (the summary and the next six Trials).
 
-### 5.1 Flow
-1. **The game plan** (phone, §5.0): players and PIN, the evening, the Trial pool, nights and Ghosts, secret roles, Purse and prize.
+### 5.4 Classic: flow
+
+1. **The game plan** (§5.3).
 2. **Lobby** → **intro** (the rules card on the TV) → **night 0** (the Forsworn are chosen and see each other).
 3. **Each round:**
-   - Day: the plan's next Trial, one tap (the Keeper may swap it). One or two a round, by the plan.
+   - Day: the plan's next Trial, one tap (the Keeper may swap it). One or two a round.
    - Trial: brief → prize step → play → done.
    - Sanctuary step: ceremony or card.
-   - Interval before the table if the plan has it (always when an Errand is in play); dinner at the morning the plan names.
+   - Interval before the Reckoning if the plan has it (always when an Errand is in play); dinner at the morning the plan names.
    - Reckoning: talk → boards → exile.
    - Reveal: the role is shown unless it's the final; the new Ghost gives their verdict.
-   - Night: a kill (murder or poison, by the plan), or a Whisper / Last Offer when one Forsworn faces four or more (if switched on), plus an Errand.
-   - Morning: dawn reveal (murder: an empty chair; poison: the victim stands, last words).
-4. **The end game** (automatic, see §5.6).
-5. **The final ceremony:** seals turned one by one (hold for a drumroll). With two or more Forsworn left, honour or betray; then possibly the Ghosts' round.
-6. **Final screen:** winner, prize, Purse split and the full roll (converted or bargain Forsworn marked). Then the **awards**, revealed one at a time.
+   - Night: a kill, or a Whisper / Last Offer when one Forsworn faces four or more (if on), plus an Errand.
+   - Morning: dawn (murder: an empty chair; poison: the victim stands, last words).
+4. **The end game** (§5.7).
+5. **The final ceremony:** seals turned one by one (hold for a drumroll). With two or more Forsworn left, Honour or Betray; then possibly the Ghosts' round.
+6. **Final screen:** winner, prize, Purse split and the full roll (converted or bargaining Forsworn marked). Then the **awards**, one at a time.
 
-### 5.2 Trials (`content.js` → `MISSIONS`)
-Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memory Wall; Snap; Rock Paper Scissors Royale; One Leg; Screen Charades; Hum It; The Statue; Two Truths and a Lie; Chalkboard Pictionary; Higher or Lower; What Changed?; The Temptation (add-on); Custom.
+### 5.5 Classic: Trials and prizes
 
-- **Settings:** per-mission options (`MSET`) have defaults; the Keeper can change them on the brief, and they're remembered in `prefs`.
-- **Prizes** are set by the plan (`autoPrize`); the brief shows them pre-selected and the Keeper can still change them.
-- **Labels:** the TV shows "round N · Trial M".
-- **Brief, then prize:** the TV shows the brief first. The Keeper picks the prizes and taps **Confirm — prize on TV**; the TV then shows a prize card with one labelled line per prize, plus the points on offer. **Start Trial** begins play. Most Likely To and the Temptation skip the prize step.
-- **Quiz:** tapping who shouted shows "X — locked in"; the answer appears only after the Keeper taps Correct or Wrong.
-- **What Changed?:** runs itself. When the study clock ends the grid hides, a 10-second countdown runs, then the new grid appears. The Keeper phone must be awake for the hide.
-- **Charades, Hum It, Pictionary:** "Blindfolds on — everyone but X" (nothing else shows) → "Blindfolds are on — show X" (the word appears, with "Don't know it? Ask ‹Keeper› to skip").
-  - **Hum It** then splits "Blindfolds off" and "Start 30 s". While the clock runs the music is silent and the clock shows only for its last 5 seconds.
-- **Higher or Lower:** shows the round winner before everyone stands again.
-- **Ties:** broken only when something rides on the winner (a public Sanctuary or Casting Vote).
+**Trials** (`content.js` → `MISSIONS`): Most Likely To; Rapid Quiz; Longest Word (key `countdown`); Closest Guess; Memory Wall; Snap; Rock Paper Scissors Royale; One Leg; Screen Charades; Hum It; The Statue; Two Truths and a Lie; Chalkboard Pictionary; Higher or Lower; What Changed?; The Temptation; Custom Trial.
 
-### 5.3 Prizes: Sanctuary, Casting Vote, Crown, Confessor
-- **Sanctuary** (safe from poison tonight): none / the overall winner (public) / 1–2 **hidden** questions or rounds (Trials played in rounds only: quiz, Longest Word, Closest Guess, Higher or Lower, What Changed?).
-  - A hidden Sanctuary is won by whoever wins *that* question or round (answers it correctly, is closest, has the longest word…), **not** by winning the Trial. The rounds are drawn at random, never the first when there's a choice, and only the Keeper sees them.
-  - At most a quarter of the table (minimum one) holds Sanctuaries at once. There are no Sanctuaries in the final.
-- **Casting Vote:** breaks a tie (1.5; it used to count twice). Every board counts once; at “All boards in”, if the top is level and the holder chalked one of the tied, that one gets +1 (`tally`); otherwise it does nothing and a tie goes to the usual revote. `bladeKill` = the tie-break decided the exile. Options: none / overall winner / a hidden round of its own / **with Sanctuary** — which makes the **Crown** (public or hidden, as Sanctuary is). **Once a game:** the Casting Vote (on its own) and the Crown are each given once, from the round `onceRound` picks; an unclaimed one comes round again on the next Trial. On the Casting Vote's round a Trial without rounds offers the Casting Vote *instead of* Sanctuary. The Keeper can still put either on a Trial sooner from "Change the prizes" on the brief, until it has been given. The Temptation is offered once a game (`dilemmaFree`).
-- **At the Reckoning** the Casting Vote is automatic. Every board counts one as it turns. When the Keeper taps "All boards in", the TV's main line becomes **"the Casting Vote fell on Y"** and one vote is added. The holder is never named.
-  - If that extra vote decided the exile, the reveal plays a **Casting Vote stab with a drop of blood**.
-  - **Only the Crown** may lay down Sanctuary and Casting Vote before the first board, to be immune from that exile (and unprotected that night).
-- **Secret winners** are tapped in a ceremony. Each prize has its own tap line and the phone says who to tap on which line.
-  - A Forsworn who wins a hidden Sanctuary on its own gets nothing and no ceremony.
-  - A Forsworn who wins a hidden Casting Vote or the hidden Crown keeps it.
-- **The Confessor** is only offered with exactly **5 alive and 1 Forsworn**, which means the final round, before its Reckoning. The TV calls it "a special prize".
-  - Whoever wins it meets the Forsworn in a ceremony straight after the Trial. Nothing said aloud names it; the tapped person reads the screen.
-  - The Confessor can't be poisoned.
-  - If the Forsworn wins, the Keeper taps them and then walks the table tapping nobody. The room hears identical lines, and nothing happens.
+- Per-Trial options (`MSET`) have defaults; the Keeper can change them on the brief, and they're remembered in `prefs`. Prizes are set by the plan (`autoPrize`) and shown pre-selected.
+- The TV shows the brief first. The Keeper confirms the prizes; the TV shows a prize card with one line per prize and the points on offer; **Start Trial** begins play. Most Likely To and the Temptation skip the prize step.
+- **Quiz:** tapping who shouted shows "X, locked in"; the answer appears only after Correct or Wrong.
+- **What Changed?:** runs itself; the Keeper phone must be awake for the hide.
+- **Charades, Hum It, Pictionary:** "Blindfolds on, everyone but X" → "Blindfolds are on, show X". Hum It then splits "Blindfolds off" and "Start 30 s"; while the clock runs the music is silent.
+- **Ties** are broken only when something rides on the winner.
 
-### 5.4 The Purse
-- The target is 2000 (set at setup). The Purse is capped there, and **the TV does not show the target**.
-- Each Trial offers what's left, shared over the Trials likely still to come (`offerOf`/`missionsLeft`). The final round offers the rest.
-- **Everything moves in multiples of 50.**
-- **Wrong shouts** (quiz Wrong, Snap −, What Changed? "wrong shout") cost 50 for a Forsworn's; a Loyal player's costs nothing. With the setup/Menu option "everyone's", a Loyal player's costs 50 and a Forsworn's 100.
-  - The room sees only the total ("Wrong shouts cost it 50"); the Keeper sees whose.
-  - A failed Errand costs 50.
-- **The Temptation's** stake is the current offer (at least 100) and says its points.
-- **At the end** the winners split the Purse. All share → split, and rock, paper, scissors for the prize. One takes → the Purse and the prize.
+**Sanctuary** (safe from the kill that night): none, the overall winner (public), or 1 to 2 **hidden** questions or rounds in round-by-round Trials (quiz, Longest Word, Closest Guess, Higher or Lower, What Changed?).
 
-### 5.5 Reckoning details
-- **Talk timer.** Before the first board, the Keeper is reminded of the Crown's option. A secret Crown is reminded without being named.
-- **The tally is hidden on the TV by default** (the Keeper can show it). Count nudges appear on the phone when it's close (level, one in it, or decided) — in words, never digits.
-- **Ties:** revote between the tied players, or the Keeper picks.
-- **Exile reveal:** a single tap after the exiled player has said their role themselves. There is no drumroll. The final ceremony keeps a hold-for-drumroll on each seal.
-- **Ghosts:** the exiled and the poisoned become Ghosts. They give one secret verdict (name a Forsworn) **straight after their exile**; the first time, it comes after the ghost lore. It counts at the end.
+- A hidden Sanctuary goes to whoever wins *that* question or round, not the Trial. The rounds are drawn at random (never the first when there's a choice) and only the Keeper sees them.
+- At most a quarter of the table (at least one) holds Sanctuary at once. None in the final.
+- A Forsworn who wins a hidden Sanctuary on its own gets nothing and no ceremony; one who wins a hidden Casting Vote or the hidden Crown keeps it.
 
-### 5.6 The end game — always starts at four
-- **Five-left Trial (1.3.2):** if the final opens with more than five (Sanctuary held on the last night), its unrevealed votes go down to five, then `fiveMission()` plays one more Trial before the last vote, so the Confessor can be won. The final never deals Most Likely To (it carries no prize).
-- **Whatever the plan, Trust or Doubt starts with four at the table.** The final round opens with five; its Reckoning takes one more with no role reveal (the unannounced exit), then Trust or Doubt.
-- **The rounds are the Keeper's choice, within what the table allows** (`roundsRange`): from the fewest (every round at full stretch: `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it. Auto = the fewest.
-- **Each round is sized as it starts** (`roundTarget`, kept in `state.rt`): what's left to lose before five, spread over the rounds left, raised until the later rounds can still finish at full stretch. It sets the Reckoning's exiles (1, or 2 above sixteen) and the night's victims (up to 2 from 12 alive, 3 from 20). A simulation of every table size (8–24) against every allowed plan reaches the final with exactly five on the planned round.
-- **When the final opens with more than five** (Sanctuary held, someone left), its Reckoning keeps voting — no reveals — until four remain ("Another vote — N more to go"). Fewer than five (people left) goes straight to Trust or Doubt.
-- **No early endings mid-game.** Forsworn at parity keep playing into the night; with no Forsworn left the Keeper is sent straight to the final round. The Menu's "End game now" is the only override.
-- In a game that started with more than 5 players, the round that starts with **5 or fewer alive is the final**.
-- **Five never becomes four by poison.** An exile that leaves 5 goes straight into the final round with no night; `startNight` refuses at 5 too. From 6, the night's poison makes 5.
-- The **final Reckoning takes 5 to 4 with no role reveal**. Then it's **Trust or Doubt** with every remaining player voting in secret on the phone.
-  - Only a unanimous TRUST ends the game.
-  - Otherwise another table (no reveal): 4→3 and vote again; 3→2 goes to the final-two ceremony.
-  - A final-round table with 4 or fewer goes straight to the vote.
-- **The ceremony:** the Keeper turns each survivor's seal.
-  - With two or more Forsworn left: **honour or betray** (phone handed round). All share → split the Purse, RPS for the prize. One takes → takes both. Two or more take → it goes to Ghosts who named a Forsworn (their own share-or-take round if there are several), otherwise the Keeper keeps it.
+**The Casting Vote** breaks a tie. Every board counts once; at "All boards in", if the top is level and the holder chalked one of the tied, that one gets +1 (`tally`) and the TV says "the Casting Vote fell on Y"; otherwise it does nothing and the tie goes to a revote. The holder is never named. If it decided the exile (`bladeKill`), the reveal plays a Casting Vote stab with a drop of blood. Options: none, the overall winner, a hidden round of its own, or **with Sanctuary**, which makes **the Crown** (public or hidden). Each is given once a game, from the round `onceRound` picks; an unclaimed one comes round again on the next Trial. On the Casting Vote's round a Trial without rounds offers it instead of Sanctuary. The Keeper can put either on a Trial sooner from "Change the prizes" on the brief. **Only the Crown** may be laid down before the first board, to be immune from that exile (and unprotected that night).
 
-### 5.7 Awards
-`awardsOf` in `core.js`. There are 21 candidates, in order of weight:
+**The Confessor** is offered only with exactly 5 alive and 1 Forsworn (the final round, before its Reckoning); the TV calls it "a special prize". The winner meets the Forsworn in a ceremony straight after the Trial; nothing said aloud names it. The Confessor can't be poisoned. If the Forsworn wins it, the Keeper taps them and then walks the table tapping nobody: the room hears identical lines and nothing happens.
 
-1. The Sharpest Eye
-2. The Grand Deceiver
-3. The Deciding Vote
-4. The Turncoat
-5. Couldn't Be Bought
-6. The Ghost Who Saw
-7. The Confessor
-8. The Backstabber
-9. The Narrow Escape
-10. First Blood
-11. The Martyr
-12. Trial Machine
-13. The Kingmaker
-14. The Lightning Rod
-15. The Wild Card
-16. Barking Up the Wrong Tree
-17. Sanctuary Seeker
-18. The Hoarder
-19. The Lone Wolf
-20. The Untouchable
-21. Last Oath Standing
+**The Temptation** is PURSE or SELF, offered once a game when nobody holds Sanctuary (`dilemmaFree`); its stake is the current offer (at least 100).
 
-- **One per person.** Each award goes to the best-placed player who hasn't had one yet.
-- **The total is trimmed to 2, 4 or 6** (1.5: six at most, so the end stays short), and the Keeper can **Show the rest** at once after the first.
-- **The Ghost Who Saw** weighs a correct verdict (2) and each Ghosts’ call (1).
-- **Reveal order:** lightest first. The TV starts with sealed cards, and the Keeper taps "The first award", "Next award"…
+**Secret winners** are tapped in a ceremony; each prize has its own tap line and the phone says who to tap on which line.
 
-### 5.8 Scripts and wording
-- All Keeper lines live in `scripts.js` (`SAY`, `nightScript`, `CEREMONY_`, `WITNESSNOW_`). `vr(list, round)` rotates phrasings by round so no two rounds sound the same.
-- **Spoiler rules the scripts follow:**
-  - nothing aloud names who holds a secret prize;
-  - the Confessor is "a special prize";
-  - title cards are generic;
-  - a shielded victim is never tapped.
-- **Blindfold lines include Ghosts** when there are any.
+### 5.6 Classic: Purse, Reckoning, Ghosts
 
-### 5.9 Original terms (1.1)
-Everything that echoed a TV format was renamed, in copy and in code:
+- **The Purse:** the TV never shows the target. Each Trial offers what's left over the Trials likely still to come (`offerOf`, `missionsLeft`); the final round offers the rest. Everything moves in 50s.
+- **Wrong shouts** (quiz Wrong, Snap −, What Changed? wrong shout) cost 50 for a Forsworn's, nothing for a Loyal player's; with "everyone's", a Loyal player's costs 50 and a Forsworn's 100. The room sees only the total; the Keeper sees whose. A failed Errand costs 50.
+- **Reckoning:** a talk timer (the Keeper is reminded of the Crown's option; a secret Crown without being named). The tally is hidden on the TV by default; the phone nudges in words (level, one in it, decided), never digits. Ties: revote between the tied, or the Keeper picks. The exile reveal is one tap after the exiled player has said their role.
+- **Ghosts:** each gives one secret verdict (name a Forsworn) straight after their exile, after the ghost lore the first time; it counts at the end. At each Reckoning the Ghosts chalk who goes; the Keeper taps who called it (`s.calls`) and the TV names them.
 
-| was | now | code |
-|---|---|---|
-| Faithful / Traitor | **Loyal / Forsworn** | `role: "candle" / "cloak"`, `candles()`, `cloaks()`, `winner: "candles" / "cloaks"` |
-| banish, banishment, "End or Banish" | **exile**, "Trust or Doubt" | `exile()`, vote value `"exile"` |
-| Seer | **the Confessor** | `witness`, `witnessOffer`, `WITNESSNOW_` |
-| Dagger / Warrior | **the Casting Vote / the Crown** | `blade`, `champion`, `championOf` |
-| Recruit / Ultimatum | **Whisper / Last Offer** | modes `convert` / `bargain` |
-| breakfast | **dawn** | |
-| share or steal | **honour or betray** | `castTake`, vote `"take"` |
+### 5.7 Classic: the end game
 
-Kept as ordinary game words: Sanctuary, murder, poison, Trial, Ghosts, the Reckoning (original). CODEWORDS (unused) had its show words swapped in place, so positions are unchanged. The Keeper's spoiler strip reads "6 Forsworn v 33 Loyal".
+- **Rounds** are the Keeper's choice within `roundsRange`: from the fewest (every round at full stretch, `capacityAt`) to the most (one exile and one victim a round). Setup shows the range for the names entered; `startGame` clamps anything outside it; Auto is the fewest. `roundsFrom` gives the fewest: 8 → 3 rounds, 12 → 5, 16 → 6, 20 → 7, 24 → 8 (final included).
+- **Each round is sized as it starts** (`roundTarget`, kept in `state.rt`): what's left to lose before five, spread over the rounds left.
+- **Two exiles** above 16: after the first reveal the Keeper's button is **The second vote**, a fresh table (`table.second`) where nobody holds the Casting Vote or can lay down the Crown; its talk timer is 3 minutes.
+- **Several night victims:** each is a pass of the night script (`night.pass`, `night.kills`, `night.victims`, redacted on the TV); each later pass wakes the Forsworn again ("The night isn't over"), with **Next victim** between. Dawn names every victim (`morning.victimIds`).
+- **No early endings mid-game.** Forsworn at parity keep playing; with no Forsworn left the Keeper is sent to the final round. The Menu's "End game now" is the only override.
+- The round that starts with **5 or fewer alive is the final**. **Five never becomes four by poison:** an exile that leaves 5 goes straight into the final with no night.
+- If the final opens with more than five (Sanctuary held on the last night), `fiveMission()` plays one more Trial before the last vote so the Confessor can be won. The final never deals Most Likely To.
+- **The final Reckoning** takes the table to four with no role reveal ("Another vote, N more to go" if more than five). Then **Trust or Doubt**, every remaining player voting in secret on the phone: only a unanimous TRUST ends the game; otherwise another table (no reveal), 4 → 3 and vote again; 3 → 2 goes to the ceremony.
+- **The ceremony:** the Keeper turns each survivor's seal. With two or more Forsworn left, **Honour or Betray** (phone handed round): all honour, they split the Purse and play rock, paper, scissors for the prize; one betrays, they take both; two or more betray, it goes to the Ghosts who named a Forsworn (their own round if several), otherwise the Keeper keeps it.
 
-### 5.10 Big tables (8–24 players)
-- Setup takes **8 to 24** names (`MINP`, `MAXP` in `core.js`). Default Forsworn: 2 (8–10), 3 (11–15), 4 (16–22), 5 (23–24).
-- **Two exiles** while more than 16 sit at the Reckoning (`exilesAt`): after the first reveal (and Ghost lore) the Keeper's button is **The second vote**, which opens a fresh table (`table.second`). The Casting Vote has already fallen, so in the second vote nobody holds it and nobody can buy immunity (`championOf` is null there); the talk timer is 3 minutes.
-- **Several night victims** (`killsAt`): 2 from 12 alive, 3 from 20, never below five. Each victim is a **pass** of the night script (`night.pass`, `night.kills`, earlier picks in `night.victims`, redacted to "·" on the TV). Pass 1 is the usual night; each later pass wakes the Forsworn again ("The night isn't over"); the Keeper taps **Next victim** between passes. Sanctuary saves its holder as before. Dawn names every victim (`morning.victimIds`, `many`, `saved` when Sanctuary held too); poison gives 30 s of last words each.
-- `roundsFrom(a)` simulates this to plan rounds and pace: 8 → 3 rounds, 14 → 5, 16 → 6, 20 → 7, 24 → 8 (final included).
-- TV: the final roll goes six across without seals above 16 players; the Ghost-rules screen hides the candle rail above 16; the rules card mentions two exiles and several victims when they apply.
+### 5.8 Classic: awards, scripts
 
----
+- **Awards** (`awardsOf` in `core.js`), 21 candidates by weight: The Sharpest Eye, The Grand Deceiver, The Deciding Vote, The Turncoat, Couldn't Be Bought, The Ghost Who Saw, The Confessor, The Backstabber, The Narrow Escape, First Blood, The Martyr, Trial Machine, The Kingmaker, The Lightning Rod, The Wild Card, Barking Up the Wrong Tree, Sanctuary Seeker, The Hoarder, The Lone Wolf, The Untouchable, Last Oath Standing. One per person. Trimmed to 2, 4 or 6; revealed lightest first from sealed cards; the Keeper can **Show the rest** after the first. The Ghost Who Saw weighs a correct verdict 2 and each Ghosts' call 1.
+- **Scripts:** every Keeper line is in `scripts.js` (`SAY`, `nightScript`, `CEREMONY_`, `WITNESSNOW_`); `vr(list, round)` rotates phrasings by round. Spoiler rules: nothing aloud names who holds a secret prize; the Confessor is "a special prize"; title cards are generic; a protected victim is never tapped. Blindfold lines include Ghosts when there are any.
+- **Big tables** on the TV: above 16 the final roll goes six across without seals and the Ghost-rules screen hides the rail; the rules card mentions two exiles and several victims when they apply.
 
 ---
 
 ## 6. Operations
 
-### 6.1 Legal pages and checkout (placeholders)
-- `site/pages/`: `terms.html` (sale and use), `privacy.html` (UK GDPR notice), `cookies.html` (only strictly necessary storage, so no banner), `refunds.html` (14-day cancellation until the pass is first used; Consumer Rights Act remedies), `contact.html` (trader details the E-Commerce Regulations require). Placeholders are `<span class="ph">[…]</span>` — they show highlighted on the page until filled.
-- `buy.html`: price, what you get, two required ticks (terms; immediate supply and losing the right to cancel once used — the Consumer Contracts Regulations need that consent) and a Pay button that posts them to `/api/checkout` (§6.2).
-- Every page's footer links all five legal pages.
+### 6.1 Environments, deploy, rollback
+
+| | production | staging | previews |
+|---|---|---|---|
+| config | `wrangler.toml` | `wrangler.staging.toml` | `[previews]` block of `wrangler.toml` |
+| Worker | `cloak-and-candle` | `cloak-and-candle-staging` | per branch |
+| address | thebetrayal.co.uk, www., cloakandcandle.co.uk, www. | staging.thebetrayal.co.uk | Cloudflare preview URL |
+| deploy | push to `main` (Git integration runs `npx wrangler deploy` at the repo root), or `./deploy.sh production` | `./deploy.sh staging` | every non-`main` branch (`npx wrangler preview`) |
+| password gate | off | on (`SITE_PASSWORD`) | on |
+| Durable Objects | own | own | fresh and empty per preview |
+
+- Cloudflare account ID is in both `.toml` files. Both Workers use migration tag `v1` (`GameState`, `Registry`, SQLite).
+- `./deploy.sh staging|production` needs `CLOUDFLARE_API_TOKEN` in the environment; it runs `build.sh`, installs `node_modules` if missing, then `wrangler deploy -c <config> --var BUILD:<build>`.
+- **Order:** `./deploy.sh staging`, then `ADMIN_TOKEN=… python3 qa/e2e.py https://staging.thebetrayal.co.uk/` (add `SITE_PASSWORD=…` for the gate), then production.
+- **Rollback:** `npx wrangler rollback <version-id> -c <config>`.
+- **Deploys don't wipe games.** Rooms live in Durable Objects; open pages reload onto the new build (§4.3). Keep saved games loadable (§2).
+- **Staging differs from production:** no `STRIPE_SUB_PRICE_ID` (the Regular isn't on sale), no `ADMIN_USER` (so `/admin` sign-in is off; the Bearer token works), no `SITE_HOST`/`OLD_HOSTS`, no `ALERT_TO` or `MAIL` binding, no `[observability]`.
+- **Previews** get only what the `[previews]` block spells out: their own vars (`KEEP_DAYS` 1, the gate, empty Stripe prices, so checkout is closed) and fresh Durable Object namespaces. No secrets, so no admin and no master passcode, and no alert email.
 
 ### 6.2 Stripe
-- **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true}` → the Registry mints a **pending** pass → the Worker creates a Checkout Session (`mode=payment`, one `STRIPE_PRICE_ID`, promotion codes allowed, the pass in `metadata`, `client_reference_id`, the PaymentIntent's description and metadata, consent timestamps in metadata; see Managed Payments below) → the buyer pays on Stripe → back to `/claim?session_id=…`, where the home page asks `/api/claim`, which checks the session is paid and activates the pass.
-- **Managed Payments.** The Stripe account has Managed Payments on (Stripe is the seller of record and handles tax). Checkout Sessions are created with `managed_payments[enabled]=true` and the API version header `2026-02-25.preview` (Stripe's Managed Payments blueprint); both products need an eligible **tax code** set in the Dashboard. It refuses invoice details and other extras, so sessions carry only the line item, URLs and metadata (no promotion codes) (the pass; for a subscription also `subscription_data.metadata.pass`). The pass is therefore **not** on Stripe's receipt: buyers see it on screen, and a lost pass is found on `/admin` by the buyer's email. If a checkout fails, `/buy` shows Stripe's reason in brackets and Workers Logs has it.
-- **Refunds** arrive as `charge.refunded` (full or partial), `refund.created`/`refund.updated` or `charge.refund.updated`. `refundFor` finds the pass by the payment noted at checkout (`pi:`); failing that it asks Stripe for the charge, then the checkout session with that payment (its `metadata.pass`), then the invoice's subscription. An unused one-off pass is cancelled; a used one, or a subscription, is marked refunded. The webhook is exempt from the site password (it is signed). Subscribe the endpoint to `refund.created` and `refund.updated` as well as the events below.
-- **Webhook** `/api/stripe/webhook` (signature checked with `STRIPE_WEBHOOK_SECRET`, 5-minute tolerance): `checkout.session.completed` (paid) and `async_payment_succeeded` activate the pass even if the buyer never returns; a checkout that expires with no payment tried is dropped (the admin never lists a checkout nobody paid for, and clears any left over after 48 hours); a refused payment (`payment_intent.payment_failed`, `async_payment_failed`, or an expiry whose payment carries a refusal) keeps the pass as **Payment failed** with Stripe's reason, cancelled once the checkout closes; `invoice.payment_failed` notes a refused subscription renewal on its code; `charge.refunded` (full refunds) cancels the pass if it hasn't opened a room, and only notes the refund if it has.
-- **Settings:** `STRIPE_PRICE_ID` (var; empty = checkout closed, 503), secrets `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`. The publishable key isn't used: Checkout is Stripe-hosted.
-- **Going live, per environment:** `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> <pence>` → put the price ID in the `.toml`, put both secrets → in the Stripe Dashboard, turn on emailed receipts and fill the public business details → staging first with a test card (4242 4242 4242 4242): check the pass appears, the receipt carries it, and a refund cancels it → then live keys on production.
-- **Billing:** the Unlimited plan is a Stripe Billing subscription. The one-off pass also uses Checkout's post-payment invoice (it puts the pass on the emailed paperwork). Stripe charges a fee per invoice: check its pricing page, and drop `invoice_creation` in `/api/checkout` to go without.
-- **Two plans.** One party: £10, `STRIPE_PRICE_ID`, `mode=payment`, one game (as above). Unlimited: £20 a month, `STRIPE_SUB_PRICE_ID`, `mode=subscription`: the pending pass has `kind: "sub"` and rides on the subscription (`subscription_data.metadata.pass`, and its description shows the code). A subscription code opens a **new room whenever its owner likes, one at a time**: entering it again offers "Carry on" (the open room) or "Start a new game" (`POST /api/games {pass, fresh: true}`, which closes the open room through the GameState's internal `/_close`). It opens games only while the subscription is `active`/`trialing` (`customer.subscription.created/updated/deleted` → Registry `/substatus`); `past_due`, `unpaid` or `canceled` get 402 with a reason.
-- **Manage subscription** (home page link) → `POST /api/portal {pass}` → a Stripe billing-portal session for that code's customer. In the Dashboard, **Settings → Billing → Customer portal**: save it (test and live separately), allow cancelling **at the end of the billing period** (the terms promise the code works until then) and updating the payment method.
-- **Webhook events** to enable: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `payment_intent.payment_failed`, `invoice.payment_failed`, `charge.refunded`, `refund.created`, `refund.updated`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
-- Checkouts are limited to ten an hour per address (each makes a pending pass). Admin `GET /api/admin/passes` shows `pending`, `paid`, `session`, `refunded`.
-- VAT: the price is created tax-inclusive (`tax_behavior=inclusive`); Stripe Tax isn't switched on.
 
-- `SITE_PASSWORD` is now `candlelight` (was changed from a show-derived word in 1.1).
-- The master passcode: `npx wrangler secret put MASTER_PASS -c wrangler.toml` (and `-c wrangler.staging.toml`), or Workers & Pages → the Worker → Settings → Variables and Secrets. Unset, no master passcode works.
-- `deploy.sh staging|production` → `build.sh` → `wrangler deploy --var BUILD:<build>`. Cloudflare account `52f36be1337501d7eb4752e3ca42fac7`. Workers: `cloak-and-candle` (thebetrayal.co.uk), `cloak-and-candle-staging` (staging.thebetrayal.co.uk). Both are **new** Workers with their own Durable Objects (migration tag `v1`: GameState, Registry); the Workers from the party build are untouched.
-- **Previews:** Cloudflare builds every non-`main` branch (so every PR) with `npx wrangler preview`, which reads only the `[previews]` block of `wrangler.toml`: its own vars, and Durable Object bindings that give each preview fresh, empty namespaces, never production's passes or rooms. Previews have no secrets (no admin, no master passcode, checkout closed). Only `main` deploys production.
-- Rollback: `npx wrangler rollback <version-id> -c <config>`.
-- **Admin page: `/admin`.** Sign in as `ADMIN_USER` (`ryanab94.admin`, in `wrangler.toml`) with the `ADMIN_PASSWORD` secret; a signed, HttpOnly, SameSite=Strict session cookie lasts 12 hours, and changing the password signs every session out. Wrong passwords count with wrong pass codes (20 an hour per address). The page shows totals, every pass (search, filter, copy, cancel), creates one-party passes or free unlimited codes, and opens a test room. It's `noindex`. Previews have no password, so no admin there.
-- Passes from a terminal: `tools/passes.sh mint|list|revoke` (needs `ADMIN_TOKEN`; `BASE=` for staging or local). The same API accepts the admin page's cookie.
-- A customer who lost their link: they re-enter their pass on the home page and get the same room back.
-- On the night (for customers): open the room on the laptop, click **Enable sound**, press F, cast. Open `…#host` on the phone and plan the game.
+- **Two plans.** A Table: £10, `STRIPE_PRICE_ID`, `mode=payment`. A Regular: £20 a month, `STRIPE_SUB_PRICE_ID`, `mode=subscription`. An empty price ID means that plan isn't on sale (`/api/checkout` returns 503).
+- **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true, plan, egg}` → the Registry mints a **pending** code → the Worker creates a Checkout Session (one line item, `success_url` `/claim?session_id={CHECKOUT_SESSION_ID}`, `cancel_url` `/buy`, `client_reference_id` = the code, metadata `pass`, `plan`, consent timestamps, and `egg` when discounted; a subscription also carries `subscription_data.metadata.pass`) → the buyer pays on Stripe → `/claim` asks `/api/claim`, which checks the session is paid and activates the code. The webhook activates it too, even if the buyer never returns. One code per checkout session, however often it's claimed; a Payment Link checkout (no code of its own) gets one minted.
+- **Managed Payments** is on: Stripe is the seller of record and handles tax. Sessions are created with `managed_payments[enabled]=true` and the `Stripe-Version: 2026-02-25.preview` header. It refuses invoice details and other extras, so sessions carry only the line item, URLs, metadata and (for the seal) `discounts`. Both products need an eligible **tax code** in the Dashboard. The booking code is **not** on Stripe's receipt: the buyer sees it on screen, and a lost code is found on `/admin` by the buyer's email (stored as the code's note). If a checkout fails, `/buy` shows Stripe's reason, and Workers Logs and the error log have it.
+- **Webhook** `POST /api/stripe/webhook`, signature checked with `STRIPE_WEBHOOK_SECRET` (5-minute tolerance; failures logged, 400). Events and what they do:
+  - `checkout.session.completed` (paid) and `checkout.session.async_payment_succeeded`: activate the code.
+  - `checkout.session.expired`: a checkout nobody tried to pay is dropped; one whose payment was refused is kept, cancelled, as **Payment failed** with Stripe's reason.
+  - `checkout.session.async_payment_failed`, `payment_intent.payment_failed`: note the refusal on the code.
+  - `invoice.payment_failed`: notes a refused Regular renewal on its code.
+  - `charge.refunded`, `refund.created`, `refund.updated` (and `charge.refund.updated` if sent): `refundFor` finds the code by the payment noted at checkout (`pi:`), failing that asks Stripe for the charge, then the checkout session with that payment, then the invoice's subscription. An unused one-party code is cancelled; a used one, or a Regular's, is marked refunded.
+  - `customer.subscription.created`, `.updated`, `.deleted`: the Registry's `/substatus`. A Regular's code opens games only while `active` or `trialing`; `past_due`, `unpaid` or `canceled` get 402 with a reason.
+- **Subscribe the endpoint to all twelve:** `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, `payment_intent.payment_failed`, `invoice.payment_failed`, `charge.refunded`, `refund.created`, `refund.updated`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- **Admin listing:** a Stripe code nobody paid for or tried to pay for is never listed, and is deleted after 48 hours. `GET /api/admin/passes` shows `pending`, `paid`, `failed`, `session`, `refunded`, `subStatus`.
+- **Manage subscription** (home page) → `POST /api/portal {pass}` → a Stripe billing-portal session for that code's customer. In the Dashboard, **Settings → Billing → Customer portal**: save it (test and live separately), allow cancelling **at the end of the billing period** (the terms promise the code works until then) and updating the payment method.
+- **Setting up an environment:**
+  1. `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> 1000` creates the one-party product, a tax-inclusive GBP price, and the webhook endpoint with all twelve events. It prints the price ID and the signing secret.
+  2. Create the Regular's price by hand in the Dashboard (recurring, monthly).
+  3. Put the price IDs in that environment's `.toml`; `npx wrangler secret put STRIPE_SECRET_KEY -c <config>` and `… STRIPE_WEBHOOK_SECRET`.
+  4. In the Dashboard: product names (as listed in `media/copy/NEXT-STEPS.md`; `stripe-setup.sh` names the Table's product), tax codes, statement descriptor, customer portal, public business details.
+  5. Test on staging with test keys and card 4242 4242 4242 4242: the code appears and opens a Table, `/admin` shows it, a refund cancels it. Then live keys on production.
+- The publishable key isn't used: Checkout is Stripe-hosted.
+
+### 6.3 Vars and secrets
+
+**Vars** (`[vars]`, values in the `.toml`):
+
+| name | meaning |
+|---|---|
+| `SITE_HOST` | the canonical host; `www.` and `OLD_HOSTS` redirect to it (production only) |
+| `OLD_HOSTS` | comma-separated hosts whose pages redirect to `SITE_HOST` |
+| `PASS_HOURS` | how long a redeemed code keeps its room writable (48) |
+| `KEEP_DAYS` | then read-only this many days, then deleted (7; previews 1) |
+| `STRIPE_PRICE_ID` | the Table's Stripe Price; empty = not on sale |
+| `STRIPE_SUB_PRICE_ID` | the Regular's monthly Price; empty = not on sale |
+| `STRIPE_EGG_PROMO` | the broken seal's Stripe promotion code ID (`promo_…`); empty = no discount |
+| `ALERT_TO` | where alert emails go |
+| `ALERT_FROM` | optional sender; default `alerts@<SITE_HOST>` |
+| `ADMIN_USER` | the `/admin` username |
+| `SITE_PASSWORD` | the pre-launch gate; unset = open |
+| `BUILD` | set by `deploy.sh` from `build.txt` |
+| `OPEN_ACCESS` | `1` = rooms without a code (development only) |
+
+**Secrets** (`npx wrangler secret put NAME -c <config>`, or Workers & Pages → the Worker → Settings → Variables and Secrets): `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `STRIPE_SECRET_KEY` (`sk_test_…` on staging, `sk_live_…` on production), `STRIPE_WEBHOOK_SECRET` (`whsec_…`), `MASTER_PASS`.
+
+**Bindings:** `GAME` (GameState), `REGISTRY` (Registry), `ASSETS` (`worker/public`), `MAIL` (send_email, production only).
+
+### 6.4 Alert emails
+
+- Every contact message and problem report is emailed to `ALERT_TO` (info@thebetrayal.co.uk) from `alerts@thebetrayal.co.uk`, with Reply-To set to the customer's email when given. The subject carries the report ID; the body links to `/admin` (Reports).
+- It uses the `MAIL` send_email binding (`[[send_email]]` in `wrangler.toml`; `alertMail` in `index.js`). **Prerequisites:** Email Routing on for thebetrayal.co.uk, and `ALERT_TO` verified under Email Routing → Destination addresses.
+- Without them, or if sending fails, the report is still saved and the failure goes to the error log (`src: "mail"`). The customer never sees a mail error.
+- Under `wrangler dev`, each email is written to `.wrangler/tmp/email/`.
+
+### 6.5 The broken seal (discount)
+
+- The QR code in the marketing pictures (the home page's hero and the tour's TV lobby) leads to `/seal` (`noindex`, disallowed in `robots.txt`). Claiming it stores `bt-egg` in `localStorage`; the buy page then shows £9 once `/api/egg` confirms the discount is on, and says the Regular isn't discounted.
+- At checkout the Worker applies `STRIPE_EGG_PROMO` (Stripe code QR10, 10% off) through `discounts`, so the buyer types nothing. One party only, never the subscription. If Stripe refuses it, the checkout opens at full price and the error log says so. `bt-egg` is cleared after a one-party purchase and is listed in the cookie notice.
+- Checkout has no box for typing a promotion code.
+
+### 6.6 Admin and booking codes
+
+- **`/admin`:** sign in as `ADMIN_USER` with the `ADMIN_PASSWORD` secret. A signed, HttpOnly, SameSite=Strict cookie (`cc_admin`) lasts 12 hours; changing the password signs every session out. Wrong passwords count with wrong codes (20 an hour per address). Signed-in browsers may only make changes from the site's own origin.
+- **Tabs:** **Booking codes** (totals, search by code, note, email or room; filter; copy; cancel; create one-party codes or free Regular codes that never lapse; open a test room with links for Classic and Modern, including *Modern against bots*), **Rooms** (config, full log, replay of TV and phone, device trails; Modern rooms show every role and whether the host looked), **Reports** (snapshot, trail, status and note), **Errors** (the master log), **Stripe events** (the webhook log).
+- **Admin API** (session cookie or `Authorization: Bearer <ADMIN_TOKEN>`): `POST login`, `POST logout`, `GET me`, `POST room` (test room), `GET|POST passes {count, note, kind}`, `POST revoke {pass}`, `GET rooms`, `GET room/CODE/room|recs|rec?n=|events`, `GET errors`, `GET hooks`, `GET reports`, `GET|POST report`.
+- **From a terminal:** `tools/passes.sh mint [n] [note] | list | revoke CODE`. Needs `ADMIN_TOKEN`; `BASE=` for staging or `http://127.0.0.1:8790` locally (defaults to production).
+- **Lost link:** the customer re-enters their code on the home page and gets the same Table back. A lost code: find it on `/admin` by email.
+- **On the night (Classic, for customers):** open the Table on the laptop, click **Enable sound**, press F, cast; open `…#keeper` on the phone and plan the game.
+
+### 6.7 Site and legal pages
+
+- `site/pages/`: `terms` (sale and use; the £10 and £20 prices, 48 hours, 7 days, discounts), `privacy` (UK GDPR notice), `cookies` (only strictly necessary storage, so no banner; lists every `bt-` key), `refunds` (14-day cancellation until the code is first used; Consumer Rights Act remedies), `contact` (a form that posts to `/api/report`, and info@thebetrayal.co.uk), `buy` (price, two required ticks for the terms and for immediate supply with loss of the right to cancel, as the Consumer Contracts Regulations require), `rules` (Modern, with a `#classic` section), `tour` (Modern / Classic toggle; `/tour#classic` opens Classic; both show without JavaScript), `seal`, `404`, `admin`.
+- Each page's `<!-- desc: -->` line becomes its description, canonical and social tags. Every footer links the legal pages; the nav links How to play, See a game and Book a Table.
+- `worker/public/sitemap.xml` and `robots.txt` (disallows `/admin`, `/seal`, `/api/`, `/t/`, `/m/`, `/g/`) are hand-maintained.
+- The home page's price line is `SHOP` near the bottom of `site/index.html`; the buy page states its prices in `site/pages/buy.html`.
+- Public copy follows `media/copy/glossary.md`: no em dashes in visible copy, the tagline "the party game of loyalty and lies", dinner as optional.
+
+### 6.8 Screenshots, brand and marketing pack
+
+| tool | what it makes | run |
+|---|---|---|
+| `tools/modern-shots.mjs` + `tools/modern-shots.py` | the Modern tour's 39 screenshots (phone 390 wide at 2x, TV 1280×720) in `media/web/`, from a whole evening played by the engine and photographed in replay mode | `./build.sh` then `python3 tools/modern-shots.py` |
+| `tools/hero-modern.py` | the home page hero, `media/web/hero-modern.jpg`, from the tour shots | after modern-shots |
+| `qa/media.py` | Classic screenshots in `media/screenshots/` (TV 1920×1080, phone 390×844 at 3x) | `node qa/server.mjs 8714 &` then `python3 qa/media.py` |
+| `tools/webshots.py` | web-sized copies of `media/screenshots` in `media/web/` for the Classic tour | after `qa/media.py` |
+| `tools/marketing-pack.py` | `dist/The-Betrayal-Marketing-Pack.zip`: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social, launch | `./build.sh` first |
+| `tools/brand/make_logos.py` | wordmark and lockups in `media/logos/` | |
+| `tools/brand/make_seal.py` | the cracked wax seal (`media/logos/the-betrayal-seal*`) and the app and browser icons | `./build.sh` first |
+| `tools/brand/make_creatives.py` | ads, social images and print card | |
+| `tools/brand/make_guidelines.py` | `media/The-Betrayal-Brand-Guidelines.pdf` | after make_creatives |
+| `tools/icons.py` | `icon-180.png`, `icon-512.png` from the crest (`ART.crest`) | writes the same files as make_seal.py: whichever runs last wins |
+
+- The Modern tour game has **twists off**, so no secret prize, Temptation or Honour or Betray appears (no spoilers), and it ends in a Loyal win so the end screens are stable. Keep it that way. It passes `qr` so the TV lobby's QR code leads to `/seal`.
+- `build.sh` copies `media/web/*` to `worker/public/media/`; rebuild after regenerating images.
+- Brand: plum and rose-gold palette (`media/palette/`), Grenze Gotisch for the wordmark and the TV's big moments, IM Fell DW Pica for headings, the cracked seal as the secondary mark.
+
+---
 
 ## 7. Content banks
 
-`content.js` (1.3): QUIZ_E 420, QUIZ_M 520, QUIZ_H 595; ESTIMATE 264; LIKELY 264; CHARADES 342; SONGS 497; PICTIONARY 520; MEMSETS 30; CODEWORDS 60 (unused, kept for positions); QUESTS 165. The 1.3 additions avoid time-sensitive facts (office-holders, records, moving capitals) and tie populations to a census year. **Append-only** (the question-bank switches identify items by position). The Longest Word dictionary is `worker/public/words.txt`. Song titles in SONGS are titles only (no lyrics).
+`src/content.js`: QUIZ_E 420, QUIZ_M 520, QUIZ_H 595; ESTIMATE 264; LIKELY 264; CHARADES 342; SONGS 497; PICTIONARY 520; MEMSETS 30; CODEWORDS 60; QUESTS 165.
+
+- **Append-only.** Each room's question-bank switches (`settings.off`) identify items by position, so never reorder, insert or delete. CODEWORDS is listed in the switches but no Trial draws from it; keep it.
+- New items avoid time-sensitive facts (office-holders, records, capitals that move) and tie populations to a census year.
+- SONGS are titles only, never lyrics.
+- The Longest Word dictionary is `worker/public/words.txt`.
+- After editing, run `./build.sh` (Modern reads the banks from `content.gen.js`) and `python3 qa/banks.py`.
+
+---
 
 ## 8. Testing
 
-**Never run `qa/chaos.py` unless Ryan explicitly asks for a chaos test.** The standard checks are smoke166, plan, big, claim and e2e.
+**Never run `qa/chaos.py` unless Ryan asks for a chaos test.** Never run `build.sh` while chaos or break is running (a new `build.txt` reloads the pages). Kill stray local servers with `for pid in $(pgrep -f "^node qa/server.mjs 871[4-9]"); do kill $pid; done`; don't `pkill -f` a pattern your own command line contains.
 
-Never run `build.sh` while chaos or break is running (a new `build.txt` reloads the pages). Kill stray servers with `for pid in $(pgrep -f "^node qa/server.mjs 871[4-9]"); do kill $pid; done` — don't `pkill -f` a pattern your own command line contains.
+**The local Worker** (for every harness marked *wrangler dev*):
 
-| harness | what it does | status at 1.0 |
+```sh
+npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var MASTER_PASS:MASTERTEST --var SITE_PASSWORD: --var BUILD:$(cat worker/public/build.txt)
+```
+
+`qa/server.mjs [port]` (default 8714) is a lightweight stand-in with the same API contract and redaction, rooms in memory, `/api/state` as a default room, and the home page at `/home`.
+
+| harness | run | checks |
 |---|---|---|
-| `qa/plan.py` (:8721) | every game-plan choice honoured: pool, rounds, Trials a round, murder/poison wording, Ghosts off, prizes, Confessor, convert/bargain, Errands, dinner, TV rules card | **new**, clean |
-| `qa/diag.py` (URL, under `wrangler dev` with `--var ADMIN_PASSWORD:testpw`) | **new in 1.3.1**: recording, device trails, errors from both screens, reports from the phone and the TV (snapshot, trail, email), the room kept, and every /admin tab including the replay | clean (25 checks) |
-| `qa/wizard.py` (:8724) | **new in 1.3**: every setup page on a phone (no overflow, screenshots in `qa/shots/wizard/`), the checks that stop Next, recommendations following earlier choices, pages skipped, the quick path, Change/Done, the game it starts | clean |
-| `qa/smoke166.py` (:8719) | 74 rules checks | clean |
-| `qa/e2e.py` (URL; `ADMIN_TOKEN` for the real Worker) | passes, rooms, isolation, PIN gate, redaction, two-screen sync, Confessor, Ghosts, wipe | clean: 31 on `qa/server.mjs`, 38 on `wrangler dev` |
-| `qa/admin.mjs` | the `/admin` sign-in and API, Durable Objects stubbed: credentials, cookie flags, tampered/expired cookies, password change, the attempt limit, the Bearer token, cross-site requests, creating/listing/cancelling passes and free unlimited codes, the test room | clean (19 checks) |
-| `qa/claim.mjs` | Stripe with its API stubbed: checkout (consent, pending pass, session parameters, rate limit), claim, signed webhook (paid, async, expired, refunded before and after use), Payment Link fallback, the subscription (mode, activation, carry on / new game closing the old room, past_due / active / cancelled, the billing portal) | clean (41 checks, incl. subscriptions) |
-| `qa/chaos.py` (:8715) | **only on request.** Random whole games through the Keeper UI with **random game plans**, invariants (plan honoured, no "poison" in a murder game, redaction), TV overflow replay | clean: 81 games / 71k taps, 500 screens at 720p and 1080p |
-| `qa/big.py` (:8722) | **new in 1.1**: 7/25 names refused, 8/24 start, the rounds control (range, Auto, clamps), round plan, the second vote, a three-victim night (redaction per pass, the picker, Sanctuary), dawn, the five floor, the final voting silently down to four, parity playing on, and every screen of a 24-player game at 720p, 1080p and 4:3 | see §8 status |
-| `qa/break.py part1` (:8718) | adversarial in-page scenarios + every TV screen at three sizes | **stale since 1.1**: its scenarios use 4–7 players and the pre-wizard setup form; needs rewriting for 8–24 players before it means anything |
-| `qa/break.py part2` (:8717) | sync and hand attacks: two phones, lost replies, offline taps, wipes, rate limits, holds | clean, 42/42 (1.4.1) |
-| `qa/flow.py` (:8726) | **new in 1.5**: dinner in courses, prize tiers (and what the TV may know), the Ghosts’ call, the awards cap, the TV narrator (speech stubbed; once, not replayed by undo), PURSE or SELF, the Casting Vote wording | clean |
-| `qa/modern-engine.mjs` | **new in 1.6**: Modern's rules engine on its own: lobby, Oath, private views, the host limited to "next", the plan for 8 to 24 players, every Trial to a result, the Casting Vote, Crown and Confessor, the host's tools (roles behind the phrase), whole games at 6/8/10/12/17/24 players won by either side | clean |
-| `qa/modern.py` (URL, under `wrangler dev` with `--var MASTER_PASS:MASTERTEST`) | **new in 1.6**: every Trial's screen (engine views through the replay mode, 320px phone and 720p TV); then eight phones and a TV: the Classic/Modern choice, joining, host settings, the Oath, roles, a whole quiz giving the Casting Vote, the Temptation, the Reckoning, a night, dawn, the Starter, the host's tools and the roles behind three confirmations, a lost phone let back in, the TV's QR code, narrator and sound, and /admin's room page and replay | clean |
-| `qa/modern-bots.py` (URL, under `wrangler dev` with the master code) | **new in 1.6**: the master code's *Modern test*, a whole game against seven bots tapped through by one phone, and the admin's test room offering Modern | clean (a game takes about three minutes) |
-| `qa/site.py` (URL, under `wrangler dev`) | **new in 1.4.1**: every public page at 320/390/768/1440 without sideways scroll or console errors, the home page's order and code box, the rules page's single Sacrament paragraph, the nav, the buy page's consent and Pay button | clean |
-| `qa/resilience.py` (:8714) | PIN persistence and lockout, colliding hosts, dropped connections, night masking | clean again in 1.4.1 (it had been left at 7 players) |
-| `qa/media.py`, `qa/shots.py` | screenshots for the media pack / quick looks | used for 1.0 |
-| `qa/review.py`, `resilience.py`, `audit.py`, `banks.py`, `audio.py`, `gallery.py`, `live.py` | older harnesses | not re-run for 1.0; `review.py` has been stale since v16.6 |
+| `qa/smoke166.py` | own server :8719 | one pass through each Classic rule with the real functions |
+| `qa/plan.py` | own server :8721 | every game-plan choice honoured |
+| `qa/wizard.py` | own server :8724 | every setup page on a phone, recommendations, the handover; screenshots in `qa/shots/wizard/` |
+| `qa/flow.py` | own server :8726 | courses, prize tiers, the Ghosts' call, the awards cap, the narrator, PURSE or SELF, the Casting Vote wording |
+| `qa/big.py` | own server :8722 | 8 to 24 players, the rounds control, the second vote, many-victim nights, the five floor, every screen of a 24-player game at 720p, 1080p and 4:3 |
+| `qa/e2e.py [URL]` | `qa/server.mjs` or wrangler dev with `ADMIN_TOKEN=` (optionally `MASTER_PASS=`, `SITE_PASSWORD=`) | booking codes, rooms, isolation, PIN gate, redaction, two-screen sync, Confessor, Ghosts, wipe |
+| `qa/resilience.py [URL]` | `qa/server.mjs` :8714 | PIN persistence and lockout, colliding hosts, dropped connections, night masking. Its last step trips the stand-in's wrong-PIN limit on purpose, so restart `qa/server.mjs` (or wait a minute) before running it again |
+| `qa/diag.py URL` | wrangler dev | recording, device trails, errors, reports from phone and TV, every `/admin` tab including the replay |
+| `qa/site.py URL` | wrangler dev (optionally `--var STRIPE_EGG_PROMO:promo_x`) | every public page at 320/390/768/1440 without sideways scroll or console errors, nav, code boxes, buy page |
+| `qa/modern.py URL` | wrangler dev | eight phones and a TV: the mode choice, joining, host settings, the Oath, a whole quiz, the Temptation, Reckoning, night, dawn, a course, host tools and the roles, rejoin, QR, narrator and sound, `/admin` replay, and every Trial's screen |
+| `qa/modern-bots.py URL` | wrangler dev | the master code's *Modern test* and a whole game against bots (about three minutes); the admin's test room |
+| `node qa/modern-engine.mjs` | none | Modern's engine alone: lobby, Oath, private views, every Trial, twists, host tools, whole games at many sizes |
+| `node qa/claim.mjs` | none (Stripe and Durable Objects stubbed) | checkout, claim, signed webhook (paid, async, expired, refused, refunded before and after use), Payment Link fallback, subscriptions, the billing portal |
+| `node qa/admin.mjs` | none (stubbed) | admin sign-in, cookie flags and tampering, the attempt limit, Bearer token, cross-site requests, codes, test room |
+| `node qa/worker.mjs` | none | the real Worker class with in-memory storage: PIN limits, stale-build writes, the settings rule |
+| `qa/break.py part2` | `qa/server.mjs` :8717 | sync and hand attacks: two phones, lost replies, offline taps, wipes, rate limits |
+| `qa/chaos.py` | own server :8715, **only on request** | random whole Classic games through the Keeper UI with random plans, invariants, TV overflow |
+| `qa/banks.py` | own server :8717 | every bank item on the TV; duplicates and well-formedness |
+| `qa/media.py`, `qa/shots.py`, `qa/gallery.py` | `qa/server.mjs` :8714 | screenshots |
 
-Expiry was checked by hand under `wrangler dev` with `PASS_HOURS=0.001, KEEP_DAYS=0.0001`: writes 423 after expiry, reads still work, a used-and-expired pass is refused, the room is deleted by its alarm.
+Unmaintained: `qa/break.py part1` and `qa/review.py` drive an older Classic setup form and small tables; `qa/smoke.py`, `qa/audit.py`, `qa/audio.py`, `qa/live.py` are older checks. Rework them before trusting a result.
 
-## 9. Known issues and ideas
+**Room expiry by hand:** `wrangler dev` with `--var PASS_HOURS:0.001 --var KEEP_DAYS:0.0001`: writes get 423 after expiry, reads still work, a used and expired code is refused, and the alarm deletes the room.
 
-- Not deployed. **Stripe has never been called for real**: this build environment's network policy blocked api.stripe.com. Everything is tested against a stub (`qa/claim.mjs`). First real test: staging with test keys (§6.2).
-- **Legal pages** (§6.1) were written to UK consumer and data-protection law; the business name, address and email go in once there is a business (see `media/copy/NEXT-STEPS.md`).
-- **Big tables are longer.** Even with two exiles and up to three victims a round, 24 players need about 8 rounds (§5.10). Only simulated and scripted (qa/big.py), never played.
-- A chaos run (before the §5.6 rework) had a 16-player game stuck at the Reckoning for 400 random taps — probably random ballots tying and revoting; not investigated.
-- Ideas: a printable guest guide in the new brand; per-mission lengths in the plan; an admin page instead of `tools/passes.sh`; bundle passes (3 parties).
+The standard checks before a deploy are smoke166, plan, big, claim, admin, modern-engine and e2e; add modern, site and diag for changes to Modern, the site or diagnostics.
+
+---
+
+## 9. Known limitations and open to-dos
+
+- **Business details:** the terms name "an independent business based in England" and info@thebetrayal.co.uk, with no trading name or geographic address. UK consumer law expects both before selling to the public; add them to the terms, privacy notice and contact page (see `media/copy/NEXT-STEPS.md`).
+- **The seal discount under Managed Payments** is unverified: check the first real seal purchase shows 10% off. If Stripe refuses it, the buyer pays full price and the error log says why.
+- **No typed promotion codes and no extra checkout fields.** A discount code for guests, or a "How did you hear about us?" question, needs another route.
+- **The booking code isn't on Stripe's receipt** (Managed Payments refuses the extras that would carry it). Buyers rely on the screen after paying; `/admin` finds a lost code by email.
+- **Live payments:** `qa/claim.mjs` covers the Stripe paths against a stub. After any Stripe change, run the staging test in §6.2 and one live purchase and refund.
+- **Vibration** doesn't work on iPhones.
+- **Big tables** (20 to 24) are checked by simulation and `qa/big.py`; a 24-player Classic game runs about 8 rounds.
+- **A Git-integration deploy doesn't set `BUILD`**, so stale pages aren't refused with 426 there; they rely on the `build.txt` poll to reload.
+- **Ideas:** a printable guest guide; per-Trial lengths in Classic's plan; bundles (three parties).
+
+---
 
 ## 10. A prompt to start the next session
 
-> You're picking up "The Betrayal", a commercial two-screen dinner-party game (TV at /g/ROOM, Keeper phone at /g/ROOM#host) on a Cloudflare Worker with a Durable Object per room and Invitations. Read HANDOVER.md, then README.md. The code is plain JS in src/ built by build.sh; secrets for the TV are stripped in worker/src/public-view.js. Build and run `python3 qa/smoke166.py` and `python3 qa/plan.py` for a clean baseline. Make surgical changes, keep content banks append-only, keep saved games loadable across deploys, and add any new secret field to public-view.js. Test locally (and under `wrangler dev` for Worker changes), deploy to staging and run qa/e2e.py against it, then production only when I say. Never write tokens into files. Here's what I'd like changed: …
+> You're picking up "The Betrayal", a commercial party game for 8 to 24 players on a Cloudflare Worker (thebetrayal.co.uk), with a Durable Object per Table and booking codes in a Registry. Modern: everyone on their own phone, the server runs the game (worker/src/modern.js; phones at /m/ROOM, TV at /t/ROOM). Classic: a Keeper phone (/t/ROOM#keeper) and a TV (/t/ROOM). Read HANDOVER.md, then README.md. The code is plain JS in src/ built by build.sh; Classic's TV secrets are stripped in worker/src/public-view.js. Build and run `python3 qa/smoke166.py`, `python3 qa/plan.py` and `node qa/modern-engine.mjs` for a baseline. Make surgical changes, keep content banks append-only, keep saved games loadable across deploys, add any new Classic secret field to public-view.js, and never rename the Worker or the CNDL- key prefix. Test locally (and under `wrangler dev` for Worker changes), deploy to staging and run qa/e2e.py against it, then production only when I say. Never write tokens into files. Here's what I'd like changed: …

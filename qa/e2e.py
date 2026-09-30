@@ -71,7 +71,7 @@ with sync_playwright() as p:
     check("TV follows the host within a poll", "A new day at the house" in tv.inner_text("#stage"))
     check("second phone follows too", "swap it" in h2.inner_text("body").lower()
 )
-    # the Witness: offered, won, met straight away in the ceremony (v16.9); the TV never learns who; then a night
+    # the Witness: offered, won, met straight away in the ceremony; the TV never learns who; then a night
     host.evaluate("()=>{pickMission('rps');act(s=>{s.mission.witnessOffer=true});startMission();startMission();act(s=>{finishPlay(s)});witnessPick(state.players[0].id);endMission()}"); sync(tv, h2)
     check("the Witness meets the Cloak at once, in the ceremony", host.evaluate("()=>state.witness.used===true && !!state.witness.metId && state.shieldCard.mode==='witness'"))
     check("TV never learns who the Witness or their Cloak is", tv.evaluate("()=>!state.witness && !('witnessName' in state.shieldCard) && !('metName' in state.shieldCard)"))
@@ -84,7 +84,7 @@ with sync_playwright() as p:
     check("before dawn the TV still shows the victim alive", tv.evaluate("()=>state.players[2].alive===true && !state.morning.kind"))
     host.evaluate("()=>act(s=>{s.morning.revealed=true})"); sync(tv, h2)
     check("after the reveal the TV shows the murder", tv.evaluate("()=>state.players[2].alive===false") and "Tom" in tv.inner_text("#stage"))
-    # ghosts judge: Tom and Oliver both name a Cloak; then both Cloaks take -> Ghosts' own round
+    # ghosts judge: Tom and Oliver both name a Forsworn; then both Forsworn take -> Ghosts' own round
     host.evaluate("()=>{ghostGuess(state.players[2].id,state.players[1].id);ghostGuess(state.players[7].id,state.players[4].id);handoff=null;renderHost()}")
     before = host.evaluate("()=>state.ghosts[state.players[2].id].pick")
     host.evaluate("()=>{ghostGuess(state.players[2].id,state.players[0].id);handoff=null}")

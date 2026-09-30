@@ -39,7 +39,7 @@ function renderHost() {
       foot = nextBtn("Roll the titles", "act(s=>{s.phase='intro';s.tvRules=false;s.startedAt=s.startedAt||now()},'Titles rolling')"); break;
     case "intro":
       body = `<h2>Titles rolling on the TV</h2>${dir("About " + (5 + s.players.length) + " seconds: the crest, the name, then a candle lit for each guest. Begin when the last one is burning.")}${say(SAY.lobby)}`;
-      foot = nextBtn("Choose the Forsworn", "act(s=>{s.phase='night0';s.night={step:0}},'Night 0 started')"); break;
+      foot = nextBtn("Choose the Forsworn", "act(s=>{s.phase='night0';s.night={step:0}},'The Oath started')"); break;
     case "night0": {
       const sc = NIGHT0_(H()), st = s.night.step;
       body = `<h2>The Oath</h2>` + stepList(sc, st) + secretPanel();
@@ -82,7 +82,7 @@ function renderHost() {
     case "mingle": {
       const g = s.mingle, din = g.kind === "dinner", stp = din ? 300000 : 120000, adv = advice().lvl === "final" && !s.finalRound, cs = g.course && COURSES.find(c => c.k === g.course);
       body = `<h2>${cs ? cs.name : din ? "Dinner" : "Interval"}</h2>${say(cs ? SAY.course(g.course, Math.round(g.dur / 60000)) : din ? SAY.dinner(Math.round(g.dur / 60000)) : SAY.mingle(Math.round(g.dur / 60000), s.round))}<div class="row"><button onclick="act(s=>{s.mingle.dur=Math.max(120000,s.mingle.dur-${stp});if(s.mingle.end)s.mingle.end-=${stp}})">−${stp / 60000} min</button><button class="${g.end ? "" : "primary"}" onclick="act(s=>{s.mingle.end=now()+s.mingle.dur})" ${g.end ? "disabled" : ""}>${g.end ? "Running on TV" : "Start " + Math.round(g.dur / 60000) + " min"}</button><button onclick="act(s=>{s.mingle.dur+=${stp};if(s.mingle.end)s.mingle.end+=${stp}})">+${stp / 60000} min</button></div>${questBox(s, "Forsworn Errand in play:")}${g.then === "round" ? "" : dilemmaOffer(s, true, "Play The Temptation before the table so one is in play.")}`;
-      foot = g.then === "round" ? nextBtn((cs ? cs.name.replace(/^The /, "") : "Dinner") + "’s done. Round " + (s.round + 1) + (adv ? ", the final" : ""), adv ? "nextRound(true)" : "nextRound()") : nextBtn("Another Trial", "act(s=>{s.phase='day';s.mingle=null;s.mission=null},'Trial after the " + (din ? "dinner" : "mingle") + "')", "ghost") + nextBtn("Reckoning", "openTable()"); break;
+      foot = g.then === "round" ? nextBtn((cs ? cs.name.replace(/^The /, "") : "Dinner") + "’s done. Round " + (s.round + 1) + (adv ? ", the final" : ""), adv ? "nextRound(true)" : "nextRound()") : nextBtn("Another Trial", "act(s=>{s.phase='day';s.mingle=null;s.mission=null},'Trial after the " + (din ? "dinner" : "Interval") + "')", "ghost") + nextBtn("Reckoning", "openTable()"); break;
     }
     case "table": { const r = tableHost(s); body = r.body; foot = r.foot; break }
     case "reveal": {
@@ -94,8 +94,8 @@ function renderHost() {
       if (callers.length) body += `<h3>The Ghosts’ call</h3><p class="note">Which Ghosts chalked ${esc(p.name)}? Tap each one who called it, and the TV names them.</p><div class="plist">${callers.map(g => pbtn(g, called.includes(g.id) ? "sel" : "", "ghostCall('" + g.id + "')", called.includes(g.id) ? "✓" : "")).join("")}</div>`;
       if (st === 0) foot = fin ? nextBtn("They’ve left the table", "revealRole()") : nextBtn("Show it on the TV", "revealRole()");
       else if (lore) foot = nextBtn(esc(p.name) + " becomes the first Ghost", "act(s=>{s.table.step=2;s.ghostIntroDone=true},'Ghost lore')");
-      // in the final the table votes even when no Cloak is left: they don't know that, and the vote is the drama
-      // the end game always starts with four left: they vote End or Exile, whoever is left
+      // in the final the table votes even when no Forsworn is left: they don't know that, and the vote is the drama
+      // the end game always starts with four left: they vote Trust or Doubt, whoever is left
       else foot = alive().length <= 2 ? nextBtn("The final two", "openFinal2()", "danger") : alive().length <= 4 ? nextBtn("Trust or Doubt, " + numWord(alive().length) + " left", "openEndvote()", "danger") : fin && alive().length === 5 && !s.fiveMission ? nextBtn("Five left: one more Trial, then the last vote", "fiveMission()", "danger")
  : fin ? nextBtn("Another vote, " + numWord(alive().length - 4) + " more before the end game", "openTable('Final: another vote')", "danger") : !cloaks().length ? nextBtn("No Forsworn left: the final round", "nextRound(true)", "danger") : alive().length <= 5 && s.players.length > 5 ? nextBtn("No night at five: the final round", "nextRound(true)", "danger") : secondVoteDue(s) ? nextBtn("The second vote: boards up again", "secondVote()", "danger") : nextBtn("Into the night", "startNight()");
       break;
@@ -169,7 +169,7 @@ function prizeHost(s) {
 }
 function ghostPanel(s) {
   const ghosts = ghostsOf(s); if (!ghosts.length) return "";
-  // Ghosts who died Cloak know their partners: they don't judge
+  // Ghosts who died Forsworn know their partners: they don't judge
   const g = s.ghosts || {}, judges = ghosts.filter(gh => gh.role !== "cloak"), pending = judges.filter(gh => !g[gh.id]), anyDone = judges.some(gh => g[gh.id]);
   return `<h3>The Ghosts’ verdict</h3>${pending.length ? say(anyDone ? SAY.ghostsAgain : SAY.ghosts) : ""}${ghosts.map(gh => `<div class="vote"><span>${ART.seal(gh)}${esc(gh.name)}</span>${gh.role === "cloak" ? `<b style="color:var(--mist);padding-right:4px">Forsworn, no verdict</b>` : g[gh.id] ? `<b style="color:var(--mist);padding-right:4px">locked</b>` : `<button class="wide" onclick="handoff={kind:'ghost',id:'${gh.id}'};renderHost()">Hand over the phone</button>`}</div>`).join("")}${dir("One verdict per Ghost, ever, scored at the end.")}`;
 }
@@ -446,7 +446,7 @@ ${P_("If they accept, they become a Forsworn. If they refuse, they die on the sp
 <div class="wopts">${wopt(d, "bargain", true, "Yes, allow one Last Offer", d.convert ? "A second chance for a lone Forsworn, and one of the hardest decisions of the night for the player who’s asked." : "Gives a lone Forsworn a fighting chance.")}${wopt(d, "bargain", false, "No Last Offer", d.convert ? "Only the gentler Whisper can happen." : "A lone Forsworn is on their own until the end.")}</div>` },
   { id: "quests", sec: "Twists", title: () => "Forsworn Errands", body: d => `
 ${P_("Each night the Forsworn can get a <b>secret Errand</b> to complete at the next break. For example: “Get Annie to say the word ‘castle’ out loud,” or “Swap seats with Ben before the Reckoning and make it look like Ben’s idea.”")}
-${P_("A completed quest counts for the Forsworn at the end. A failed one costs the Purse " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". Quests give the Forsworn something to do beyond acting innocent, and the Loyal something odd to spot.")}
+${P_("A completed Errand counts for the Forsworn at the end. A failed one costs the Purse " + moneyOf({ potUnit: d.unit || "pts" }, 50) + ". Errands give the Forsworn something to do beyond acting innocent, and the Loyal something odd to spot.")}
 <div class="wopts">${wopt(d, "quests", true, "Yes, an Errand each night", d.mingle ? "They happen during the Interval, so the Forsworn have time to pull them off." : "You chose no Interval, so the Forsworn will have to do them during Trials and dinner. That’s harder, but possible.")}${wopt(d, "quests", false, "No Errands", "The Forsworn just have to blend in. A little simpler to run.")}</div>` },
   { id: "pot", sec: "The Purse and prize", check: d => !(+d.potCap > 0) ? "Set a Purse target." : "", title: () => "The Purse", body: d => `
 ${P_("Trials fill a shared <b>Purse</b>. At the end, the winners split it: the Loyal take what they built, the Forsworn what it fell short of its target. It’s a score for the evening, and you can make it real money if your group wants to. The Purse stops growing once it reaches its target, so it fills steadily across the game.")}
@@ -476,7 +476,6 @@ function wBack() {
   d.step = d.back === "review" || d.step === "handover" ? "review" : i > 0 ? list[i - 1].id : w && !w.core ? "review" : list[0].id; d.back = null; saveDraft(); renderHost(); window.scrollTo(0, 0);
 }
 function wGo(id, fromReview) { draft(); setupMsg = ""; setupDraft.step = id; setupDraft.back = fromReview ? "review" : null; saveDraft(); renderHost(); window.scrollTo(0, 0) }
-function wFast() { draft(); settle(setupDraft); wGo("review") }
 // every page's check, in order; the first that fails is where the Keeper is sent
 function wCheck(d) { for (const w of wizSteps(d)) { const err = w.check && w.check(d); if (err) { setupMsg = err; d.step = w.id; d.back = "review"; toast(err, 5000); saveDraft(); renderHost(); return false } } return true }
 // a friend keeps: the host plans it, then hands the phone over; the Keeper presses Start, so the host never sees the roles
@@ -494,7 +493,6 @@ ${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}</di
 function setupForm() {
   if (!setupDraft) try { setupDraft = JSON.parse(sessionStorage.getItem("candle-draft") || "null") } catch (e) {}
   const d = setupDraft = settle(Object.assign(SETUP0(), setupDraft || {})), n = tableOf(d), steps = wizSteps(d);
-  if (d.step === "fast" || d.step === "host") d.step = d.step === "host" ? "keeper" : "review";
   if (d.step === "handover") return d.keeper === "friend" ? handoverForm(d) : (d.step = "review", setupForm());
   let w = steps.find(x => x.id === d.step); if (!w) { w = steps[0]; d.step = w.id }
   const core = !!w.core, list = core ? coreSteps(d) : moreSteps(d), i = list.findIndex(x => x.id === w.id), last = w.id === "review", friend = d.keeper === "friend";
@@ -531,7 +529,7 @@ function planLines(d, n) {
 
 /* ---- missions ---- */
 // the host's private flag on a mystery round: its winner takes a hidden shield
-const mysteryNote = (m, n, what) => { const it = mysteryAt(m, n); return it.length ? `<div class="secret"><b>${it.some(x => /blade|Champion/.test(x)) ? "⚔" : "⛨"} The mystery round.</b> Whoever ${what} takes ${esc(andList(it))}, in secret. Say nothing: the room must not know which round it is.</div>` : "" };
+const mysteryNote = (m, n, what) => { const it = mysteryAt(m, n); return it.length ? `<div class="secret"><b>${it.some(x => /Casting Vote|Crown/.test(x)) ? "⚔" : "⛨"} The mystery round.</b> Whoever ${what} takes ${esc(andList(it))}, in secret. Say nothing: the room must not know which round it is.</div>` : "" };
 const scoreRows = m => alive().map(p => `<div class="vote"><span>${ART.seal(p)}${esc(p.name)}</span><button onclick="bump('${p.id}',-1)" aria-label="${esc(p.name)}: one point less">−</button><b class="n num">${m.scores[p.id] || 0}</b><button onclick="bump('${p.id}',1)" aria-label="${esc(p.name)}: one point more">+</button></div>`).join("");
 function missionHost(s) {
   const m = s.mission; let ctl = "", foot = "";
@@ -663,12 +661,12 @@ ${potNote}<label for="pts">Points for the Purse</label><input id="pts" type="num
 }
 
 /* ---- the Reckoning: talk, then every board in seat order, then the exile ---- */
-// the name goes into the sheet from the state, never through an onclick string (an apostrophe in a name broke it)
+// the name goes into the sheet from the state, never through an onclick string, where an apostrophe in a name would break it
 function askLay() { const id = championArmed(state), p = id && P(id); if (p) confirmSheet(p.name + " lays down Sanctuary and Casting Vote?", "Nobody may chalk their name at this table. Their vote counts once, and nothing protects them tonight. Undo brings it back.", "Lay them down", championImmunity, "primary") }
 function tableHost(s) {
   const t = s.table, stage = t.stage || "votes", A = alive(), v = t.votes || {}, imm = t.immune || [], ballots = t.ballots || {}, w = championOf(s), wp = w ? P(w) : null;
   const nIn = A.filter(p => p.id in ballots).length, wa = championArmed(s), wap = wa && P(wa);
-  // only the Champion (shield and blade) may lay both down, and only before the first board
+  // only the Crown (Sanctuary and the Casting Vote) may lay both down, and only before the first board
   const layBtn = wap && stage !== "exile" && !nIn ? `<div class="row"><button onclick="askLay()">⚔ ${esc(wap.name)} lays down Sanctuary and the Casting Vote, to be safe from this vote</button></div>` : "";
   const laid = t.laid && P(t.laid), sec = !!(wp && s.champion && s.champion.secret), dg = t.blade && P(t.blade.to);
   const notes = (wp ? `<p class="note">⚔ ${wa ? "Crown" : "Casting Vote"}${sec ? ", won in secret" : ""}: <b>${esc(wp.name)}</b>. Their board counts one as it turns, like everyone’s. If the boards tie and they chalked one of the tied, the Casting Vote breaks the tie once every board is in, and the TV shows which way it fell${sec ? ", never whose it was. Don’t give them away" : ""}.${wa ? " They hold Sanctuary too." : ""}</p>${dg ? `<p class="note">⚔ The boards tied, and the Casting Vote broke it: <b>${esc(dg.name)}</b> +1, counted below.</p>` : ""}` : "") + (laid ? say(SAY.championLaid(laid.name, s.round)) + `<p class="note">⛨ Can’t be voted for at this table: <b>${esc(laid.name)}</b>. Sanctuary and the Casting Vote are gone: no tie-break for them, and nothing protects them tonight.</p>` : "");
@@ -692,7 +690,7 @@ ${questBox(s, "Forsworn Errand still open:")}${say(SAY.talk(s.round) + (wap ? (s
   }
   const cand = A.filter(p => !imm.includes(p.id)), max = Math.max(0, ...cand.map(p => v[p.id] || 0)), lead = cand.filter(p => (v[p.id] || 0) === max && max > 0);
   return { body: `<h2>Reckoning</h2><p class="step-head">3 · The exile</p>${lead.length > 1 && t.revote ? say(SAY.stillTied(andList(lead.map(p => p.name)))) + dir("Still tied after the revote. When the rest agree a name, or you decide, tap it below.")
- : ""}${lead.length > 1 ? `<div class="secret"><b>Tie:</b> ${esc(andList(lead.map(p => p.name)))} on ${max}. Revote between them, or pick one below.<div class="row"><button class="primary" onclick="ballotEdit=null;revoteTied()">Revote between ${esc(lead.map(p => p.name).join(" and "))}</button></div></div>` : lead.length ? `<p class="note">Most votes: <b>${esc(lead[0].name)}</b> (${max}).</p>` : `<p class="note">Not one name was chalked. Revote, or tap a name if the table agrees on one.</p>`}<div class="plist">${cand.map(p => pbtn(p, lead.length === 1 && lead[0].id === p.id ? "sel" : "", "exile('" + p.id + "')", (p.role === "cloak" ? "T · " : "") + (v[p.id] || 0))).join("")}</div>`, foot: backBtn("toVotes()") + `<button class="ghost" onclick="ballotEdit=null;revoteAll()">Everyone revotes</button>` };
+ : ""}${lead.length > 1 ? `<div class="secret"><b>Tie:</b> ${esc(andList(lead.map(p => p.name)))} on ${max}. Revote between them, or pick one below.<div class="row"><button class="primary" onclick="ballotEdit=null;revoteTied()">Revote between ${esc(lead.map(p => p.name).join(" and "))}</button></div></div>` : lead.length ? `<p class="note">Most votes: <b>${esc(lead[0].name)}</b> (${max}).</p>` : `<p class="note">Not one name was chalked. Revote, or tap a name if the table agrees on one.</p>`}<div class="plist">${cand.map(p => pbtn(p, lead.length === 1 && lead[0].id === p.id ? "sel" : "", "exile('" + p.id + "')", (p.role === "cloak" ? "F · " : "") + (v[p.id] || 0))).join("")}</div>`, foot: backBtn("toVotes()") + `<button class="ghost" onclick="ballotEdit=null;revoteAll()">Everyone revotes</button>` };
 }
 function seatSheet(s) {
   if (!seatOpen) return "";
@@ -717,7 +715,7 @@ function nightHost(s) {
   const vid = n.mode === "murder" ? n.victimId : n.targetId, vp = vid ? P(vid) : null;
   if (cur.tap === "victim") tapNote = `<div class="secret">${!vp ? "<b>Nobody picked yet.</b>" : vp.shield ? "<b>DO NOT TAP.</b> " + esc(vp.name) + " holds Sanctuary. Walk the full circle at the same pace, pause behind two or three people, tap nobody." : "<b>Tap " + esc(vp.name) + " now.</b> They read the screen, then blindfold back on. Walk the full circle either side of them."}</div>`;
   if (cur.tap === "target") tapNote = `<div class="secret">${n.targetId && P(n.targetId) ? "<b>Tap " + esc(P(n.targetId).name) + " now.</b> They read the screen." : "Pick the target first."}</div>`;
-  if (cur.murdered) tapNote = `<div class="secret">${vp && vp.shield ? "Shielded, so nobody was tapped. Wait ten seconds so the room hears nothing, then next." : (killOf(s) === "murder" ? "They read it, stand and leave the table. Keep walking the circle at the same pace until they’re clear." : "They read it and blindfold up again. Nobody leaves until dawn.")}</div>`;
+  if (cur.murdered) tapNote = `<div class="secret">${vp && vp.shield ? "They hold Sanctuary, so nobody was tapped. Wait ten seconds so the room hears nothing, then next." : (killOf(s) === "murder" ? "They read it, stand and leave the table. Keep walking the circle at the same pace until they’re clear." : "They read it and blindfold up again. Nobody leaves until dawn.")}</div>`;
   if (cur.tap === "cloaks") tapNote = `<div class="secret"><b>Tap every Forsworn now:</b> ${esc(cloaks().filter(p => p.id !== n.targetId).map(p => p.name).join(", "))}.</div>`;
   if (cur.answer) tapNote = `<div class="secret"><b>Watch them.</b> Nod = accepted, shake = refused. Record below.</div>`;
   return `<h2>Night ${s.round}: ${modeLabel(n.mode, s)}${killsOf(n) > 1 ? " · " + ((n.pass || 0) + 1) + "/" + killsOf(n) : ""}</h2>${(n.victims || []).length ? `<p class="note">Already chosen tonight: ${esc(n.victims.map(id => P(id) ? P(id).name + (P(id).shield ? " ⛨" : "") : "?").join(", "))}.</p>` : ""}${stepList(script, step)}${tapNote}${pick}`;
@@ -738,7 +736,7 @@ function nightFoot(s) {
   return back + `<button class="primary" onclick="finishNight()" ${ready ? "" : "disabled"}>${ready ? "To dawn" : "Pick the outcome first"}</button>`;
 }
 
-/* ---- the final two / share or take ---- */
+/* ---- the final two / honour or betray ---- */
 function final2Host(s) {
   if (!s.final2.shown) { setTimeout(() => { if (state.final2 && !state.final2.shown) act(x => { const f = x.final2; f.shown = []; f.showRoles = false; f.cloakIds = null; aliveOf(x).forEach(p => p.revealed = false) }, "Ceremony reset, seals hidden again") }, 0); return { body: "", foot: "" } }
   const f = s.final2, A = alive(), ts = A.filter(p => p.role === "cloak"), nT = ts.length, shown = f.shown || []; let body = "", foot = "";
@@ -750,10 +748,10 @@ function final2Host(s) {
     foot = holdBtn("Turn " + esc(nxt.name) + "’s seal", "seal", nxt.id, "danger");
     return { body, foot };
   }
-  if (nT >= 2 && !f.order) { const done = ts.filter(p => f.votes[p.id]).length; body = `<h2>Share or Take</h2>${say(SAY.final2Cloaks)}<p class="note">Hand the phone to each Forsworn in turn. ${done}/${nT} voted.</p><div class="plist">${ts.map(p => pbtn(p, f.votes[p.id] ? "dim" : "", "handoff={kind:'take',id:'" + p.id + "'};renderHost()", f.votes[p.id] ? "✓" : "")).join("")}</div>`; foot = `<button class="primary" onclick="startTakeReveal()" ${done === nT ? "" : "disabled"}>${done === nT ? "All voted. Reveal on the TV" : "Waiting for " + (nT - done) + " more"}</button>` }
+  if (nT >= 2 && !f.order) { const done = ts.filter(p => f.votes[p.id]).length; body = `<h2>Honour or Betray</h2>${say(SAY.final2Cloaks)}<p class="note">Hand the phone to each Forsworn in turn. ${done}/${nT} voted.</p><div class="plist">${ts.map(p => pbtn(p, f.votes[p.id] ? "dim" : "", "handoff={kind:'take',id:'" + p.id + "'};renderHost()", f.votes[p.id] ? "✓" : "")).join("")}</div>`; foot = `<button class="primary" onclick="startTakeReveal()" ${done === nT ? "" : "disabled"}>${done === nT ? "All voted. Reveal on the TV" : "Waiting for " + (nT - done) + " more"}</button>` }
   else if (nT >= 2) {
     const all = f.revealed >= f.order.length, st = ts.filter(p => f.votes[p.id] === "take"), g = f.ghostRound;
-    body = `<h2>Share or Take</h2><p class="note">Revealing ${Math.min(f.revealed, f.order.length)}/${f.order.length}.</p>`;
+    body = `<h2>Honour or Betray</h2><p class="note">Revealing ${Math.min(f.revealed, f.order.length)}/${f.order.length}.</p>`;
     if (!all) foot = nextBtn("Reveal next", "act(s=>{s.final2.revealed++})");
     else if (st.length >= 2 && !g) {
       const gs = ghostScores(s).filter(x => x.hits);

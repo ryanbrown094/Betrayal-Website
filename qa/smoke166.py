@@ -1,4 +1,4 @@
-# v16.6 smoke: one pass through each new rule with the real functions, host + TV in one browser (no server).
+# Smoke test: one pass through each rule with the real functions, host + TV in one browser (no server).
 # Own static server on :8719.  Usage: python3 qa/smoke166.py
 import os, sys, subprocess, time, json
 from playwright.sync_api import sync_playwright
@@ -41,7 +41,7 @@ try:
         E("()=>startMission()")
         my = E("()=>({sh:state.mission.mystery,d:state.mission.dagRound})")
         check("one mystery round drawn for the Champion, never question 1", len(my["sh"]) == 1 and my["sh"][0] != 1 and my["d"] is None, my)
-        # play the quiz: a Cloak shouts wrong on question 1, a Candle (Tom) wins the Champion round
+        # play the quiz: a Forsworn player shouts wrong on question 1, a Loyal player (Tom) wins the Champion round
         r = E("""()=>{const T=state.players[0].id,F=state.players[2].id,W=state.mission.mystery[0];
           for(let q=1;q<=state.mission.total;q++){ if(state.mission.stage!=='play')break;
             if(q===1){act(s=>{s.mission.shouter=T});quizJudge(false)} else if(q===W){act(s=>{s.mission.shouter=F});quizJudge(true)} else quizJudge(null);
@@ -81,7 +81,7 @@ try:
         E("()=>{const A=aliveOf(state);toExile();exile(A[5].id);askGo();revealRole()}")
         E("()=>act(s=>{s.table.step=2;s.ghostIntroDone=true})")
         check("reveal: after the ghost lore, the new Ghost's verdict is offered there and then", "the ghosts’ verdict" in h.inner_text("#host").lower(), h.inner_text("#host")[-600:])
-        # the night: the Cloaks see who holds a public shield
+        # the night: the Forsworn see who holds a public shield
         E("()=>{act(s=>{s.players[3].shield='public'});startNight();act(s=>{s.night.mode='murder'})}")
         line = E("()=>nightScript(state.night,state).map(l=>norm(l)).find(l=>l.pick).tv")
         check("poison screen reminds the Cloaks who holds a public shield", "Sophie holds Sanctuary" in line, line)
@@ -108,14 +108,14 @@ try:
         check("no roles revealed in the end game", E("()=>{const d=state.players.filter(p=>!p.alive);return !d[d.length-1].revealed}"))
         E("()=>{act(s=>{s.phase='day';s.table=null;s.endvote=null})}"); E("()=>openTable()")
         check("a table in the final with four or fewer opens the vote instead", E("()=>state.phase==='endvote'"), E("()=>state.phase"))
-        # share: two Cloaks split what the Purse fell short (2000 − 200), rock paper scissors for the prize
+        # share: two Forsworn split what the Purse fell short (2000 − 200), rock paper scissors for the prize
         E("()=>{act(s=>{s.pot=200;s.players.forEach((p,i)=>p.alive=i<3)});act(s=>{s.phase='day';s.endvote=null});startCeremony();aliveOf(state).forEach(p=>revealSurvivor(p.id));const f=state.final2;f.cloakIds.forEach(id=>castTake(id,'share'));handoff=null;startTakeReveal();act(s=>{s.final2.revealed=s.final2.order.length});finishGame()}")
         fin = E("()=>({each:state.potEach,ids:state.prizeIds,rps:!!state.rps})")
         check("all share: the pot is split and they play for the prize", fin["each"] == 900 and len(fin["ids"]) == 2 and fin["rps"], fin)
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
         check("TV final: the pot splits two ways, 900 each", "splits two ways" in tvtxt and "900" in tvtxt, tvtxt[:300])
         check("host reads the split", "900" in h.inner_text("#host"))
-        # v16.7: six awards, one at a time
+        # six awards, one at a time
         aw = E("()=>(state.awards||[]).map(a=>a.title)"); awn = E("()=>(state.awards||[]).flatMap(a=>a.names)")
         check("awards fill a grid (2, 4, 6, 8 or 12), one per person", len(aw) in (2, 4, 6, 8, 12) and len(awn) == len(set(awn)), (aw, awn))
         E("()=>act(s=>{s.finalStep=1;s.awardShown=0})")
@@ -124,7 +124,7 @@ try:
         E("()=>act(s=>{s.awardShown=1})")
         tvtxt = E("()=>{const v=tvView(publicView(state));const d=document.createElement('div');d.innerHTML=v.html;return d.textContent}")
         check("…then one at a time", aw[0] in tvtxt and all(t not in tvtxt for t in aw[1:]) and "Next award" in h.inner_text("#host .foot"), tvtxt[:200])
-        # v16.7: a fresh game for the rest
+        # a fresh game for the rest
         E("()=>{newGame()}"); h.wait_for_timeout(200); E("()=>renderHost()")
         h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a[0],pin:a[1]},a[2]||{});setupDraft.touched=Object.keys(a[2]||{});submitSetup()}", ["\n".join(NAMES), "1111"]); h.wait_for_timeout(300)
         E("()=>act(s=>{s.players.forEach((p,i)=>p.role=i<2?'cloak':'candle');s.phase='day'})")
@@ -170,7 +170,7 @@ try:
         E("()=>{const P=state.players;castBallot(P[8].id,P[6].id);toExile();exile(P[6].id);askGo()}")
         check("…not when they'd have gone anyway (4 v 2)", E("()=>state.table.bladeKill===false"))
         check("rules card: no quiz count line; End or Exile at four", E("()=>{const r=RULES_TV('H').map(x=>x.join(' ')).join(' ');return !/keeps count/.test(r) && /with four left/.test(r)}"))
-        # v16.9: the Witness only with five left and one Cloak; met at once; a Cloak gets a show
+        # the Witness only with five left and one Forsworn; met at once; a Forsworn player gets a show
         E("()=>{act(s=>{s.phase='day';s.table=null;s.mission=null;s.witness=null;s.champion=null;s.finalRound=null;s.players.forEach((p,i)=>{p.alive=true;p.role=i<2?'cloak':'candle'})});pickMission('quiz')}")
         check("no Witness offer with ten left", "Offer the Witness" not in h.inner_text("#host") and "Witness on offer" not in h.inner_text("#host"))
         E("()=>{act(s=>{s.phase='day';s.mission=null;s.table={exiled:s.players[7].id,step:1};s.players.forEach((p,i)=>{p.alive=i>=1&&i<6})});pickMission('quiz')}")
