@@ -1,0 +1,132 @@
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "HowTo",
+   "name": "How to host a traitors-style game at home",
+   "description": "A traitors-style game needs no set and no camera crew. A few players are secretly traitors, everyone else tries to find them, the group votes someone out each day, and the traitors pick someone off each night. This guide is how to run one for 8 to 24 friends in your own home: by hand, or the easy way on everyone’s phones.",
+   "totalTime": "PT3H30M",
+   "supply": [
+    {
+     "@type": "HowToSupply",
+     "name": "A pack of playing cards"
+    },
+    {
+     "@type": "HowToSupply",
+     "name": "Paper and pens for the votes"
+    },
+    {
+     "@type": "HowToSupply",
+     "name": "Sleep masks"
+    },
+    {
+     "@type": "HowToSupply",
+     "name": "A prize, such as chocolate coins"
+    }
+   ],
+   "step": [
+    {
+     "@type": "HowToStep",
+     "position": 1,
+     "name": "Deal the roles in secret",
+     "text": "Deal the roles in secret. Take one playing card per player: a black card for each traitor and a red card for everyone else. Shuffle, deal face down, and have everyone look at theirs without showing anyone.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 2,
+     "name": "Let the traitors find each other",
+     "text": "Let the traitors find each other. Everyone closes their eyes. The host says “Traitors, open your eyes.” They look around, see each other, and close their eyes again. Then everyone opens their eyes.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 3,
+     "name": "Play a game for the prize pot",
+     "text": "Play a game for the prize pot. A quiz round, charades, a guessing game. Every win adds to a shared pot. The traitors will try to lose without being seen to lose.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 4,
+     "name": "Hold the vote",
+     "text": "Hold the vote. Give the table a few minutes to argue on a timer, then everyone writes one name in secret. Reveal the votes together. The player with the most votes is out and reveals whether they were a traitor.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 5,
+     "name": "Night falls",
+     "text": "Night falls. Everyone closes their eyes. The host wakes the traitors, who silently point at a victim, then go back to sleep.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 6,
+     "name": "Dawn",
+     "text": "Dawn. Everyone opens their eyes and the host names the victim. Give them thirty seconds of last words before they leave the table.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 7,
+     "name": "Repeat",
+     "text": "Repeat a game, a vote and a night each round, until about five players are left.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    },
+    {
+     "@type": "HowToStep",
+     "position": 8,
+     "name": "The final and the reveal",
+     "text": "The final and the reveal. The last players decide whether they trust everyone left. If they do, turn over every card: if only loyal players remain, they win the pot. If a traitor is still at the table, the traitors win.",
+     "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
+    }
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "How many traitors should there be?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, and 5 for 23 or 24."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can the host play too?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Not if you run the game by hand, because whoever runs the night knows who the traitors are. If the game runs on phones, as The Betrayal does, the host plays like everyone else and never sees a role."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What is the minimum number of players?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Eight is the practical minimum for a full evening, and The Betrayal needs at least 8. With fewer, the game ends after a couple of rounds."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Do we need a TV?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. By hand you need only cards, paper and pens. With The Betrayal, a TV shows the questions, the votes and the reveals, with music, but everything can be played on the phones alone."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is The Betrayal the official game of The Traitors?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. The Betrayal is an independent, original party game made in England. It isn’t affiliated with, endorsed by or connected to The Traitors, the BBC or any other television programme or broadcaster."
+     }
+    }
+   ]
+  }
+ ]
+}

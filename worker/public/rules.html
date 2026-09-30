@@ -1,15 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930150156">
-<title>How to play · The Betrayal</title>
+<meta name="build" content="20260930151503">
+<title>How to play The Betrayal: rules for the party game</title>
 <meta name="theme-color" content="#09070a">
-<meta name="description" content="How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away.">
+<meta name="description" content="How to play The Betrayal, the hidden-role party game for 8 to 24 on phones: the Oath, Trials, the secret vote, the night, the Purse and the end game.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Betrayal","item":"https://thebetrayal.co.uk/"},{"@type":"ListItem","position":2,"name":"How to play","item":"https://thebetrayal.co.uk/rules"}]}</script>
 <link rel="canonical" href="https://thebetrayal.co.uk/rules">
-<meta property="og:title" content="How to play · The Betrayal"><meta property="og:description" content="How to play The Betrayal on everyone’s phones: the Oath, the Trials, the Reckoning, the night, Sanctuary, the Purse and the end game. And Classic, if you’d rather put phones away."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/rules">
-<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="How to play The Betrayal: rules for the party game"><meta property="og:description" content="How to play The Betrayal, the hidden-role party game for 8 to 24 on phones: the Oath, Trials, the secret vote, the night, the Purse and the end game."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/rules"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="How to play The Betrayal: rules for the party game"><meta name="twitter:description" content="How to play The Betrayal, the hidden-role party game for 8 to 24 on phones: the Oath, Trials, the secret vote, the night, the Purse and the end game.">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -40,12 +41,13 @@ a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
 .wrap { max-width: 760px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)) }
 nav.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0 8px }
-nav.top .home { display: flex; align-items: center; gap: 10px; color: var(--ivory); text-decoration: none; font: 600 26px/1 var(--disp) }
+nav.top .home { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--ivory); text-decoration: none; font: 600 26px/1 var(--disp) }
 nav.top svg { width: 30px; height: 35px; color: var(--rose) }
 nav.top .links { display: flex; align-items: center; gap: 4px 18px } nav.top .links a:not(.btn) { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 12px 0 } nav.top .links a:not(.btn):hover, nav.top .links a[aria-current] { color: var(--ivory) }
 nav.top .links .btn[aria-current] { display: none }
 nav.top .links .btn, nav.top .home span { white-space: nowrap } @media (max-width: 360px) { nav.top .home { font-size: 22px } nav.top .links .btn { padding: 8px 14px } }
-@media (max-width: 600px) { nav.top .links a:not(.btn) { display: none } }
+/* phones: the logo and the button on the first line, the page links on a second line of full-height tap targets */
+@media (max-width: 600px) { nav.top { flex-wrap: wrap; justify-content: flex-start; gap: 0 22px; padding-bottom: 2px } nav.top .links { display: contents } nav.top .links .btn { margin-left: auto } nav.top::after { content: ""; order: 2; flex-basis: 100% } nav.top .links a:not(.btn) { order: 3; display: inline-flex; align-items: center; min-height: 44px; padding: 0; white-space: nowrap } }
 h1 { font: 400 clamp(38px, 7.4vw, 58px)/1.05 var(--book); letter-spacing: -.005em; margin: 44px 0 10px; text-wrap: balance }
 h2 { font: 400 31px/1.15 var(--book); margin: 36px 0 8px; color: var(--ivory); text-wrap: balance; scroll-margin-top: 16px }
 p { text-wrap: pretty } .lede { font-size: 19px; color: var(--ivory2); max-width: 36em }
@@ -84,6 +86,16 @@ ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:
 dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.missions dd { margin: 2px 0 0; color: var(--ivory2) }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 }
 .btn.ghost { background: transparent; color: var(--ivory) }
+/* the contents: a sticky row of chips with full-height tap targets, sideways-scrolling on phones, marking the section being read */
+.toc { position: sticky; top: 0; z-index: 5; gap: 0 20px; margin: 20px calc(-1 * max(20px, env(safe-area-inset-right))) 6px calc(-1 * max(20px, env(safe-area-inset-left))); padding: env(safe-area-inset-top) max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); border-top: 0; background: rgba(9,7,10,.96); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px) }
+.toc li { flex: none } .toc li + li::before { content: none } .toc a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; white-space: nowrap } .toc a[aria-current="true"] { color: var(--rose); box-shadow: inset 0 -2px var(--rose) }
+@media (max-width: 900px) { .toc { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain } .toc::-webkit-scrollbar { display: none } }
+h2[id] { scroll-margin-top: calc(var(--barh, 46px) + 14px) }
+/* phones: each Trial folds into its name (built from the list below by the script at the foot of the page) */
+.missions.acc { margin: 12px 0; border-top: 1px solid rgba(230,165,140,.18) } .missions.acc details { border-bottom: 1px solid rgba(230,165,140,.18) }
+.missions.acc summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; font-weight: 700; color: var(--ivory); cursor: pointer; list-style: none } .missions.acc summary::-webkit-details-marker { display: none }
+.missions.acc summary::after { content: "+"; flex: none; color: var(--rose); font-size: 24px; font-weight: 400; line-height: 1 } .missions.acc details[open] summary::after { content: "\2212" }
+.missions.acc p { margin: -4px 0 14px; color: var(--ivory2) }
 </style>
 <h1>How to play</h1>
 <p>Everything that happens at a night of The Betrayal, from the first oath to the last betrayal. You don’t need to learn any of it before the night: every phone tells its player what to do, when. But if you like to know what you’re buying, here is the whole game.</p>
@@ -185,9 +197,44 @@ dl.missions dt { font-weight: 700; color: var(--ivory); margin-top: 14px } dl.mi
 <li>A phone each. A TV, with a laptop connected or casting to it, makes it a show, but it’s optional.</li>
 <li><b>For Classic:</b> a TV with a laptop connected or casting to it, a phone for the Keeper, a blindfold for every guest (sleep masks work well), and a small chalkboard and chalk, or a whiteboard and pen, for every guest.</li>
 </ul>
+<p>In short: The Betrayal is a hidden-role party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone with no app to install. A game takes about 3 to 3½ hours for 8 to 12 players. A Table costs £10 for one party, or £20 a month as a Regular.</p>
+<p>Hosting a big group, an office party or a birthday? Read <a href="/party-games-for-large-groups">party games for large groups</a>. Curious how hidden-traitor games work without an app? Read <a href="/traitors-at-home">how to host a traitors-style game night at home</a>.</p>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/tour">See what a game looks like</a></div>
+<script>
+(() => {
+  // the contents row: mark the section being read, and keep its chip in view along the row
+  const toc = document.querySelector(".toc"), root = document.documentElement;
+  if (toc) {
+    const links = [...toc.querySelectorAll('a[href^="#"]')]; let cur = null, raf = 0;
+    const setBar = () => root.style.setProperty("--barh", toc.offsetHeight + "px");
+    const spy = () => {
+      raf = 0; const y = toc.offsetHeight + 24; let a = null;
+      for (const l of links) { const h = document.getElementById(l.hash.slice(1)); if (h && h.getBoundingClientRect().top <= y) a = l; }
+      if (a === cur) return; if (cur) cur.removeAttribute("aria-current"); cur = a; if (!a) return;
+      a.setAttribute("aria-current", "true");
+      if (toc.scrollWidth > toc.clientWidth) { const r = a.getBoundingClientRect(), c = toc.getBoundingClientRect(); toc.scrollTo({ left: toc.scrollLeft + r.left - c.left - (c.width - r.width) / 2, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+    };
+    addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(spy); }, { passive: true });
+    addEventListener("resize", setBar); setBar(); if (document.fonts) document.fonts.ready.then(setBar); spy();
+  }
+  // phones: each Trial folds into its name, the same words, tap to read
+  const small = matchMedia("(max-width: 600px)");
+  const fold = () => {
+    if (!small.matches) return;
+    for (const dl of document.querySelectorAll("dl.missions")) {
+      const box = document.createElement("div"); box.className = "missions acc";
+      for (const dt of dl.querySelectorAll("dt")) {
+        const dd = dt.nextElementSibling, d = document.createElement("details"), s = document.createElement("summary"), p = document.createElement("p");
+        s.append(...dt.childNodes); if (dd && dd.tagName === "DD") p.append(...dd.childNodes); d.append(s, p); box.append(d);
+      }
+      dl.replaceWith(box);
+    }
+  };
+  fold(); if (small.addEventListener) small.addEventListener("change", fold);
+})();
+</script>
 </main>
-<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
+<footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/party-games-for-large-groups">Party games for large groups</a><a href="/traitors-at-home">Host a hidden-traitor game night</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>
 <script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page")</script>
 </body>

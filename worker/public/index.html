@@ -1,21 +1,227 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930150156">
-<title>The Betrayal · the party game of loyalty and lies</title>
-<meta name="description" content="The Betrayal turns your party, games night or dinner into a game of hidden Forsworn, secret votes and midnight poisonings, played on everyone’s phones. No app to install, and nothing to learn in advance.">
+<meta name="build" content="20260930151503">
+<title>The Betrayal · Party game for 8 to 24, played on phones</title>
+<meta name="description" content="A hidden-role party game for 8 to 24 adults, played on everyone’s own phone: secret roles, a secret vote and a poisoning each night. £10 a party, no app.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
 <meta name="theme-color" content="#09070a">
-<meta property="og:title" content="The Betrayal · the party game of loyalty and lies">
+<meta property="og:title" content="The Betrayal · the party game of loyalty and lies"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
 <meta property="og:description" content="Everyone swore an oath. Not everyone meant it. The party game of loyalty and lies, played on everyone’s phones: scan the code, get your secret role, trust nobody.">
 <meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/">
-<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="The Betrayal · the party game of loyalty and lies"><meta name="twitter:description" content="Everyone swore an oath. Not everyone meant it. The party game of loyalty and lies, played on everyone’s phones: scan the code, get your secret role, trust nobody.">
+<link rel="preload" href="/media/hero-modern.jpg" as="image" fetchpriority="high">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "Organization",
+   "@id": "https://thebetrayal.co.uk/#org",
+   "name": "The Betrayal",
+   "url": "https://thebetrayal.co.uk/",
+   "logo": "https://thebetrayal.co.uk/icon-512.png",
+   "image": "https://thebetrayal.co.uk/media/og-card.png",
+   "email": "info@thebetrayal.co.uk",
+   "description": "An independent party game made in England.",
+   "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "email": "info@thebetrayal.co.uk",
+    "url": "https://thebetrayal.co.uk/contact",
+    "areaServed": "GB",
+    "availableLanguage": "English"
+   }
+  },
+  {
+   "@type": "WebSite",
+   "@id": "https://thebetrayal.co.uk/#website",
+   "name": "The Betrayal",
+   "url": "https://thebetrayal.co.uk/",
+   "inLanguage": "en-GB",
+   "publisher": {
+    "@id": "https://thebetrayal.co.uk/#org"
+   }
+  },
+  {
+   "@type": [
+    "Product",
+    "Game"
+   ],
+   "@id": "https://thebetrayal.co.uk/#game",
+   "name": "The Betrayal",
+   "alternateName": "The Betrayal party game",
+   "description": "The party game of loyalty and lies: a hidden-role party game for 8 to 24 players in one room, played on everyone’s own phone in the browser. A few players are secretly the Forsworn; the Loyal have one evening to find them through Trials, a secret vote and a poisoning each night. About 3 to 3½ hours for 8 to 12 players.",
+   "url": "https://thebetrayal.co.uk/",
+   "image": [
+    "https://thebetrayal.co.uk/media/og-card.png",
+    "https://thebetrayal.co.uk/media/hero-modern.jpg"
+   ],
+   "brand": {
+    "@type": "Brand",
+    "name": "The Betrayal"
+   },
+   "manufacturer": {
+    "@id": "https://thebetrayal.co.uk/#org"
+   },
+   "category": "Party game",
+   "numberOfPlayers": {
+    "@type": "QuantitativeValue",
+    "minValue": 8,
+    "maxValue": 24
+   },
+   "audience": {
+    "@type": "PeopleAudience",
+    "audienceType": "Adults"
+   },
+   "offers": [
+    {
+     "@type": "Offer",
+     "name": "A Table",
+     "description": "One party of 8 to 24 players. The Table stays open for 48 hours from the first use of its booking code.",
+     "price": "10.00",
+     "priceCurrency": "GBP",
+     "availability": "https://schema.org/InStock",
+     "url": "https://thebetrayal.co.uk/buy",
+     "seller": {
+      "@id": "https://thebetrayal.co.uk/#org"
+     }
+    },
+    {
+     "@type": "Offer",
+     "name": "A Regular",
+     "description": "A monthly subscription: one booking code that opens a new Table whenever you like, one at a time. Cancel any time.",
+     "price": "20.00",
+     "priceCurrency": "GBP",
+     "availability": "https://schema.org/InStock",
+     "url": "https://thebetrayal.co.uk/buy",
+     "seller": {
+      "@id": "https://thebetrayal.co.uk/#org"
+     },
+     "priceSpecification": {
+      "@type": "UnitPriceSpecification",
+      "price": "20.00",
+      "priceCurrency": "GBP",
+      "referenceQuantity": {
+       "@type": "QuantitativeValue",
+       "value": 1,
+       "unitCode": "MON"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "@type": "FAQPage",
+   "@id": "https://thebetrayal.co.uk/#faq",
+   "mainEntity": [
+    {
+     "@type": "Question",
+     "name": "What is The Betrayal?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The Betrayal is a party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone in the browser. A few players are secretly the Forsworn; the rest, the Loyal, have one evening to find them. Trials (quizzes and party games on the phones) fill a shared Purse, a secret vote exiles someone each day, and each night the Forsworn poison someone. A game takes about 3 to 3½ hours for 8 to 12 players. It costs £10 for one party, or £20 a month as a Regular."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does everyone need a phone?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes: everyone plays on their own, in the browser, with nothing to install. If your group would rather put phones away, play Classic: only the Keeper uses one, guests wear blindfolds at night and chalk their votes. You choose when you open your Table."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What does booking a Table get me?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What’s a Regular?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "A Regular pays £20 a month and gets one booking code that starts a new game whenever you like, one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Does the host get to play?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes. The host’s phone also says when to begin the next part and when to take a break, but it never shows anyone’s role. In Classic, the game’s Keeper runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How long does it take?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "About 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables need more rounds: about 4¼ hours for 16, and 5 to 6 for 20 and up. In Classic there’s also a Short game (one Trial a round, no breaks) of about 2 hours for 8 to 10 players, and the Keeper’s setup shows an estimate for your table."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Why “The Betrayal”?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Is it like The Traitors?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The idea is similar: a few players are secretly traitors (here they are the Forsworn), everyone else tries to find them, there’s a vote to throw someone out each day and a poisoning each night. The difference is that you play it yourselves, at home or at a party, on your own phones, and everyone in the room is in the game. The Betrayal is an original game. It isn’t connected to The Traitors, the BBC or the programme’s makers. If you’d like to run something like it, here’s how to host a traitors-style game night at home."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Can we play it at a work Christmas party?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Yes. It suits an office party, a Christmas do, a birthday or a hen party as well as a night in with friends: 8 to 24 people, a phone each, and a big screen if the room has one. Nobody installs anything or makes an account, and whoever organises it plays too. For bigger groups, read our guide to party games for large groups."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "How do the Forsworn kill?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "With poison. The victim finds out in secret on their phone during the night. At dawn they stand up, announce it, get thirty seconds of last words, then leave the table. (In Classic, the Keeper taps them while everyone is blindfolded.)"
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What if the Wi-Fi drops?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "Who wins the Purse?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "The Loyal, if they win, take the Purse they built. The Forsworn, if they win, take what it fell short of its target, so every point they quietly sabotage is theirs. More in the rules."
+     }
+    }
+   ]
+  }
+ ]
+}
+</script>
 <style>
 @font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Alegreya Sans';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
@@ -43,7 +249,7 @@ a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 
 
 /* the masthead: the wordmark is small and sits where a name sits, not in the middle of the page */
 nav.topnav { display: flex; align-items: center; justify-content: space-between; gap: 12px 22px; flex-wrap: wrap; padding: 18px 0 0 }
-nav.topnav .home { display: flex; align-items: center; gap: 10px; color: var(--ivory); text-decoration: none; font: 600 27px/1 var(--disp); white-space: nowrap }
+nav.topnav .home { display: flex; align-items: center; gap: 10px; min-height: 44px; color: var(--ivory); text-decoration: none; font: 600 27px/1 var(--disp); white-space: nowrap }
 nav.topnav .home svg { width: 26px; height: 30px; color: var(--rose) }
 nav.topnav .links { display: flex; gap: 0 22px; flex-wrap: wrap } nav.topnav .links a { color: var(--ivory2); text-decoration: none; font-size: 16px; padding: 10px 0; white-space: nowrap } nav.topnav .links a:hover { color: var(--ivory) }
 
@@ -69,7 +275,7 @@ header.hero .shot { align-self: start }
 .btn:hover { background: #f3c1ac; color: #150b17 } .btn:active { transform: translateY(1px) }
 .btn.ghost { background: transparent; color: var(--ivory) } .btn.ghost:hover { background: rgba(230,165,140,.1); color: var(--ivory) } .btn:disabled { opacity: .6; cursor: progress }
 .more-link { font: 700 16px/1 var(--sc); letter-spacing: .06em; color: var(--rose); text-decoration: none; padding: 14px 0; border-bottom: 1px solid currentColor } .more-link:hover { color: #f4c9b7 }
-.linkish { display: inline; padding: 0; border: 0; background: none; color: var(--rose); font: inherit; text-decoration: underline; text-underline-offset: .18em; cursor: pointer }
+.linkish { display: inline; padding: 0; border: 0; background: none; color: var(--rose); font: inherit; text-decoration: underline; text-underline-offset: .18em; cursor: pointer } #manage.linkish { padding: 10px 0 }
 
 section { padding: 72px 0 0 }
 h2 { font: 400 clamp(32px, 4.6vw, 48px)/1.08 var(--book); margin: 0 0 22px; color: var(--ivory); text-wrap: balance; max-width: 18em }
@@ -198,12 +404,15 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
 
   <section>
     <h2>Before you ask</h2>
+    <details><summary>What is The Betrayal?</summary><p>The Betrayal is a party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone in the browser. A few players are secretly the Forsworn; the rest, the Loyal, have one evening to find them. Trials (quizzes and party games on the phones) fill a shared Purse, a secret vote exiles someone each day, and each night the Forsworn poison someone. A game takes about 3 to 3½ hours for 8 to 12 players. It costs £10 for one party, or £20 a month as a Regular.</p></details>
     <details><summary>Does everyone need a phone?</summary><p>Yes: everyone plays on their own, in the browser, with nothing to install. If your group would rather put phones away, play Classic: only the Keeper uses one, guests wear blindfolds at night and chalk their votes. You choose when you open your Table.</p></details>
     <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like, one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to take a break, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables need more rounds: about 4¼ hours for 16, and 5 to 6 for 20 and up. In Classic there’s also a Short game (one Trial a round, no breaks) of about 2 hours for 8 to 10 players, and the Keeper’s setup shows an estimate for your table.</p></details>
     <details><summary>Why “The Betrayal”?</summary><p>It starts with an oath. Every guest swears to be loyal to the table, and a few of them don’t mean it: they are the Forsworn. Each night a candle goes out, and the Loyal have until the last one to find out who betrayed them.</p></details>
+    <details><summary>Is it like The Traitors?</summary><p>The idea is similar: a few players are secretly traitors (here they are the Forsworn), everyone else tries to find them, there’s a vote to throw someone out each day and a poisoning each night. The difference is that you play it yourselves, at home or at a party, on your own phones, and everyone in the room is in the game. The Betrayal is an original game. It isn’t connected to The Traitors, the BBC or the programme’s makers. If you’d like to run something like it, here’s <a href="/traitors-at-home">how to host a traitors-style game night at home</a>.</p></details>
+    <details><summary>Can we play it at a work Christmas party?</summary><p>Yes. It suits an office party, a Christmas do, a birthday or a hen party as well as a night in with friends: 8 to 24 people, a phone each, and a big screen if the room has one. Nobody installs anything or makes an account, and whoever organises it plays too. For bigger groups, read our guide to <a href="/party-games-for-large-groups">party games for large groups</a>.</p></details>
     <details><summary>How do the Forsworn kill?</summary><p>With poison. The victim finds out in secret on their phone during the night. At dawn they stand up, announce it, get thirty seconds of last words, then leave the table. (In Classic, the Keeper taps them while everyone is blindfolded.)</p></details>
     <details><summary>What if the Wi-Fi drops?</summary><p>Every phone reconnects by itself and picks up where it was: the game lives on our server, not on anyone’s phone. If someone’s battery dies, they rejoin on another phone and the host lets them back in.</p></details>
     <details><summary>Who wins the Purse?</summary><p>The Loyal, if they win, take the Purse they built. The Forsworn, if they win, take what it <b>fell short</b> of its target, so every point they quietly sabotage is theirs. <a href="/rules#pot">More in the rules</a>.</p></details>
@@ -220,7 +429,7 @@ footer nav.legal { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 1
 
 
   </main>
-  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
+  <footer><nav class="legal" aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/party-games-for-large-groups">Party games for large groups</a><a href="/traitors-at-home">Host a hidden-traitor game night</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.<span id="contact"></span></footer>
 </div>
 <script>
 "use strict";

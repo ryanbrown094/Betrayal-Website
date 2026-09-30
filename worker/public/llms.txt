@@ -1,0 +1,48 @@
+# The Betrayal
+
+> The Betrayal (thebetrayal.co.uk) is a party game for 8 to 24 players in one room, best with 8 to 16, played on everyone's own phone in the browser. A few players are secretly the Forsworn; the rest, the Loyal, have one evening to find them. It costs £10 for one party or £20 a month. It is an independent game made in England and is not affiliated with any television programme or broadcaster.
+
+## Key facts
+
+- What it is: a hidden-role (social deduction) party game for adults, "the party game of loyalty and lies". Always written "The Betrayal", with "The".
+- Players: 8 to 24 in one room, best with 8 to 16. Everyone plays, including the host.
+- Length: about 3 to 3½ hours for 8 to 12 players; about 4¼ hours for 16; 5 to 6 hours for 20 and up. Stopping for dinner adds half an hour to an hour.
+- What you need: a phone each (any browser; no app to download, no account) and a prize. A TV is optional: a laptop connected or casting to it shows the questions, votes and reveals, with music.
+- Joining: guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the six-character Table code and their name.
+- Prize: set by the host. By default, chocolate coins: one coin for every 100 points the winners take from the Purse.
+- Price: a Table is £10 for one party of 8 to 24, open for 48 hours from the first use of its booking code. A Regular is £20 a month: one booking code that opens a new Table whenever you like, one at a time; cancel any time. Payments by Stripe. Prices include VAT where it applies.
+- How to buy: https://thebetrayal.co.uk/buy. The booking code (OATH-XXXX-XXXX) is shown on screen straight after payment; enter it on the home page to open a Table.
+- Contact: info@thebetrayal.co.uk or https://thebetrayal.co.uk/contact
+
+## How a game works (Modern, everyone on their own phone)
+
+1. The host opens the Table with their booking code and name; guests join on their phones.
+2. The Oath: each phone privately asks its player whether they would like to be Forsworn, then deals the roles. The Forsworn (about one player in four or five: 2 for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, 5 for 23 or 24) see each other; nobody else sees anything.
+3. Trials: party games played on the phones (quizzes, word games, guessing games, charades where only the actor sees the word, rock-paper-scissors and more; 15 in all, drawing on thousands of questions and prompts). They fill a shared Purse and win Sanctuary, protection from that night.
+4. The Reckoning: a few minutes of debate on a timer, then a secret vote on every phone. The player with the most votes is exiled and their role is revealed.
+5. Night: the Forsworn choose someone to poison. Everyone else taps a name too, so nobody can tell who is choosing. At dawn the victim, told first in secret on their phone, announces it and gets thirty seconds of last words.
+6. Players who are out become Ghosts: they stay at the party and still call each vote.
+7. The final starts with five players. The survivors decide in secret whether they trust everyone left; then the Unmasking reveals every role. The Loyal win if every Forsworn is gone and take the Purse they built; the Forsworn win if one survives and take what the Purse fell short of its target. The game ends with up to six awards.
+
+Classic is the other way to play every Table, for groups who would rather put phones away: a TV with a laptop, one phone for a Keeper who reads the script and doesn't play, blindfolds at night and votes chalked on small boards. Classic also has a Short game of about 2 hours for 8 to 10 players.
+
+## Comparisons
+
+- The Betrayal is similar in idea to the TV show The Traitors (hidden traitors, a vote each day, a victim each night), but it is an original game that you play yourselves at home, and it is not connected to The Traitors, the BBC or its makers.
+- It is often used as an alternative to a murder mystery party: no scripts, characters or booklets, nobody knows the answer in advance, and it works for any number from 8 to 24.
+- Occasions: games nights, birthday parties, Christmas and office parties, hen and stag dos, dinner parties (dinner in courses is an optional setting).
+
+## Pages
+
+- [Home](https://thebetrayal.co.uk/): what it is, how an evening goes, prices, questions
+- [How to play](https://thebetrayal.co.uk/rules): the full rules, Modern and Classic
+- [See a game](https://thebetrayal.co.uk/tour): every screen of a game, phones and TV
+- [Book a Table](https://thebetrayal.co.uk/buy): prices and checkout
+- [How to host a traitors-style game at home](https://thebetrayal.co.uk/traitors-at-home): a practical guide, with or without an app
+- [Party games for large groups](https://thebetrayal.co.uk/party-games-for-large-groups): group sizes, occasions, murder mystery alternative
+- [Contact](https://thebetrayal.co.uk/contact)
+
+## Optional
+
+- [Full text for AI assistants](https://thebetrayal.co.uk/llms-full.txt)
+- [Terms of sale](https://thebetrayal.co.uk/terms), [Refunds](https://thebetrayal.co.uk/refunds), [Privacy](https://thebetrayal.co.uk/privacy)
