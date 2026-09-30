@@ -1,6 +1,6 @@
 #!/bin/sh
 # Assemble src/ into one self-contained game page (index.html — also runs standalone), wrap it as worker/public/play.html
-# (served at /g/CODE), and copy the home page (site/index.html) to worker/public/index.html.
+# (served at /t/CODE), and copy the home page (site/index.html) to worker/public/index.html.
 set -e
 cd "$(dirname "$0")"
 mkdir -p worker/public
@@ -22,7 +22,7 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
   tail -n +2 index.html
   printf '\n</body>\n</html>\n'
 } > worker/public/play.html
-# the home page: sell, redeem a pass, join a room (site/index.html, self-contained)
+# the home page: sell, redeem a booking code, join a room (site/index.html, self-contained)
 awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
 # the legal and checkout pages: site/pages/NAME.html (first line <!-- title: … -->) in site/page.html → worker/public/NAME.html, served at /NAME
 for f in site/pages/*.html; do

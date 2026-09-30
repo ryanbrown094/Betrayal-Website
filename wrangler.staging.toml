@@ -1,4 +1,5 @@
-# Staging: staging.thebetrayal.co.uk — its own Worker, rooms and passes. Deploy by hand: ./deploy.sh staging
+# Staging: staging.thebetrayal.co.uk, with its own Worker, rooms and booking codes. Deploy by hand: ./deploy.sh staging
+# The Worker is named cloak-and-candle-staging because its Durable Objects are bound to that name.
 name = "cloak-and-candle-staging"
 main = "worker/src/index.js"
 compatibility_date = "2026-09-01"
@@ -10,10 +11,10 @@ routes = [
 ]
 
 [vars]
-PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
+PASS_HOURS = "48"        # a redeemed booking code keeps its room writable this long
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
-STRIPE_PRICE_ID = ""     # the party pass's Stripe Price (price_…), printed by tools/stripe-setup.sh; empty = checkout closed
+STRIPE_PRICE_ID = ""     # the one-party Table's Stripe Price (price_…), printed by tools/stripe-setup.sh; empty = checkout closed
 STRIPE_EGG_PROMO = ""     # the broken seal’s promotion code (promo_…, 10% off one party); empty = the seal offers no discount
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS

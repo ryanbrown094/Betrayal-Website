@@ -1,5 +1,5 @@
-# Production: thebetrayal.co.uk (formerly cloakandcandle.co.uk; the Worker keeps its old name so its Durable Objects,
-# with every pass and room, carry on). Cloudflare's Git integration deploys this file with `npx wrangler deploy` from the
+# Production: thebetrayal.co.uk. The Worker is named cloak-and-candle because its Durable Objects, with every booking
+# code and room, are bound to that name. Cloudflare's Git integration deploys this file with `npx wrangler deploy` from the
 # repo root; ./deploy.sh does the same by hand. Staging: wrangler.staging.toml.
 name = "cloak-and-candle"
 main = "worker/src/index.js"
@@ -7,7 +7,7 @@ compatibility_date = "2026-09-01"
 workers_dev = false
 account_id = "52f36be1337501d7eb4752e3ca42fac7"
 
-# The Betrayal lives at thebetrayal.co.uk. The old name's domain stays attached and redirects every page there.
+# The Betrayal lives at thebetrayal.co.uk. cloakandcandle.co.uk is also attached and redirects every page there (OLD_HOSTS).
 routes = [
   { pattern = "thebetrayal.co.uk", custom_domain = true },
   { pattern = "www.thebetrayal.co.uk", custom_domain = true },
@@ -16,11 +16,11 @@ routes = [
 ]
 
 [vars]
-SITE_HOST = "thebetrayal.co.uk"    # the one address: www. and the old domains redirect here (pages only; the API answers everywhere)
+SITE_HOST = "thebetrayal.co.uk"    # the one address: www. and OLD_HOSTS redirect here (pages only; the API answers everywhere)
 OLD_HOSTS = "cloakandcandle.co.uk,www.cloakandcandle.co.uk"
-PASS_HOURS = "48"        # a redeemed party pass keeps its room writable this long
+PASS_HOURS = "48"        # a redeemed booking code keeps its room writable this long
 KEEP_DAYS = "7"          # then the room is read-only for this many days, then deleted
-STRIPE_PRICE_ID = "price_1UL4Ds9eT91BoTqdAel9htGQ"  # the £10 party pass's Stripe Price — LIVE MODE. Empty = checkout closed
+STRIPE_PRICE_ID = "price_1UL4Ds9eT91BoTqdAel9htGQ"  # the £10 one-party Table's Stripe Price — LIVE MODE. Empty = checkout closed
 STRIPE_SUB_PRICE_ID = "price_1UKk9M9eT91BoTqd9P9iSm1I"  # the £20/month unlimited subscription's Price — LIVE MODE; empty = subscription not on sale
 STRIPE_EGG_PROMO = "promo_1UL5tM9eT91BoTqdS0J7RLMs"  # the broken seal's promotion code (QR10, 10% off one party), applied for buyers who found /seal — LIVE MODE; empty = the seal offers no discount
 ALERT_TO = "info@thebetrayal.co.uk"  # contact messages and problem reports are emailed here (see [[send_email]] below)

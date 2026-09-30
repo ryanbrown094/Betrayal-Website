@@ -1,8 +1,8 @@
 #!/bin/sh
-# Party passes, from the command line. Needs ADMIN_TOKEN (the Worker secret) in the environment.
-#   tools/passes.sh mint 5 "gift for Annie"      → five new pass codes
-#   tools/passes.sh list                          → every pass: made, redeemed, which room, when it runs out
-#   tools/passes.sh revoke CNDL-XXXX-XXXX         → cancel a pass (refunds, mistakes)
+# Booking codes, from the command line. Needs ADMIN_TOKEN (the Worker secret) in the environment.
+#   tools/passes.sh mint 5 "gift for Annie"      → five new booking codes
+#   tools/passes.sh list                          → every code: made, redeemed, which room, when it runs out
+#   tools/passes.sh revoke OATH-XXXX-XXXX         → cancel a code (refunds, mistakes)
 # BASE defaults to production; BASE=https://staging.thebetrayal.co.uk for staging, http://127.0.0.1:8790 for wrangler dev.
 set -e
 BASE=${BASE:-https://thebetrayal.co.uk}

@@ -1,7 +1,7 @@
 // The Betrayal — Modern. Everyone plays on their own phone: the server runs the game, deals the roles, collects every
 // answer, vote and night choice, moves on by itself when everyone has answered or a clock runs out, and sends each phone
-// only what that player may see. The room's creator (the director) plays too; their phone also moves the evening on
-// (Trials, breaks, the Reckoning, dawn) but is shown no more secrets than anyone else's.
+// only what that player may see. The room's creator is the director (the host): a player whose phone also moves the
+// evening on (Trials, breaks, the Reckoning, dawn) and is shown no more secrets than anyone else's.
 //
 // Everything here is pure: (state, input, now) → state. The Durable Object (index.js) stores the state, calls tick()
 // on every request so clocks move on, and answers each phone with viewFor().
