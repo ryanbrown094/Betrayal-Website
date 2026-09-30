@@ -408,7 +408,7 @@ function awardsOf(s) {
   const F = s.players.filter((p) => p.role === "f"); const dec = F.map((p) => [p.id, (s.stats.against[p.id] || []).length]).sort((a, c) => a[1] - c[1])[0]; if (dec) give("The Grand Deceiver", dec[0], dec[1] ? "drew only " + dec[1] + (dec[1] === 1 ? " vote" : " votes") + " all night" : "drew no votes all night");
   b = best(s.stats.wins); if (b) give("Trial Machine", b[0], "won " + b[1] + (b[1] === 1 ? " Trial" : " Trials"));
   b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "drew " + b[1] + " votes");
-  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to die");
+  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to be poisoned");
   b = best(s.stats.calls); if (b) give("The Ghost Who Saw", b[0], "called " + b[1] + (b[1] === 1 ? " exile" : " exiles") + " from beyond the table");
   b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "chalked the Loyal " + b[1] + " times");
   return out.slice(0, 6);
