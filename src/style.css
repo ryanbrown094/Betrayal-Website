@@ -654,3 +654,4 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #repbtn { position: absolute; left: 1.2vw; bottom: 3.6vh; z-index: 10; height: 3.6vh; padding: 0 1.6vh; font-family: var(--sc); font-size: 1.4vh; letter-spacing: .06em; color: var(--tallow2); background: none; border: 0; border-radius: 0; text-decoration: underline; text-decoration-color: rgba(174,98,73,.5); text-underline-offset: .4vh; opacity: .3; cursor: pointer; transition: opacity .3s } #repbtn:hover, #repbtn:focus-visible { opacity: 1 }
 /* the Reckoning table on a 4:3 screen: room for the side name plates, so they neither overlap the words nor get cut */
 @media (max-aspect-ratio: 3/2) { .rtwrap { gap: 10vh } .rtcopy { width: 26vw } .rtcopy .eyebrow { letter-spacing: .1em; white-space: nowrap } .rt .nm { letter-spacing: .07em } .rt .nm.side { max-width: 19vh } }
+#host .aside { margin: 16px 0; font-family: var(--book); font-style: italic; font-size: 18px; line-height: 1.45; color: var(--tallow) }
