@@ -21,6 +21,25 @@ async function gzip(str) { const cs = new CompressionStream("gzip"), w = cs.writ
 async function gunzip(bytes) { const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Response(ds.readable).text(); }
 // the master error log (in the Registry): server exceptions, errors from players' browsers, refused webhooks, issue reports
 const logErr = (env, e) => env && env.REGISTRY ? env.REGISTRY.get(env.REGISTRY.idFromName("registry")).fetch("https://registry/err", { method: "POST", body: JSON.stringify(e) }).catch(() => {}) : null;
+// An email to ALERT_TO when someone writes in or reports a problem, with Reply-To set to them. Needs the MAIL send_email
+// binding (wrangler.toml), Email Routing on the domain, and ALERT_TO verified as a destination address; otherwise it does
+// nothing. Failures go to the error log, never to the customer.
+const b64 = (s) => { const u = new TextEncoder().encode(s); let o = ""; for (let i = 0; i < u.length; i += 8192) o += String.fromCharCode(...u.subarray(i, i + 8192)); return btoa(o); };
+async function alertMail(env, subject, body, replyTo) {
+  if (!env || !env.MAIL || !env.ALERT_TO) return;
+  try {
+    const { EmailMessage } = await import("cloudflare:email");
+    const host = env.SITE_HOST || "thebetrayal.co.uk", from = env.ALERT_FROM || "alerts@" + host, line = (x) => String(x).replace(/[\r\n]+/g, " ").slice(0, 200);
+    const subj = line(subject), mime = [
+      `From: The Betrayal <${from}>`, `To: ${env.ALERT_TO}`,
+      ...(replyTo && /^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(replyTo) ? [`Reply-To: ${replyTo}`] : []),
+      `Subject: ${/^[\x20-\x7e]*$/.test(subj) ? subj : "=?UTF-8?B?" + b64(subj) + "?="}`,
+      `Message-ID: <${crypto.randomUUID()}@${host}>`, `Date: ${new Date().toUTCString()}`,
+      "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64", "",
+      b64(body).replace(/.{76}/g, "$&\r\n")].join("\r\n");
+    await env.MAIL.send(new EmailMessage(from, env.ALERT_TO, mime));
+  } catch (e) { logErr(env, { src: "mail", msg: clip(e && e.message || e, 300) }); }
+}
 // Every save of a room's game is recorded (compressed) so a game can be replayed screen by screen from /admin; up to this
 // many a room. Players' browsers also send a trail of what they tapped and any errors (EVMAX batches a room).
 const RECMAX = 20000, EVMAX = 2000;
@@ -339,7 +358,7 @@ export class Registry {
     if (url.pathname === "/hooks") return json({ hooks: await this.newest("hook:", 500) });
     if (url.pathname === "/report") {
       const rec = (this.reps = (this.reps || new Map())).get(ip) || [], t = Date.now(), fresh = rec.filter((x) => t - x < 3600000);
-      if (fresh.length >= 10) return json({ error: "Too many reports from here. Try again in an hour, or email us." }, 429);
+      if (fresh.length >= 10) return json({ error: "Too many reports from here. Try again in an hour, or email info@thebetrayal.co.uk." }, 429);
       fresh.push(t); this.reps.set(ip, fresh); if (this.reps.size > 2000) this.reps.clear();
       let id; do id = "R-" + Math.random().toString(36).slice(2, 8).toUpperCase(); while (await this.storage.get("rep:" + id));
       const snap = typeof b.snap === "string" && b.snap.length <= 4000000 ? b.snap : "", parts = Math.ceil(snap.length / 100000);
@@ -644,6 +663,11 @@ async function route(req, env) {
       const rr = await registry(env).fetch("https://registry/report", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ ...b, room: code, rec }) });
       const r = await rr.json(); if (!rr.ok) return json(r, rr.status);
       logErr(env, { src: "report", room: code, report: r.id, msg: clip(b.what, 300), device: clip(b.device, 16), host: !!b.host });
+      const contact = clip(b.url, 200) === "/contact", mail = clip(b.email, 200).trim(), site = "https://" + (env.SITE_HOST || "thebetrayal.co.uk");
+      await alertMail(env, (contact ? "Message " : "Problem report ") + r.id + ": " + clip(b.what, 60).trim(),
+        [contact ? "A message from the contact page." : "A problem reported from " + (b.host ? "the host's phone" : clip(b.device, 16) || "a device") + (code ? " in room " + code : "") + ".",
+          "", "From: " + (mail || "(no email given)"), "", clip(b.what, 4000).trim(), ...(clip(b.expected, 2000).trim() ? ["", "Expected: " + clip(b.expected, 2000).trim()] : []),
+          "", "Reference " + r.id + ". Reply to this email to answer them" + (mail ? "" : " (they left no address)") + ".", "Open it on " + site + "/admin (Reports)."].join("\n"), mail);
       return json({ id: r.id });
     }
     if (p === "/api/games" && req.method === "POST") {
@@ -795,5 +819,8 @@ async function route(req, env) {
       return new Response(r.body, { status: r.status, headers: h });
     }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).
-    return env.ASSETS.fetch(req);
+    const r = await env.ASSETS.fetch(req);
+    if (r.status !== 404 || (req.method !== "GET" && req.method !== "HEAD")) return r;
+    const nf = await env.ASSETS.fetch(new Request(url.origin + "/404.html"));
+    return new Response(req.method === "HEAD" ? null : nf.body, { status: 404, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });
 }

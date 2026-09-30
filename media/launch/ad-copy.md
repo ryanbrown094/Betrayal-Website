@@ -10,7 +10,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 **Primary text**
 - A: Everyone at your table swore an oath. Not everyone meant it. By the end of the night, you’ll know who.
-- B: Invite your friends round. Send a few of them a secret, straight to their phone. Watch what happens to the conversation.
+- B: Invite your friends round, and a few of them get a secret sent straight to their phone. Then see what happens to the conversation.
 - C: A party game for 8 to 16 friends, played on everyone’s phone. A few are secretly Forsworn. The rest have one evening to find them.
 
 **Headline:** The party game of loyalty and lies · or · Not everyone meant it
@@ -19,8 +19,8 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## 2 · Your phone runs the game (`02-your-phone-runs-the-game`)
 
 **Primary text**
-- A: Scan the code, type your name, and you’re in. Your role arrives on your phone, and nobody else sees it.
-- B: Hosting? You play too. The game plans its own Trials and votes. Your phone just says when to begin.
+- A: Scan the code and type your name to join. Your role arrives on your phone, and nobody else sees it.
+- B: If you’re hosting, you play too. The game plans its own Trials and votes, and your phone just says when to begin.
 - C: Would you like to be Forsworn? The question arrives on every phone at once. Nobody sees your answer.
 
 **Headline:** Everyone plays on their phone · or · The host plays too
@@ -30,7 +30,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 
 **Primary text**
 - A: One £10 Table runs the whole party for eight or more. Everyone brings their phone; you bring a prize worth betraying a friend for.
-- B: Cheaper than a round of drinks. Nothing to buy, nothing to download, and a friend you’ll never quite trust again.
+- B: It costs less than a round of drinks, with nothing to buy or download. You might never quite trust one of your friends again.
 
 **Headline:** Under £2 a guest · or · Book a Table for £10
 **Description:** Best with 8–16 · a phone each
@@ -38,27 +38,27 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 ## 4 · Who do you exile? (`04-who-do-you-exile`)
 
 **Primary text**
-- A: Talk. Accuse. Defend. Then everyone votes on their phone, and your best friend waits for the count.
-- B: Every round ends the same way: one name on every phone, and one guest leaves the table.
+- A: After the arguing, everyone votes on their phone and your best friend waits for the count.
+- B: Every round ends with one name on every phone, and one guest leaving the table.
 
 **Headline:** Who do you exile? · or · Vote on your phone
 **Description:** Book a Table · £10 a party
 
 ## Extra lines (any set)
 
-- At night, everyone taps their phone. Only the Forsworn’s taps count. Nobody can tell who’s choosing.
-- Poisoned? You’ll find out on your phone. Say nothing until dawn.
+- At night everyone taps their phone, but only the Forsworn’s taps count, so nobody can tell who’s choosing.
+- If you’re poisoned, you’ll find out on your phone. Say nothing until dawn.
 - Charades, but only the actor’s phone knows the word.
-- Eating together? Switch on dinner in courses. Betrayal comes in between.
-- The Loyal build the Purse. The Forsworn take what it falls short. Sabotage, quietly.
-- Prefer it the old-fashioned way? Classic has a Keeper, blindfolds and chalk.
+- If you’re eating together, switch on dinner in courses and the game stops for each course between the rounds.
+- The Loyal build the Purse, and the Forsworn, if they win, take whatever it falls short, so they sabotage it quietly.
+- If you’d rather play the old-fashioned way, Classic has a Keeper, blindfolds and chalk.
 
 ## Seasonal lines (weeks 3 and 4)
 
-- Halloween: This Halloween, skip the costumes. Candles lit, phones out, and somebody at the table is lying.
+- Halloween: Skip the costumes this Halloween. Light some candles and get the phones out, because somebody at the table is lying.
 - Christmas: The office party that ends with your manager exiled. Book a Table for £10.
-- Christmas: Book a Table for the big family night. A full house, a few lies, and a grudge that lasts until Boxing Day.
-- Christmas: Hosting more than once this season? Become a Regular: £20 a month, a new Table whenever you like.
+- Christmas: Book a Table for the big family night. Someone will be lying, and the grudge will last until Boxing Day.
+- Christmas: If you’re hosting more than once this season, Become a Regular for £20 a month and open a new Table whenever you like.
 
 ---
 

@@ -34,6 +34,21 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
 - **Keeper phone**: screen titles in the brand's display face; the top bar says Trial, Interval, Reckoning… instead of the code's phase names; “NOT SYNCED / OFFLINE” on a line of its own so it can't push Menu off a small phone; the Keeper PIN is 4–8 digits (a PIN with letters couldn't be typed on the unlock screen's number pad); Forsworn tagged F, not C; “9 Loyal”, not “9 candle”; “1 line”; the Confessor named in the prize picker; long names hyphenate instead of breaking mid-letter; a bigger “Report a problem” target; curly apostrophes in every spoken line. The play page's title and home-screen name were still “Cloak & Candle”.
 
 
+**1.6.11 (30 Sep 2026), ready for a soft launch:**
+- **The password gate is off** in production (`SITE_PASSWORD` removed from `[vars]`; previews and staging keep it).
+- **Alert emails:**
+  - Every contact message and problem report is emailed to `ALERT_TO` (info@thebetrayal.co.uk), from alerts@thebetrayal.co.uk, with Reply-To set to the customer.
+  - It uses the `MAIL` send_email binding (`[[send_email]]` in `wrangler.toml`; `alertMail` in `index.js`). That needs Email Routing on for thebetrayal.co.uk and ALERT_TO verified under Email Routing → Destination addresses.
+  - Without them, or if sending fails, the report is still saved and the failure goes to the error log (`src: "mail"`).
+  - Locally, wrangler dev writes each email to `.wrangler/tmp/email/`.
+- **Contact details:** info@thebetrayal.co.uk is on the contact, terms and privacy pages.
+- **404:** unknown pages get `site/pages/404.html` with status 404. `/api/*` still answers JSON.
+- **Sitemap:** `worker/public/sitemap.xml`, listed in `robots.txt`.
+- **Classic TV:** the Reckoning name plates are flat (dark ground, copper hairline), and "Accuse. Defend. Deflect." is rewritten. The Classic tour and media screenshots are regenerated.
+- **Lengths:** big tables are now "about 4¼ hours for 16, and 5 to 6 for 20 and up" everywhere, from Classic's planner without dinner. The old figures included dinner.
+- **Marketing copy:** the ads, outreach, video scripts and press kit had a pass for stock phrasing.
+- **Marketing pack:** `tools/marketing-pack.py` no longer depends on a home-page heading removed in 1.6.9.
+
 **1.6.10 (30 Sep 2026), the Modern tour covers a whole evening:** `/tour` walks through opening the Table, joining, the Oath, roles, a day, a Trial from intro to result (and six more on phones), breaks and the pause, the Reckoning with last words, night, dawn and the end, with 39 screenshots.
 - **Generator:** `tools/modern-shots.mjs` plays the evening through the engine and `tools/modern-shots.py` photographs it in replay mode. Twists are off in that game, so no secret prize, Temptation or final Honour/Betray appears; keep it that way (no spoilers). The final is forced to a Loyal win so the end screens are stable.
 
@@ -95,7 +110,7 @@ It grew out of a private party build ("v17", played 26 September 2026). For the 
   - Classic's wizard no longer recommends a dinner break or courses; both are still options.
   - The site says "a party game" and describes dinner as something the game can fit in.
   - The marketing pack uses the tagline "the party game of loyalty and lies" (see `glossary.md`).
-  - `table-sizes.csv` in the marketing pack still includes dinner in its lengths until it's regenerated.
+  - `table-sizes.csv` in the marketing pack is regenerated without dinner (1.6.11).
 
 **1.6.5 (29 Sep 2026), ease of use and atmosphere (Modern):**
 - **Pause:** the host's top bar has Pause, which stops every clock (`s.paused`; `tick` does nothing, and every other action is refused). Carry on moves each deadline, and each answer's time, on by the length of the pause (`shiftClocks`). Host tools stay open while paused.

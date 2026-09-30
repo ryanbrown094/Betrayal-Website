@@ -22,18 +22,18 @@ Public copy. It uses only the public words in `01-game/glossary-and-naming.md`. 
 The Betrayal turns your party into a night of oaths, lies and midnight murders, played on everyone’s phone. The host plays too.
 
 ## Short description (about 50 words)
-The Betrayal is a party game, best with 8 to 16 people, played on everyone’s own phone. Guests scan a code on the TV, or go to thebetrayal.co.uk/join. Everyone swears an oath; a few are secretly Forsworn. Roles, votes and murders arrive in secret on each phone. No props, no downloads, and the host plays too.
+The Betrayal is a party game, best with 8 to 16 people, played on everyone’s own phone. Guests scan a code on the TV, or go to thebetrayal.co.uk/join. Everyone swears an oath; a few are secretly Forsworn. Roles, votes and murders arrive in secret on each phone. You don’t need props or a download, and the host plays too.
 
 ## Long description (about 150 words)
-The Betrayal is the party game of loyalty and lies, and everyone plays on their own phone. Guests join like a pub quiz: scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. Then the Oath arrives on every phone, a question nobody else can see: would you like to be Forsworn? A few are. They see each other on their phones; the Loyal have one evening to find them.
+The Betrayal is the party game of loyalty and lies, and everyone plays on their own phone. Guests join like a pub quiz: scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. Then the Oath arrives on every phone as a question nobody else can see, “Would you like to be Forsworn?”, and a few guests become Forsworn. They see each other on their phones; the Loyal have one evening to find them.
 
-Fifteen Trials, played on phones (quizzes, word games, charades where only the actor sees the word), fill a shared Purse and win Sanctuary from the night. At the Reckoning everyone votes on their phone. At night the Forsworn choose, while everyone else taps too so nobody can tell who’s choosing; the victim finds out in secret. The host plays as well: the game plans itself. Play it over dinner, with drinks and snacks, or at a games night; if you’re eating together, it can serve dinner in courses between the rounds. Prefer it the old-fashioned way? Classic has a Keeper, blindfolds and chalk.
+Fifteen Trials, played on phones (quizzes, word games, charades where only the actor sees the word), fill a shared Purse and win Sanctuary from the night. At the Reckoning everyone votes on their phone. At night the Forsworn choose, while everyone else taps too so nobody can tell who’s choosing; the victim finds out in secret. The host plays as well: the game plans itself. Play it over dinner, with drinks and snacks, or at a games night; if you’re eating together, it can serve dinner in courses between the rounds. If you’d rather play the old-fashioned way, Classic has a Keeper, blindfolds and chalk.
 
 ## Key facts
 | | |
 |---|---|
 | Players | 8 to 24, best with 8 to 16. In Modern the host plays too |
-| Length | about 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer: about 5 hours for 16, and 6 or more for 20 and up |
+| Length | about 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer: about 4¼ hours for 16, and 5 to 6 for 20 and up |
 | You need | a phone each and a prize. A TV is optional (any laptop cast to it) |
 | Joining | scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and your name |
 | Format | web app; no download, no accounts |
@@ -49,7 +49,7 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 | Classic | the old-fashioned way, on the same Table: one phone runs the game, a Keeper reads the script and doesn’t play, blindfolds at night, votes chalked on small boards, the TV puts on the show |
 
 ## Feature bullets
-- A phone each, nothing to buy: no blindfolds, no chalkboards, no app, no accounts. Guests join like a pub quiz.
+- A phone each, nothing to buy: no blindfolds or chalkboards, and no app or accounts. Guests join like a pub quiz.
 - The host plays too: their phone just moves the evening on. The game plans its own Trials and Reckonings, and never shows the host a role.
 - Secrets stay secret: roles, votes, night choices and murders arrive privately on each phone. The Forsworn see each other; nobody else sees anything.
 - Nobody can tell who’s choosing: at night everyone taps their phone, and only the Forsworn’s choices count.
@@ -61,7 +61,7 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 - The host can pause: one tap stops every clock for the doorbell or a second helping, and anyone taken ill can be taken out of the game without their role being revealed.
 - Last words for the exiled and the murdered, on the TV; the Forsworn can whisper to each other on their phones at night.
 - It ends with awards: up to six, from The Grand Deceiver to The Ghost Who Saw.
-- Prefer it the old-fashioned way? Classic runs from one phone, with a Keeper, blindfolds and chalk.
+- Classic, the old-fashioned way, runs from one phone with a Keeper, blindfolds and chalk.
 
 ## Boilerplate
 The Betrayal is an independent party game made in England. It is not affiliated with, endorsed by or connected to any television programme, broadcaster or other game.
