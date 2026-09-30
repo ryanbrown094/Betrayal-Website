@@ -88,7 +88,7 @@ Nobody goes home when they’re out. Exiled and poisoned players become Ghosts: 
 Sanctuary protects its holder from that night’s poison. It’s the prize in most Trials, and it lasts one night. At most a quarter of the table can hold one at the same time. The host chooses at the start whether Sanctuary is won in public, named for everyone, or in secret, so only the winner knows they’re safe. A Forsworn who wins a secret Sanctuary gets nothing, and is the only one who knows.
 
 ## Twists
-Each comes once in the evening, and the phones explain it when it happens. The host can switch off the Casting Vote, the Crown and the Confessor before the start; the Temptation always comes.
+Each comes once in the evening, and the phones explain it when it happens. The host can switch them all off before the start, for a plainer first game.
 
 - The Casting Vote, about halfway: its Trial’s winner gets it instead of Sanctuary, and nobody else knows who. If a Reckoning ties and they voted for one of the tied players, their vote decides it.
 - The Temptation: everyone chooses, in secret, PURSE or SELF. Exactly one SELF takes Sanctuary and the Purse grows. Nobody, and it grows double. Two or more, and nobody gets it, and the Purse shrinks.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930164125">
+<meta name="build" content="20260930165915">
 <title>See a game of The Betrayal, screen by screen</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="A night of The Betrayal in pictures: every phone screen and the TV, from the Oath to the Unmasking. And Classic, with a Keeper and blindfolds.">
@@ -111,6 +111,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 .zoom { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: zoom-in; border-radius: 12px }
 .zoom .zhint { display: none }
 @media (max-width: 700px) { .zoom .zhint { display: block; position: absolute; right: 8px; bottom: 8px; padding: 5px 9px; border-radius: 3px; background: rgba(9,7,10,.78); color: var(--ivory); font: 14px/1 var(--sc); letter-spacing: .05em; pointer-events: none } }
+@media (hover: hover) and (pointer: fine) { .zoom:hover .zhint, .zoom:focus-visible .zhint { display: block; position: absolute; right: 8px; bottom: 8px; padding: 5px 9px; border-radius: 3px; background: rgba(9,7,10,.78); color: var(--ivory); font: 14px/1 var(--sc); letter-spacing: .05em; pointer-events: none } }
 dialog.lb { width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; overflow: hidden }
 dialog.lb::backdrop { background: rgba(9,7,10,.95) } html:has(dialog.lb[open]) { overflow: hidden }
 dialog.lb img { position: absolute; left: 50%; top: 50%; width: min(96vw, calc(92dvh * 16 / 9)); height: auto; transform: translate(-50%, -50%); border-radius: 8px; border: 1px solid rgba(230,165,140,.25); cursor: zoom-out }
@@ -354,7 +355,7 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
     dlg.addEventListener("close", () => { big.removeAttribute("src"); if (opener) opener.focus(); });
     for (const img of $$('.shot img[width="1280"]')) {
       const b = document.createElement("button"), hint = document.createElement("span");
-      b.type = "button"; b.className = "zoom"; b.setAttribute("aria-label", "Enlarge: " + img.alt); hint.className = "zhint"; hint.setAttribute("aria-hidden", "true"); hint.textContent = "Tap to enlarge";
+      b.type = "button"; b.className = "zoom"; b.setAttribute("aria-label", "Enlarge: " + img.alt); hint.className = "zhint"; hint.setAttribute("aria-hidden", "true"); hint.textContent = matchMedia("(hover: hover) and (pointer: fine)").matches ? "Click to enlarge" : "Tap to enlarge";
       img.replaceWith(b); b.append(img, hint);
       b.onclick = () => { opener = b; big.src = img.currentSrc || img.src; big.alt = img.alt; dlg.showModal(); x.focus(); };
     }

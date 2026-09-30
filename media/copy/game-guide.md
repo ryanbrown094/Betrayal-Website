@@ -83,7 +83,7 @@ The host taps **Reveal the night**: every phone (and the TV) shows who died, one
 | power | when | what it does |
 |---|---|---|
 | **Sanctuary** | every round, from Trials | safe from that night’s kill |
-| **Temptation** | once a game, twists on or off | offered after a Trial: everyone chooses **PURSE or SELF** in secret on their phone. Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse shrinks |
+| **Temptation** | once a game, when twists are on | offered after a Trial: everyone chooses **PURSE or SELF** in secret on their phone. Exactly one SELF: they take Sanctuary and the Purse grows. Nobody: the Purse grows by double. Two or more: nobody gets Sanctuary and the Purse shrinks |
 | **Casting Vote** | once a game, twists on | won in a Trial; only the winner knows. If a Reckoning ties and they voted for one of the tied players, their vote decides it |
 | **Crown** | once a game, twists on | won in a Trial late in the game: Sanctuary that night, and once, at a Reckoning, its holder may **lay down the Crown** to be safe from that exile |
 | **Confessor** (never named in public) | once, in the final, twists on | a special prize for the winner of a Trial in the final: in secret, on their phone, they learn one name that is Forsworn (or that no other Forsworn is left, if the winner is the last one) |

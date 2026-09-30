@@ -202,7 +202,7 @@ const prizeOf = s => { const t = prizeTier(s); return (t && t.what) || (s && s.p
 const coinsOf = s => prizeOf(s) === PRIZE0 ? Math.floor(wonPot(s) / 100) : null;
 const coinsText = n => n ? n + " chocolate coin" + (n === 1 ? "" : "s") : "no chocolate coins";
 // the prize as it's announced at the end: "15 chocolate coins", or the host's own prize
-const prizeName = s => { const c = coinsOf(s); return c == null ? prizeOf(s) : coinsText(c) };
+const prizeName = s => { const c = coinsOf(s); return c == null ? prizeOf(s) : c === 0 && s.winner === "cloaks" ? "the glory, not the coins" : coinsText(c) };
 // Dinner in three courses: the starter after round one, the main course mid-game, dessert before the final.
 const COURSES = [{ k: "starter", name: "The Starter", dur: 900000 }, { k: "main", name: "The Main Course", dur: 1500000 }, { k: "dessert", name: "Dessert", dur: 900000 }];
 const courseRounds = R => R >= 4 ? [1, Math.ceil(R / 2), R - 1] : [];

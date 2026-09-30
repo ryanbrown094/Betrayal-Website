@@ -255,7 +255,7 @@ function planDay(s) {
   if (s.final) {
     if (!s.done.finalTrial) steps.push({ k: "trial", special: tw && alive(s).length === 5 && !s.confess ? "confess" : null, once: "finalTrial" });
   } else if (r === castR && !s.done.tempt) {
-    steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, { k: "tempt" });
+    steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, ...(tw ? [{ k: "tempt" }] : []));
   } else {
     steps.push({ k: "trial", special: tw && r === crownR && !s.crown ? "crown" : null });
   }
