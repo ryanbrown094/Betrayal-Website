@@ -7,8 +7,11 @@ let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond };
 const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a, b] of Object.entries(k)) m.set(a, b); else m.set(k, v) }, delete: async k => { for (const x of [].concat(k)) m.delete(x) },
   list: async ({ prefix, reverse, limit }) => { let e = [...m].filter(([k]) => k.startsWith(prefix)).sort((a, b) => a[0] < b[0] ? -1 : 1); if (reverse) e.reverse(); if (limit) e = e.slice(0, limit); return new Map(e) } } };
-const closed = []; const GAME = { idFromName: n => n, get: id => ({ fetch: async (u) => { if (String(u).endsWith("/_close")) closed.push(id); return new Response("{}") } }) };
-const reg = new Registry({ storage: store() }, { GAME });
+const closed = [], extended = []; let gameGone = false;
+const GAME = { idFromName: n => n, get: id => ({ fetch: async (u, init) => { if (String(u).endsWith("/_close")) closed.push(id); if (String(u).endsWith("/_extend")) { if (gameGone) return new Response("{}", { status: 404 }); extended.push([id, JSON.parse(init.body).expires]) } return new Response("{}") } }) };
+// the MAIL binding, stubbed: what it was asked to send, and a switch to make it refuse
+const sent = []; let mailFail = false; const MAIL = { send: async m => { if (mailFail) throw new Error("refused"); sent.push(m); return { messageId: "m" + sent.length } } };
+const reg = new Registry({ storage: store() }, { GAME, MAIL, SITE_HOST: "thebetrayal.co.uk" });
 const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_SUB_PRICE_ID: "price_sub", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
 
 // the stubbed Stripe: sessions made, sessions read back
@@ -181,5 +184,52 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   check("…if Stripe refuses the code, the sale still opens at full price", st === 200 && made.length === n0 + 1 && !made[n0].q.has("discounts[0][promotion_code]") && !made[n0].q.has("metadata[egg]"));
   const pg = await W("/seal", {}, { ...EGG, ASSETS: { fetch: (r) => new Response("<h1>The broken seal</h1>", { headers: { "Content-Type": "text/html" } }) } });
   check("…the /seal page is served, and kept out of search engines", pg.status === 200 && /noindex/.test(pg.headers.get("X-Robots-Tag") || ""));
+}
+// the booking email: sent once per paid booking, to the buyer, and again from the admin on request
+{
+  const n0 = sent.length;
+  check("booking email: the first purchase's code was emailed to the buyer, once, though it was claimed twice", sent.filter(m => m.html.includes(pass1)).length === 1);
+  const m = sent.find(m => m.html.includes(pass1));
+  check("…from bookings@, replies to info@, with the code in the HTML and the text", m && m.from.email === "bookings@thebetrayal.co.uk" && m.replyTo === "info@thebetrayal.co.uk" && m.to === "buyer@example.com" && m.text.includes(pass1) && /Your Table is booked/.test(m.subject), m && { from: m.from, to: m.to, subject: m.subject });
+  check("…and its button opens the home page with the code filled in", m && m.html.includes("https://thebetrayal.co.uk/?code=" + encodeURIComponent(pass1) + "#start"));
+  check("…the thank-you page is told it was emailed", (await claim("cs_test_000000000000"))[1].emailed === true && sent.length === n0);
+  const [, cx] = await checkout({ terms: true, supply: true }, base, "192.0.2.50"), idx = Object.keys(sessions).pop(), passx = sessions[idx].metadata.pass;
+  sessions[idx].payment_status = "paid"; mailFail = true;
+  const [hs] = await hook({ type: "checkout.session.completed", data: { object: { ...sessions[idx] } } });
+  check("booking email: if sending fails, the payment still clears and nothing is marked sent", hs === 200 && (await passOf(passx)).pending === false && !(await passOf(passx)).mailed && sent.length === n0);
+  mailFail = false; const [, cy] = await claim(idx);
+  check("…and the next claim (the thank-you page) sends it", cy.emailed === true && sent.length === n0 + 1 && !!(await passOf(passx)).mailed);
+  const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  const [rs, rj] = await A("resend", { pass: passx, to: "friend@example.org" });
+  check("admin: \"Email\" sends the code again, to another address if given", rs === 200 && rj.to === "friend@example.org" && sent.length === n0 + 2 && sent[sent.length - 1].to === "friend@example.org" && (await passOf(passx)).mailedTo === "friend@example.org", [rs, rj]);
+  check("admin: a cancelled code isn't emailed", (await A("resend", { pass: pass2 }))[0] === 409 && sent.length === n0 + 2);
+}
+// the admin's "extend": a Table stays open longer, on its booking code, in the Registry's list and in the Table itself
+{
+  const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  const before = await passOf(pass1), room = before.room, t0 = Date.now();
+  const [es, ej] = await A("extend", { pass: pass1, hours: 24 }), after = await passOf(pass1), rr = await reg.storage.get("room:" + room);
+  const want = Math.max(t0, before.expires) + 24 * 3600000;
+  check("extend: a code's Table gets 24 more hours, on the code, in the list of Tables and in the Table itself", es === 200 && ej.room === room && Math.abs(after.expires - want) < 2000 && rr.expires === after.expires && rr.extended === 24 && extended.some(([id, e]) => id === "room:" + room && e === after.expires), [es, ej]);
+  const [rs2, rj2] = await A("extend", { room, hours: 2 });
+  check("extend: by the Table's own code too, and its booking code follows", rs2 === 200 && (await passOf(pass1)).expires === rj2.expires && rj2.expires - after.expires === 2 * 3600000, [rs2, rj2]);
+  const [, cz] = await checkout({ terms: true, supply: true }, base, "192.0.2.77"), idz = Object.keys(sessions).pop(); sessions[idz].payment_status = "paid"; await claim(idz);
+  check("extend: a code that hasn't opened a Table yet is refused, with why", (await A("extend", { pass: sessions[idz].metadata.pass, hours: 24 }))[0] === 409);
+  check("extend: 0 hours, or more than 30 days, is refused", (await A("extend", { pass: pass1, hours: 0 }))[0] === 400 && (await A("extend", { pass: pass1, hours: 721 }))[0] === 400);
+  gameGone = true; const gone = await A("extend", { room, hours: 1 }); gameGone = false;
+  check("extend: a Table whose game was deleted can't be reopened", gone[0] === 410 && (await passOf(pass1)).expires === rj2.expires);
+  check("extend: only for the admin", (await W("/api/admin/extend", { method: "POST", body: JSON.stringify({ pass: pass1, hours: 5 }) })).status === 401);
+}
+// the admin's "Set email" and "Delete"
+{
+  const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  check("set email: not an address is refused", (await A("setemail", { pass: pass1, email: "not-an-email" }))[0] === 400);
+  const [ss] = await A("setemail", { pass: pass1, email: "owner@example.com" }), n = sent.length;
+  const [rs] = await A("resend", { pass: pass1 });
+  check("set email: the code keeps the address, and \"Email\" with no address typed sends there", ss === 200 && (await passOf(pass1)).email === "owner@example.com" && rs === 200 && sent.length === n + 1 && sent[sent.length - 1].to === "owner@example.com");
+  check("delete: a code still in use can't be deleted", (await A("delete", { pass: pass1 }))[0] === 409 && !!(await passOf(pass1)));
+  const [ds] = await A("delete", { pass: pass2 });
+  check("delete: a refunded (cancelled) code is removed from the list", ds === 200 && !(await passOf(pass2)) && !(await listed()).includes(pass2));
+  check("delete: and it's gone for good", (await A("delete", { pass: pass2 }))[0] === 404);
 }
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);
