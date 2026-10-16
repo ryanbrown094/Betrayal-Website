@@ -241,6 +241,8 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const a = await buy({ src: "Instagram", med: "bio", camp: "oct", ref: "l.instagram.com", land: "/" }, "192.0.2.91");
   check("source: utm tags become one line on the Stripe payment and the booking", a.q.get("metadata[source]") === "instagram · bio · oct (via l.instagram.com)" && (await passOf(a.pass)).from === "instagram · bio · oct (via l.instagram.com)" && a.q.get("metadata[landing]") === "/", [a.q.get("metadata[source]"), (await passOf(a.pass)).from]);
   const b = await buy({ click: "google ads", land: "/rules" }, "192.0.2.92"), c = await buy({ ref: "reddit.com" }, "192.0.2.93"), d = await buy(null, "192.0.2.94");
+  const k = await buy({ click: "google ads", term: "Traitors game at home", land: "/traitors-at-home" }, "192.0.2.96");
+  check("source: a Google Ads keyword (utm_term) rides along", (await passOf(k.pass)).from === "google ads · traitors game at home" && k.q.get("metadata[source]") === "google ads · traitors game at home", (await passOf(k.pass)).from);
   check("source: an ad click, a referring site, or direct", (await passOf(b.pass)).from === "google ads" && (await passOf(c.pass)).from === "reddit.com" && (await passOf(d.pass)).from === "direct");
   const e = await buy({ src: "<script>alert(1)</script>" + "x".repeat(200), land: "/<b>" }, "192.0.2.95");
   check("source: only plain characters, and short", /^[a-z0-9 ._\/()·-]+$/.test((await passOf(e.pass)).from) && (await passOf(e.pass)).from.length <= 60 && (await passOf(e.pass)).land === "/b", (await passOf(e.pass)));
