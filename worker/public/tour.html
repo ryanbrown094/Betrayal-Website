@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261016151226">
+<meta name="build" content="20261016152251">
 <title>See a game of The Betrayal, screen by screen</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="A night of The Betrayal in pictures: every phone screen and the TV, from the Oath to the Unmasking. And Classic, with a Keeper and blindfolds.">
@@ -370,6 +370,11 @@ dialog.lb .lbx { position: absolute; top: max(10px, env(safe-area-inset-top)); r
 </main>
 <footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/party-games-for-large-groups">Party games for large groups</a><a href="/traitors-at-home">Host a hidden-traitor game night</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>
-<script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page")</script>
+<script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page");
+// where this visit came from (a campaign link's utm_ tags, an ad click, or the referring site), kept for this tab only so a
+// purchase can say which link or advert led to it (sessionStorage "bt-src"; listed on /cookies)
+(() => { try { if (sessionStorage.getItem("bt-src")) return; const q = new URLSearchParams(location.search), r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "", own = /(^|\.)(thebetrayal|cloakandcandle)\.co\.uk$/.test(r);
+  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", click: q.get("gclid") ? "google ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
+</script>
 </body>
 </html>

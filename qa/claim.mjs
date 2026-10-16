@@ -231,5 +231,18 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const [ds] = await A("delete", { pass: pass2 });
   check("delete: a refunded (cancelled) code is removed from the list", ds === 200 && !(await passOf(pass2)) && !(await listed()).includes(pass2));
   check("delete: and it's gone for good", (await A("delete", { pass: pass2 }))[0] === 404);
+  const [ms, mj] = await A("passes", { count: 1, kind: "sub", email: "me@example.com" });
+  check("create: a code made with an email address keeps it", ms === 200 && (await passOf(mj.passes[0])).email === "me@example.com" && (await passOf(mj.passes[0])).kind === "sub", [ms, mj]);
+  check("create: a bad email address is refused", (await A("passes", { count: 1, email: "nope" }))[0] === 400);
+}
+// where a buyer came from: the buy page sends the site's "bt-src"; it's kept on the booking and on the Stripe payment
+{
+  const buy = async (src, ip) => { const n = made.length; await checkout({ terms: true, supply: true, src }, base, ip); const q = made[n].q; return { q, pass: q.get("metadata[pass]") } };
+  const a = await buy({ src: "Instagram", med: "bio", camp: "oct", ref: "l.instagram.com", land: "/" }, "192.0.2.91");
+  check("source: utm tags become one line on the Stripe payment and the booking", a.q.get("metadata[source]") === "instagram · bio · oct (via l.instagram.com)" && (await passOf(a.pass)).from === "instagram · bio · oct (via l.instagram.com)" && a.q.get("metadata[landing]") === "/", [a.q.get("metadata[source]"), (await passOf(a.pass)).from]);
+  const b = await buy({ click: "google ads", land: "/rules" }, "192.0.2.92"), c = await buy({ ref: "reddit.com" }, "192.0.2.93"), d = await buy(null, "192.0.2.94");
+  check("source: an ad click, a referring site, or direct", (await passOf(b.pass)).from === "google ads" && (await passOf(c.pass)).from === "reddit.com" && (await passOf(d.pass)).from === "direct");
+  const e = await buy({ src: "<script>alert(1)</script>" + "x".repeat(200), land: "/<b>" }, "192.0.2.95");
+  check("source: only plain characters, and short", /^[a-z0-9 ._\/()·-]+$/.test((await passOf(e.pass)).from) && (await passOf(e.pass)).from.length <= 60 && (await passOf(e.pass)).land === "/b", (await passOf(e.pass)));
 }
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

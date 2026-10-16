@@ -392,6 +392,12 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - **Prerequisite for real inboxes:** the `MAIL` binding can only reach verified destination addresses until thebetrayal.co.uk is onboarded to Cloudflare **Email Sending** (Cloudflare dashboard → Email → Email Sending; it adds the domain's sending DNS records). Until then every booking email fails quietly and is logged; the code still shows on the thank-you page.
 - Tests: `qa/claim.mjs` (sent once, retried after a failure, admin resend, cancelled codes refused).
 
+### 6.4b Where buyers come from
+
+- Every site page notes, once per tab, how the visit arrived: the link's `utm_source`/`utm_medium`/`utm_campaign`, an ad click id (`gclid` → "google ads", `ttclid` → "tiktok ads", `fbclid` → "facebook / instagram") or the referring site, plus the landing page. It's kept in `sessionStorage` as `bt-src` (listed on `/cookies` and in the privacy notice) and sent with the checkout.
+- `sourceOf` in `index.js` turns it into one short line ("instagram · bio · launch (via l.instagram.com)", "google.com", "direct"), stored on the booking as `from` (and `land`) and on the Stripe payment's metadata as `source` and `landing`. The admin's booking-code list shows it in the **From** column.
+- Tag your own links to get clean names: e.g. the Instagram bio link `https://thebetrayal.co.uk/?utm_source=instagram&utm_medium=bio`.
+
 ### 6.5 The broken seal (discount)
 
 - The QR code in the marketing pictures (the home page's hero and the tour's TV lobby) leads to `/seal` (`noindex`, disallowed in `robots.txt`). Claiming it stores `bt-egg` in `localStorage`; the buy page then shows £9 once `/api/egg` confirms the discount is on, and says the Regular isn't discounted.
@@ -400,6 +406,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ### 6.6 Admin and booking codes
 
+- The booking-code list shows each code's **Email** (its `email`, or a purchase's address) and **From**, never a free-text note; click a code to copy it. New codes take an optional email rather than a note. A row has **Email** when the code has an address and **Set email** when it doesn't.
 - **Set email** stores the address a code's booking emails go to (`email` on the pass, used before `note`). **Delete** (only on cancelled or refunded codes) removes a code from the list; Stripe keeps its own record of the sale.
 - **Email** (on a paid code's row) sends the booking email again, to the buyer or to an address you type. **Extend** (on a code that has opened a Table, and "Extend this Table" on a Table's page in Rooms) keeps the Table open 1 to 720 hours longer, counted from its closing time, or from now if it has closed. It updates the code, the Registry's list of Tables and the Table itself (`/_extend` sets its `meta.expires` and its deletion alarm), so a closed Table reopens. A Table whose game has already been deleted can't be reopened.
 
