@@ -13,8 +13,10 @@ def check(name, cond, extra=""):
     if not cond: fails.append(name)
 with sync_playwright() as p:
     b = p.chromium.launch()
+    def ctx(**kw):  # Google's tag (every site page) is answered here, so the run doesn't depend on reaching Google
+        c = b.new_context(**kw); c.route("https://www.googletagmanager.com/**", lambda r: r.fulfill(status=200, content_type="text/javascript", body="")); return c
     for w, h in [(320, 640), (390, 844), (768, 1024), (1440, 900)]:
-        pg = b.new_context(viewport={"width": w, "height": h}).new_page(); errs = []
+        pg = ctx(viewport={"width": w, "height": h}).new_page(); errs = []
         pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: m.type == "error" and errs.append(m.text))
         wide = []
         for u in PAGES:
@@ -23,7 +25,7 @@ with sync_playwright() as p:
         check(f"{w}px: no page scrolls sideways", not wide, wide)
         check(f"{w}px: no console errors", not errs, errs)
         pg.close()
-    pg = b.new_context(viewport={"width": 390, "height": 844}).new_page()
+    pg = ctx(viewport={"width": 390, "height": 844}).new_page()
     pg.goto(URL + "/"); pg.wait_for_timeout(400)
     fit = pg.evaluate("()=>{const i=document.querySelector('#pass'),c=document.createElement('canvas').getContext('2d'),s=getComputedStyle(i);c.font=s.fontWeight+' '+s.fontSize+' '+s.fontFamily;return i.clientWidth-28>=c.measureText('XXXX-XXXX-XXXX').width+14*parseFloat(s.letterSpacing||0)}")
     check("home, phone: the whole Invitation code fits its box", fit)
@@ -46,7 +48,7 @@ with sync_playwright() as p:
     pg.check("#c2"); pg.click("#pay"); pg.wait_for_timeout(1500)
     check("buy: with both ticks it asks the server (payments are off locally, so it explains)", pg.inner_text("#paymsg") != "" and "Tick" not in pg.inner_text("#paymsg"), pg.inner_text("#paymsg"))
     # the broken seal: the QR code in the home page's picture leads to /seal, which remembers 10% off for the buy page
-    sp = b.new_context(viewport={"width": 390, "height": 844}).new_page(); sp.goto(URL + "/seal"); sp.wait_for_timeout(700)
+    sp = ctx(viewport={"width": 390, "height": 844}).new_page(); sp.goto(URL + "/seal"); sp.wait_for_timeout(700)
     on = sp.evaluate("fetch('/api/egg').then(r=>r.json()).then(j=>j.on)")
     check("seal: the page names the reward, or says it isn't open", ("10% off" in sp.inner_text("main")) if on else ("isn’t open yet" in sp.inner_text("main")))
     if on:
@@ -56,7 +58,7 @@ with sync_playwright() as p:
         check("…a Regular pays the usual £20, and the note says the seal is for one party", "£20 a month" in sp.inner_text("#pay") and "Regular plan" in sp.inner_text("#eggnote"))
     # search and AI answer engines: every indexable page has its own title and description, one h1, the canonical
     # address it is served at, and JSON-LD that parses; FAQ and HowTo JSON-LD must match the words on the page
-    sp = b.new_context(viewport={"width": 1280, "height": 900}).new_page(); titles, descs = set(), set()
+    sp = ctx(viewport={"width": 1280, "height": 900}).new_page(); titles, descs = set(), set()
     for u in INDEXED:
         r = sp.goto(URL + u); sp.wait_for_timeout(150)
         m = sp.evaluate("""()=>({t: document.title, d: (document.querySelector('meta[name=description]')||{}).content||'', c: (document.querySelector('link[rel=canonical]')||{}).href||'',

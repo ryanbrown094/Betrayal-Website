@@ -23,7 +23,8 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
   printf '\n</body>\n</html>\n'
 } > worker/public/play.html
 # the home page: sell, redeem a booking code, join a room (site/index.html, self-contained)
-awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
+# Google's tag (site/gtag.html) goes at __GTAG__, first in the head of the home page and every site page but /admin.
+awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTAG__$/{while((getline l < "site/gtag.html")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
 # the legal, checkout and guide pages: site/pages/NAME.html in site/page.html → worker/public/NAME.html, served at /NAME.
 # Each starts with <!-- title: … --> (short name: nav, breadcrumbs; the <title> is "NAME · The Betrayal") and
 # <!-- desc: … -->; an optional <!-- fulltitle: … --> replaces the whole <title>. The head gets a BreadcrumbList, plus
@@ -38,7 +39,7 @@ for f in site/pages/*.html; do
     *) printf '<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Betrayal","item":"%s/"},{"@type":"ListItem","position":2,"name":"%s","item":"%s/%s"}]}</script>\n' "$SITE" "$t" "$SITE" "$slug" > "$hf"
        if [ -f "site/pages/$slug.jsonld" ]; then { printf '<script type="application/ld+json">\n'; cat "site/pages/$slug.jsonld"; printf '</script>\n'; } >> "$hf"; fi ;;
   esac
-  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
+  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTAG__$/{if (slug != "admin") while((getline l < "site/gtag.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
   rm -f "$hf"
 done
 # the sitemap: the home page and every indexable page, each dated by the last commit of its source (today if it has

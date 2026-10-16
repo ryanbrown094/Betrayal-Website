@@ -30,7 +30,8 @@ VIEWS = json.loads(subprocess.check_output(["node", os.path.join(ROOT, "qa", "mo
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []
     def page(w=390, h=844):
-        pg = b.new_context(viewport={"width": w, "height": h}).new_page()
+        c = b.new_context(viewport={"width": w, "height": h}); pg = c.new_page()
+        c.route("https://www.googletagmanager.com/**", lambda r: r.fulfill(status=200, content_type="text/javascript", body=""))  # Google's tag on the home page
         pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: m.type == "error" and "favicon" not in m.text and errs.append(m.text))
         return pg
 
