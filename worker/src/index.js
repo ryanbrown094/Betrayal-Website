@@ -319,7 +319,7 @@ export class Registry {
     const k = "pass:" + key, v = await this.storage.get(k);
     if (!v || v.revoked || v.pending) return false;
     if (v.mailed && !to) return true;
-    const addr = String(to || v.note || "").trim().slice(0, 200);
+    const addr = String(to || v.email || v.note || "").trim().slice(0, 200);
     if (!this.env.MAIL || !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(addr)) return false;
     if (v.mailing && Date.now() - v.mailing < 120000) return false;
     await this.storage.put(k, { ...v, mailing: Date.now() });
@@ -448,10 +448,29 @@ export class Registry {
       const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
       if (!v) return json({ error: "No such pass" }, 404);
       if (v.revoked) return json({ error: "That code is cancelled." }, 409);
-      const to = String(b.to || "").trim();
-      if (!to && !/@/.test(String(v.note || ""))) return json({ error: "There’s no email address on this code. Type one in." }, 400);
+      const to = String(b.to || "").trim() || String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim();
+      if (!to) return json({ error: "There’s no email address on this code. Type one in." }, 400);
       if (!this.env.MAIL) return json({ error: "Email isn’t set up (no MAIL binding)." }, 503);
-      return (await this.mailCode(key, to || String(v.note).trim())) ? json({ ok: true, to: to || String(v.note).trim() }) : json({ error: "It didn’t send. The error log says why." }, 502);
+      return (await this.mailCode(key, to)) ? json({ ok: true, to }) : json({ error: "It didn’t send. The error log says why." }, 502);
+    }
+    // the admin's "Set email": the address this code's booking emails go to (empty clears it)
+    if (url.pathname === "/setemail") {
+      const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
+      if (!v) return json({ error: "No such pass" }, 404);
+      const email = String(b.email || "").trim().slice(0, 200);
+      if (email && !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(email)) return json({ error: "That isn’t an email address." }, 400);
+      await this.storage.put("pass:" + key, { ...v, email: email || undefined });
+      return json({ ok: true, pass: shownPass(key), email });
+    }
+    // the admin's "Delete": a cancelled or refunded code is removed from the list (Stripe keeps its own record of the sale)
+    if (url.pathname === "/delete") {
+      const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
+      if (!v) return json({ error: "No such pass" }, 404);
+      if (!v.revoked) return json({ error: "Only a cancelled or refunded code can be deleted. Cancel it first." }, 409);
+      await this.storage.delete("pass:" + key);
+      if (v.session && (await this.storage.get("claim:" + v.session)) === key) await this.storage.delete("claim:" + v.session);
+      if (v.pi && (await this.storage.get("pi:" + v.pi)) === key) await this.storage.delete("pi:" + v.pi);
+      return json({ ok: true, pass: shownPass(key) });
     }
     if (url.pathname === "/revoke") {
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
@@ -852,6 +871,8 @@ async function route(req, env) {
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
       if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
+      if (p === "/api/admin/setemail" && req.method === "POST") return call(env, "/setemail", await req.json().catch(() => ({})));
+      if (p === "/api/admin/delete" && req.method === "POST") return call(env, "/delete", await req.json().catch(() => ({})));
       if (p === "/api/admin/rooms") return registry(env).fetch("https://registry/rooms");
       if (p === "/api/admin/errors") return registry(env).fetch("https://registry/errs");
       if (p === "/api/admin/hooks") return registry(env).fetch("https://registry/hooks");

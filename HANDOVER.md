@@ -400,6 +400,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ### 6.6 Admin and booking codes
 
+- **Set email** stores the address a code's booking emails go to (`email` on the pass, used before `note`). **Delete** (only on cancelled or refunded codes) removes a code from the list; Stripe keeps its own record of the sale.
 - **Email** (on a paid code's row) sends the booking email again, to the buyer or to an address you type. **Extend** (on a code that has opened a Table, and "Extend this Table" on a Table's page in Rooms) keeps the Table open 1 to 720 hours longer, counted from its closing time, or from now if it has closed. It updates the code, the Registry's list of Tables and the Table itself (`/_extend` sets its `meta.expires` and its deletion alarm), so a closed Table reopens. A Table whose game has already been deleted can't be reopened.
 
 - **`/admin`:** sign in as `ADMIN_USER` with the `ADMIN_PASSWORD` secret. A signed, HttpOnly, SameSite=Strict cookie (`cc_admin`) lasts 12 hours; changing the password signs every session out. Wrong passwords count with wrong codes (20 an hour per address). Signed-in browsers may only make changes from the site's own origin.

@@ -220,4 +220,16 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   check("extend: a Table whose game was deleted can't be reopened", gone[0] === 410 && (await passOf(pass1)).expires === rj2.expires);
   check("extend: only for the admin", (await W("/api/admin/extend", { method: "POST", body: JSON.stringify({ pass: pass1, hours: 5 }) })).status === 401);
 }
+// the admin's "Set email" and "Delete"
+{
+  const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  check("set email: not an address is refused", (await A("setemail", { pass: pass1, email: "not-an-email" }))[0] === 400);
+  const [ss] = await A("setemail", { pass: pass1, email: "owner@example.com" }), n = sent.length;
+  const [rs] = await A("resend", { pass: pass1 });
+  check("set email: the code keeps the address, and \"Email\" with no address typed sends there", ss === 200 && (await passOf(pass1)).email === "owner@example.com" && rs === 200 && sent.length === n + 1 && sent[sent.length - 1].to === "owner@example.com");
+  check("delete: a code still in use can't be deleted", (await A("delete", { pass: pass1 }))[0] === 409 && !!(await passOf(pass1)));
+  const [ds] = await A("delete", { pass: pass2 });
+  check("delete: a refunded (cancelled) code is removed from the list", ds === 200 && !(await passOf(pass2)) && !(await listed()).includes(pass2));
+  check("delete: and it's gone for good", (await A("delete", { pass: pass2 }))[0] === 404);
+}
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

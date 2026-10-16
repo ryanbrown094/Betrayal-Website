@@ -142,10 +142,12 @@ function render() {
     const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; cell("Status", tag);
     cell("Created", when(p.created) + (p.source && p.source !== "admin" ? " · " + (p.source.startsWith("stripe") ? "Stripe" : p.source) : ""));
     cell("Room", p.room ? p.room + (p.games > 1 ? " · " + p.games + " games" : "") : "");
-    cell("Note", [p.note, p.failed && (p.paid ? "last payment failed: " : "") + p.failWhy, p.mailed && "code emailed " + when(p.mailed) + (p.mailedTo && p.mailedTo !== p.note ? " to " + p.mailedTo : "")].filter(Boolean).join(" · "), "notecol");
+    cell("Note", [p.note, p.email && p.email !== p.note && "email: " + p.email, p.failed && (p.paid ? "last payment failed: " : "") + p.failWhy, p.mailed && "code emailed " + when(p.mailed) + (p.mailedTo && p.mailedTo !== p.note ? " to " + p.mailedTo : "")].filter(Boolean).join(" · "), "notecol");
     const td = cell("", ""), cp = document.createElement("button"); cp.className = "btn ghost tiny"; cp.textContent = "Copy"; cp.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); cp.textContent = "Copied" }; td.append(cp);
     if (p.room && !p.revoked) { const xt = document.createElement("button"); xt.className = "btn ghost tiny"; xt.style.marginLeft = "6px"; xt.textContent = "Extend"; xt.title = "Keep this code's Table open longer"; xt.onclick = () => extend({ pass: p.pass }, p.expires); td.append(xt) }
     if (!p.revoked && !p.pending) { const e = document.createElement("button"); e.className = "btn ghost tiny"; e.style.marginLeft = "6px"; e.textContent = "Email"; e.title = "Email this code to the buyer (or another address)"; e.onclick = () => resend(p); td.append(e) }
+    if (!p.revoked && !p.pending) { const a = document.createElement("button"); a.className = "btn ghost tiny"; a.style.marginLeft = "6px"; a.textContent = "Set email"; a.title = "The address this code's booking emails go to"; a.onclick = () => setEmail(p); td.append(a) }
+    if (p.revoked) { const d = document.createElement("button"); d.className = "btn danger tiny"; d.style.marginLeft = "6px"; d.textContent = "Delete"; d.onclick = () => del(p.pass); td.append(d) }
     if (!p.revoked) { const x = document.createElement("button"); x.className = "btn danger tiny"; x.style.marginLeft = "6px"; x.textContent = "Cancel"; x.onclick = () => cancel(p.pass); td.append(x) }
     rows.append(tr);
   }
@@ -165,8 +167,17 @@ async function extend(target, until, done) {
   if (!(hrs >= 1 && hrs <= 720)) return alert("Enter a number of hours from 1 to 720.");
   try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + " now stays open until " + when(j.expires) + ".") } } catch (e) { alert(e.message) }
 }
+async function setEmail(p) {
+  const e = prompt("Email address for " + p.pass + " (its booking emails go here; leave empty to clear):", p.email || (/@/.test(p.note || "") ? p.note : ""));
+  if (e === null) return;
+  try { await api("setemail", { pass: p.pass, email: e.trim() }); await load(); say($("#tmsg"), e.trim() ? p.pass + " now emails " + e.trim() + "." : "Cleared the email address on " + p.pass + ".") } catch (err) { say($("#tmsg"), err.message, true) }
+}
+async function del(pass) {
+  if (!confirm("Delete " + pass + " from the list? This can't be undone. Stripe keeps its own record of the sale.")) return;
+  try { await api("delete", { pass }); await load(); say($("#tmsg"), "Deleted " + pass + ".") } catch (e) { say($("#tmsg"), e.message, true) }
+}
 async function resend(p) {
-  const to = prompt("Email " + p.pass + " to:", /@/.test(p.note || "") ? p.note : "");
+  const to = prompt("Email " + p.pass + " to:", p.email || (/@/.test(p.note || "") ? p.note : ""));
   if (to === null) return;
   try { const j = await api("resend", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Emailed " + p.pass + " to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
