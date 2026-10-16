@@ -353,12 +353,12 @@ export class Registry {
   }
   failed(ip) { const rec = this.fails.get(ip) || []; rec.push(Date.now()); this.fails.set(ip, rec); }
 
-  async mint(count, note, source, kind) {
+  async mint(count, note, source, kind, email) {
     const out = [];
     for (let i = 0; i < count; i++) {
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
       // a free unlimited code (from the admin page) works like a subscription that never lapses, until it's cancelled
-      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin", ...(kind === "sub" ? { kind: "sub", subActive: true, subStatus: "free" } : {}) });
+      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin", ...(email ? { email } : {}), ...(kind === "sub" ? { kind: "sub", subActive: true, subStatus: "free" } : {}) });
       out.push(p);
     }
     return out;
@@ -374,7 +374,11 @@ export class Registry {
   async fetch(req) {
     const url = new URL(req.url), env = this.env, b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const ip = req.headers.get("CF-Connecting-IP") || "?";
-    if (url.pathname === "/mint") return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind)).map(shownPass) });
+    if (url.pathname === "/mint") {
+      const email = String(b.email || "").trim().slice(0, 200);
+      if (email && !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(email)) return json({ error: "That isn’t an email address." }, 400);
+      return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind, email)).map(shownPass) });
+    }
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
     if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts. Try again in an hour." }, 429) : json({ ok: true });
     if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
@@ -412,7 +416,7 @@ export class Registry {
     // every room ever opened, with the pass that opened it
     if (url.pathname === "/rooms") {
       const passes = new Map(); for (const [k, v] of await this.storage.list({ prefix: "pass:" })) passes.set(k.slice(5), v);
-      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, pass: v.pass && v.pass !== "MASTER" ? shownPass(v.pass) : v.pass, note: pv ? pv.note || "" : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
+      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, pass: v.pass && v.pass !== "MASTER" ? shownPass(v.pass) : v.pass, note: pv ? pv.note || "" : "", email: pv ? pv.email || (/@/.test(pv.note || "") ? String(pv.note).trim() : "") : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
       return json({ rooms: rows.sort((a, c) => (c.expires || 0) - (a.expires || 0)) });
     }
     // a checkout nobody paid for or tried to pay for isn't a pass yet: it's left out (and cleared after two days)
@@ -484,7 +488,7 @@ export class Registry {
       if (rec.length >= 10) return json({ error: "Too many checkouts from here. Try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one" });
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null });
       return json({ pass: shownPass(p) });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
@@ -632,6 +636,14 @@ async function stripeVerified(req, env, body) {
   return sigs.some((s) => same(s, mac));
 }
 const piOf = (x) => (x && typeof x === "object" ? x.id : x) || null;
+// where a buyer came from, as the buy page sends it (the site's "bt-src": utm_ tags, an ad click id, the referring site):
+// one short line for the admin and Stripe, e.g. "instagram · bio" or "google.com", or "direct"
+function sourceOf(x) {
+  const t = (k) => String((x && x[k]) || "").toLowerCase().replace(/[^a-z0-9 ._\/-]/g, "").slice(0, 40).trim();
+  const head = t("src") || t("click") || t("ref"), line = [head, t("med"), t("camp")].filter(Boolean).join(" · ");
+  const extra = t("src") && t("ref") && t("ref") !== t("src") ? " (via " + t("ref") + ")" : "";
+  return { from: (line || "direct") + extra, land: String((x && x.land) || "").replace(/[^A-Za-z0-9\/_.-]/g, "").slice(0, 80) };
+}
 async function stripeGet(env, path) {
   const r = await fetch("https://api.stripe.com/v1/" + path, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY } });
   const j = await r.json().catch(() => ({})); return r.ok ? j : Promise.reject(new Error((j.error && j.error.message) || "Stripe error " + r.status));
@@ -771,13 +783,14 @@ async function route(req, env) {
       if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Tables go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
       const ip = req.headers.get("CF-Connecting-IP") || "?";
-      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one" }) }), pj = await pr.json();
+      const from = sourceOf(b.src);
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from }) }), pj = await pr.json();
       if (!pr.ok) return json(pj, pr.status);
       const pass = pj.pass, at = new Date().toISOString();
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
         // API version, and nothing it refuses (invoice details, extra descriptions) — just what the game needs: the pass in

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261016151226">
+<meta name="build" content="20261016152251">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -92,7 +92,10 @@ nav.top .links { display: none }
 .stat { padding: 12px 0; border-top: 1px solid rgba(230,165,140,.25) } .stat b { display: block; font: 600 32px/1.1 var(--ui); color: var(--ivory); font-variant-numeric: tabular-nums lining-nums } .stat span { color: var(--ivory2); font-size: 15px }
 .msg { min-height: 1.4em; font-size: 15.5px; color: var(--ivory2); margin: 10px 0 0 } .msg.err { color: #ff9dbf }
 .codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 3px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
-table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.notecol { white-space: normal; max-width: 240px; overflow-wrap: anywhere }
+table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.mailcol { white-space: normal; min-width: 160px; max-width: 220px; overflow-wrap: break-word; word-break: normal } table.passes td.fromcol { white-space: normal; min-width: 90px; max-width: 170px; overflow-wrap: break-word }
+.ptype { display: block; font-size: 13px; color: #877e78; margin-top: 2px } table.passes td:nth-child(2) { white-space: normal; max-width: 130px }
+table.passes td.acts { white-space: normal } table.passes td.acts > .btn { margin: 2px 6px 2px 0 } @media (min-width: 1041px) { table.passes td.acts { white-space: nowrap } }
+code.copy { cursor: copy } code.copy:hover { border-color: var(--rose) } code.copy.copied::after { content: " ✓ copied"; color: #7fd3b4; font-size: 13px }
 .tag { font-size: 14.5px; font-weight: 700 }
 .tabs { display: flex; flex-wrap: wrap; gap: 0 26px; margin: 14px 0 6px; border-bottom: 1px solid rgba(230,165,140,.22) } .tabs button { min-height: 44px; margin-bottom: -1px; padding: 6px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--ivory2); font: 700 16px/1 var(--ui); cursor: pointer } .tabs button:hover { color: var(--ivory) } .tabs button[aria-selected="true"] { border-bottom-color: var(--rose); color: var(--ivory) } .tabs .cnt { margin-left: 6px; font-weight: 500; opacity: .8 }
 table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor: pointer } table.list tr.click:hover td { background: rgba(230,165,140,.07) } table.list td.msgcol { max-width: 420px; overflow-wrap: anywhere }
@@ -107,9 +110,9 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 .snapbox { position: relative; overflow: hidden; border-radius: 3px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
 .ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
 .t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-failed { color: #ffb38a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
-@media (max-width: 700px) {
+@media (max-width: 1040px) {
   table.passes thead { display: none } table.passes tr { display: block; padding: 10px 0; border-bottom: 1px solid rgba(230,165,140,.18) }
-  table.passes td { display: block; border: 0; padding: 2px 0; white-space: normal } table.passes td[data-l]::before { content: attr(data-l) ": "; color: #877e78 }
+  table.passes td { display: block; border: 0; padding: 2px 0; white-space: normal } table.passes td[data-l]:not([data-l=""])::before { content: attr(data-l) ": "; color: #877e78 } table.passes td.acts { padding-top: 8px } .ptype { display: inline; margin-left: 8px }
 }
 </style>
 <h1>Admin</h1>
@@ -136,7 +139,7 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
     <form id="mf" class="adm-row">
       <label>How many <input id="mc" type="number" min="1" max="50" value="1" style="width:100px"></label>
       <label>Type <select id="mk"><option value="one">One party (one game)</option><option value="sub">Free unlimited (until cancelled)</option></select></label>
-      <label style="flex:1;min-width:200px">Note <input id="mn" maxlength="120" placeholder="Who it’s for" style="width:100%"></label>
+      <label style="flex:1;min-width:200px">Email <small>(optional)</small> <input id="mn" type="email" maxlength="200" placeholder="Where its booking emails go" autocomplete="off" style="width:100%"></label>
       <button class="btn small">Create</button>
     </form>
     <p class="msg" id="mmsg"></p>
@@ -158,13 +161,13 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
     </select></label>
     <button class="btn ghost small" id="reload">Refresh</button>
   </div>
-  <div class="table-scroll"><table class="passes"><thead><tr><th>Code</th><th>Type</th><th>Status</th><th>Created</th><th>Room</th><th>Note / email</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+  <div class="table-scroll"><table class="passes"><thead><tr><th>Code</th><th>Status</th><th>Created</th><th>Room</th><th>Email</th><th>From</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
   <p class="msg" id="tmsg"></p>
   </div>
 
   <div id="t-rooms" hidden>
     <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
-      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Note</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
+      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Email</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
     <div id="roomview" hidden></div>
   </div>
 
@@ -213,22 +216,25 @@ function statusOf(p) {
 let all = [];
 function render() {
   const q = $("#q").value.trim().toLowerCase(), f = $("#f").value, rows = $("#rows"); rows.textContent = "";
-  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.room, p.source].join(" ").toLowerCase().includes(q)) });
+  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.email, p.room, p.source, p.from].join(" ").toLowerCase().includes(q)) });
   for (const p of list) {
     const [k, label] = statusOf(p), tr = document.createElement("tr");
     const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
-    const code = document.createElement("code"); code.textContent = p.pass; cell("Code", code);
-    cell("Type", p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party");
-    const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; cell("Status", tag);
-    cell("Created", when(p.created) + (p.source && p.source !== "admin" ? " · " + (p.source.startsWith("stripe") ? "Stripe" : p.source) : ""));
-    cell("Room", p.room ? p.room + (p.games > 1 ? " · " + p.games + " games" : "") : "");
-    cell("Note", [p.note, p.email && p.email !== p.note && "email: " + p.email, p.failed && (p.paid ? "last payment failed: " : "") + p.failWhy, p.mailed && "code emailed " + when(p.mailed) + (p.mailedTo && p.mailedTo !== p.note ? " to " + p.mailedTo : "")].filter(Boolean).join(" · "), "notecol");
-    const td = cell("", ""), cp = document.createElement("button"); cp.className = "btn ghost tiny"; cp.textContent = "Copy"; cp.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); cp.textContent = "Copied" }; td.append(cp);
-    if (p.room && !p.revoked) { const xt = document.createElement("button"); xt.className = "btn ghost tiny"; xt.style.marginLeft = "6px"; xt.textContent = "Extend"; xt.title = "Keep this code's Table open longer"; xt.onclick = () => extend({ pass: p.pass }, p.expires); td.append(xt) }
-    if (!p.revoked && !p.pending) { const e = document.createElement("button"); e.className = "btn ghost tiny"; e.style.marginLeft = "6px"; e.textContent = "Email"; e.title = "Email this code to the buyer (or another address)"; e.onclick = () => resend(p); td.append(e) }
-    if (!p.revoked && !p.pending) { const a = document.createElement("button"); a.className = "btn ghost tiny"; a.style.marginLeft = "6px"; a.textContent = "Set email"; a.title = "The address this code's booking emails go to"; a.onclick = () => setEmail(p); td.append(a) }
-    if (p.revoked) { const d = document.createElement("button"); d.className = "btn danger tiny"; d.style.marginLeft = "6px"; d.textContent = "Delete"; d.onclick = () => del(p.pass); td.append(d) }
-    if (!p.revoked) { const x = document.createElement("button"); x.className = "btn danger tiny"; x.style.marginLeft = "6px"; x.textContent = "Cancel"; x.onclick = () => cancel(p.pass); td.append(x) }
+    const code = document.createElement("code"); code.textContent = p.pass; code.className = "copy"; code.title = "Click to copy"; code.tabIndex = 0;
+    code.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); code.classList.add("copied"); setTimeout(() => code.classList.remove("copied"), 1200) };
+    const ty = document.createElement("small"); ty.className = "ptype"; ty.textContent = p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party";
+    const cc = document.createElement("span"); cc.append(code, ty); cell("Code", cc);
+    const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; if (p.failed && p.failWhy) tag.title = p.failWhy; cell("Status", tag);
+    const cr = cell("Created", new Date(p.created).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })); cr.title = when(p.created);
+    cell("Room", p.room ? p.room + (p.games > 1 ? " · " + p.games + " games" : "") : "—");
+    const mail = emailOf(p), mc = cell("Email", mail || "—", "mailcol"); if (p.mailed) mc.title = "Code emailed " + when(p.mailed) + (p.mailedTo ? " to " + p.mailedTo : "");
+    cell("From", p.from || (p.source === "admin" ? "made here" : p.source && p.source.startsWith("stripe") ? "—" : p.source || "—"), "fromcol");
+    const td = cell("", "", "acts");
+    const act = (label, cls, title, fn) => { const b = document.createElement("button"); b.className = "btn tiny " + cls; b.textContent = label; if (title) b.title = title; b.onclick = fn; td.append(b) };
+    if (p.room && !p.revoked) act("Extend", "ghost", "Keep this code's Table open longer", () => extend({ pass: p.pass }, p.expires));
+    if (!p.revoked && !p.pending) mail ? act("Email", "ghost", "Email this code to " + mail + " (or another address)", () => resend(p)) : act("Set email", "ghost", "The address this code's booking emails go to", () => setEmail(p));
+    if (p.revoked) act("Delete", "danger", "", () => del(p.pass));
+    if (!p.revoked) act("Cancel", "danger", "", () => cancel(p.pass));
     rows.append(tr);
   }
   say($("#tmsg"), list.length ? list.length + " of " + all.length + " codes" : all.length ? "Nothing matches." : "No booking codes yet.");
@@ -247,6 +253,7 @@ async function extend(target, until, done) {
   if (!(hrs >= 1 && hrs <= 720)) return alert("Enter a number of hours from 1 to 720.");
   try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + " now stays open until " + when(j.expires) + ".") } } catch (e) { alert(e.message) }
 }
+const emailOf = p => p.email || (/@/.test(p.note || "") ? String(p.note).trim() : "");
 async function setEmail(p) {
   const e = prompt("Email address for " + p.pass + " (its booking emails go here; leave empty to clear):", p.email || (/@/.test(p.note || "") ? p.note : ""));
   if (e === null) return;
@@ -257,7 +264,7 @@ async function del(pass) {
   try { await api("delete", { pass }); await load(); say($("#tmsg"), "Deleted " + pass + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function resend(p) {
-  const to = prompt("Email " + p.pass + " to:", p.email || (/@/.test(p.note || "") ? p.note : ""));
+  const to = prompt("Email " + p.pass + " to:", emailOf(p));
   if (to === null) return;
   try { const j = await api("resend", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Emailed " + p.pass + " to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
@@ -275,7 +282,7 @@ $("#out").onclick = async () => { await fetch("/api/admin/logout", { method: "PO
 $("#mf").onsubmit = async e => {
   e.preventDefault(); const n = Math.max(1, Math.min(50, +$("#mc").value || 1)); say($("#mmsg"), "Creating…"); $("#made").textContent = "";
   try {
-    const j = await api("passes", { count: n, note: $("#mn").value.trim(), kind: $("#mk").value });
+    const j = await api("passes", { count: n, email: $("#mn").value.trim(), kind: $("#mk").value });
     for (const p of j.passes) { const c = document.createElement("code"); c.textContent = p; $("#made").append(c) }
     const n2 = j.passes.length, sub = $("#mk").value === "sub";
     say($("#mmsg"), "Created " + n2 + (sub ? " free unlimited code" + (n2 > 1 ? "s" : "") : " booking code" + (n2 > 1 ? "s" : "")) + ".");
@@ -321,8 +328,8 @@ for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => sho
 let rooms = [];
 async function loadRooms() { try { rooms = (await api("rooms")).rooms || []; renderRooms() } catch (e) { say($("#rlmsg"), e.message, true) } }
 function renderRooms() {
-  const q = $("#rq").value.trim().toLowerCase(), list = rooms.filter(r => !q || [r.room, r.pass, r.note].join(" ").toLowerCase().includes(q)), tb = $("#rrows"); tb.textContent = "";
-  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.note || ""], () => openRoom(r.room)));
+  const q = $("#rq").value.trim().toLowerCase(), list = rooms.filter(r => !q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q)), tb = $("#rrows"); tb.textContent = "";
+  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
   say($("#rlmsg"), list.length + " of " + rooms.length + " rooms");
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
@@ -468,6 +475,11 @@ fetch("/api/admin/me", { cache: "no-store" }).then(r => r.ok ? r.json().then(j =
 </main>
 <footer><nav aria-label="Legal"><a href="/rules">How to play</a><a href="/tour">See a game</a><a href="/party-games-for-large-groups">Party games for large groups</a><a href="/traitors-at-home">Host a hidden-traitor game night</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a><a href="/cookies">Cookies</a><a href="/refunds">Refunds &amp; cancellations</a><a href="/contact">Contact</a></nav>The Betrayal is an independent party game. It is not affiliated with, endorsed by or connected to any television programme or broadcaster.</footer>
 </div>
-<script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page")</script>
+<script>for (const a of document.querySelectorAll("nav.top .links a")) if (a.pathname === location.pathname) a.setAttribute("aria-current", "page");
+// where this visit came from (a campaign link's utm_ tags, an ad click, or the referring site), kept for this tab only so a
+// purchase can say which link or advert led to it (sessionStorage "bt-src"; listed on /cookies)
+(() => { try { if (sessionStorage.getItem("bt-src")) return; const q = new URLSearchParams(location.search), r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "", own = /(^|\.)(thebetrayal|cloakandcandle)\.co\.uk$/.test(r);
+  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", click: q.get("gclid") ? "google ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
+</script>
 </body>
 </html>

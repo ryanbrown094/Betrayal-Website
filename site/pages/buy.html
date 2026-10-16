@@ -55,7 +55,7 @@ $("#pay").onclick = async () => {
   if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one" }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update((j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
