@@ -401,9 +401,9 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ### 6.4c Google Ads tag and conversions (with consent)
 
-- `site/consent.js` (copied to `worker/public/consent.js` by `build.sh`, loaded on every site page, never the game or `/admin`): a cookie banner, then Google's tag (`AW-18517139586`) only after the visitor says yes. The choice is kept in `localStorage` as `bt-consent` ("yes"/"no"); `/cookies` has a "Change your cookie choice" button (`btCookieChoice()`).
-- The thank-you page reports the purchase with `btConversion(value, session_id)`: the value is what Stripe says was paid (`/api/claim` returns `value`), the transaction id is the checkout session, so a refreshed page isn't counted twice. A purchase made before the visitor answers the banner is held and sent if they then say yes.
-- **The conversion label** goes in `LABEL` at the top of `site/consent.js` (from the Google Ads event snippet, `send_to: "AW-18517139586/<label>"`). While it's empty, the tag loads after consent but no conversion is sent.
+- Google's tag (`AW-18517139586`) is `site/gtag.html`, which `build.sh` puts first in the head of the home page and every site page except `/admin` (never the game), so Google can detect it. It runs in Consent Mode: advertising storage is denied by default, so until a visitor says yes it sets no cookies and sends only cookieless signals (with ad click ids redacted), which Google uses for modelled conversions. A stored yes is applied in the head before the tag's `config`.
+- `site/consent.js` (copied to `worker/public/consent.js`, loaded on every site page, inactive on `/admin`) is the cookie banner. Yes grants `ad_storage` and `ad_user_data` (never `ad_personalization`: no remarketing); no denies them. The choice is kept in `localStorage` as `bt-consent` ("yes"/"no"); `/cookies` has a "Change your cookie choice" button (`btCookieChoice()`).
+- The thank-you page reports the purchase with `btConversion(value, session_id)` to `AW-18517139586/QFUdCKnQj58dEILB1P1E` (the "Purchase" conversion action): the value is what Stripe says was paid (`/api/claim` returns `value`), the transaction id is the checkout session, so a refreshed page isn't counted twice.
 
 ### 6.5 The broken seal (discount)
 

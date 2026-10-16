@@ -1,23 +1,16 @@
-// Google Ads on the site's own pages (never in the game): its tag loads only after the visitor says yes, as UK cookie law
-// requires, and the choice is remembered ("bt-consent": "yes" or "no"). Until then nothing is sent to Google.
-// window.btConversion(value, txn) reports a purchase from the thank-you page; it waits for a yes if the banner is still up.
+// Google Ads on the site's own pages (never in the game). Google's tag is in every page's head (site/gtag.html) in
+// Consent Mode: until the visitor says yes it sets no cookies and sends Google only cookieless signals; a yes lets it
+// use its advertising cookies, as UK cookie law requires. The choice is remembered ("bt-consent": "yes" or "no").
+// window.btConversion(value, txn) reports a purchase from the thank-you page.
 // window.btCookieChoice() reopens the banner (the cookies page links to it). build.sh copies this to worker/public/.
 (() => {
-  const ID = "AW-18517139586", LABEL = ""; // LABEL: the conversion label from Google Ads' event snippet (send_to: ID/LABEL)
-  let choice = null, pending = null, box = null;
+  const SEND_TO = "AW-18517139586/QFUdCKnQj58dEILB1P1E";
+  let choice = null, box = null;
   try { choice = localStorage.getItem("bt-consent") } catch (e) {}
-  function load() {
-    if (window.gtag) return;
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function () { dataLayer.push(arguments) };
-    gtag("js", new Date()); gtag("config", ID);
-    const s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + ID; document.head.append(s);
-  }
-  function fire() { if (!pending || choice !== "yes" || !LABEL) return; load(); gtag("event", "conversion", { send_to: ID + "/" + LABEL, value: pending.value, currency: "GBP", transaction_id: pending.txn }); pending = null }
   function set(v) {
     choice = v; try { localStorage.setItem("bt-consent", v) } catch (e) {}
     if (box) { box.remove(); box = null; document.body.style.paddingBottom = "" }
-    if (v === "yes") { load(); fire() }
+    if (window.gtag) gtag("consent", "update", v === "yes" ? { ad_storage: "granted", ad_user_data: "granted" } : { ad_storage: "denied", ad_user_data: "denied" });
   }
   function banner() {
     if (box) return;
@@ -31,8 +24,8 @@
     box.querySelector(".y").onclick = () => set("yes"); box.querySelector(".n").onclick = () => set("no");
     document.body.append(box); document.body.style.paddingBottom = box.offsetHeight + "px";
   }
-  window.btConversion = (value, txn) => { pending = { value, txn: String(txn || "") }; fire() };
+  window.btConversion = (value, txn) => { if (window.gtag) gtag("event", "conversion", { send_to: SEND_TO, value, currency: "GBP", transaction_id: String(txn || "") }) };
   window.btCookieChoice = () => { choice = null; try { localStorage.removeItem("bt-consent") } catch (e) {} banner() };
-  const start = () => { if (/^\/admin/.test(location.pathname)) return; if (choice === "yes") load(); else if (choice !== "no") banner() };
+  const start = () => { if (/^\/admin/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner() };
   if (document.body) start(); else addEventListener("DOMContentLoaded", start);
 })();
