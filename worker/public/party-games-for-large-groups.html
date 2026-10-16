@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261016152251">
+<meta name="build" content="20261016152855">
 <title>Party games for large groups of adults (8 to 24 people)</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="A party game for 8 to 24 adults, all playing at once: for Christmas and office parties, birthdays, hen dos and games nights. A murder mystery alternative.">
@@ -153,7 +153,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 // where this visit came from (a campaign link's utm_ tags, an ad click, or the referring site), kept for this tab only so a
 // purchase can say which link or advert led to it (sessionStorage "bt-src"; listed on /cookies)
 (() => { try { if (sessionStorage.getItem("bt-src")) return; const q = new URLSearchParams(location.search), r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "", own = /(^|\.)(thebetrayal|cloakandcandle)\.co\.uk$/.test(r);
-  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", click: q.get("gclid") ? "google ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
+  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", term: q.get("utm_term") || "", click: q.get("gclid") || q.get("gbraid") || q.get("wbraid") ? "google ads" : q.get("msclkid") ? "microsoft ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
 </script>
 </body>
 </html>

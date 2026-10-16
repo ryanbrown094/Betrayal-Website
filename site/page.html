@@ -75,7 +75,7 @@ __BODY__
 // where this visit came from (a campaign link's utm_ tags, an ad click, or the referring site), kept for this tab only so a
 // purchase can say which link or advert led to it (sessionStorage "bt-src"; listed on /cookies)
 (() => { try { if (sessionStorage.getItem("bt-src")) return; const q = new URLSearchParams(location.search), r = document.referrer ? new URL(document.referrer).hostname.replace(/^www\./, "") : "", own = /(^|\.)(thebetrayal|cloakandcandle)\.co\.uk$/.test(r);
-  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", click: q.get("gclid") ? "google ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
+  sessionStorage.setItem("bt-src", JSON.stringify({ src: q.get("utm_source") || "", med: q.get("utm_medium") || "", camp: q.get("utm_campaign") || "", term: q.get("utm_term") || "", click: q.get("gclid") || q.get("gbraid") || q.get("wbraid") ? "google ads" : q.get("msclkid") ? "microsoft ads" : q.get("ttclid") ? "tiktok ads" : q.get("fbclid") ? "facebook / instagram" : "", ref: own ? "" : r, land: location.pathname })) } catch (e) {} })();
 </script>
 </body>
 </html>

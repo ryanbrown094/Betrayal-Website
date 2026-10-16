@@ -637,10 +637,11 @@ async function stripeVerified(req, env, body) {
 }
 const piOf = (x) => (x && typeof x === "object" ? x.id : x) || null;
 // where a buyer came from, as the buy page sends it (the site's "bt-src": utm_ tags, an ad click id, the referring site):
-// one short line for the admin and Stripe, e.g. "instagram · bio" or "google.com", or "direct"
+// one short line for the admin and Stripe, e.g. "instagram · bio", "google ads · traitors game at home" (utm_term, from a
+// Google Ads final URL suffix of utm_term={keyword}), "google.com", or "direct"
 function sourceOf(x) {
   const t = (k) => String((x && x[k]) || "").toLowerCase().replace(/[^a-z0-9 ._\/-]/g, "").slice(0, 40).trim();
-  const head = t("src") || t("click") || t("ref"), line = [head, t("med"), t("camp")].filter(Boolean).join(" · ");
+  const head = t("src") || t("click") || t("ref"), line = [head, t("med"), t("camp"), t("term")].filter(Boolean).join(" · ");
   const extra = t("src") && t("ref") && t("ref") !== t("src") ? " (via " + t("ref") + ")" : "";
   return { from: (line || "direct") + extra, land: String((x && x.land) || "").replace(/[^A-Za-z0-9\/_.-]/g, "").slice(0, 80) };
 }

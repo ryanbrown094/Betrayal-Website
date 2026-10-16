@@ -394,7 +394,8 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ### 6.4b Where buyers come from
 
-- Every site page notes, once per tab, how the visit arrived: the link's `utm_source`/`utm_medium`/`utm_campaign`, an ad click id (`gclid` → "google ads", `ttclid` → "tiktok ads", `fbclid` → "facebook / instagram") or the referring site, plus the landing page. It's kept in `sessionStorage` as `bt-src` (listed on `/cookies` and in the privacy notice) and sent with the checkout.
+- Every site page notes, once per tab, how the visit arrived: the link's `utm_source`/`utm_medium`/`utm_campaign`/`utm_term`, an ad click id (`gclid`, `gbraid` or `wbraid` → "google ads", `msclkid` → "microsoft ads", `ttclid` → "tiktok ads", `fbclid` → "facebook / instagram") or the referring site, plus the landing page.
+- Google Ads keywords: set the account's **Final URL suffix** to `utm_term={keyword}` and each buyer's From line carries the keyword ("google ads · traitors game at home"). It's kept in `sessionStorage` as `bt-src` (listed on `/cookies` and in the privacy notice) and sent with the checkout.
 - `sourceOf` in `index.js` turns it into one short line ("instagram · bio · launch (via l.instagram.com)", "google.com", "direct"), stored on the booking as `from` (and `land`) and on the Stripe payment's metadata as `source` and `landing`. The admin's booking-code list shows it in the **From** column.
 - Tag your own links to get clean names: e.g. the Instagram bio link `https://thebetrayal.co.uk/?utm_source=instagram&utm_medium=bio`.
 
