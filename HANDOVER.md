@@ -399,6 +399,12 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - `sourceOf` in `index.js` turns it into one short line ("instagram · bio · launch (via l.instagram.com)", "google.com", "direct"), stored on the booking as `from` (and `land`) and on the Stripe payment's metadata as `source` and `landing`. The admin's booking-code list shows it in the **From** column.
 - Tag your own links to get clean names: e.g. the Instagram bio link `https://thebetrayal.co.uk/?utm_source=instagram&utm_medium=bio`.
 
+### 6.4c Google Ads tag and conversions (with consent)
+
+- `site/consent.js` (copied to `worker/public/consent.js` by `build.sh`, loaded on every site page, never the game or `/admin`): a cookie banner, then Google's tag (`AW-18517139586`) only after the visitor says yes. The choice is kept in `localStorage` as `bt-consent` ("yes"/"no"); `/cookies` has a "Change your cookie choice" button (`btCookieChoice()`).
+- The thank-you page reports the purchase with `btConversion(value, session_id)`: the value is what Stripe says was paid (`/api/claim` returns `value`), the transaction id is the checkout session, so a refreshed page isn't counted twice. A purchase made before the visitor answers the banner is held and sent if they then say yes.
+- **The conversion label** goes in `LABEL` at the top of `site/consent.js` (from the Google Ads event snippet, `send_to: "AW-18517139586/<label>"`). While it's empty, the tag loads after consent but no conversion is sent.
+
 ### 6.5 The broken seal (discount)
 
 - The QR code in the marketing pictures (the home page's hero and the tour's TV lobby) leads to `/seal` (`noindex`, disallowed in `robots.txt`). Claiming it stores `bt-egg` in `localStorage`; the buy page then shows £9 once `/api/egg` confirms the discount is on, and says the Regular isn't discounted.

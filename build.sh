@@ -77,6 +77,7 @@ lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git
   printf '</script>\n</body>\n</html>\n'
 } > worker/public/modern.html
 mkdir -p worker/public/media && if [ -d media/web ]; then cp media/web/* worker/public/media/; fi
+cp site/consent.js worker/public/consent.js
 # /media/* is cached for a week, so every page asks for each image by a fingerprint of its contents (?v=…): a changed
 # image gets a new address and nobody sees a stale one.
 python3 - <<'PY'

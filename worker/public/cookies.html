@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261016152855">
+<meta name="build" content="20261016154123">
 <title>Cookie notice · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
-<meta name="description" content="The cookies and browser storage The Betrayal uses: only what the site needs to work, what each item does and how to control it.">
+<meta name="description" content="The cookies and storage The Betrayal uses, the advertising cookies it only uses if you say yes, and how to change your choice.">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Betrayal","item":"https://thebetrayal.co.uk/"},{"@type":"ListItem","position":2,"name":"Cookie notice","item":"https://thebetrayal.co.uk/cookies"}]}</script>
 <link rel="canonical" href="https://thebetrayal.co.uk/cookies">
-<meta property="og:title" content="Cookie notice · The Betrayal"><meta property="og:description" content="The cookies and browser storage The Betrayal uses: only what the site needs to work, what each item does and how to control it."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/cookies"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
-<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png?v=d57d1bee"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Cookie notice · The Betrayal"><meta name="twitter:description" content="The cookies and browser storage The Betrayal uses: only what the site needs to work, what each item does and how to control it.">
+<meta property="og:title" content="Cookie notice · The Betrayal"><meta property="og:description" content="The cookies and storage The Betrayal uses, the advertising cookies it only uses if you say yes, and how to change your choice."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/cookies"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png?v=d57d1bee"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Cookie notice · The Betrayal"><meta name="twitter:description" content="The cookies and storage The Betrayal uses, the advertising cookies it only uses if you say yes, and how to change your choice.">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -74,6 +74,7 @@ label.check { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0;
 footer { margin: 72px 0 0; padding: 28px 0 44px; border-top: 1px solid rgba(230,165,140,.2); color: #877e78; font-size: 14.5px }
 footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } footer nav a { color: var(--ivory2); display: inline-block; padding: 12px 0 }
 </style>
+<script src="/consent.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to the page</a>
@@ -83,7 +84,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <h1>Cookie notice</h1>
 <p class="updated">Last updated: 29 September 2026</p>
 
-<p>The Betrayal uses no advertising, analytics or tracking cookies. It only stores the small things it needs to work. The law doesn’t require us to ask your consent for these, but we want you to know what they are.</p>
+<p>The Betrayal stores a few small things it needs to work. The law doesn’t require us to ask your consent for these, but we want you to know what they are. We also ask whether we may use Google’s advertising cookies, which tell us which of our adverts bring people here. They stay off unless you say yes, and the game itself (your Table and every player’s phone) never uses them.</p>
 
 <h2>What we store on your device</h2>
 <div class="table-scroll"><table>
@@ -100,11 +101,19 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <tr><td><code>candle-v1</code>, <code>candle-settings</code></td><td>Browser storage</td><td>Only when the game is played offline without a Table: keep the game and the question-bank switches on that device.</td><td>Until cleared</td></tr>
 </table></div>
 
+<h2>Advertising cookies (only if you say yes)</h2>
+<div class="table-scroll"><table>
+<tr><th>Name</th><th>Type</th><th>What it does</th><th>How long</th></tr>
+<tr><td><code>bt-consent</code></td><td>Browser storage</td><td>Remembers whether you said yes or no to advertising cookies, so we don’t ask again.</td><td>Until cleared</td></tr>
+<tr><td><code>_gcl_au</code> and Google’s own advertising cookies</td><td>Cookies (Google Ads)</td><td>Set by Google’s tag, only after you say yes. They let Google Ads tell us when someone who clicked one of our adverts books a Table, so we know which adverts work. Google’s use of them is covered by <a href="https://policies.google.com/technologies/ads" rel="noopener">Google’s advertising policy</a>.</td><td>Up to 90 days (<code>_gcl_au</code>); Google sets its own</td></tr>
+</table></div>
+<p><button type="button" class="btn ghost small" onclick="window.btCookieChoice && btCookieChoice()">Change your cookie choice</button></p>
+
 <h2>Payments</h2>
 <p>When you pay, you’re taken to Stripe’s secure checkout page. Stripe sets its own cookies there, which it needs to take the payment and prevent fraud. See <a href="https://stripe.com/gb/legal/cookies-policy" rel="noopener">Stripe’s cookie policy</a>.</p>
 
 <h2>Controlling them</h2>
-<p>You can clear or block cookies and browser storage in your browser’s settings. If you do, the Keeper will have to re-enter the PIN, and the preview password will be asked for again.</p>
+<p>You can change your advertising choice at any time with the button above. You can also clear or block cookies and browser storage in your browser’s settings. If you do, the Keeper will have to re-enter the PIN, and the preview password will be asked for again.</p>
 
 <p>Questions? See our <a href="/privacy">privacy notice</a> or <a href="/contact">contact us</a>.</p>
 </main>
