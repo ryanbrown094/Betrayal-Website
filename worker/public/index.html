@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20260930165915">
+<meta name="build" content="20261016150546">
 <title>The Betrayal · Party game for 8 to 24, played on phones</title>
 <meta name="description" content="A hidden-role party game for 8 to 24 adults, played on everyone’s own phone: secret roles, a secret vote and a poisoning each night. £10 a party, no app.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
@@ -496,11 +496,14 @@ $("#join").onclick = () => { const v = $("#room").value.trim().toUpperCase().rep
 $("#room").onkeydown = e => { if (e.key === "Enter") $("#join").click() };
 // back from checkout: fetch this session's pass and show it
 const sid = new URLSearchParams(location.search).get("session_id");
+// from the booking email's "Open your Table": the code is filled in, ready to open
+const pre = new URLSearchParams(location.search).get("code");
+if (pre && !sid) { $("#pass").value = pre.slice(0, 20); addEventListener("load", () => $("#start").scrollIntoView()) }
 if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
     try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (!j.sub) try { localStorage.removeItem("bt-egg") } catch (e) {} // the broken seal is for one party: used now
-      if (j.sub) { $("#claimhead").textContent = "Thank you. You’re a Regular."; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+      if (j.sub) { $("#claimhead").textContent = "Thank you. You’re a Regular."; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; if (j.emailed) say($("#claimmsg"), $("#claimmsg").textContent + " We’ve emailed it to you too."); $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
   say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute and your booking code will appear here.", true);

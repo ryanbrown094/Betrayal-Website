@@ -2,6 +2,7 @@ import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
 import * as M from "./modern.js";
+import { sendBooking } from "./booking-mail.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -105,6 +106,12 @@ export class GameState {
     if (path === "/_close" && req.method === "POST") {
       if (Date.now() < meta.expires) { meta.expires = Date.now(); await this.storage.put("meta", meta); await this.storage.setAlarm(meta.expires + keepMs(this.env)); }
       return json({ ok: true });
+    }
+    // made by the Registry when the admin extends a Table: it closes later (and reopens if it had closed)
+    if (path === "/_extend" && req.method === "POST") {
+      const e = +((await req.json().catch(() => ({}))).expires) || 0;
+      if (e > Date.now()) { meta.expires = e; await this.storage.put("meta", meta); await this.storage.setAlarm(Math.max(e + keepMs(this.env), meta.keepUntil || 0)); }
+      return json({ ok: true, expires: meta.expires });
     }
     // an issue report was filed: keep the room (and its recording) at least this long
     if (path === "/_keep" && req.method === "POST") {
@@ -305,6 +312,28 @@ export class GameState {
 export class Registry {
   constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; }
 
+  // A paid booking's code goes to the buyer by email, once. `mailing` holds the send while it's in flight (the webhook
+  // and the thank-you page can arrive together); a failed send is logged and tried again on the next claim. `to`
+  // overrides the address (the admin's "email it again"). Returns whether the code has been emailed.
+  async mailCode(key, to) {
+    const k = "pass:" + key, v = await this.storage.get(k);
+    if (!v || v.revoked || v.pending) return false;
+    if (v.mailed && !to) return true;
+    const addr = String(to || v.note || "").trim().slice(0, 200);
+    if (!this.env.MAIL || !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(addr)) return false;
+    if (v.mailing && Date.now() - v.mailing < 120000) return false;
+    await this.storage.put(k, { ...v, mailing: Date.now() });
+    try {
+      await sendBooking(this.env, addr, shownPass(key), v.kind === "sub");
+      await this.storage.put(k, { ...(await this.storage.get(k)), mailing: null, mailed: Date.now(), mailedTo: addr });
+      return true;
+    } catch (e) {
+      await this.storage.put(k, { ...(await this.storage.get(k)), mailing: null });
+      logErr(this.env, { src: "mail", msg: "The booking email didn’t send: " + clip((e && e.message) || e, 240), pass: shownPass(key) });
+      return false;
+    }
+  }
+
   // the logs keep their newest `max` entries: every fiftieth write trims the oldest
   async trim(prefix, max) {
     if (++this.writes % 50) return;
@@ -396,6 +425,34 @@ export class Registry {
       for (let i = 0; i < old.length; i += 128) await this.storage.delete(old.slice(i, i + 128));
       return json({ passes: rows.sort((a, c) => c.created - a.created) });
     }
+    // the admin's "extend": a Table stays open `hours` longer (counted from now if it has already closed). Found by its
+    // booking code (its current Table) or by the Table's own code.
+    if (url.pathname === "/extend") {
+      const h = Math.round(+b.hours || 0);
+      if (!(h >= 1 && h <= 720)) return json({ error: "Extend by 1 to 720 hours." }, 400);
+      let key = b.pass && isPass(b.pass) ? passKey(b.pass) : null, v = key && (await this.storage.get("pass:" + key));
+      let code = v ? v.room : String(b.room || "").toUpperCase();
+      if (b.pass && !v) return json({ error: "No such pass" }, 404);
+      if (!code) return json({ error: "This code hasn’t opened a Table yet. Its 48 hours start when it’s first used." }, 409);
+      const r = await this.storage.get("room:" + code);
+      if (!r) return json({ error: "No Table with that code." }, 404);
+      if (!key && r.pass && r.pass !== "MASTER") { key = r.pass; v = await this.storage.get("pass:" + key); }
+      const expires = Math.max(Date.now(), r.expires || 0) + h * 3600000;
+      const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + code)).fetch("https://game/_extend", { method: "POST", body: JSON.stringify({ expires }) });
+      if (!g.ok) return json({ error: "That Table’s game has been deleted, so it can’t be reopened." }, 410);
+      await this.storage.put("room:" + code, { ...r, expires, extended: (r.extended || 0) + h });
+      if (v && v.room === code) await this.storage.put("pass:" + key, { ...v, expires });
+      return json({ ok: true, room: code, expires });
+    }
+    if (url.pathname === "/resend") { // the admin's "email it again", to the buyer or to another address
+      const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
+      if (!v) return json({ error: "No such pass" }, 404);
+      if (v.revoked) return json({ error: "That code is cancelled." }, 409);
+      const to = String(b.to || "").trim();
+      if (!to && !/@/.test(String(v.note || ""))) return json({ error: "There’s no email address on this code. Type one in." }, 400);
+      if (!this.env.MAIL) return json({ error: "Email isn’t set up (no MAIL binding)." }, 503);
+      return (await this.mailCode(key, to || String(v.note).trim())) ? json({ ok: true, to: to || String(v.note).trim() }) : json({ error: "It didn’t send. The error log says why." }, 502);
+    }
     if (url.pathname === "/revoke") {
       const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
       if (!v) return json({ error: "No such pass" }, 404);
@@ -419,13 +476,13 @@ export class Registry {
     // of its own, gets one minted). One pass per checkout session, however often it's claimed.
     if (url.pathname === "/claim") {
       const k = "claim:" + b.session, have = await this.storage.get(k);
-      if (have) return json({ pass: shownPass(have), sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub" });
+      if (have) return json({ pass: shownPass(have), sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub", emailed: await this.mailCode(have) });
       let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
       if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null,
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
-      return json({ pass: shownPass(p), sub: !!(v && v.kind === "sub") });
+      return json({ pass: shownPass(p), sub: !!(v && v.kind === "sub"), emailed: await this.mailCode(p) });
     }
     // a payment that was tried and refused: noted on its pass (a checkout's, or a subscription's renewal)
     if (url.pathname === "/fail") {
@@ -793,6 +850,8 @@ async function route(req, env) {
       if (p === "/api/admin/passes" && req.method === "POST") return call(env, "/mint", await req.json().catch(() => ({})));
       if (p === "/api/admin/passes" && req.method === "GET") return registry(env).fetch("https://registry/list");
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
+      if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
+      if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
       if (p === "/api/admin/rooms") return registry(env).fetch("https://registry/rooms");
       if (p === "/api/admin/errors") return registry(env).fetch("https://registry/errs");
       if (p === "/api/admin/hooks") return registry(env).fetch("https://registry/hooks");

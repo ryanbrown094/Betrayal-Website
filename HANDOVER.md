@@ -385,6 +385,13 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - Without them, or if sending fails, the report is still saved and the failure goes to the error log (`src: "mail"`). The customer never sees a mail error.
 - Under `wrangler dev`, each email is written to `.wrangler/tmp/email/`.
 
+### 6.4a The booking email
+
+- When a payment clears, the buyer is emailed their booking code (`worker/src/booking-mail.js`: HTML in the brand's look plus a plain-text copy; Table and Regular versions). It's from `bookings@thebetrayal.co.uk` (`BOOKING_FROM` var to change it), replies go to `info@thebetrayal.co.uk` (`REPLY_TO`), and its "Open your Table" button links to `/?code=…#start`, which fills the code in on the home page. The images are `media/web/email-crest.png` and `email-wordmark.png`, loaded from the live site.
+- The Registry sends it (`Registry.mailCode`) from `/claim`, so the webhook and the thank-you page can't both send it: the pass is marked `mailing` while it's in flight and `mailed` (+ `mailedTo`) once sent. A failed send is logged (`src: "mail"`), the payment is unaffected, and the next claim (the thank-you page) tries again. The thank-you page adds "We've emailed it to you too" only when it went.
+- **Prerequisite for real inboxes:** the `MAIL` binding can only reach verified destination addresses until thebetrayal.co.uk is onboarded to Cloudflare **Email Sending** (Cloudflare dashboard → Email → Email Sending; it adds the domain's sending DNS records). Until then every booking email fails quietly and is logged; the code still shows on the thank-you page.
+- Tests: `qa/claim.mjs` (sent once, retried after a failure, admin resend, cancelled codes refused).
+
 ### 6.5 The broken seal (discount)
 
 - The QR code in the marketing pictures (the home page's hero and the tour's TV lobby) leads to `/seal` (`noindex`, disallowed in `robots.txt`). Claiming it stores `bt-egg` in `localStorage`; the buy page then shows £9 once `/api/egg` confirms the discount is on, and says the Regular isn't discounted.
@@ -392,6 +399,8 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - Checkout has no box for typing a promotion code.
 
 ### 6.6 Admin and booking codes
+
+- **Email** (on a paid code's row) sends the booking email again, to the buyer or to an address you type. **Extend** (on a code that has opened a Table, and "Extend this Table" on a Table's page in Rooms) keeps the Table open 1 to 720 hours longer, counted from its closing time, or from now if it has closed. It updates the code, the Registry's list of Tables and the Table itself (`/_extend` sets its `meta.expires` and its deletion alarm), so a closed Table reopens. A Table whose game has already been deleted can't be reopened.
 
 - **`/admin`:** sign in as `ADMIN_USER` with the `ADMIN_PASSWORD` secret. A signed, HttpOnly, SameSite=Strict cookie (`cc_admin`) lasts 12 hours; changing the password signs every session out. Wrong passwords count with wrong codes (20 an hour per address). Signed-in browsers may only make changes from the site's own origin.
 - **Tabs:** **Booking codes** (totals, search by code, note, email or room; filter; copy; cancel; create one-party codes or free Regular codes that never lapse; open a test room with links for Classic and Modern, including *Modern against bots*), **Rooms** (config, full log, replay of TV and phone, device trails; Modern rooms show every role and whether the host looked), **Reports** (snapshot, trail, status and note), **Errors** (the master log), **Stripe events** (the webhook log).
