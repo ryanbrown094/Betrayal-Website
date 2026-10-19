@@ -34,7 +34,8 @@ Run `node tools/ads/ads.mjs check`. If it fails, the whole summary is what faile
 1. Run `node tools/ads/ads.mjs report --out /tmp/ads-report.json`, then read the file.
 2. Start with `alerts` and `errors`. An entry in `errors` is a query Google refused, perhaps because a field changed in a new API version. Mention it and carry on with the rest.
 3. Money is in pounds.
-4. `changes` is the account's change history for the last 14 days, including your own earlier sweeps, shown as "sweep (API)".
+4. `networks` is where each campaign's money went in the last 7 days: Google Search, Search partners, Display (other sites and apps), YouTube or Discover. Performance Max shows no keywords or search terms, so this is the clearest sign of what it's buying.
+5. `changes` is the account's change history for the last 14 days, including your own earlier sweeps, shown as "sweep (API)".
 
 ## 3. Decide
 
