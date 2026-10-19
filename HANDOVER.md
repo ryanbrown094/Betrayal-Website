@@ -485,7 +485,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   - Everything else is proposed to the owner: enabling, new campaigns, ads or keywords, ad text, bidding strategy and conversion settings. `qa/ads.mjs` tests each limit.
   - Google may spend up to twice a day's budget on a busy day, but no more than 30.4 days' worth in a month.
 - **API version:** `VERSION` (v26). Each version is retired about a year after release. A retired version gives a 404, and `check` says so; then set `GOOGLE_ADS_API_VERSION`, or update `VERSION`.
-- **Credentials:** environment variables in the cloud environment's settings, never a file. There's no developer token: Google retired them in September 2026, and API access now belongs to the Google Cloud project that owns the OAuth client.
+- **Credentials:** environment variables in the cloud environment's settings, never a file. Google retired developer tokens in September 2026, and API access now belongs to the Google Cloud project that owns the OAuth client. `GOOGLE_ADS_DEVELOPER_TOKEN` is optional: if set it's still sent, and Google ignores it (remove it if a later API version refuses it).
   - `GOOGLE_ADS_CLIENT_ID`
   - `GOOGLE_ADS_CLIENT_SECRET`
   - `GOOGLE_ADS_REFRESH_TOKEN`

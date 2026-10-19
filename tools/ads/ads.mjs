@@ -7,8 +7,9 @@
 //                                                Google only validates them
 // Credentials come from the environment, never a file: GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET,
 // GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_CUSTOMER_ID, and GOOGLE_ADS_LOGIN_CUSTOMER_ID when access is through a manager
-// account. There's no developer token: since September 2026 API access belongs to the Google Cloud project that owns the
-// OAuth client. GOOGLE_ADS_API_VERSION overrides VERSION (each version is retired a year after release).
+// account. Since September 2026 API access belongs to the Google Cloud project that owns the OAuth client, and Google
+// ignores a developer token; GOOGLE_ADS_DEVELOPER_TOKEN, if set, is still sent (remove it if a later API version refuses
+// it). GOOGLE_ADS_API_VERSION overrides VERSION (each version is retired a year after release).
 import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -74,7 +75,7 @@ export function client(env = process.env) {
     return (token = j.access_token);
   }
   async function call(path, body) {
-    const headers = { Authorization: "Bearer " + (await auth()), "Content-Type": "application/json", ...(login ? { "login-customer-id": login } : {}) };
+    const headers = { Authorization: "Bearer " + (await auth()), "Content-Type": "application/json", ...(login ? { "login-customer-id": login } : {}), ...(env.GOOGLE_ADS_DEVELOPER_TOKEN ? { "developer-token": env.GOOGLE_ADS_DEVELOPER_TOKEN } : {}) };
     const r = await net(base + path, { method: "POST", headers, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw failure(r.status, j);
