@@ -5,6 +5,9 @@
   gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied'});
   try { if (localStorage.getItem('bt-consent') === 'yes') gtag('consent', 'update', {ad_storage: 'granted', ad_user_data: 'granted'}) } catch (e) {}
   gtag('set', 'ads_data_redaction', true);
+  // until the visitor answers the banner, an ad click's id rides along in the address from page to page, so it's still
+  // there to be saved if they say yes on a later page
+  gtag('set', 'url_passthrough', true);
 </script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
