@@ -147,6 +147,10 @@ export async function report(c) {
     }
     return kws;
   });
+  // where the money went (Google Search, Search partners, Display, YouTube, Discover…), last 7 days: Performance Max shows
+  // no keywords or search terms, so this is the clearest sign of what it's buying
+  await part("networks", async () => (await c.search("SELECT campaign.id, segments.ad_network_type, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions, metrics.conversions_value FROM campaign WHERE campaign.status != 'REMOVED' AND segments.date DURING LAST_7_DAYS"))
+    .map((r) => ({ campaignId: String(r.campaign.id), network: r.segments.adNetworkType, ...met(r.metrics) })));
   await part("negatives", () => negativeState(c));
   await part("searchTerms", async () => (await c.search("SELECT campaign.id, ad_group.id, search_term_view.search_term, search_term_view.status, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions FROM search_term_view WHERE segments.date DURING LAST_14_DAYS ORDER BY metrics.impressions DESC LIMIT 300"))
     .map((r) => ({ campaignId: String(r.campaign.id), adGroupId: String(r.adGroup.id), term: r.searchTermView.searchTerm, status: r.searchTermView.status, ...met(r.metrics) })));
@@ -178,6 +182,10 @@ export async function report(c) {
   if (out.conversionActions && !out.conversionActions.some((x) => x.primary && x.status === "ENABLED" && x.category === "PURCHASE")) a("warn", "No enabled primary Purchase conversion action: conversions aren't being counted for bidding.");
   for (const x of out.ads || []) if (x.status === "ENABLED" && /DISAPPROVED|APPROVED_LIMITED/.test(x.approval || "")) a(x.approval === "DISAPPROVED" ? "fix" : "warn", `Ad ${x.adId} (ad group ${x.adGroupId}) is ${x.approval}${x.policy.length ? ": " + x.policy.join(", ") : ""}.`);
   for (const x of out.assets || []) if (/DISAPPROVED|APPROVED_LIMITED/.test(x.approval || "")) a("warn", `${x.type} asset "${x.text || x.id}" is ${x.approval}.`);
+  for (const x of camps) {
+    const nets = (out.networks || []).filter((n) => n.campaignId === x.id), display = nets.filter((n) => n.network === "CONTENT").reduce((s, n) => s + n.cost, 0);
+    if (x.last7.cost >= 2 && !x.last7.conversions && display / x.last7.cost >= 0.5) a("warn", `${x.name}: ${Math.round((100 * display) / x.last7.cost)}% of the last 7 days' spend (£${display.toFixed(2)} of £${x.last7.cost}) went on the Display network (other sites and apps), with no sales.`);
+  }
   if (out.errors.length) a("warn", `${out.errors.length} part(s) of the report failed: ${out.errors.map((e) => e.part).join(", ")}.`);
   return out;
 }
