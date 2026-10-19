@@ -71,6 +71,10 @@ lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git
 {
   printf '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta name="build" content="%s">\n<meta name="theme-color" content="#09070a">\n<meta name="robots" content="noindex">\n<title>The Betrayal</title>\n' "$BUILD"
   printf '<link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>\n<link rel="apple-touch-icon" href="/icon-180.png">\n<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">\n'
+  # the preview card when a host sends thebetrayal.co.uk/join to their guests
+  D="You're invited to a game of The Betrayal. Type the Table code and your name, and get your secret role on your phone. No app, no account."
+  printf '<meta name="description" content="%s">\n<meta property="og:title" content="Join a game of The Betrayal"><meta property="og:description" content="%s"><meta property="og:type" content="website"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">\n' "$D" "$D"
+  printf '<meta property="og:image" content="%s/media/og-card.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image">\n' "$SITE"
   printf '<style>\nhtml{color-scheme:dark}[hidden]{display:none!important}\n'
   cat src/fonts.css src/modern.css
   printf '</style>\n</head>\n<body>\n<div id="app"></div>\n<script>\n"use strict";\n'
