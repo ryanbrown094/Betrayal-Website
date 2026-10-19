@@ -102,7 +102,7 @@ qa/                   test harnesses (§8)
 - **API:**
   - `GET|PUT|DELETE /api/g/CODE/state`, `GET|PUT /api/g/CODE/settings` (Classic), `POST /api/g/CODE/events` (device trail), `GET /api/g/CODE/m`, `POST /api/g/CODE/m/create|m/join|m/act` (Modern)
   - `POST /api/games {pass, fresh?}` redeem a booking code (or the master passcode)
-  - `POST /api/checkout {terms, supply, plan?, egg?}`, `GET /api/claim?session_id=`, `POST /api/stripe/webhook`, `POST /api/portal {pass}`, `GET /api/egg`
+  - `POST /api/checkout {terms, supply, plan?, egg?, discount?}`, `GET /api/claim?session_id=`, `POST /api/stripe/webhook`, `POST /api/portal {pass}`, `GET /api/egg`
   - `POST /api/report` (problem reports and contact messages)
   - `/api/admin/*` (§6.6)
 
@@ -334,7 +334,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 ### 6.2 Stripe
 
 - **Two plans.** A Table: £10, `STRIPE_PRICE_ID`, `mode=payment`. A Regular: £20 a month, `STRIPE_SUB_PRICE_ID`, `mode=subscription`. An empty price ID means that plan isn't on sale (`/api/checkout` returns 503).
-- **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true, plan, egg}` → the Registry mints a **pending** code → the Worker creates a Checkout Session (one line item, `success_url` `/claim?session_id={CHECKOUT_SESSION_ID}`, `cancel_url` `/buy`, `client_reference_id` = the code, metadata `pass`, `plan`, consent timestamps, and `egg` when discounted; a subscription also carries `subscription_data.metadata.pass`) → the buyer pays on Stripe → `/claim` asks `/api/claim`, which checks the session is paid and activates the code. The webhook activates it too, even if the buyer never returns. One code per checkout session, however often it's claimed; a Payment Link checkout (no code of its own) gets one minted.
+- **Flow:** `/buy` → `POST /api/checkout {terms: true, supply: true, plan, egg}` → the Registry mints a **pending** code → the Worker creates a Checkout Session (one line item, `success_url` `/claim?session_id={CHECKOUT_SESSION_ID}`, `cancel_url` `/buy`, `client_reference_id` = the code, metadata `pass`, `plan`, consent timestamps, `egg` when the seal's discount applies and `discount` when the buyer typed a code (sent as the session's `discounts`); a subscription also carries `subscription_data.metadata.pass`) → the buyer pays on Stripe → `/claim` asks `/api/claim`, which checks the session is paid (or free: a 100% discount comes back as `no_payment_required`, which counts as paid) and activates the code. The webhook activates it too, even if the buyer never returns. One code per checkout session, however often it's claimed; a Payment Link checkout (no code of its own) gets one minted.
 - **Managed Payments** is on: Stripe is the seller of record and handles tax. Sessions are created with `managed_payments[enabled]=true` and the `Stripe-Version: 2026-02-25.preview` header. It refuses invoice details and other extras, so sessions carry only the line item, URLs, metadata and (for the seal) `discounts`. Both products need an eligible **tax code** in the Dashboard. The booking code is **not** on Stripe's receipt: the buyer sees it on screen, and a lost code is found on `/admin` by the buyer's email (stored as the code's note). If a checkout fails, `/buy` shows Stripe's reason, and Workers Logs and the error log have it.
 - **Webhook** `POST /api/stripe/webhook`, signature checked with `STRIPE_WEBHOOK_SECRET` (5-minute tolerance; failures logged, 400). Events and what they do:
   - `checkout.session.completed` (paid) and `checkout.session.async_payment_succeeded`: activate the code.
@@ -414,6 +414,12 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - The QR code in the marketing pictures (the home page's hero and the tour's TV lobby) leads to `/seal` (`noindex`, disallowed in `robots.txt`). Claiming it stores `bt-egg` in `localStorage`; the buy page then shows £9 once `/api/egg` confirms the discount is on, and says the Regular isn't discounted.
 - At checkout the Worker applies `STRIPE_EGG_PROMO` (Stripe code QR10, 10% off) through `discounts`, so the buyer types nothing. One party only, never the subscription. If Stripe refuses it, the checkout opens at full price and the error log says so. `bt-egg` is cleared after a one-party purchase and is listed in the cookie notice.
 - Checkout has no box for typing a promotion code.
+
+### 6.5a Discount codes
+
+- **Admin → Discount codes** makes them: a code (3 to 20 letters and numbers, stored upper case), 1 to 100% off, for one party only or a Regular's first month too, an optional number of uses and an optional last day (to the end of that day, UTC). Each is a Stripe coupon (`duration: once`) with a promotion code on it, made through `/api/admin/discounts` on the pinned API version `PROMO_VERSION` (`2025-09-30.clover`, whose promotion codes name their coupon in `promotion[coupon]`). The list shows every promotion code in Stripe (QR10 too) with its uses; **Switch off** sets it inactive (`/api/admin/discounts/off`). Stripe can't delete one.
+- **Buying with one:** `/buy` has "Have a discount code?", which opens a box. The checkout looks the code up in Stripe before making a pending booking code, and refuses one that's unknown, switched off, used up, past its last day, or for one party when the buyer chose the Regular (a code made in Stripe's dashboard counts as one-party). A good code goes to Stripe as the session's `discounts` (instead of the seal's) and in its metadata as `discount`; if Stripe then refuses it, the buyer sees the error rather than paying full price. The booking keeps the code (`disc`), shown in the admin under the code's type.
+- **Testing without paying:** make a 100% code (one use is enough) and book with it. Stripe asks for no card, the checkout comes back `no_payment_required`, and the claim and the webhook treat that as paid. The ad conversion reports £0.
 
 ### 6.6 Admin and booking codes
 

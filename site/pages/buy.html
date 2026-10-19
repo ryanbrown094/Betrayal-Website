@@ -18,6 +18,8 @@
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
 <label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
+<p class="disc"><button type="button" id="dtog" aria-expanded="false" aria-controls="dbox">Have a discount code?</button></p>
+<div id="dbox" hidden><label class="dl" for="dcode">Discount code</label><input id="dcode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"><p class="dnote">It comes off on Stripe’s page, before you pay.</p></div>
 
 <p id="eggnote" class="formmsg" hidden>The broken seal: 10% off one party, taken off automatically at checkout. (It doesn’t apply to the Regular plan.)</p>
 <button class="btn" id="pay">Pay £10 securely with Stripe</button>
@@ -26,6 +28,11 @@
 
 <p style="font-size:15.5px">Payments are handled by Stripe; we never see your card details. After paying you come straight back with your booking code on screen, and Stripe emails you a receipt.</p>
 
+<style>
+.disc { margin: 4px 0 14px } #dtog { background: none; border: 0; padding: 6px 0; min-height: 44px; color: var(--rose); font: 16px/1.4 var(--ui); text-decoration: underline; text-underline-offset: 3px; cursor: pointer }
+#dbox { margin: 6px 0 16px } .dl { display: block; margin: 0 0 6px; font-weight: 700; color: var(--ivory) } .dnote { margin: 6px 0 0; font-size: 15px; color: var(--ivory2) }
+#dcode { width: 100%; max-width: 320px; padding: 12px 14px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui); letter-spacing: .06em; text-transform: uppercase } #dcode:focus { border-color: var(--rose) } #dcode[aria-invalid] { border-color: #ff9dbf }
+</style>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
@@ -47,18 +54,24 @@ function update(msg, err) {
   $("#paymsg").textContent = msg || ""; $("#paymsg").className = "formmsg" + (err ? " err" : "");
   for (const c of ["#c1", "#c2"]) if ($(c).checked) $(c).removeAttribute("aria-invalid");
 }
-function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; $("#pay").textContent = plan() === "sub" ? "Subscribe for £20 a month with Stripe" : "Pay " + ONE() + " securely with Stripe"; $("#eggnote").hidden = !egg; update() }
+const disc = () => $("#dcode").value.trim().toUpperCase();
+// with a discount code the price isn't known until Stripe's page, so the button doesn't name one
+function payText() { $("#pay").textContent = disc() ? "Continue to Stripe" : plan() === "sub" ? "Subscribe for £20 a month with Stripe" : "Pay " + ONE() + " securely with Stripe"; $("#eggnote").hidden = !egg || !!disc() }
+function choose() { const t = TEXT[plan()]; $("#c2t").innerHTML = t.c2; $("#li1").textContent = t.li1; $("#li2").textContent = t.li2; $("#c2").checked = false; payText(); update() }
 document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
+$("#dtog").onclick = () => { $("#dbox").hidden = false; $("#dtog").setAttribute("aria-expanded", "true"); $("#dtog").parentNode.hidden = true; $("#dcode").focus() };
+$("#dcode").oninput = () => { $("#dcode").removeAttribute("aria-invalid"); payText() };
 $("#pay").onclick = async () => {
   if (busy) return;
   if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", discount: disc() || undefined, src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update((j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
+    if (j.field === "discount") { $("#dcode").setAttribute("aria-invalid", "true"); $("#dcode").focus() }
   } catch (e) { busy = false; update("Can’t reach the server. Check you’re online.", true) }
 };
 choose();

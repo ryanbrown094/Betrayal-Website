@@ -18,7 +18,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261019074337">
+<meta name="build" content="20261019080342">
 <title>The Betrayal · Party game for 8 to 24, played on phones</title>
 <meta name="description" content="A hidden-role party game for 8 to 24 adults, played on everyone’s own phone: secret roles, a secret vote and a poisoning each night. £10 a party, no app.">
 <link rel="canonical" href="https://thebetrayal.co.uk/">
@@ -527,7 +527,7 @@ if (sid) (async () => {
   $("#claim").classList.add("on"); $("#start").scrollIntoView();
   for (let i = 0; i < 6; i++) {
     try { const r = await fetch("/api/claim?session_id=" + encodeURIComponent(sid)); const j = await r.json(); if (r.ok && j.pass) { if (!j.sub) try { localStorage.removeItem("bt-egg") } catch (e) {} // the broken seal is for one party: used now
-      if (j.sub) { $("#claimhead").textContent = "Thank you. You’re a Regular."; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; if (j.emailed) say($("#claimmsg"), $("#claimmsg").textContent + " We’ve emailed it to you too."); if (window.dataLayer) { dataLayer.push({ ecommerce: null }); dataLayer.push({ event: "purchase", ecommerce: { transaction_id: sid, value: j.value || (j.sub ? 20 : 10), currency: "GBP", items: [{ item_id: j.sub ? "regular" : "table", item_name: j.sub ? "Regular" : "Book a Table", quantity: 1 }] } }) } $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
+      if (j.sub) { $("#claimhead").textContent = "Thank you. You’re a Regular."; say($("#claimmsg"), "Keep it safe: it starts a new game whenever you like, one at a time, while you’re subscribed. Use it with “Manage subscription” to change your card or cancel.") } $("#claimcode").textContent = j.pass; $("#pass").value = j.pass; if (j.emailed) say($("#claimmsg"), $("#claimmsg").textContent + " We’ve emailed it to you too."); if (window.dataLayer) { dataLayer.push({ ecommerce: null }); dataLayer.push({ event: "purchase", ecommerce: { transaction_id: sid, value: typeof j.value === "number" ? j.value : (j.sub ? 20 : 10), currency: "GBP", items: [{ item_id: j.sub ? "regular" : "table", item_name: j.sub ? "Regular" : "Book a Table", quantity: 1 }] } }) } $("#claimgo").onclick = () => open(j.pass); $("#claimcopy").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(j.pass).then(() => { $("#claimcopy").textContent = "Copied" }) }; return } if (r.status !== 402) { say($("#claimmsg"), j.error || "Something went wrong.", true); return } } catch (e) {}
     await new Promise(z => setTimeout(z, 2500));
   }
   say($("#claimmsg"), "We can’t confirm the payment yet. Refresh this page in a minute and your booking code will appear here.", true);

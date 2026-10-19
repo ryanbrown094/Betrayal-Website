@@ -501,7 +501,7 @@ export class Registry {
       const k = "claim:" + b.session, have = await this.storage.get(k);
       if (have) return json({ pass: shownPass(have), sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub", emailed: await this.mailCode(have) });
       let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
-      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null,
+      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null, ...(b.disc ? { disc: String(b.disc).slice(0, 40) } : {}),
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
@@ -621,6 +621,11 @@ async function stripeSession(env, id) {
 const form = (o, pre, out = []) => { for (const [k, v] of Object.entries(o)) { const key = pre ? pre + "[" + k + "]" : k; if (v && typeof v === "object") form(v, key, out); else if (v !== undefined && v !== null) out.push(encodeURIComponent(key) + "=" + encodeURIComponent(v)); } return out.join("&"); };
 // Managed Payments (Stripe is the seller of record and handles tax) needs this API version on the Checkout Session call
 const MANAGED_PAYMENTS_VERSION = "2026-02-25.preview";
+// Discount codes are Stripe promotion codes; pinned to the version whose shape this code speaks (a promotion code names
+// its coupon in promotion[coupon])
+const PROMO_VERSION = "2025-09-30.clover";
+// A checkout counts as paid when Stripe took the money, or when a discount made it free (no_payment_required)
+const settled = (s) => !!s && (s.payment_status === "paid" || s.payment_status === "no_payment_required");
 async function stripePost(env, path, params, version) {
   const headers = { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, "Content-Type": "application/x-www-form-urlencoded", ...(version ? { "Stripe-Version": version } : {}) };
   const r = await fetch("https://api.stripe.com/v1/" + path, { method: "POST", headers, body: form(params) });
@@ -645,10 +650,20 @@ function sourceOf(x) {
   const extra = t("src") && t("ref") && t("ref") !== t("src") ? " (via " + t("ref") + ")" : "";
   return { from: (line || "direct") + extra, land: String((x && x.land) || "").replace(/[^A-Za-z0-9\/_.-]/g, "").slice(0, 80) };
 }
-async function stripeGet(env, path) {
-  const r = await fetch("https://api.stripe.com/v1/" + path, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY } });
+async function stripeGet(env, path, version) {
+  const r = await fetch("https://api.stripe.com/v1/" + path, { headers: { Authorization: "Bearer " + env.STRIPE_SECRET_KEY, ...(version ? { "Stripe-Version": version } : {}) } });
   const j = await r.json().catch(() => ({})); return r.ok ? j : Promise.reject(new Error((j.error && j.error.message) || "Stripe error " + r.status));
 }
+// A discount code, as the admin and the checkout see it, from a Stripe promotion code. "plans" (in its metadata, set when
+// it's made here) is "one" (a Table only) or "both" (the Regular's first month too); a code made in Stripe's dashboard
+// counts as "one".
+function discountOf(x) {
+  const c = (x.promotion && typeof x.promotion.coupon === "object" && x.promotion.coupon) || (typeof x.coupon === "object" && x.coupon) || {}, md = x.metadata || {};
+  const percent = typeof c.percent_off === "number" ? c.percent_off : +md.percent || null;
+  return { id: x.id, code: x.code, active: !!x.active, percent, amountOff: typeof c.amount_off === "number" ? c.amount_off / 100 : null, plans: md.plans === "both" ? "both" : "one",
+    used: x.times_redeemed || 0, max: x.max_redemptions || null, expires: x.expires_at ? x.expires_at * 1000 : null, created: x.created ? x.created * 1000 : null, here: md.by === "admin" };
+}
+const discountLive = (d) => d.active && (!d.expires || d.expires > Date.now()) && (!d.max || d.used < d.max);
 // A refund, from whichever event carried it. The pass is found by the payment we noted at checkout; failing that, Stripe
 // is asked which checkout (and so which pass) the payment belonged to, or which subscription the invoice was for.
 async function refundFor(env, x) {
@@ -779,10 +794,23 @@ async function route(req, env) {
     // promotion code STRIPE_EGG_PROMO (promo_…, the code QR10), applied for the buyer. Unset, the seal offers nothing.
     if (p === "/api/egg") return json({ on: !!env.STRIPE_EGG_PROMO });
     if (p === "/api/checkout" && req.method === "POST") {
-      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", egg = !sub && b.egg === true && !!env.STRIPE_EGG_PROMO;
+      const b = await req.json().catch(() => ({})), sub = b.plan === "sub", code = String(b.discount || "").trim().toUpperCase();
+      const egg = !sub && !code && b.egg === true && !!env.STRIPE_EGG_PROMO;
       const price = sub ? env.STRIPE_SUB_PRICE_ID : env.STRIPE_PRICE_ID;
       if (!env.STRIPE_SECRET_KEY || !price) return json({ error: "Tables go on sale soon. Payments aren’t open yet." }, 503);
       if (b.terms !== true || b.supply !== true) return json({ error: "Tick both boxes to continue." }, 400);
+      // a discount code the buyer typed (one made in the admin, or any live Stripe promotion code): checked before a
+      // pending code is made, and applied through discounts; if Stripe then refuses it, the buyer is told
+      let disc = null;
+      if (code) {
+        const bad = (m) => json({ error: m, field: "discount" }, 400);
+        if (!/^[A-Z0-9_-]{2,40}$/.test(code)) return bad("That discount code isn’t right. Check it and try again, or clear it.");
+        let found; try { found = await stripeGet(env, "promotion_codes?active=true&limit=1&code=" + encodeURIComponent(code) + "&expand[]=data.promotion.coupon", PROMO_VERSION); }
+        catch (e) { logErr(env, { src: "stripe", where: "discount", msg: "Stripe wouldn’t look up a discount code: " + e.message }); return json({ error: "We couldn’t check that discount code. Try again in a moment." }, 502); }
+        const x = found && found.data && found.data[0]; disc = x && discountOf(x);
+        if (!disc || !discountLive(disc)) return bad(disc && disc.max && disc.used >= disc.max ? "That discount code has been used up." : disc && disc.expires && disc.expires <= Date.now() ? "That discount code has expired." : "That discount code isn’t right. Check it and try again, or clear it.");
+        if (sub && disc.plans !== "both") return bad("That discount code is for booking one party, not the Regular plan.");
+      }
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       const from = sourceOf(b.src);
       const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from }) }), pj = await pr.json();
@@ -791,12 +819,13 @@ async function route(req, env) {
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), ...(disc ? { discount: disc.code } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
         // API version, and nothing it refuses (invoice details, extra descriptions) — just what the game needs: the pass in
         // the metadata (and, for a subscription, the subscription's metadata, which its webhooks bring back).
         const params = sub ? { ...common, mode: "subscription", subscription_data: { metadata: { pass } } } : { ...common, mode: "payment" };
+        if (disc) params.discounts = [{ promotion_code: disc.id }];
         let cs;
         if (egg) {
           // the seal's discount; if Stripe won't take it, the sale still goes ahead at the full price (shown on Stripe's page
@@ -822,8 +851,8 @@ async function route(req, env) {
       let ev; try { ev = JSON.parse(body); } catch { return json({ error: "Bad JSON" }, 400); }
       const o = (ev.data && ev.data.object) || {}, pass = o.metadata && o.metadata.pass;
       let result = "ignored";
-      if ((ev.type === "checkout.session.completed" && o.payment_status === "paid") || ev.type === "checkout.session.async_payment_succeeded")
-        result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer) })).json();
+      if ((ev.type === "checkout.session.completed" && settled(o)) || ev.type === "checkout.session.async_payment_succeeded")
+        result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer), disc: o.metadata && o.metadata.discount })).json();
       else if ((ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.created" || ev.type === "customer.subscription.deleted") && pass)
         result = await (await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status })).json();
       else if (ev.type === "checkout.session.async_payment_failed" && pass) {
@@ -856,8 +885,8 @@ async function route(req, env) {
       if (!env.STRIPE_SECRET_KEY) return json({ error: "Payments aren’t set up yet." }, 503);
       if (!/^cs_[A-Za-z0-9_]{10,200}$/.test(id)) return json({ error: "That isn’t a checkout session." }, 400);
       const s = await stripeSession(env, id);
-      if (!s || s.payment_status !== "paid") return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
-      const cr = await call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer) });
+      if (!settled(s)) return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
+      const cr = await call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer), disc: s.metadata && s.metadata.discount });
       if (!cr.ok) return cr;
       return json({ ...(await cr.json()), value: typeof s.amount_total === "number" ? s.amount_total / 100 : null }); // what was paid, for the ad conversion
     }
@@ -889,6 +918,23 @@ async function route(req, env) {
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
       if (p === "/api/admin/setemail" && req.method === "POST") return call(env, "/setemail", await req.json().catch(() => ({})));
       if (p === "/api/admin/delete" && req.method === "POST") return call(env, "/delete", await req.json().catch(() => ({})));
+      if (p.startsWith("/api/admin/discounts")) {
+        if (!env.STRIPE_SECRET_KEY) return json({ error: "Stripe isn’t set up, so there are no discount codes." }, 503);
+        try {
+          if (req.method === "GET") return json({ discounts: ((await stripeGet(env, "promotion_codes?limit=100&expand[]=data.promotion.coupon", PROMO_VERSION)).data || []).map(discountOf) });
+          const b = await req.json().catch(() => ({}));
+          if (p === "/api/admin/discounts/off") { if (!/^promo_\w+$/.test(String(b.id || ""))) return json({ error: "No such discount code." }, 400); return json(discountOf(await stripePost(env, "promotion_codes/" + b.id, { active: "false" }, PROMO_VERSION))); }
+          const code = String(b.code || "").trim().toUpperCase(), pct = Number(b.percent), max = b.max ? Number(b.max) : null, exp = b.expires ? Date.parse(b.expires + "T23:59:59Z") : null;
+          if (!/^[A-Z0-9]{3,20}$/.test(code)) return json({ error: "A code is 3 to 20 letters and numbers, like TESTFREE or SPRING20." }, 400);
+          if (!Number.isInteger(pct) || pct < 1 || pct > 100) return json({ error: "The discount is a whole percentage from 1 to 100." }, 400);
+          if (max !== null && (!Number.isInteger(max) || max < 1 || max > 100000)) return json({ error: "Uses must be a whole number, or blank for no limit." }, 400);
+          if (exp !== null && !(exp > Date.now())) return json({ error: "The end date must be in the future." }, 400);
+          const plans = b.plans === "both" ? "both" : "one", md = { by: "admin", percent: String(pct), plans };
+          const cp = await stripePost(env, "coupons", { percent_off: pct, duration: "once", name: code + " (" + pct + "% off)", metadata: md }, PROMO_VERSION);
+          const pc = await stripePost(env, "promotion_codes", { promotion: { type: "coupon", coupon: cp.id }, code, ...(max ? { max_redemptions: max } : {}), ...(exp ? { expires_at: Math.floor(exp / 1000) } : {}), metadata: md }, PROMO_VERSION);
+          return json({ ...discountOf(pc), percent: pct });
+        } catch (e) { return json({ error: "Stripe said: " + e.message }, 502); }
+      }
       if (p === "/api/admin/rooms") return registry(env).fetch("https://registry/rooms");
       if (p === "/api/admin/errors") return registry(env).fetch("https://registry/errs");
       if (p === "/api/admin/hooks") return registry(env).fetch("https://registry/hooks");
