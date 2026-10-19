@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261019074337">
+<meta name="build" content="20261019080342">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -131,7 +131,7 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 
 <div id="dash" hidden>
   <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
-  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
+  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="discounts">Discount codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
   <div id="t-passes">
   <div class="stats" id="stats"></div>
 
@@ -164,6 +164,25 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
   </div>
   <div class="table-scroll"><table class="passes"><thead><tr><th>Code</th><th>Status</th><th>Created</th><th>Room</th><th>Email</th><th>From</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
   <p class="msg" id="tmsg"></p>
+  </div>
+
+  <div id="t-discounts" hidden>
+  <h2>Make a discount code</h2>
+  <div class="panel">
+    <form id="df" class="adm-row">
+      <label>Code <input id="dc" maxlength="20" placeholder="TESTFREE" autocapitalize="characters" autocomplete="off" spellcheck="false" required style="width:170px;text-transform:uppercase"></label>
+      <label>% off <input id="dp" type="number" min="1" max="100" value="100" required style="width:100px"></label>
+      <label>For <select id="dplans"><option value="one">One party only</option><option value="both">One party, and a Regular’s first month</option></select></label>
+      <label>Uses <small>(blank: no limit)</small> <input id="dmax" type="number" min="1" style="width:120px"></label>
+      <label>Last day <small>(optional)</small> <input id="dexp" type="date"></label>
+      <button class="btn small">Make it</button>
+    </form>
+    <p class="msg" id="dmsg">Buyers type it under “Have a discount code?” on the booking page, and Stripe takes it off before they pay. At 100% off, a Table is booked without paying (no card needed): handy for testing.</p>
+  </div>
+  <h2>Discount codes</h2>
+  <div class="adm-row" style="margin-bottom:10px"><label>Show <select id="dshow"><option value="live">Live</option><option value="all">All</option></select></label><button class="btn ghost small" id="dreload">Refresh</button></div>
+  <div class="table-scroll"><table class="list"><thead><tr><th>Code</th><th>Off</th><th>For</th><th>Used</th><th>Last day</th><th>Status</th><th></th></tr></thead><tbody id="drows"></tbody></table></div>
+  <p class="msg" id="dlmsg"></p>
   </div>
 
   <div id="t-rooms" hidden>
@@ -223,7 +242,7 @@ function render() {
     const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
     const code = document.createElement("code"); code.textContent = p.pass; code.className = "copy"; code.title = "Click to copy"; code.tabIndex = 0;
     code.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); code.classList.add("copied"); setTimeout(() => code.classList.remove("copied"), 1200) };
-    const ty = document.createElement("small"); ty.className = "ptype"; ty.textContent = p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party";
+    const ty = document.createElement("small"); ty.className = "ptype"; ty.textContent = (p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party") + (p.disc ? " · code " + p.disc : "");
     const cc = document.createElement("span"); cc.append(code, ty); cell("Code", cc);
     const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; if (p.failed && p.failWhy) tag.title = p.failWhy; cell("Status", tag);
     const cr = cell("Created", new Date(p.created).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })); cr.title = when(p.created);
@@ -273,7 +292,39 @@ async function cancel(pass) {
   if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;
   try { await api("revoke", { pass }); await load() } catch (e) { say($("#tmsg"), e.message, true) }
 }
-function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load(); api("reports").then(j => { reports = j.reports || []; $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "" }).catch(() => {}); if (["rooms", "reports", "errors", "stripe"].includes(firstTab)) showTab(firstTab) } else $("#lu").focus() }
+// discount codes (Stripe promotion codes): make one, see how often each was used, switch one off
+let discounts = [];
+const dLive = d => d.active && (!d.expires || d.expires > Date.now()) && (!d.max || d.used < d.max);
+async function loadDiscounts() { try { discounts = (await api("discounts")).discounts || []; renderDiscounts() } catch (e) { say($("#dlmsg"), e.message, true) } }
+function renderDiscounts() {
+  const rows = $("#drows"), every = $("#dshow").value === "all", list = discounts.filter(d => every || dLive(d)); rows.textContent = "";
+  for (const d of list) {
+    const tr = document.createElement("tr"), cell = v => { const td = document.createElement("td"); if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
+    const c = document.createElement("code"); c.textContent = d.code; c.className = "copy"; c.title = "Click to copy"; c.tabIndex = 0;
+    c.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(d.code); c.classList.add("copied"); setTimeout(() => c.classList.remove("copied"), 1200) };
+    cell(c); cell(d.percent ? d.percent + "%" : d.amountOff ? "£" + d.amountOff : "—"); cell(d.plans === "both" ? "Party and Regular" : "One party");
+    cell(d.used + (d.max ? " of " + d.max : "")); cell(d.expires ? new Date(d.expires).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—");
+    cell(!d.active ? "Switched off" : dLive(d) ? "Live" : d.max && d.used >= d.max ? "Used up" : "Ended");
+    const td = cell("");
+    if (d.active) { const b = document.createElement("button"); b.className = "btn tiny danger"; b.textContent = "Switch off"; b.onclick = () => discountOff(d); td.append(b) }
+    rows.append(tr);
+  }
+  say($("#dlmsg"), list.length ? list.length + (every ? " of " + discounts.length : " live") + " code" + (list.length > 1 ? "s" : "") : discounts.length ? "No live codes. Choose “All” to see the rest." : "No discount codes yet.");
+}
+async function discountOff(d) {
+  if (!confirm("Switch off " + d.code + "? It stops working straight away.")) return;
+  try { await api("discounts/off", { id: d.id }); await loadDiscounts(); say($("#dlmsg"), d.code + " is switched off.") } catch (e) { say($("#dlmsg"), e.message, true) }
+}
+$("#df").onsubmit = async e => {
+  e.preventDefault(); say($("#dmsg"), "Making it…");
+  try {
+    const d = await api("discounts", { code: $("#dc").value.trim(), percent: +$("#dp").value, plans: $("#dplans").value, max: $("#dmax").value ? +$("#dmax").value : null, expires: $("#dexp").value || null });
+    say($("#dmsg"), d.code + " is live: " + d.percent + "% off " + (d.plans === "both" ? "one party or a Regular’s first month" : "one party") + (d.max ? ", " + d.max + " use" + (d.max > 1 ? "s" : "") : "") + ".");
+    $("#dc").value = ""; $("#dmax").value = ""; $("#dexp").value = ""; loadDiscounts();
+  } catch (err) { say($("#dmsg"), err.message, true) }
+};
+$("#dshow").onchange = renderDiscounts; $("#dreload").onclick = loadDiscounts;
+function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load(); api("reports").then(j => { reports = j.reports || []; $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "" }).catch(() => {}); if (["discounts", "rooms", "reports", "errors", "stripe"].includes(firstTab)) showTab(firstTab) } else $("#lu").focus() }
 $("#lf").onsubmit = async e => {
   e.preventDefault(); say($("#lmsg"), "Signing in…");
   try { await api("login", { user: $("#lu").value, password: $("#lp").value }); $("#lp").value = ""; say($("#lmsg"), ""); show(true, $("#lu").value.trim()) }
@@ -318,9 +369,9 @@ const row = (cells, onclick, cls) => h("tr" + (onclick ? ".click" : "") + (cls ?
 let tab = "passes";
 function showTab(t) {
   tab = t; for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", b.dataset.t === t);
-  for (const x of ["passes", "rooms", "reports", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
+  for (const x of ["passes", "discounts", "rooms", "reports", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
   if (t === "rooms") { $("#roomlist").hidden = false; $("#roomview").hidden = true; if (replay) replay.stop() } if (t === "reports") { $("#replist").hidden = false; $("#repview").hidden = true }
-  if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
+  if (t === "discounts") loadDiscounts(); if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
   try { history.replaceState(null, "", "#" + t) } catch (e) {}
 }
 for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => showTab(b.dataset.t);

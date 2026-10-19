@@ -16,6 +16,8 @@ const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STR
 
 // the stubbed Stripe: sessions made, sessions read back
 const made = [], sessions = {}, invoices = {}, pis = {}; let failCreate = false, refuseDiscount = false;
+// discount codes: Stripe's coupons and promotion codes, and every call made for them
+const coupons = {}, promos = [], promoCalls = [];
 globalThis.fetch = async (u, init) => {
   u = String(u);
   if (u === "https://api.stripe.com/v1/checkout/sessions" && init && init.method === "POST") {
@@ -33,6 +35,26 @@ globalThis.fetch = async (u, init) => {
   if (bypi) return new Response(JSON.stringify({ data: Object.values(sessions).filter(x => x.payment_intent === bypi[1]) }));
   const pim = u.match(/^https:\/\/api\.stripe\.com\/v1\/payment_intents\/(\w+)$/);
   if (pim) return new Response(JSON.stringify(pis[pim[1]] || { id: pim[1], status: "canceled", last_payment_error: null }));
+  const ver = init && init.headers && init.headers["Stripe-Version"];
+  if (u === "https://api.stripe.com/v1/coupons" && init && init.method === "POST") {
+    const q = new URLSearchParams(init.body), id = "co_" + (Object.keys(coupons).length + 1); promoCalls.push({ path: "coupons", q, version: ver });
+    coupons[id] = { id, percent_off: +q.get("percent_off"), duration: q.get("duration") }; return new Response(JSON.stringify(coupons[id]));
+  }
+  if (u === "https://api.stripe.com/v1/promotion_codes" && init && init.method === "POST") {
+    const q = new URLSearchParams(init.body), c = coupons[q.get("promotion[coupon]")]; promoCalls.push({ path: "promotion_codes", q, version: ver });
+    if (!c || q.get("promotion[type]") !== "coupon" || promos.some(x => x.code === q.get("code"))) return new Response(JSON.stringify({ error: { message: "An active promotion code with `code: " + q.get("code") + "` already exists." } }), { status: 400 });
+    const md = {}; for (const [k, v] of q) { const mm = k.match(/^metadata\[(\w+)\]$/); if (mm) md[mm[1]] = v }
+    const p = { id: "promo_" + (promos.length + 1), code: q.get("code"), active: true, times_redeemed: 0, max_redemptions: q.get("max_redemptions") ? +q.get("max_redemptions") : null, expires_at: q.get("expires_at") ? +q.get("expires_at") : null, metadata: md, created: Math.floor(Date.now() / 1000), promotion: { type: "coupon", coupon: c.id } };
+    promos.push(p); return new Response(JSON.stringify(p));
+  }
+  const pu = u.match(/^https:\/\/api\.stripe\.com\/v1\/promotion_codes\/(promo_\w+)$/);
+  if (pu && init && init.method === "POST") { const p = promos.find(x => x.id === pu[1]); if (!p) return new Response("{}", { status: 404 }); p.active = new URLSearchParams(init.body).get("active") !== "false"; return new Response(JSON.stringify(p)) }
+  if (u.startsWith("https://api.stripe.com/v1/promotion_codes?")) {
+    const q = new URLSearchParams(u.split("?")[1]); promoCalls.push({ path: "list", q, version: ver });
+    let list = promos.map(p => ({ ...p, promotion: { type: "coupon", coupon: q.getAll("expand[]").includes("data.promotion.coupon") ? coupons[p.promotion.coupon] : p.promotion.coupon } }));
+    if (q.get("active") === "true") list = list.filter(p => p.active); if (q.get("code")) list = list.filter(p => p.code.toUpperCase() === q.get("code").toUpperCase());
+    return new Response(JSON.stringify({ data: list.slice(0, +q.get("limit") || 10) }));
+  }
   const inv = u.match(/^https:\/\/api\.stripe\.com\/v1\/invoices\/(\w+)$/);
   if (inv && invoices[inv[1]]) return new Response(JSON.stringify(invoices[inv[1]]));
   return new Response("{}", { status: 404 });
@@ -246,5 +268,51 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   check("source: an ad click, a referring site, or direct", (await passOf(b.pass)).from === "google ads" && (await passOf(c.pass)).from === "reddit.com" && (await passOf(d.pass)).from === "direct");
   const e = await buy({ src: "<script>alert(1)</script>" + "x".repeat(200), land: "/<b>" }, "192.0.2.95");
   check("source: only plain characters, and short", /^[a-z0-9 ._\/()·-]+$/.test((await passOf(e.pass)).from) && (await passOf(e.pass)).from.length <= 60 && (await passOf(e.pass)).land === "/b", (await passOf(e.pass)));
+}
+// discount codes: made in the admin (Stripe promotion codes), typed on the buy page, and a free (100% off) checkout
+{
+  const A = (path, body) => W("/api/admin/" + path, body === undefined ? { headers: { Authorization: "Bearer adm" } } : { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  check("discounts: only for the admin", (await W("/api/admin/discounts", {})).status === 401 && (await W("/api/admin/discounts", { method: "POST", body: "{}" })).status === 401);
+  const bad = [{ code: "x", percent: 50 }, { code: "GOOD1", percent: 101 }, { code: "GOOD1", percent: 0 }, { code: "GOOD1", percent: 12.5 }, { code: "GOOD1", percent: 50, max: -1 }, { code: "GOOD1", percent: 50, expires: "2020-01-01" }];
+  check("discounts: a bad code, percentage, use count or last day is refused, and nothing is made", (await Promise.all(bad.map(b => A("discounts", b)))).every(([st]) => st === 400) && !promoCalls.length);
+  const [fs, fj] = await A("discounts", { code: "testfree", percent: 100, max: 5 });
+  const cc = promoCalls.find(x => x.path === "coupons"), pc = promoCalls.find(x => x.path === "promotion_codes");
+  check("discounts: made as a 100%, once-only coupon and an upper-case promotion code, on the pinned API version", fs === 200 && fj.code === "TESTFREE" && fj.percent === 100 && fj.max === 5 && cc.q.get("percent_off") === "100" && cc.q.get("duration") === "once" && pc.q.get("promotion[type]") === "coupon" && pc.q.get("promotion[coupon]") === "co_1" && pc.q.get("code") === "TESTFREE" && pc.q.get("max_redemptions") === "5" && cc.version === "2025-09-30.clover" && pc.version === "2025-09-30.clover", [fs, fj]);
+  const [ls, lj] = await A("discounts");
+  check("discounts: listed with their percentage, what they're for and their uses", ls === 200 && lj.discounts.length === 1 && lj.discounts[0].percent === 100 && lj.discounts[0].plans === "one" && lj.discounts[0].used === 0 && lj.discounts[0].max === 5 && lj.discounts[0].active, lj);
+  check("discounts: the same code twice is refused (Stripe says why)", (await A("discounts", { code: "TESTFREE", percent: 50 }))[0] === 502);
+  const last = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  const [bs2, bj2] = await A("discounts", { code: "BOTH50", percent: 50, plans: "both", expires: last });
+  check("discounts: a last day ends at the end of that day", bs2 === 200 && promos[1].expires_at === Date.parse(last + "T23:59:59Z") / 1000 && bj2.plans === "both", [bs2, bj2]);
+
+  const n0 = made.length;
+  const [us, uj] = await checkout({ terms: true, supply: true, discount: "nope99" }, base, "192.0.2.101");
+  check("checkout: an unknown discount code is refused before anything is made", us === 400 && uj.field === "discount" && made.length === n0, [us, uj]);
+  check("checkout: a one-party code can't discount the Regular", (await checkout({ terms: true, supply: true, plan: "sub", discount: "TESTFREE" }, base, "192.0.2.102"))[0] === 400 && made.length === n0);
+  const [gs, gj] = await checkout({ terms: true, supply: true, discount: " testfree ", egg: true }, { ...base, STRIPE_EGG_PROMO: "promo_egg" }, "192.0.2.103");
+  const gq = made[n0] && made[n0].q, gpass = gq && gq.get("metadata[pass]");
+  check("checkout: a typed code goes to Stripe as the session's discount (not the seal's as well), and is noted", gs === 200 && gq.get("discounts[0][promotion_code]") === "promo_1" && !gq.has("discounts[1][promotion_code]") && gq.get("metadata[discount]") === "TESTFREE" && !gq.get("metadata[egg]"), [gs, gj, gq && [...gq]]);
+  const [hs] = await checkout({ terms: true, supply: true, plan: "sub", discount: "both50" }, base, "192.0.2.104");
+  check("checkout: a party-and-Regular code works on the Regular", hs === 200 && made[n0 + 1].q.get("discounts[0][promotion_code]") === "promo_2");
+  // the free checkout comes back: Stripe needed no payment
+  const gid = "cs_test_" + String(n0).padStart(12, "0");
+  Object.assign(sessions[gid], { payment_status: "no_payment_required", amount_total: 0, payment_intent: null, metadata: { pass: gpass, discount: "TESTFREE" } });
+  const [cs2, cj2] = await claim(gid);
+  check("claim: a free (100% off) checkout gives its booking code, worth £0 to the ad conversion", cs2 === 200 && cj2.pass === gpass && cj2.value === 0 && !(await passOf(gpass)).pending, [cs2, cj2]);
+  check("claim: the booking notes the discount code, and it works", (await passOf(gpass)).disc === "TESTFREE" && (await redeem(gpass))[0] === 200);
+  const [ws] = await checkout({ terms: true, supply: true, discount: "TESTFREE" }, base, "192.0.2.105"), wq = made[made.length - 1].q, wpass = wq.get("metadata[pass]");
+  const [hs2] = await hook({ type: "checkout.session.completed", id: "evt_free", data: { object: { id: "cs_free_webhook_1", payment_status: "no_payment_required", amount_total: 0, payment_intent: null, customer_details: { email: "free@example.com" }, metadata: { pass: wpass, discount: "TESTFREE" } } } });
+  check("webhook: a free checkout activates its code too", ws === 200 && hs2 === 200 && !(await passOf(wpass)).pending && (await passOf(wpass)).disc === "TESTFREE");
+  promos[0].times_redeemed = 5;
+  const [xs, xj] = await checkout({ terms: true, supply: true, discount: "TESTFREE" }, base, "192.0.2.106");
+  check("checkout: a used-up code says so", xs === 400 && /used up/.test(xj.error), [xs, xj]);
+  promos[0].times_redeemed = 0; promos[0].expires_at = Math.floor(Date.now() / 1000) - 60;
+  check("checkout: an ended code says so", /expired/.test((await checkout({ terms: true, supply: true, discount: "TESTFREE" }, base, "192.0.2.107"))[1].error));
+  const [os, oj] = await A("discounts/off", { id: "promo_2" });
+  check("discounts: switched off, it stops working", os === 200 && oj.active === false && !promos[1].active && (await checkout({ terms: true, supply: true, discount: "BOTH50" }, base, "192.0.2.108"))[0] === 400);
+  refuseDiscount = true; promos[0].expires_at = null;
+  const nr = made.length, [rs3, rj3] = await checkout({ terms: true, supply: true, discount: "TESTFREE" }, base, "192.0.2.109");
+  check("checkout: if Stripe refuses a typed code, the buyer is told (not charged full price)", rs3 === 502 && made.length === nr, [rs3, rj3]);
+  refuseDiscount = false;
 }
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);
