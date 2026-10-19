@@ -1,10 +1,9 @@
-// Google Ads on the site's own pages (never in the game). Google's tag is in every page's head (site/gtag.html) in
-// Consent Mode: until the visitor says yes it sets no cookies and sends Google only cookieless signals; a yes lets it
-// use its advertising cookies, as UK cookie law requires. The choice is remembered ("bt-consent": "yes" or "no").
-// window.btConversion(value, txn) reports a purchase from the thank-you page.
-// window.btCookieChoice() reopens the banner (the cookies page links to it). build.sh copies this to worker/public/.
+// The cookie banner for Google Tag Manager on the site's own pages (never in the game). Tag Manager is in every page's
+// head (site/gtm.html) behind Consent Mode defaults: until the visitor says yes Google sets no cookies and gets only
+// cookieless signals; a yes lets its advertising cookies on, as UK cookie law requires. The choice is remembered
+// ("bt-consent": "yes" or "no"). window.btCookieChoice() reopens the banner (the cookies page links to it).
+// build.sh copies this to worker/public/.
 (() => {
-  const SEND_TO = "AW-18517139586/QFUdCKnQj58dEILB1P1E";
   let choice = null, box = null;
   try { choice = localStorage.getItem("bt-consent") } catch (e) {}
   function set(v) {
@@ -24,7 +23,6 @@
     box.querySelector(".y").onclick = () => set("yes"); box.querySelector(".n").onclick = () => set("no");
     document.body.append(box); document.body.style.paddingBottom = box.offsetHeight + "px";
   }
-  window.btConversion = (value, txn) => { if (window.gtag) gtag("event", "conversion", { send_to: SEND_TO, value, currency: "GBP", transaction_id: String(txn || "") }) };
   window.btCookieChoice = () => { choice = null; try { localStorage.removeItem("bt-consent") } catch (e) {} banner() };
   const start = () => { if (/^\/admin/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner() };
   if (document.body) start(); else addEventListener("DOMContentLoaded", start);
