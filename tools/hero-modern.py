@@ -23,3 +23,10 @@ for i, (name, x, y, rot) in enumerate([("role", 1330, 250, 5), ("vote", 1560, 32
     sh = Image.new("RGBA", c.size, (0, 0, 0, 0)); sh.alpha_composite(Image.new("RGBA", body.size, (0, 0, 0, 150)), (x - 145 + 20, y + 40)); m = Image.new("L", c.size, 0); m.paste(body.split()[3], (x - 145 + 20, y + 40)); sh.putalpha(m.point(lambda v: v * 150 // 255)); c.alpha_composite(sh.filter(ImageFilter.GaussianBlur(28)))
     c.alpha_composite(body, (x - 145, y))
 out = os.path.join(WEB, "hero-modern.jpg"); c.convert("RGB").save(out, "JPEG", quality=82, optimize=True, progressive=True); print(out, os.path.getsize(out) // 1024, "KB")
+# smaller WebP copies of the home page's three images, which the page offers by screen size (site/index.html srcset)
+def webp(im, name, widths):
+    for w in widths:
+        p = os.path.join(WEB, f"{name}-{w}.webp"); im.resize((w, round(im.height * w / im.width)), Image.LANCZOS).save(p, "WEBP", quality=78, method=6); print(p, os.path.getsize(p) // 1024, "KB")
+webp(c.convert("RGB"), "hero-modern", (640, 960, 1280, 1920))
+webp(Image.open(os.path.join(WEB, "tour-modern-tv-quiz.jpg")).convert("RGB"), "tour-modern-tv-quiz", (640, 960, 1280))
+webp(Image.open(os.path.join(WEB, "tour-modern-phone-role.jpg")).convert("RGB"), "tour-modern-phone-role", (390, 780))

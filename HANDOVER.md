@@ -447,7 +447,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 | tool | what it makes | run |
 |---|---|---|
 | `tools/modern-shots.mjs` + `tools/modern-shots.py` | the Modern tour's 39 screenshots (phone 390 wide at 2x, TV 1280×720) in `media/web/`, from a whole evening played by the engine and photographed in replay mode | `./build.sh` then `python3 tools/modern-shots.py` |
-| `tools/hero-modern.py` | the home page hero, `media/web/hero-modern.jpg`, from the tour shots | after modern-shots |
+| `tools/hero-modern.py` | the home page hero, `media/web/hero-modern.jpg`, from the tour shots, and WebP copies at several widths of the hero and the home page's two tour shots (`*-640.webp` etc.), which `site/index.html` offers by screen size | after modern-shots, and after changing either tour shot |
 | `qa/media.py` | Classic screenshots in `media/screenshots/` (TV 1920×1080, phone 390×844 at 3x) | `node qa/server.mjs 8714 &` then `python3 qa/media.py` |
 | `tools/webshots.py` | web-sized copies of `media/screenshots` in `media/web/` for the Classic tour | after `qa/media.py` |
 | `tools/marketing-pack.py` | `dist/The-Betrayal-Marketing-Pack.zip`: game guide, setup guide, data sheets from the built game, brand, copy, screenshots, social, launch | `./build.sh` first |
