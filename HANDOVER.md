@@ -399,11 +399,15 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - `sourceOf` in `index.js` turns it into one short line ("instagram · bio · launch (via l.instagram.com)", "google.com", "direct"), stored on the booking as `from` (and `land`) and on the Stripe payment's metadata as `source` and `landing`. The admin's booking-code list shows it in the **From** column.
 - Tag your own links to get clean names: e.g. the Instagram bio link `https://thebetrayal.co.uk/?utm_source=instagram&utm_medium=bio`.
 
-### 6.4c Google Ads tag and conversions (with consent)
+### 6.4c Google Tag Manager, Google Ads and consent
 
-- Google's tag (`AW-18517139586`) is `site/gtag.html`, which `build.sh` puts first in the head of the home page and every site page except `/admin` (never the game), so Google can detect it. It runs in Consent Mode: advertising storage is denied by default, so until a visitor says yes it sets no cookies and sends only cookieless signals (with ad click ids redacted), which Google uses for modelled conversions. A stored yes is applied in the head before the tag's `config`.
-- `site/consent.js` (copied to `worker/public/consent.js`, loaded on every site page, inactive on `/admin`) is the cookie banner. Yes grants `ad_storage` and `ad_user_data` (never `ad_personalization`: no remarketing); no denies them. The choice is kept in `localStorage` as `bt-consent` ("yes"/"no"); `/cookies` has a "Change your cookie choice" button (`btCookieChoice()`).
-- The thank-you page reports the purchase with `btConversion(value, session_id)` to `AW-18517139586/QFUdCKnQj58dEILB1P1E` (the "Purchase" conversion action): the value is what Stripe says was paid (`/api/claim` returns `value`), the transaction id is the checkout session, so a refreshed page isn't counted twice.
+- **Tag Manager** (`GTM-MW8SWKVS`) is `site/gtm.html` (first in the head) and `site/gtm-body.html` (the `noscript` iframe straight after `<body>`), which `build.sh` puts in the home page and every site page except `/admin`; the game never gets it. Which Google tags run is set in Tag Manager itself, not here: nothing fires until a container version is published there.
+- **Consent Mode:** `site/gtm.html` sets `ad_storage`, `ad_user_data`, `ad_personalization` and `analytics_storage` to denied (with ad click ids redacted) before Tag Manager loads, then applies a stored yes. `site/consent.js` (copied to `worker/public/consent.js`, inactive on `/admin`) is the banner: yes grants `ad_storage` and `ad_user_data` (never `ad_personalization`: no remarketing), no denies them. The choice is kept in `localStorage` as `bt-consent`; `/cookies` has a "Change your cookie choice" button (`btCookieChoice()`).
+- **Purchases:** the thank-you page pushes `{event: "purchase", ecommerce: {transaction_id, value, currency: "GBP", items}}` to the dataLayer once the code shows: the value is what Stripe says was paid (`/api/claim` returns `value`), the transaction id is the checkout session, so a refreshed page isn't counted twice.
+- **In Tag Manager** (what the container needs for Google Ads):
+  - Data Layer Variables `ecommerce.value`, `ecommerce.transaction_id` and `ecommerce.currency`.
+  - A Custom Event trigger on `purchase`.
+  - Tags: a Google tag `AW-18517139586` on Initialization – All Pages; a Conversion Linker on All Pages; a Google Ads Conversion Tracking tag (conversion ID `18517139586`, label `QFUdCKnQj58dEILB1P1E`, value, transaction ID and currency from the three variables) on the `purchase` trigger.
 
 ### 6.5 The broken seal (discount)
 
