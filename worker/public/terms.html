@@ -9,6 +9,9 @@
   gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied'});
   try { if (localStorage.getItem('bt-consent') === 'yes') gtag('consent', 'update', {ad_storage: 'granted', ad_user_data: 'granted'}) } catch (e) {}
   gtag('set', 'ads_data_redaction', true);
+  // until the visitor answers the banner, an ad click's id rides along in the address from page to page, so it's still
+  // there to be saved if they say yes on a later page
+  gtag('set', 'url_passthrough', true);
 </script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -18,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261019080342">
+<meta name="build" content="20261019090547">
 <title>Terms of sale and use · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="The terms of sale and use for The Betrayal: prices, booking codes, the 48-hour Table, the Regular subscription and your rights.">

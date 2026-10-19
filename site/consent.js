@@ -10,6 +10,8 @@
     choice = v; try { localStorage.setItem("bt-consent", v) } catch (e) {}
     if (box) { box.remove(); box = null; document.body.style.paddingBottom = "" }
     if (window.gtag) gtag("consent", "update", v === "yes" ? { ad_storage: "granted", ad_user_data: "granted" } : { ad_storage: "denied", ad_user_data: "denied" });
+    // Tag Manager's Conversion Linker also fires on this, so the ad click is saved the moment they say yes
+    if (v === "yes" && window.dataLayer) dataLayer.push({ event: "bt_consent_yes" });
   }
   function banner() {
     if (box) return;
