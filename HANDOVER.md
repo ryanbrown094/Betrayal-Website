@@ -485,8 +485,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   - Everything else is proposed to the owner: enabling, new campaigns, ads or keywords, ad text, bidding strategy and conversion settings. `qa/ads.mjs` tests each limit.
   - Google may spend up to twice a day's budget on a busy day, but no more than 30.4 days' worth in a month.
 - **API version:** `VERSION` (v26). Each version is retired about a year after release. A retired version gives a 404, and `check` says so; then set `GOOGLE_ADS_API_VERSION`, or update `VERSION`.
-- **Credentials:** environment variables in the cloud environment's settings, never a file:
-  - `GOOGLE_ADS_DEVELOPER_TOKEN`
+- **Credentials:** environment variables in the cloud environment's settings, never a file. There's no developer token: Google retired them in September 2026, and API access now belongs to the Google Cloud project that owns the OAuth client.
   - `GOOGLE_ADS_CLIENT_ID`
   - `GOOGLE_ADS_CLIENT_SECRET`
   - `GOOGLE_ADS_REFRESH_TOKEN`
@@ -501,10 +500,9 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
      1. Open the gear menu, choose "Use your own OAuth credentials" and enter the client ID and secret.
      2. Use the scope `https://www.googleapis.com/auth/adwords` and authorise as the Google user with access to the ad account. Pass Google's "unverified app" warning through Advanced.
      3. Exchange the code for tokens, and keep the **refresh token**.
-  5. **Developer token:** from a Google Ads manager account (free; link the ad account to it), under Admin → API Center.
-     - A new token starts with test-account access. A sweep needs at least **Explorer** access (2,880 operations a day on live accounts) or Basic.
-     - Google has been moving access levels to the Cloud project's Google Ads API page, so apply wherever API Center points.
-  6. Put the six values in the environment's settings. The next day's sweep, or `node tools/ads/ads.mjs check`, confirms it works.
+  5. **API access level:** on the same Cloud project, request **Explorer** access (2,880 operations a day on live accounts, plenty for a daily sweep) on the Google Ads API's page in the Cloud Console. A new project starts with test-account access only. Basic needs brand verification of the consent screen first.
+  6. **Manager account** (optional, if access is through one): link the ad account to it and set `GOOGLE_ADS_LOGIN_CUSTOMER_ID` to the manager's ID.
+  7. Put the values in the environment's settings. The next day's sweep, or `node tools/ads/ads.mjs check`, confirms it works.
 - **Refresh token problems:** if `check` says `OAUTH_INVALID_GRANT`, the refresh token has expired or been revoked. Make a new one (step 4) and replace `GOOGLE_ADS_REFRESH_TOKEN`.
 
 ---

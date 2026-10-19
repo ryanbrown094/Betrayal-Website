@@ -3,7 +3,7 @@
 import { client, report, apply, LIMITS, VERSION, AdsError } from "../tools/ads/ads.mjs";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 500))); ok = ok && !!cond };
-const ENV = { GOOGLE_ADS_DEVELOPER_TOKEN: "devtok", GOOGLE_ADS_CLIENT_ID: "cid.apps.googleusercontent.com", GOOGLE_ADS_CLIENT_SECRET: "sec", GOOGLE_ADS_REFRESH_TOKEN: "rt", GOOGLE_ADS_CUSTOMER_ID: "123-456-7890", GOOGLE_ADS_LOGIN_CUSTOMER_ID: "111-222-3333" };
+const ENV = { GOOGLE_ADS_CLIENT_ID: "cid.apps.googleusercontent.com", GOOGLE_ADS_CLIENT_SECRET: "sec", GOOGLE_ADS_REFRESH_TOKEN: "rt", GOOGLE_ADS_CUSTOMER_ID: "123-456-7890", GOOGLE_ADS_LOGIN_CUSTOMER_ID: "111-222-3333" };
 const M = (p) => String(Math.round(p * 1e6));
 const json = (status, body, type) => new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { "Content-Type": type || "application/json; charset=UTF-8" } });
 
@@ -74,14 +74,16 @@ const c = client(ENV);
 await c.search("SELECT customer.id FROM customer LIMIT 1"); await c.search("SELECT customer.id FROM customer LIMIT 1");
 const h = calls[0].headers;
 check("sign-in: the refresh token is exchanged once, then reused", oauth.length === 1 && oauth[0].get("grant_type") === "refresh_token" && oauth[0].get("refresh_token") === "rt" && oauth[0].get("client_id") === ENV.GOOGLE_ADS_CLIENT_ID);
-check("requests: the pinned API version, the customer ID without dashes, the developer token, the manager ID", calls[0].version === VERSION && calls[0].cid === "1234567890" && h.Authorization === "Bearer at-1" && h["developer-token"] === "devtok" && h["login-customer-id"] === "1112223333", [calls[0].version, calls[0].cid, h]);
+check("requests: the pinned API version, the customer ID without dashes, the manager ID, and no developer token (Google retired them)", calls[0].version === VERSION && calls[0].cid === "1234567890" && h.Authorization === "Bearer at-1" && !("developer-token" in h) && h["login-customer-id"] === "1112223333", [calls[0].version, calls[0].cid, h]);
 check("requests: no manager header without a manager ID", await (async () => { calls = []; await client({ ...ENV, GOOGLE_ADS_LOGIN_CUSTOMER_ID: "" }).search("SELECT customer.id FROM customer LIMIT 1"); return !("login-customer-id" in calls[0].headers) })());
 check("requests: GOOGLE_ADS_API_VERSION overrides the version", await (async () => { calls = []; await client({ ...ENV, GOOGLE_ADS_API_VERSION: "v99" }).search("SELECT customer.id FROM customer LIMIT 1").catch(() => {}); return calls[0].version === "v99" })());
 const fails = async (setup) => { Object.assign(mode, setup); try { await client(ENV).search("SELECT customer.id FROM customer LIMIT 1"); return null } catch (e) { return e } finally { mode = {} } };
 let e = await fails({ oauth: { error: "invalid_grant", error_description: "Token has been expired or revoked." } });
 check("errors: an expired refresh token says how to fix it", e && e.codes[0] === "OAUTH_INVALID_GRANT" && /7 days/.test(e.hint), e);
 e = await fails({ fail: () => json(403, { error: { code: 403, status: "PERMISSION_DENIED", message: "The caller does not have permission", details: [{ "@type": "type.googleapis.com/google.ads.googleads.v26.errors.GoogleAdsFailure", errors: [{ errorCode: { authorizationError: "DEVELOPER_TOKEN_NOT_APPROVED" }, message: "The developer token is only approved for use with test accounts." }] }] } }) });
-check("errors: a test-only developer token is recognised", e && e.codes.includes("DEVELOPER_TOKEN_NOT_APPROVED") && /Explorer or Basic/.test(e.hint) && /only approved for use with test accounts/.test(e.message), e);
+check("errors: a project with only test access says where to ask for more", e && e.codes[0] === "TEST_ACCESS_ONLY" && /Explorer \(or Basic\)/.test(e.hint) && /Cloud Console/.test(e.hint), e);
+e = await fails({ fail: () => json(403, { error: { code: 403, status: "PERMISSION_DENIED", details: [{ errors: [{ errorCode: { authorizationError: "ACTION_NOT_PERMITTED" }, message: "This Google Cloud project's API access level only allows test accounts." }] }] } }) });
+check("errors: the same when Google's code changes but the wording doesn't", e && e.codes[0] === "TEST_ACCESS_ONLY", e);
 e = await fails({ fail: () => json(403, { error: { code: 403, details: [{ errors: [{ errorCode: { authorizationError: "USER_PERMISSION_DENIED" }, message: "User doesn't have permission to access customer." }] }] } }) });
 check("errors: no access suggests the manager ID", e && /GOOGLE_ADS_LOGIN_CUSTOMER_ID/.test(e.hint));
 e = await fails({ fail: () => json(404, "<!DOCTYPE html>", "text/html") });

@@ -5,9 +5,10 @@
 //                                                terms, ads and assets (with approvals), conversions, recent changes
 //   node tools/ads/ads.mjs apply FILE [--live]   a list of changes, each checked against LIMITS first; without --live
 //                                                Google only validates them
-// Credentials come from the environment, never a file: GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID,
-// GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_CUSTOMER_ID, and GOOGLE_ADS_LOGIN_CUSTOMER_ID when access
-// is through a manager account. GOOGLE_ADS_API_VERSION overrides VERSION (each version is retired a year after release).
+// Credentials come from the environment, never a file: GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET,
+// GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_CUSTOMER_ID, and GOOGLE_ADS_LOGIN_CUSTOMER_ID when access is through a manager
+// account. There's no developer token: since September 2026 API access belongs to the Google Cloud project that owns the
+// OAuth client. GOOGLE_ADS_API_VERSION overrides VERSION (each version is retired a year after release).
 import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -20,7 +21,7 @@ import { pathToFileURL } from "node:url";
 export const LIMITS = { dailyCap: 4, maxCpc: 2, minCpc: 0.05, minBudget: 0.5, bidStep: 0.2, maxChanges: 30, currency: "GBP" };
 export const VERSION = "v26";
 
-const NEED = ["GOOGLE_ADS_DEVELOPER_TOKEN", "GOOGLE_ADS_CLIENT_ID", "GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_ADS_CUSTOMER_ID"];
+const NEED = ["GOOGLE_ADS_CLIENT_ID", "GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_ADS_CUSTOMER_ID"];
 const gbp = (micros) => Math.round(Number(micros || 0) / 10000) / 100;
 const toMicros = (pounds) => String(Math.round(pounds * 100) * 10000);
 const digits = (s) => String(s || "").replace(/\D/g, "");
@@ -35,9 +36,7 @@ const HINTS = {
   NETWORK: "Allow googleads.googleapis.com and oauth2.googleapis.com under Allowed domains in the cloud environment's network settings.",
   OAUTH_INVALID_GRANT: "The refresh token has expired or been revoked (a consent screen left in Testing expires it after 7 days): make a new one and update GOOGLE_ADS_REFRESH_TOKEN.",
   OAUTH_INVALID_CLIENT: "GOOGLE_ADS_CLIENT_ID or GOOGLE_ADS_CLIENT_SECRET is wrong.",
-  DEVELOPER_TOKEN_NOT_APPROVED: "The developer token only has test-account access: apply for Explorer or Basic access.",
-  DEVELOPER_TOKEN_PROHIBITED: "This developer token isn't allowed with this Google Cloud project.",
-  DEVELOPER_TOKEN_INVALID: "GOOGLE_ADS_DEVELOPER_TOKEN is wrong.",
+  TEST_ACCESS_ONLY: "The Google Cloud project that owns the OAuth client only has test-account access: request Explorer (or Basic) access on the project's Google Ads API page in the Cloud Console.",
   USER_PERMISSION_DENIED: "The signed-in Google user can't reach this account. If access is through a manager account, set GOOGLE_ADS_LOGIN_CUSTOMER_ID to the manager's ID.",
   CUSTOMER_NOT_ENABLED: "The Google Ads account isn't active (billing set up?).",
   NOT_FOUND: "Google answered 404: the API version may have been retired (set GOOGLE_ADS_API_VERSION, and update VERSION in tools/ads/ads.mjs), or GOOGLE_ADS_CUSTOMER_ID is wrong.",
@@ -48,6 +47,8 @@ function failure(status, j) {
   const codes = errs.map((x) => Object.values(x.errorCode || {})[0]).filter(Boolean);
   if (status === 404) codes.push("NOT_FOUND");
   const msg = errs.map((x) => x.message).filter(Boolean).join("; ") || e.message || "HTTP " + status;
+  // a project without live access: the code Google gives it has changed with the access rules, the wording hasn't
+  if (codes.includes("DEVELOPER_TOKEN_NOT_APPROVED") || /test accounts?|access level/i.test(msg)) codes.unshift("TEST_ACCESS_ONLY");
   return new AdsError("Google Ads said: " + msg, codes, codes.map((c) => HINTS[c]).find(Boolean) || "");
 }
 
@@ -73,7 +74,7 @@ export function client(env = process.env) {
     return (token = j.access_token);
   }
   async function call(path, body) {
-    const headers = { Authorization: "Bearer " + (await auth()), "developer-token": env.GOOGLE_ADS_DEVELOPER_TOKEN, "Content-Type": "application/json", ...(login ? { "login-customer-id": login } : {}) };
+    const headers = { Authorization: "Bearer " + (await auth()), "Content-Type": "application/json", ...(login ? { "login-customer-id": login } : {}) };
     const r = await net(base + path, { method: "POST", headers, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw failure(r.status, j);
