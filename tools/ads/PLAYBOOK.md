@@ -27,7 +27,7 @@ The script enforces these, and you never look for a way round them. If one gets 
 
 ## 1. Check
 
-Run `node tools/ads/ads.mjs check`. If it fails, the whole summary is what failed and its `hint`. That could be a missing variable, an expired refresh token, or a test-only developer token. Stop there.
+Run `node tools/ads/ads.mjs check`. If it fails, the whole summary is what failed and its `hint`. That could be a missing variable, an expired refresh token, or a Google Cloud project that only has test access. Stop there.
 
 ## 2. Report
 
