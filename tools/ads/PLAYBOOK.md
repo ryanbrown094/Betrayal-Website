@@ -81,7 +81,10 @@ At £4 a day there's a handful of clicks a day, so act only on clear evidence. D
 - **Tracking:**
   - the Purchase conversion isn't enabled and primary;
   - auto-tagging is off;
-  - more than £20 spent over 7 days with no purchases at all, which means tracking needs a check (a 100% discount-code test purchase, or Tag Assistant).
+  - more than £20 spent over 7 days with no purchases at all. Google only counts a sale when the buyer said yes to the site's advertising cookies; a sale from anyone who said no, or never answered, never shows here (the owner chose this). So don't call it broken tracking. Propose that the owner checks the sales in the admin portal, which records whether each one came from Google Ads whatever the cookie choice:
+    - sales from Google Ads there that Google hasn't counted most likely came from buyers who said no, which is expected;
+    - no sales from Google Ads there either means the ads aren't selling yet;
+    - either way, Tag Assistant during a 100% discount-code test purchase confirms the tag still fires.
 - **No activity:** a campaign with almost no impressions needs its keywords or ads looked at.
 
 ## 4. Apply
