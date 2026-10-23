@@ -27,6 +27,8 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 .phbox { position: relative; width: 280px; height: 606px; overflow: hidden; border-radius: 18px; border: 1px solid rgba(230,165,140,.25); background: #000 } .phbox iframe { position: absolute; left: 0; top: 0; width: 390px; height: 844px; border: 0; transform: scale(.718); transform-origin: 0 0 }
 .scrub { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 10px 0 } .scrub input[type=range] { flex: 1; min-width: 200px; accent-color: var(--rose) } .scrub .now { font-size: 14px; color: var(--ivory2); flex-basis: 100% }
 .tl { max-height: 360px; overflow: auto; border-top: 1px solid rgba(230,165,140,.2); border-bottom: 1px solid rgba(230,165,140,.2) } .tl div { padding: 4px 10px; font-size: 13.5px; color: var(--ivory2); cursor: pointer; border-bottom: 1px solid rgba(230,165,140,.08) } .tl div.on { background: rgba(230,165,140,.18); color: var(--ivory) }
+.tlhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px } .tlhead label { font-size: 14.5px; color: var(--ivory2); cursor: pointer } .tlhead input { accent-color: var(--rose) }
+details.devs > summary { cursor: pointer } details.devs > summary h2 { display: inline } details.devs > summary span { margin-left: 12px; font-size: 15px; color: var(--ivory2) }
 .snapbox { position: relative; overflow: hidden; border-radius: 3px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
 .ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
 .t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-failed { color: #ffb38a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
@@ -307,8 +309,6 @@ $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 let replay = null;
-// the whole game log, from each recorded save's newest line (a save that added no line repeats the one before)
-const fullLog = recs => recs.map((r, i) => r.kind === "wipe" ? secs(r.t) + " (game wiped)" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : null).filter(Boolean).join("\n");
 async function openRoom(code, at) {
   const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
   let d, recs, evs;
@@ -330,7 +330,7 @@ async function openRoom(code, at) {
         ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? md.result.winner : "—"]]),
       h("h3", {}, "Players"),
       h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), p.role === "f" ? "Forsworn" : p.role === "l" ? "Loyal" : "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
-      h("h3", {}, "Game log"), h("div.mono", {}, (md.log || []).slice().reverse().map(x => secs(x.t).slice(-8) + " " + x.m).join("\n") || "(empty)"));
+      recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (md.log || []).slice().reverse().map(x => secs(x.t).slice(-8) + " " + x.m).join("\n") || "(empty)")]);
   } else if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
   else {
     const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
@@ -340,39 +340,70 @@ async function openRoom(code, at) {
       h("h3", {}, "Game plan (setup)"), kv(Object.entries(s.rules || {}).map(([k, x]) => [RULE_WORDS[k] || k, yes(x)])),
       h("h3", {}, "Players, in seat order"),
       h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
-      h("h3", {}, "Game log"), h("p.note", {}, "Every line from the start, taken from the recording (the game itself only keeps its latest 80)."), h("div.mono", {}, fullLog(recs) || (s.log || []).slice().reverse().join("\n") || "(empty)"));
+      recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (s.log || []).slice().reverse().join("\n") || "(empty)")]);
   }
-  // the replay: every saved version, on a TV and a phone
-  ap(v, h("h2", {}, "Replay"), h("p.note", {}, "Every change the Keeper’s phone saved, in order. Drag the slider or tap a line; Play steps through them. The TV shows what the guests saw, the phone what the Keeper saw."));
+  // the replay: every saved version, on a TV and a phone. Its list is what happened (the game's log: each decision, not
+  // each save, of which there's one at every new screen and every 15 seconds); the slider still moves through every save
+  const modern = recs.some(r => r.kind === "modern"), cache = new Map();
+  const recAt = async n => { if (!cache.has(n)) cache.set(n, await api("room/" + code + "/rec?n=" + recs[n - 1].n)); return cache.get(n) };
+  let moments = [];
+  if (modern) {
+    // a Modern game keeps its whole log, with times, in every save: the last save of each game played here has all of it
+    for (const g of [...new Set(recs.filter(r => r.kind === "modern").map(r => r.gid))]) {
+      const idx = recs.map((r, i) => r.gid === g ? i : -1).filter(i => i >= 0), last = idx[idx.length - 1];
+      let log = md && md.gid === g ? md.log : null;
+      if (!log) try { log = ((await recAt(last + 1)).state || {}).log } catch (e) {}
+      for (const x of (log || []).slice().reverse()) {
+        const i = idx.find(j => recs[j].t >= x.t) ?? last, prev = moments[moments.length - 1], who = / joined$/.test(x.m) ? x.m.slice(0, -7) : null;
+        if (who && prev && prev.join && prev.g === g) { prev.text += ", " + who; prev.i = i; continue } // everyone arriving is one line
+        moments.push(who ? { t: x.t, i, g, join: true, text: "Joined: " + who } : { t: x.t, i, text: x.m });
+      }
+    }
+    recs.forEach((r, i) => { if (r.kind === "wipe") moments.push({ t: r.t, i, text: "(game wiped)" }) });
+    moments.sort((a, b) => a.i - b.i || a.t - b.t);
+  } else moments = recs.map((r, i) => r.kind === "wipe" ? { t: r.t, i, text: "(game wiped)" } : r.line && (!i || r.line !== recs[i - 1].line) ? { t: r.t, i, text: r.line } : null).filter(Boolean);
+  ap(v, h("h2", {}, "Replay"), h("p.note", {}, "What happened, in order. Tap a line to see that moment: the TV shows what the guests saw, the phone what the " + (modern ? "host" : "Keeper") + " saw. ◀ ▶ and Play step through the lines; the slider moves through every save in between."));
   if (!recs.length) ap(v, h("p.note", {}, "Nothing recorded yet."));
   else {
-    const page = recs.some(r => r.kind === "modern") ? "/modern.html" : "/play.html";
-    const tv = h("iframe", { src: page + "#replay-tv", title: "TV replay" }), ph = h("iframe", { src: page + "#replay-host", title: page === "/modern.html" ? "Host phone replay" : "Keeper phone replay" });
+    const page = modern ? "/modern.html" : "/play.html";
+    const tv = h("iframe", { src: page + "#replay-tv", title: "TV replay" }), ph = h("iframe", { src: page + "#replay-host", title: modern ? "Host phone replay" : "Keeper phone replay" });
     const tvbox = h("div.tvbox", {}, tv), rng = h("input", { type: "range", min: 1, max: recs.length, value: 1, "aria-label": "Point in the game" }), now = h("div.now", {}), tl = h("div.tl", {});
     const play = h("button.btn.ghost.small", {}, "Play"), speed = h("select", { "aria-label": "Speed" }, [["1500", "slow"], ["700", "normal"], ["250", "fast"]].map(([v, l]) => h("option", { value: v, selected: v === "700" }, l)));
-    recs.forEach((r, i) => tl.append(h("div", { onclick: () => go(i + 1) }, secs(r.t).slice(-8) + " · " + (r.kind === "wipe" ? "(game wiped)" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)"))));
-    ap(v, h("div.scrub", {}, play, speed, h("button.btn.ghost.small", { onclick: () => go(+rng.value - 1) }, "◀"), rng, h("button.btn.ghost.small", { onclick: () => go(+rng.value + 1) }, "▶"), now), h("div.stage", {}, tvbox, h("div.phbox", {}, ph)), h("h3", {}, "Timeline"), tl);
+    const every = h("input", { type: "checkbox" });
+    let shown = [], cur = 0, k = -1, timer = null;
+    const mark = () => { [...tl.children].forEach((x, j) => x.classList.toggle("on", j === k)); const on = tl.children[k]; if (on) on.scrollIntoView({ block: "nearest" }) };
+    const drawTl = () => {
+      shown = every.checked ? recs.map((r, i) => ({ t: r.t, i, text: r.kind === "wipe" ? "(game wiped)" : r.line && (!i || r.line !== recs[i - 1].line) ? r.line : "(" + (r.phase || "") + ", no new log line)" })) : moments;
+      tl.textContent = ""; shown.forEach((m, j) => tl.append(h("div", { onclick: () => go(m.i + 1, j) }, secs(m.t).slice(-8) + " · " + m.text)));
+      k = shown.reduce((a, m, j) => m.i + 1 <= cur ? j : a, -1); mark();
+    };
+    every.onchange = drawTl;
+    const step = d => { const j = Math.max(0, Math.min(shown.length - 1, k + d)); if (shown[j]) go(shown[j].i + 1, j) };
+    ap(v, h("div.scrub", {}, play, speed, h("button.btn.ghost.small", { onclick: () => step(-1), "aria-label": "Previous" }, "◀"), rng, h("button.btn.ghost.small", { onclick: () => step(1), "aria-label": "Next" }, "▶"), now), h("div.stage", {}, tvbox, h("div.phbox", {}, ph)),
+      h("div.tlhead", {}, h("h3", {}, "What happened"), h("label", {}, every, " Every save (" + recs.length + ")")), tl);
+    drawTl();
     const fit = () => { tv.style.transform = "scale(" + tvbox.clientWidth / 1600 + ")" }; fit(); addEventListener("resize", fit);
-    const cache = new Map(); let cur = 0, timer = null;
-    async function go(n) {
+    async function go(n, at) {
       n = Math.max(1, Math.min(recs.length, n)); cur = n; rng.value = n; const r = recs[n - 1];
-      [...tl.children].forEach((x, i) => x.classList.toggle("on", i === n - 1)); const on = tl.children[n - 1]; if (on) on.scrollIntoView({ block: "nearest" });
+      k = at ?? shown.reduce((a, m, j) => m.i + 1 <= n ? j : a, -1); mark();
       now.textContent = n + " of " + recs.length + " · " + secs(r.t) + " · " + (r.phase || "") + (r.round ? " · round " + r.round : "") + (r.line ? " · " + r.line : "");
-      let st = null; if (r.kind !== "wipe") { if (!cache.has(n)) cache.set(n, await api("room/" + code + "/rec?n=" + r.n)); st = cache.get(n) }
+      let st = null; if (r.kind !== "wipe") st = await recAt(n);
       if (cur !== n) return;
       for (const f of [tv, ph]) try { f.contentWindow.replayShow && f.contentWindow.replayShow(st && JSON.parse(JSON.stringify(st))) } catch (e) {}
     }
     rng.oninput = () => go(+rng.value);
     replay = { stop() { clearInterval(timer); timer = null; play.textContent = "Play" } };
-    play.onclick = () => { if (timer) return replay.stop(); play.textContent = "Pause"; timer = setInterval(() => { if (cur >= recs.length) return replay.stop(); go(cur + 1) }, +speed.value) };
+    play.onclick = () => { if (timer) return replay.stop(); play.textContent = "Pause"; timer = setInterval(() => { if (k >= shown.length - 1) return replay.stop(); step(1) }, +speed.value) };
     let loaded = 0; for (const f of [tv, ph]) f.onload = () => { if (++loaded === 2) setTimeout(() => go(at ? Math.min(at, recs.length) : recs.length), 300) };
   }
   // what the devices sent
   const ef = h("select", { "aria-label": "Which events" }, [["all", "Everything"], ["error", "Errors"], ["sync", "Sync and network"], ["tap", "Taps"], ["view", "Screens"], ["report", "Reports"]].map(([v, l]) => h("option", { value: v }, l)));
   const tb = h("tbody", {}), draw = () => { tb.textContent = ""; const want = ef.value; for (const e of evs.slice().reverse()) if (want === "all" || e.k === want || (want === "sync" && e.k === "net")) tb.append(row([secs(e.t), (e.host ? "phone " : "TV ") + e.device, e.k, h("div", {}, e.m, e.stack ? h("div.mono", {}, e.stack) : null)], null, "ev-" + e.k)) };
   ef.onchange = draw; draw();
-  ap(v, h("h2", {}, "What the devices saw"), h("p.note", {}, "Each TV and phone in this room sends what it showed, what was tapped (button names only, never anything typed), connection trouble and errors. Newest first."), ef,
-    h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["When", "Device", "Kind", "What"].map(x => h("th", {}, x)))), tb)));
+  const errs = evs.filter(e => e.k === "error").length;
+  ap(v, h("details.devs", {}, h("summary", {}, h("h2", {}, "What the devices saw"), h("span", {}, evs.length + (evs.length === 1 ? " report" : " reports") + (errs ? ", " + errs + (errs === 1 ? " error" : " errors") : ""))),
+    h("p.note", {}, "Each TV and phone in this room sends what it showed, what was tapped (button names only, never anything typed), connection trouble and errors. Newest first."), ef,
+    h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["When", "Device", "Kind", "What"].map(x => h("th", {}, x)))), tb))));
 }
 
 /* issue reports */
