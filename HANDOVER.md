@@ -572,8 +572,8 @@ The standard checks before a deploy are smoke166, plan, big, claim, admin, moder
 
 - **Business details:** the terms name "an independent business based in England" and info@thebetrayal.co.uk, with no trading name or geographic address. UK consumer law expects both before selling to the public; add them to the terms, privacy notice and contact page.
 - **The seal discount under Managed Payments** is unverified: check the first real seal purchase shows 10% off. If Stripe refuses it, the buyer pays full price and the error log says why.
-- **No typed promotion codes and no extra checkout fields.** A discount code for guests, or a "How did you hear about us?" question, needs another route.
-- **The booking code isn't on Stripe's receipt** (Managed Payments refuses the extras that would carry it). Buyers rely on the screen after paying; `/admin` finds a lost code by email.
+- **No extra checkout fields** (Managed Payments). Discount codes are typed on the booking page instead (§6.5a), and where a buyer came from is recorded without asking (§6.4b).
+- **The booking code isn't on Stripe's receipt** (Managed Payments refuses the extras that would carry it). Buyers get it on screen after paying and in the booking email (§6.4a); `/admin` finds a lost code by email address.
 - **Live payments:** `qa/claim.mjs` covers the Stripe paths against a stub. After any Stripe change, run the staging test in §6.2 and one live purchase and refund.
 - **Vibration** doesn't work on iPhones.
 - **Big tables** (20 to 24) are checked by simulation and `qa/big.py`; a 24-player Classic game runs about 8 rounds.
