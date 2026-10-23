@@ -76,7 +76,7 @@ with sync_playwright() as p:
     check("the TV lists all eight", until(lambda: all(n in tv.inner_text("#tvapp") for n in NAMES)))
     check("no kill choice in the lobby (poison is the only kill), and the default prize explains its chocolate coins", host.locator("[data-a=opt][data-k=kill]").count() == 0 and host.input_value("#prize") == "chocolate coins" and "Every 100 points in the Purse is one chocolate coin" in host.inner_text("#app"))
     host.click("summary:has-text('Better prizes')"); host.fill("#tier1", "champagne"); host.locator("#tier1").dispatch_event("change")
-    check("the host's settings: a better prize for a half-full Purse", until(lambda: host.input_value("#tier1") == "champagne"))
+    check("the host's settings: a better prize for a half-full Purse (saved, so the next tap isn't lost to the redraw)", until(lambda: host.evaluate("()=>!!(V&&V.opts&&(V.opts.prizes||[]).some(x=>x.what==='champagne'))")))
     check("twists on and dinner off by default", "Once each: the Casting Vote, the Temptation, the Crown" in host.inner_text("#app") and "No meal breaks" in host.inner_text("#app"))
     host.click("[data-a=opt][data-k=courses][data-v=true]")
     check("…and the host can switch dinner in courses on", until(lambda: "Dinner in courses: a starter" in host.inner_text("#app")))

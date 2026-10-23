@@ -1,71 +1,16 @@
-# Break it: 100+ adversarial sims. Part 1 plays targeted games in the host page (story, every mission and shield choice,
-# leavers in every phase, undo storms, rewinds, random games with a twist) and checks invariants after every tap, then
-# replays every TV screen it reached at 1280x720 and 3840x2160. Part 2 attacks the sync and the hands: two phones at once,
-# lost replies, offline taps, wipes, a wifi login page, rate limits, a new version mid-setup, holds cancelled every way.
-# Own servers: static :8718 (part 1), node qa/server.mjs :8717 (part 2). Usage: python3 qa/break.py [part1|part2]
+# Break it: attacks on the sync and the hands, through the real Keeper page against qa/server.mjs (started here on :8717):
+# two phones at once, lost replies, offline taps, wipes, a wifi login page, rate limits, a new version mid-setup, holds
+# cancelled every way. Usage: python3 qa/break.py [part of a scenario's name]
 import sys, json, subprocess, time, os, urllib.request, random
 from playwright.sync_api import sync_playwright
 ONLY = sys.argv[1] if len(sys.argv) > 1 else ""
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
-LIB = open(os.path.join(HERE, "break.js")).read()
-API, STATIC = 8717, 8718
+API = 8717
 results = []  # (name, [fails])
 def record(name, fails):
     results.append((name, fails))
     print(("PASS " if not fails else "FAIL ") + name + ("" if not fails else "  -> " + json.dumps(fails)[:600]), flush=True)
 
-OVER = r"""(st) => { window.__noCards = true; state = st; lastKey = null; lastPhase = st.phase; renderTV();
-  const out = [], sg = document.querySelector('#stage'), sr = sg.getBoundingClientRect();
-  for (const el of sg.querySelectorAll('*')) { if (el.closest('svg') && el.nodeName !== 'svg') continue; const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
-    if (getComputedStyle(el).position === 'absolute' && el.closest('.rt,.ring,.rolecard')) continue;
-    if (r.top < sr.top - 2 || r.bottom > sr.bottom + 2 || r.left < -1 || r.right > innerWidth + 1) { out.push((el.className || el.nodeName) + ' ' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' stage ' + Math.round(sr.top) + '..' + Math.round(sr.bottom)); break } }
-  const rt = sg.querySelector('.rt'); if (rt) for (const el of rt.querySelectorAll('.nm,.chairseal')) { const r = el.getBoundingClientRect(); if (r.left < 0 || r.right > innerWidth || r.top < 0 || r.bottom > innerHeight) { out.push('round table off-screen: ' + el.textContent); break } }
-  if (document.documentElement.scrollHeight > innerHeight + 1) out.push('page scrolls vertically');
-  const t = document.body.innerText; if (/undefined|NaN|\[object/.test(t)) out.push('tv text: ' + (t.match(/.{0,30}(undefined|NaN|\[object).{0,30}/) || [''])[0]);
-  return out }"""
-FREEZE = "*,*::before,*::after{animation-duration:0s!important;animation-delay:0s!important;transition:none!important}"
-
-def part1(b):
-    srv = subprocess.Popen([sys.executable, "-m", "http.server", str(STATIC), "--directory", os.path.join(ROOT, "worker/public")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    NAP(1)
-    try:
-        ctx = b.new_context(viewport={"width": 440, "height": 956})
-        pg = ctx.new_page(); errs = []
-        pg.on("pageerror", lambda e: errs.append(str(e)))
-        # act() swallows a tap the state has moved past; in the sims every tap is on a fresh render, so one is a bug
-        pg.on("console", lambda m: errs.append(m.text[:300]) if "stale tap ignored" in m.text else None)
-        pg.goto(f"http://localhost:{STATIC}/play.html#host"); pg.wait_for_timeout(1200); pg.add_style_tag(content=FREEZE)
-        pg.evaluate(LIB)
-        n = pg.evaluate("()=>__B.count()")
-        for i in range(n):
-            e0 = len(errs)
-            try: r = pg.evaluate(f"()=>__B.run({i})")
-            except Exception as ex:
-                record(f"story #{i}", [{"msg": "harness: " + str(ex)[:300]}]); pg.goto(f"http://localhost:{STATIC}/play.html#host"); pg.wait_for_timeout(1000); pg.evaluate(LIB); continue
-            f = r["fails"] + [{"msg": "page error: " + x} for x in errs[e0:]]
-            record(r["name"], f)
-        samples = pg.evaluate("()=>__B.samples")
-        # every TV screen reached, on the 720p preview and the 4K TV
-        for w, h in ((1280, 720), (1440, 900), (3840, 2160)):  # 16:9, a MacBook mirrored (16:10), a 4K TV
-            tv = b.new_page(viewport={"width": w, "height": h}); terr = []
-            tv.on("pageerror", lambda e: terr.append(str(e)))
-            tv.goto(f"http://localhost:{STATIC}/play.html"); tv.wait_for_timeout(1200); tv.add_style_tag(content=FREEZE)
-            for size in ("large", "standard"):  # the TV text switch in the host's Menu
-                bad = []
-                for k, st in samples.items():
-                    out = tv.evaluate(OVER, {**st, "tvText": size})
-                    if out: bad.append({"view": k, "out": out[:2], "st": st})
-                if bad:  # keep the failing states for a closer look
-                    os.makedirs(os.path.join(HERE, "shots"), exist_ok=True)
-                    json.dump([x.pop("st") for x in bad[:6]], open(os.path.join(HERE, "shots", f"break_fail_{w}x{h}_{size}.json"), "w"))
-                    for x in bad: x.pop("st", None)
-                record(f"every TV screen reached ({len(samples)}) fits {w}x{h}, {size} text", bad[:8] + [{"msg": "tv error: " + x} for x in terr[:3]])
-            tv.close()
-        ctx.close()
-    finally:
-        srv.kill()
-
-# ---------------------------------------------------------------- part 2: sync, network, PIN, holds
 srvp = None
 def server():
     global srvp
@@ -513,8 +458,7 @@ def part2(b):
 with sync_playwright() as p:
     b = p.chromium.launch()
     try:
-        if ONLY in ("", "part1"): part1(b)
-        if ONLY != "part1": part2(b)
+        part2(b)
     finally:
         b.close()
         if srvp: srvp.kill()

@@ -556,7 +556,7 @@ body.nocursor, body.nocursor * { cursor: none !important }
 #host .mlist em { display: block; font-family: var(--book); font-style: italic; font-weight: 400; font-size: 15.5px; color: var(--brass2); margin-top: 2px }
 #host .mlist small { display: block; font-weight: 400; font-size: 15.5px; color: var(--tallow2); margin-top: 3px; line-height: 1.35 }
 #host .log { font-size: 14.5px; color: var(--tallow2); display: grid; gap: 3px; font-variant-numeric: tabular-nums }
-#host .kv { color: var(--brass2) } #host .lettersrow { font-family: var(--book); font-size: 30px; letter-spacing: .22em; color: var(--ink) }
+#host .kv { color: var(--brass2) } #host .lettersrow { font-family: var(--book); font-size: min(30px, 6.6vw); letter-spacing: .22em; color: var(--ink); overflow-wrap: anywhere }
 
 /* the foot: the next step, always in reach */
 #host .foot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 10px max(var(--gut), calc(50vw - 264px)) calc(10px + env(safe-area-inset-bottom)); background: rgba(9,7,10,.97); border-top: 1px solid var(--rule) }

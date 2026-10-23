@@ -3,6 +3,9 @@
 // paid, expired or refunded pass may do. node qa/claim.mjs
 import worker, { Registry } from "../worker/src/index.js";
 import { passKey } from "../worker/src/codes.js";
+import { register } from "node:module";
+// the Workers runtime's cloudflare:email, stubbed for Node, so the owner's alert emails can be read back
+register("data:text/javascript," + encodeURIComponent('export async function resolve(s, c, next) { return s === "cloudflare:email" ? { shortCircuit: true, url: "data:text/javascript," + encodeURIComponent("export class EmailMessage { constructor(from, to, raw) { Object.assign(this, { from, to, raw }) } }") } : next(s, c) }'));
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond };
 const store = () => { const m = new Map(); return { get: async k => m.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a, b] of Object.entries(k)) m.set(a, b); else m.set(k, v) }, delete: async k => { for (const x of [].concat(k)) m.delete(x) },
@@ -10,8 +13,9 @@ const store = () => { const m = new Map(); return { get: async k => m.get(k), pu
 const closed = [], extended = []; let gameGone = false;
 const GAME = { idFromName: n => n, get: id => ({ fetch: async (u, init) => { if (String(u).endsWith("/_close")) closed.push(id); if (String(u).endsWith("/_extend")) { if (gameGone) return new Response("{}", { status: 404 }); extended.push([id, JSON.parse(init.body).expires]) } return new Response("{}") } }) };
 // the MAIL binding, stubbed: what it was asked to send, and a switch to make it refuse
-const sent = []; let mailFail = false; const MAIL = { send: async m => { if (mailFail) throw new Error("refused"); sent.push(m); return { messageId: "m" + sent.length } } };
-const reg = new Registry({ storage: store() }, { GAME, MAIL, SITE_HOST: "thebetrayal.co.uk" });
+// (booking emails to buyers in `sent`; the owner's alerts, raw MIME, in `alerts`)
+const sent = [], alerts = []; let mailFail = false; const MAIL = { send: async m => { if (mailFail) throw new Error("refused"); (m.raw ? alerts : sent).push(m); return { messageId: "m" + (sent.length + alerts.length) } } };
+const reg = new Registry({ storage: store() }, { GAME, MAIL, SITE_HOST: "thebetrayal.co.uk", ALERT_TO: "info@thebetrayal.co.uk" });
 const base = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_PRICE_ID: "price_123", STRIPE_SUB_PRICE_ID: "price_sub", STRIPE_WEBHOOK_SECRET: "whsec_test", ADMIN_TOKEN: "adm", GAME, REGISTRY: { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) } };
 
 // the stubbed Stripe: sessions made, sessions read back
@@ -314,5 +318,30 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const nr = made.length, [rs3, rj3] = await checkout({ terms: true, supply: true, discount: "TESTFREE" }, base, "192.0.2.109");
   check("checkout: if Stripe refuses a typed code, the buyer is told (not charged full price)", rs3 === 502 && made.length === nr, [rs3, rj3]);
   refuseDiscount = false;
+}
+// the owner's emails (ALERT_TO): one for each sale, refund, cancelled Regular and refused renewal, however many events
+// carry it, and the morning summary
+{
+  const read = m => { const [head, body] = m.raw.split("\r\n\r\n"), h = Object.fromEntries(head.split("\r\n").map(l => [l.slice(0, l.indexOf(":")).toLowerCase(), l.slice(l.indexOf(":") + 2)]));
+    return { to: h.to, subject: h.subject.replace(/^=\?UTF-8\?B\?(.*)\?=$/, (_, x) => Buffer.from(x, "base64").toString()), body: Buffer.from(body.replace(/\r\n/g, ""), "base64").toString() } };
+  const mails = () => alerts.map(read), about = (start, code) => mails().filter(m => m.subject.startsWith(start) && (!code || (m.subject + m.body).includes(code)));
+  check("owner: one sale email per booking, though the thank-you page and the webhook both claimed it", about("Sale: a Table", pass1).length === 1 && about("Sale: a Table", pass2).length === 1 && mails().every(m => m.to === "info@thebetrayal.co.uk"), mails().map(m => m.subject));
+  check("…naming the code, the buyer and where they came from", about("Sale: a Table", pass1)[0].body.includes("Email: buyer@example.com") && /Came from: /.test(about("Sale: a Table", pass1)[0].body));
+  check("…a Regular's says so, and a free (100% off) one says £0.00 and its code", about("Sale: a Regular", spass).length === 1 && about("Sale: a Table, £0.00").length === 2 && about("Sale: a Table, £0.00").every(m => m.body.includes("Discount code: TESTFREE")), mails().map(m => m.subject));
+  const r0 = about("Refund").length;
+  await hook({ type: "refund.updated", data: { object: { id: "re_5", object: "refund", status: "succeeded", amount: 1500, payment_intent: pi5, charge: "ch_5" } } });
+  await hook({ type: "charge.refunded", data: { object: { id: "ch_2", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions[id2].payment_intent } } });
+  check("owner: one refund email per refund, though Stripe sends several events for it", about("Refund: £15.00", pass2).length === 1 && about("Refund: £15.00", pass5).length === 1 && about("Refund").length === r0, mails().filter(m => m.subject.startsWith("Refund")).map(m => m.subject));
+  await hook({ type: "charge.refunded", data: { object: { id: "ch_2", object: "charge", amount: 1500, amount_refunded: 1500, refunded: true, payment_intent: sessions[id2].payment_intent } } });
+  check("…and an unplayed Table's says its code is cancelled", /code is now cancelled/.test(about("Refund: £15.00", pass2)[0].body));
+  const c0 = about("A Regular cancelled").length;
+  await hook({ type: "customer.subscription.deleted", data: { object: { id: sessions[sid].subscription, customer: sessions[sid].customer, status: "canceled", metadata: { pass: spass } } } });
+  check("owner: a Regular cancelling is one email", about("A Regular cancelled", spass).length === 1 && c0 === 1);
+  check("owner: a Regular's refused renewal is emailed; a card refused at checkout isn't (it's in the admin)", about("A Regular’s payment failed", spass).length === 1 && !about("A Regular’s payment failed", pass6).length);
+  const d = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
+  check("the morning summary counts the last 24 hours", /^The Betrayal, last 24 hours: \d+ sales \(£[\d.]+\), \d+ Tables?, \d+ errors?$/.test(d.subject) && /Sales: \d+ \(\d+ Tables, 1 new Regular\)/.test(d.body) && /Refunds: \d+, £/.test(d.body) && /Regulars who cancelled: /.test(d.body) && /Payments refused: /.test(d.body), d);
+  const waits = [], n = alerts.length;
+  await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk" }, { waitUntil: w => waits.push(w) }); await Promise.all(waits);
+  check("…and the daily schedule emails it", alerts.length === n + 1 && read(alerts[n]).subject === d.subject && read(alerts[n]).body.startsWith(d.body), alerts.length - n);
 }
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

@@ -22,12 +22,12 @@ SHEET = r"""() => {
   QUESTS.forEach(q => { if (/\{(?!F\}|T\})/.test(q)) out.push("quest has an unknown placeholder: " + q) });
   return { out, sizes: { QUIZ_E: QUIZ_E.length, QUIZ_M: QUIZ_M.length, QUIZ_H: QUIZ_H.length, ESTIMATE: ESTIMATE.length, LIKELY: LIKELY.length, CHARADES: CHARADES.length, SONGS: SONGS.length, PICTIONARY: PICTIONARY.length, MEMSETS: MEMSETS.length, CODEWORDS: CODEWORDS.length, QUESTS: QUESTS.length } };
 }"""
-# builds each screen from the real game functions, then measures it like the chaos replay does
+# builds each screen from the real game functions, then measures it as the TV would show it
 SWEEP = r"""(kind) => {
   const bad = [], P0 = () => state.players[1].id;
   const measure = label => {
     lastKey = null; lastPhase = state.phase; renderTV();
-    const sg = document.querySelector('#stage'), sr = sg.getBoundingClientRect(), txt = sg.textContent;
+    const sg = document.querySelector('#stage'), sr = (() => { const b = sg.getBoundingClientRect(), k = parseFloat(sg.style.scale) || 1, cy = (b.top + b.bottom) / 2; return { top: cy - b.height / k / 2, bottom: cy + b.height / k / 2, left: b.left, right: b.right } })(), txt = sg.textContent; // the stage's area, unscaled (src/tv.js fitStage)
     if (/undefined|NaN|\[object|null/.test(txt)) { bad.push(label + ': prints ' + txt.slice(0, 80)); return }
     for (const el of sg.querySelectorAll('*')) { if (el.closest('svg') && el.nodeName !== 'svg') continue; const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
       if (getComputedStyle(el).position === 'absolute' && el.closest('.rt,.ring,.rolecard')) continue;
@@ -48,7 +48,7 @@ SWEEP = r"""(kind) => {
 ok = True
 with sync_playwright() as p:
     b = p.chromium.launch()
-    for (w, h) in [(1024, 768), (1280, 720), (1920, 1080)]:
+    for (w, h) in [(1024, 768), (1280, 720), (1440, 900), (1920, 1080)]:
         pg = b.new_page(viewport={"width": w, "height": h}); errs = []
         pg.on("pageerror", lambda e: errs.append(str(e)))
         pg.goto(f"http://localhost:{PORT}/play.html"); pg.wait_for_timeout(1500); pg.add_style_tag(content=FREEZE)

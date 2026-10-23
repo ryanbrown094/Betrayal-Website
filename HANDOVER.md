@@ -110,7 +110,7 @@ qa/                   test harnesses (§8)
 
 - One Durable Object for the whole service (`idFromName("registry")`). Keys: `pass:CNDL-XXXX-XXXX` → `{created, note, source, kind?, room?, expires?, redeemed?, revoked?, pending?, paid?, failed?, refunded?, session?, pi?, subId?, customer?, subActive?, subStatus?, games?}`; `room:CODE`; `claim:<checkout session>` and `pi:<payment intent>` → pass; `co:<ip>` checkout rate; `err:` master log; `hook:` webhook log; `rep:` / `repx:` reports.
 - **Code formats** (`codes.js`): the alphabet avoids 0/O and 1/I/L. Rooms are 6 characters. Booking codes are 8 characters, **stored under a `CNDL-` key and shown as `OATH-`** (`shownPass`). `normPass` strips either prefix or none, so `CNDL-…`, `OATH-…` and the bare 8 characters all find the same record.
-- **Redeeming** a one-party code creates a room good for `PASS_HOURS`; redeeming it again returns the same room until it expires (a host who lost the link), then 410. Pending (unpaid) codes get 402, cancelled ones 410. A Regular's code returns the open room ("Carry on") or, with `fresh: true`, closes it (GameState `/_close`) and opens a new one; it works only while `subActive` (Stripe status `active` or `trialing`), otherwise 402.
+- **Redeeming** a one-party code creates a room good for `PASS_HOURS`; redeeming it again returns the same room until it expires (a host who lost the link), then 410. Redemptions of one code run one at a time (`queued` in `index.js`), so two taps at once, or two tabs, get the same room; a Modern Table's set-up (`m/create`) is queued the same way, so it gets one host. Pending (unpaid) codes get 402, cancelled ones 410. A Regular's code returns the open room ("Carry on") or, with `fresh: true`, closes it (GameState `/_close`) and opens a new one; it works only while `subActive` (Stripe status `active` or `trialing`), otherwise 402.
 - **Limits:** 20 failed redemptions an hour per address, then 429 (admin sign-in failures and billing-portal lookups count too). Checkouts: 10 an hour per address.
 - **Master passcode** (`MASTER_PASS` secret): entered in the home page's code box (any case, trimmed) it opens a fresh room every time, recorded as `pass: "MASTER"`, and the home page offers a third card, *Modern test*. Unset, it does nothing.
 - `OPEN_ACCESS=1` lets `POST /api/games` with no pass make a room. Development only.
@@ -144,7 +144,7 @@ qa/                   test harnesses (§8)
 ### 4.6 Diagnostics
 
 - **Recording** (`GameState.record`): every accepted Classic save stores `recl:<n>` (time, kind start/save/wipe, the newest log line, phase, round, version) and `recs:<n>` (the whole state, gzipped). Modern is recorded on every new screen and at most every 15 seconds otherwise, with the TV's and host's views. Up to `RECMAX` (20,000) a room; deleted with the room.
-- **Device trail** (`src/diag.js`): taps (button labels only), screen changes, visibility, network, sync failures (`crumb()`), errors and unhandled rejections. Sent every 15 s (errors at once, and on pagehide) to `POST /api/g/CODE/events`, stored as `ev:<n>` batches (up to `EVMAX` = 2,000, each at most 32 KB). Errors are copied to the master log.
+- **Device trail** (`src/diag.js`): taps (button labels only), screen changes, visibility, network, sync failures (`crumb()`), errors and unhandled rejections. Sent every 15 s (errors at once, and on pagehide) to `POST /api/g/CODE/events`, stored as `ev:<n>` batches (up to `EVMAX` = 2,000, each at most 32 KB). Errors are copied to the master log, at most 30 an hour a room (`errc`), so nobody with a room code can flood it; the rest stay in the room's trail.
 - **Reports** (10 an hour per address): `POST /api/report {room, what, expected, email, snap, crumbs…}`, where `snap` is the page without scripts, gzipped and base64. The Registry keeps `rep:<R-XXXXXX>` and the snapshot in 100 KB chunks (`repx:`). The room is kept 90 days for its replay. The contact form posts here too. Every report is emailed (§6.4).
 - **Master log** (Registry `err:`, newest 3,000): `src` = `browser`, `server` (every Worker and GameState exception is caught, logged, then 500), `stripe` (bad signatures, unmatched refunds, refused checkouts or discounts), `report`, `mail` (failed alert emails). **Webhook log** `hook:` (newest 1,000): every verified Stripe event and what it did.
 - **Replay:** `/play.html#replay-tv` and `#replay-host` (and the same hashes on `modern.html`) start nothing and expose `replayShow(state)`. `/admin` loads both in iframes and feeds them recorded states. Its list, **What happened**, is the game's log rather than every save: for Modern, the whole log of each game played in the room (from its last save), with arrivals as one line, and every decision named (who voted for whom and who didn't, the Forsworn's night picks, who chose SELF in the Temptation, trust or doubt, honour or betray, who was dealt Forsworn); for Classic, each save that added a log line. Tapping a line, ◀ ▶ and Play move between those lines; the slider and the **Every save** box still reach every save. The devices' trail is folded under its heading, with a count of reports and errors. The Modern log is only ever read by `/admin`: `viewFor` never sends it to a phone or the TV.
@@ -350,7 +350,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   1. `STRIPE_SECRET_KEY=sk_… tools/stripe-setup.sh https://<domain> 1000` creates the one-party product, a tax-inclusive GBP price, and the webhook endpoint with all twelve events. It prints the price ID and the signing secret.
   2. Create the Regular's price by hand in the Dashboard (recurring, monthly).
   3. Put the price IDs in that environment's `.toml`; `npx wrangler secret put STRIPE_SECRET_KEY -c <config>` and `… STRIPE_WEBHOOK_SECRET`.
-  4. In the Dashboard: product names (as listed in `media/copy/NEXT-STEPS.md`; `stripe-setup.sh` names the Table's product), tax codes, statement descriptor, customer portal, public business details.
+  4. In the Dashboard: product names (“The Betrayal — a Table (one party)” and “The Betrayal — Regular (monthly)”; `stripe-setup.sh` names the Table's product), tax codes, statement descriptor, customer portal, public business details.
   5. Test on staging with test keys and card 4242 4242 4242 4242: the code appears and opens a Table, `/admin` shows it, a refund cancels it. Then live keys on production.
 - The publishable key isn't used: Checkout is Stripe-hosted.
 
@@ -383,7 +383,13 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - Every contact message and problem report is emailed to `ALERT_TO` (info@thebetrayal.co.uk) from `alerts@thebetrayal.co.uk`, with Reply-To set to the customer's email when given. The subject carries the report ID; the body links to `/admin` (Reports).
 - It uses the `MAIL` send_email binding (`[[send_email]]` in `wrangler.toml`; `alertMail` in `index.js`). **Prerequisites:** Email Routing on for thebetrayal.co.uk, and `ALERT_TO` verified under Email Routing → Destination addresses.
 - Without them, or if sending fails, the report is still saved and the failure goes to the error log (`src: "mail"`). The customer never sees a mail error.
-- Under `wrangler dev`, each email is written to `.wrangler/tmp/email/`.
+- Under `wrangler dev`, each email is written to `.wrangler/tmp/email/`; `--test-scheduled` adds `/__scheduled` to fire the morning summary by hand.
+- **The owner's emails** (`Registry.notify`), each once, sent only when the Registry's record actually changes, so the thank-you page and the webhook both claiming, or Stripe's several events for one refund, still make one email:
+  - **Sale:** a Table or a Regular, the amount (£0.00 for a 100% discount code), the booking code, the buyer's email, where they came from and any discount code.
+  - **Refund:** the amount, the code, and whether its unplayed code was cancelled. A larger later total (a second partial refund) is news again.
+  - **A Regular cancelled.**
+  - **A Regular's payment failed**, once per attempt. A card refused at checkout isn't emailed; it shows in the admin and in the morning summary.
+- **The morning summary** (`[triggers] crons` in `wrangler.toml`, 07:00 UTC; the Worker's `scheduled` handler and the Registry's `/digest`): the last 24 hours' sales and their total, refunds, Regulars who cancelled, refused payments, Tables opened (test rooms counted apart), new and open reports, and errors with the commonest three; then how many Regulars there are. Sent every day, even when nothing happened, so its absence means something's wrong.
 
 ### 6.4a The booking email
 
@@ -436,7 +442,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ### 6.7 Site and legal pages
 
-- `site/pages/`: `terms` (sale and use; the £10 and £20 prices, 48 hours, 7 days, discounts), `privacy` (UK GDPR notice), `cookies` (only strictly necessary storage, so no banner; lists every `bt-` key), `refunds` (14-day cancellation until the code is first used; Consumer Rights Act remedies), `contact` (a form that posts to `/api/report`, and info@thebetrayal.co.uk), `buy` (price, two required ticks for the terms and for immediate supply with loss of the right to cancel, as the Consumer Contracts Regulations require), `rules` (Modern, with a `#classic` section), `tour` (Modern / Classic toggle; `/tour#classic` opens Classic; both show without JavaScript), `seal`, `404`, `admin`.
+- `site/pages/`: `terms` (sale and use; the £10 and £20 prices, 48 hours, 7 days, discounts), `privacy` (UK GDPR notice), `cookies` (the storage the site needs, and Google's advertising cookies, which only start after a yes on the banner in `site/consent.js`; lists every `bt-` key), `refunds` (14-day cancellation until the code is first used; Consumer Rights Act remedies), `contact` (a form that posts to `/api/report`, and info@thebetrayal.co.uk), `buy` (price, two required ticks for the terms and for immediate supply with loss of the right to cancel, as the Consumer Contracts Regulations require), `rules` (Modern, with a `#classic` section), `tour` (Modern / Classic toggle; `/tour#classic` opens Classic; both show without JavaScript), `seal`, `404`, `admin`.
 - Each page's `<!-- desc: -->` line becomes its description, canonical and social tags. Every footer links the legal pages; the nav links How to play, See a game and Book a Table.
 - `robots.txt` (disallows `/admin`, `/seal`, `/api/`, `/t/`, `/m/`, `/g/`) and `llms.txt` in `worker/public/` are hand-maintained; `sitemap.xml` and `llms-full.txt` are generated by `build.sh` (§6.9).
 - The home page's price line is `SHOP` near the bottom of `site/index.html`; the buy page states its prices in `site/pages/buy.html`.
@@ -455,7 +461,6 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 | `tools/brand/make_seal.py` | the cracked wax seal (`media/logos/the-betrayal-seal*`) and the app and browser icons | `./build.sh` first |
 | `tools/brand/make_creatives.py` | ads, social images and print card | |
 | `tools/brand/make_guidelines.py` | `media/The-Betrayal-Brand-Guidelines.pdf` | after make_creatives |
-| `tools/icons.py` | `icon-180.png`, `icon-512.png` from the crest (`ART.crest`) | writes the same files as make_seal.py: whichever runs last wins |
 
 - The Modern tour game has **twists off**, so no secret prize, Temptation or Honour or Betray appears (no spoilers), and it ends in a Loyal win so the end screens are stable. Keep it that way. It passes `qr` so the TV lobby's QR code leads to `/seal`.
 - `build.sh` copies `media/web/*` to `worker/public/media/`; rebuild after regenerating images.
@@ -485,7 +490,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   - Everything else is proposed to the owner: enabling, new campaigns, ads or keywords, ad text, bidding strategy and conversion settings. `qa/ads.mjs` tests each limit.
   - Google may spend up to twice a day's budget on a busy day, but no more than 30.4 days' worth in a month.
 - **Permission to act:** in auto mode the safety check refuses any change to the live account unless a permission rule allows `node tools/ads/ads.mjs …`; without one a sweep can only report. The rule belongs in `.claude/settings.json` (`{"permissions": {"allow": ["Bash(node tools/ads/ads.mjs *)"]}}`) and is the owner's to add, since it changes what Claude may do. `LIMITS` in the script is what keeps the sweep's changes safe.
-- **The 19 Oct 2026 setup** (`tools/ads/once-2026-10-19.mjs`, kept as a record): Performance Max cut from £3.90 to £1 a day; the unused duplicate conversion "Purchase (1)" made secondary ("Purchase", the one the site's tag feeds, stays primary); 145 mobile-app categories excluded account-wide (Performance Max had spent 98% on Display, mostly app taps, with no sales); and a Search campaign "Search: party games" at £3 a day: Maximise clicks with a £1 limit, UK presence, English, Google Search only, three ad groups (game at home → /traitors-at-home, party games → /party-games-for-large-groups, hidden role games → /) with 17 phrase keywords, an ad each from the brief's headlines and descriptions, and the 15 negatives. Sitelinks, callouts and the snippet are account-level, so it has them too.
+- **The 19 Oct 2026 setup** (a one-off script, removed once it had run; it's in the git history): Performance Max cut from £3.90 to £1 a day; the unused duplicate conversion "Purchase (1)" made secondary ("Purchase", the one the site's tag feeds, stays primary); 145 mobile-app categories excluded account-wide (Performance Max had spent 98% on Display, mostly app taps, with no sales); and a Search campaign "Search: party games" at £3 a day: Maximise clicks with a £1 limit, UK presence, English, Google Search only, three ad groups (game at home → /traitors-at-home, party games → /party-games-for-large-groups, hidden role games → /) with 17 phrase keywords, an ad each from the brief's headlines and descriptions, and the 15 negatives. Sitelinks, callouts and the snippet are account-level, so it has them too.
 - **API version:** `VERSION` (v26). Each version is retired about a year after release. A retired version gives a 404, and `check` says so; then set `GOOGLE_ADS_API_VERSION`, or update `VERSION`.
 - **Credentials:** environment variables in the cloud environment's settings, never a file. Google retired developer tokens in September 2026, and API access now belongs to the Google Cloud project that owns the OAuth client. `GOOGLE_ADS_DEVELOPER_TOKEN` is optional: if set it's still sent, and Google ignores it (remove it if a later API version refuses it).
   - `GOOGLE_ADS_CLIENT_ID`
@@ -523,7 +528,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 ## 8. Testing
 
-**Never run `qa/chaos.py` unless Ryan asks for a chaos test.** Never run `build.sh` while chaos or break is running (a new `build.txt` reloads the pages). Kill stray local servers with `for pid in $(pgrep -f "^node qa/server.mjs 871[4-9]"); do kill $pid; done`; don't `pkill -f` a pattern your own command line contains.
+Never run `build.sh` while break is running (a new `build.txt` reloads the pages). Kill stray local servers with `for pid in $(pgrep -f "^node qa/server.mjs 871[4-9]"); do kill $pid; done`; don't `pkill -f` a pattern your own command line contains.
 
 **The local Worker** (for every harness marked *wrangler dev*):
 
@@ -551,12 +556,12 @@ npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw -
 | `node qa/admin.mjs` | none (stubbed) | admin sign-in, cookie flags and tampering, the attempt limit, Bearer token, cross-site requests, codes, test room |
 | `node qa/ads.mjs` | none (Google Ads API stubbed) | the sweep's script: sign-in, Google's errors and their hints, every part of the report, and every limit on changes (the £4 cap, bid steps and ceiling, negatives that would block a keyword, an ad group's last ad, non-GBP accounts, dry run vs live, partial failures) |
 | `node qa/worker.mjs` | none | the real Worker class with in-memory storage: PIN limits, stale-build writes, the settings rule |
-| `qa/break.py part2` | `qa/server.mjs` :8717 | sync and hand attacks: two phones, lost replies, offline taps, wipes, rate limits |
-| `qa/chaos.py` | own server :8715, **only on request** | random whole Classic games through the Keeper UI with random plans, invariants, TV overflow |
-| `qa/banks.py` | own server :8717 | every bank item on the TV; duplicates and well-formedness |
+| `qa/break.py` | starts `qa/server.mjs` :8717 itself (leave the port free) | sync and hand attacks: two phones, lost replies, offline taps, wipes, rate limits, holds |
+| `qa/banks.py` | own server :8717 | every bank item on the TV at 4:3, 16:9 and 16:10; duplicates and well-formedness |
+| `qa/audit.py` | own server :8718 | phone widths, TV sizes and player counts: overflow, tap targets, tiny text, and contrast read from `src/style.css` |
+| `qa/audio.py` | own server :8716 | renders every scene and sound effect offline and prints their levels |
 | `qa/media.py`, `qa/shots.py`, `qa/gallery.py` | `qa/server.mjs` :8714 | screenshots |
 
-Unmaintained: `qa/break.py part1` and `qa/review.py` drive an older Classic setup form and small tables; `qa/smoke.py`, `qa/audit.py`, `qa/audio.py`, `qa/live.py` are older checks. Rework them before trusting a result.
 
 **Room expiry by hand:** `wrangler dev` with `--var PASS_HOURS:0.001 --var KEEP_DAYS:0.0001`: writes get 423 after expiry, reads still work, a used and expired code is refused, and the alarm deletes the room.
 
@@ -566,10 +571,10 @@ The standard checks before a deploy are smoke166, plan, big, claim, admin, moder
 
 ## 9. Known limitations and open to-dos
 
-- **Business details:** the terms name "an independent business based in England" and info@thebetrayal.co.uk, with no trading name or geographic address. UK consumer law expects both before selling to the public; add them to the terms, privacy notice and contact page (see `media/copy/NEXT-STEPS.md`).
+- **Business details:** the terms name "an independent business based in England" and info@thebetrayal.co.uk, with no trading name or geographic address. UK consumer law expects both before selling to the public; add them to the terms, privacy notice and contact page.
 - **The seal discount under Managed Payments** is unverified: check the first real seal purchase shows 10% off. If Stripe refuses it, the buyer pays full price and the error log says why.
-- **No typed promotion codes and no extra checkout fields.** A discount code for guests, or a "How did you hear about us?" question, needs another route.
-- **The booking code isn't on Stripe's receipt** (Managed Payments refuses the extras that would carry it). Buyers rely on the screen after paying; `/admin` finds a lost code by email.
+- **No extra checkout fields** (Managed Payments). Discount codes are typed on the booking page instead (§6.5a), and where a buyer came from is recorded without asking (§6.4b).
+- **The booking code isn't on Stripe's receipt** (Managed Payments refuses the extras that would carry it). Buyers get it on screen after paying and in the booking email (§6.4a); `/admin` finds a lost code by email address.
 - **Live payments:** `qa/claim.mjs` covers the Stripe paths against a stub. After any Stripe change, run the staging test in §6.2 and one live purchase and refund.
 - **Vibration** doesn't work on iPhones.
 - **Big tables** (20 to 24) are checked by simulation and `qa/big.py`; a 24-player Classic game runs about 8 rounds.

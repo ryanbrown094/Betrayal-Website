@@ -74,7 +74,7 @@ async function openReport() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || "It didn’t send (" + r.status + ")");
       crumb("report", "sent " + j.id);
-      box.querySelector("form").innerHTML = `<h2>Thank you</h2><p>Your report is in. Its reference is <b>${esc(j.id)}</b>, in case you write to us about it.</p><div class="rp-row"><button type="button" class="rp-send">Back to the game</button></div>`;
+      box.querySelector("form").innerHTML = `<h2>Thank you</h2><p>Your report is in. Its reference is <b>${esc(j.id)}</b>, in case you write to us about it. If you left your email, we’ll reply within 24 hours.</p><div class="rp-row"><button type="button" class="rp-send">Back to the game</button></div>`;
       box.querySelector(".rp-send").onclick = close;
     } catch (err) { send.disabled = false; msg.textContent = (err.message || "It didn’t send") + ". Check the connection and try again." }
   };

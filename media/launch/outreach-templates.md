@@ -25,7 +25,7 @@ Replace anything in [brackets]. Keep it personal: these work because they come f
 
 > Thanks for last night! If you fancy hosting your own game, use code [GUEST] for £5 off at thebetrayal.co.uk.
 
-(Set up the code first. Checkout applies the broken seal’s discount automatically but has no box for typing a code: see `NEXT-STEPS.md` step 4 before sending this.)
+(Make the code first: /admin → Discount codes, 50% off one party, which is £5 off a Table. Buyers type it under “Have a discount code?” on the booking page.)
 
 ## 5 · Facebook groups (ask the admin first)
 

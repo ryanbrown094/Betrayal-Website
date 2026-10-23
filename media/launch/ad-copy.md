@@ -68,4 +68,4 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - **Audience:** UK, 25–45, all genders. Either Advantage+ audience, or interests in party games, murder mystery games, games nights, dinner parties, pub quizzes, board games, hen parties and party planning. Leave it broad and let the creative do the filtering.
 - **Placements:** Advantage+ placements, with the story images assigned to Stories and Reels.
 - **Link:** `https://thebetrayal.co.uk/?utm_source=meta&utm_medium=paid&utm_campaign=launch&utm_content=01-everyone-swore-an-oath`, with `utm_content` changed for each ad.
-- **Attribution:** a “How did you hear about us?” question (Instagram, Facebook, TikTok, a friend’s party, a friend told me, other) is more reliable than a pixel at this volume. Checkout can’t carry extra fields with Managed Payments on, so see `NEXT-STEPS.md` step 4 for where to ask it.
+- **Attribution:** every booking records where its buyer came from (the link’s `utm_` tags, or which ad network’s click), shown in /admin and in the sale email, so there’s no need for a “How did you hear about us?” question.
