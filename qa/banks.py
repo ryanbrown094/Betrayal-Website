@@ -22,7 +22,7 @@ SHEET = r"""() => {
   QUESTS.forEach(q => { if (/\{(?!F\}|T\})/.test(q)) out.push("quest has an unknown placeholder: " + q) });
   return { out, sizes: { QUIZ_E: QUIZ_E.length, QUIZ_M: QUIZ_M.length, QUIZ_H: QUIZ_H.length, ESTIMATE: ESTIMATE.length, LIKELY: LIKELY.length, CHARADES: CHARADES.length, SONGS: SONGS.length, PICTIONARY: PICTIONARY.length, MEMSETS: MEMSETS.length, CODEWORDS: CODEWORDS.length, QUESTS: QUESTS.length } };
 }"""
-# builds each screen from the real game functions, then measures it like the chaos replay does
+# builds each screen from the real game functions, then measures it as the TV would show it
 SWEEP = r"""(kind) => {
   const bad = [], P0 = () => state.players[1].id;
   const measure = label => {

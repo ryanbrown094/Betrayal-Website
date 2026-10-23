@@ -23,7 +23,7 @@ KEEP_DAYS = "7"          # then the room is read-only for this many days, then d
 STRIPE_PRICE_ID = "price_1UL4Ds9eT91BoTqdAel9htGQ"  # the £10 one-party Table's Stripe Price — LIVE MODE. Empty = checkout closed
 STRIPE_SUB_PRICE_ID = "price_1UKk9M9eT91BoTqd9P9iSm1I"  # the £20/month unlimited subscription's Price — LIVE MODE; empty = subscription not on sale
 STRIPE_EGG_PROMO = "promo_1UL5tM9eT91BoTqdS0J7RLMs"  # the broken seal's promotion code (QR10, 10% off one party), applied for buyers who found /seal — LIVE MODE; empty = the seal offers no discount
-ALERT_TO = "info@thebetrayal.co.uk"  # contact messages and problem reports are emailed here (see [[send_email]] below)
+ALERT_TO = "info@thebetrayal.co.uk"  # contact messages, problem reports, each sale, refund, cancelled Regular and refused renewal, and the morning summary are emailed here (see [[send_email]] below)
 ADMIN_USER = "ryanab94.admin"  # the /admin page's username; its password is the ADMIN_PASSWORD secret
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
 #   ADMIN_PASSWORD, ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
@@ -49,10 +49,15 @@ class_name = "Registry"
 
 # Workers Logs: console output and uncaught exceptions, searchable in the Cloudflare dashboard (Workers → cloak-and-candle
 # → Logs). The game's own error log is on /admin → Errors.
-# Alert emails (contact messages, problem reports) to ALERT_TO, from alerts@thebetrayal.co.uk. Needs Email Routing on
+# Alert emails (contact messages, problem reports, sales and the rest above) to ALERT_TO, from alerts@thebetrayal.co.uk. Needs Email Routing on
 # for thebetrayal.co.uk and ALERT_TO verified under Email Routing → Destination addresses. Previews don't get it.
 [[send_email]]
 name = "MAIL"
+
+# The morning summary to ALERT_TO: the last 24 hours' sales, Tables opened, reports and errors. Cron times are UTC, so
+# this is 7am in winter and 8am in summer. Previews and staging don't run it.
+[triggers]
+crons = ["0 7 * * *"]
 
 [observability]
 enabled = true

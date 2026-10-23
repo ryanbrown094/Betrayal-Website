@@ -109,7 +109,7 @@ for f in sorted(os.listdir("media/web")):
 cp("media/social", P("05-social"))
 cp("media/web/hero-modern.jpg", P("05-social", "hero-modern.jpg"))
 cp("media/web/tv-table.jpg", P("05-social", "classic-tv-table.jpg"))
-cp("media/launch", P("06-launch")); cp("media/copy/NEXT-STEPS.md", P("NEXT-STEPS.md"))
+cp("media/launch", P("06-launch"))
 
 with open(P("VERSION.txt"), "w") as f: f.write(f"The Betrayal {data['version']} · build {data['build']} · made {time.strftime('%d %B %Y')}\n")
 zp = os.path.join("dist", NAME + ".zip")

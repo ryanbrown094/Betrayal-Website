@@ -17,6 +17,7 @@ const keepMs = (env) => Math.max(0.00001, +(env.KEEP_DAYS || 7)) * 86400000;
 const pad = (n) => String(n).padStart(9, "0");
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
 // time-ordered keys: the newest sort last
+const gbp = (pence) => "£" + (pence / 100).toFixed(2);
 const tkey = (pre) => pre + String(Date.now()).padStart(15, "0") + Math.random().toString(36).slice(2, 6);
 async function gzip(str) { const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
 async function gunzip(bytes) { const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Response(ds.readable).text(); }
@@ -334,6 +335,10 @@ export class Registry {
     }
   }
 
+  // the owner hears of each sale, refund, cancelled Regular and refused renewal (ALERT_TO), once per event: the webhook
+  // and the thank-you page, and Stripe's retries, only reach here after the state has already changed
+  async notify(subject, lines) { await alertMail(this.env, subject, lines.filter(Boolean).join("\n") + "\n\nhttps://" + (this.env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); }
+
   // the logs keep their newest `max` entries: every fiftieth write trims the oldest
   async trim(prefix, max) {
     if (++this.writes % 50) return;
@@ -388,6 +393,31 @@ export class Registry {
       await this.storage.put(tkey("err:"), e); await this.trim("err:", 3000); return json({ ok: true });
     }
     if (url.pathname === "/errs") return json({ errors: await this.newest("err:", 1000) });
+    // the morning summary (the Worker's daily schedule): the last 24 hours, for the owner's inbox
+    if (url.pathname === "/digest") {
+      const since = Date.now() - 86400000, sales = [], refunds = [], ended = [], failed = []; let regulars = 0, games = 0, tests = 0;
+      for (const [k, v] of await this.storage.list({ prefix: "pass:" })) {
+        if (v.kind === "sub" && v.subActive) regulars++;
+        if (v.paid > since) sales.push(v); if (v.refunded > since) refunds.push(v); if (v.subEnded > since) ended.push([k, v]); if (v.failed > since) failed.push([k, v]);
+      }
+      for (const [, v] of await this.storage.list({ prefix: "room:" })) if (v.created > since) { if (v.pass === "MASTER") tests++; else games++; }
+      const reps = [...(await this.storage.list({ prefix: "rep:" })).values()], open = reps.filter((r) => r.status === "open").length, newReps = reps.filter((r) => r.t > since);
+      const errs = [...(await this.storage.list({ prefix: "err:", start: "err:" + String(since).padStart(15, "0") })).values()].filter((e) => e.src !== "report"), seen = new Map();
+      for (const e of errs) { const m = clip(e.msg || e.where || "?", 120); seen.set(m, (seen.get(m) || 0) + 1); }
+      const money = (list, f) => list.reduce((a, v) => a + (+f(v) || 0), 0), tables = sales.filter((v) => v.kind !== "sub").length, subs = sales.length - tables;
+      const lines = [
+        "In the last 24 hours:",
+        "Sales: " + (sales.length ? sales.length + " (" + [tables && tables + (tables === 1 ? " Table" : " Tables"), subs && subs + (subs === 1 ? " new Regular" : " new Regulars")].filter(Boolean).join(", ") + "), " + gbp(money(sales, (v) => v.amount)) : "none"),
+        refunds.length ? "Refunds: " + refunds.length + ", " + gbp(money(refunds, (v) => v.refundedAmount)) : null,
+        ended.length ? "Regulars who cancelled: " + ended.map(([k]) => shownPass(k.slice(5))).join(", ") : null,
+        failed.length ? "Payments refused: " + failed.length + " (" + failed.map(([k, v]) => shownPass(k.slice(5)) + ": " + (v.failWhy || "refused")).join("; ") + ")" : null,
+        "Tables opened: " + games + (tests ? " (and " + tests + " test " + (tests === 1 ? "room" : "rooms") + ")" : ""),
+        "Problem reports and messages: " + newReps.length + " new, " + open + " open",
+        "Errors: " + (errs.length ? errs.length + ". Most common: " + [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([m, n]) => m + (n > 1 ? " (×" + n + ")" : "")).join(" · ") : "none"),
+        "", "Regulars now: " + regulars];
+      const subject = "The Betrayal, last 24 hours: " + (sales.length ? sales.length + (sales.length === 1 ? " sale" : " sales") + " (" + gbp(money(sales, (v) => v.amount)) + ")" : "no sales") + ", " + games + (games === 1 ? " Table" : " Tables") + ", " + errs.length + (errs.length === 1 ? " error" : " errors");
+      return json({ subject, body: lines.filter((x) => x !== null).join("\n") });
+    }
     if (url.pathname === "/hook") { await this.storage.put(tkey("hook:"), { t: Date.now(), ...b }); await this.trim("hook:", 1000); return json({ ok: true }); }
     if (url.pathname === "/hooks") return json({ hooks: await this.newest("hook:", 500) });
     if (url.pathname === "/report") {
@@ -501,11 +531,15 @@ export class Registry {
       const k = "claim:" + b.session, have = await this.storage.get(k);
       if (have) return json({ pass: shownPass(have), sub: ((await this.storage.get("pass:" + have)) || {}).kind === "sub", emailed: await this.mailCode(have) });
       let p = b.pass && passKey(b.pass), v = p && (await this.storage.get("pass:" + p));
-      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null, ...(b.disc ? { disc: String(b.disc).slice(0, 40) } : {}),
+      const amount = typeof b.amount === "number" ? b.amount : null; // in pence
+      if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), amount, note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null, ...(b.disc ? { disc: String(b.disc).slice(0, 40) } : {}),
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
-      return json({ pass: shownPass(p), sub: !!(v && v.kind === "sub"), emailed: await this.mailCode(p) });
+      const sub = !!(v && v.kind === "sub");
+      await this.notify("Sale: " + (sub ? "a Regular" : "a Table") + (amount !== null ? ", " + gbp(amount) + (sub ? " a month" : "") : ""), [
+        "Booking code: " + shownPass(p), "Email: " + (b.email || "none given"), v && v.from ? "Came from: " + v.from : null, b.disc ? "Discount code: " + b.disc : null]);
+      return json({ pass: shownPass(p), sub, emailed: await this.mailCode(p) });
     }
     // a payment that was tried and refused: noted on its pass (a checkout's, or a subscription's renewal)
     if (url.pathname === "/fail") {
@@ -514,6 +548,8 @@ export class Registry {
       const k = p && "pass:" + p, v = k && (await this.storage.get(k));
       if (!v) return json({ ok: true, pass: null });
       await this.storage.put(k, { ...v, failed: Date.now(), failWhy: clip(b.why, 200) || "payment refused", fails: (v.fails || 0) + 1 });
+      if (v.kind === "sub" && !v.pending) await this.notify("A Regular’s payment failed: " + shownPass(p), ["Why: " + (clip(b.why, 200) || "payment refused"), "Email: " + (v.note || "unknown"),
+        "Until it’s paid, the code can’t open a new Table. Stripe retries it as your billing settings say."]);
       return json({ ok: true, pass: shownPass(p), failed: true });
     }
     // a checkout that ended unpaid: if a payment was tried and refused, its pass stays (cancelled) so the admin sees it;
@@ -535,8 +571,10 @@ export class Registry {
       const k = p && "pass:" + p, v = k && (await this.storage.get(k));
       if (!v) return json({ ok: true, pass: null });
       if (b.pi) await this.storage.put("pi:" + b.pi, p);
-      const cancel = v.kind !== "sub" && !v.room && !v.revoked;
-      await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: Date.now(), refundedAmount: +b.amount || v.refundedAmount || null });
+      const cancel = v.kind !== "sub" && !v.room && !v.revoked, amt = +b.amount || 0, fresh = !v.refunded || amt > (v.refundedAmount || 0);
+      await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: Date.now(), refundedAmount: Math.max(amt, v.refundedAmount || 0) || null });
+      if (fresh) await this.notify("Refund: " + (amt ? gbp(amt) + " on " : "") + shownPass(p), [
+        (v.kind === "sub" ? "A Regular" : "A Table") + (cancel ? ". It hadn’t been played, so its code is now cancelled." : v.room ? ". It had already opened a Table, which stays open." : "."), "Email: " + (v.note || "unknown")]);
       return json({ ok: true, pass: shownPass(p), cancelled: cancel });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
@@ -547,8 +585,9 @@ export class Registry {
     if (url.pathname === "/substatus") {
       const k = "pass:" + passKey(b.pass || ""), v = b.pass && (await this.storage.get(k));
       if (!v || v.kind !== "sub") return json({ ok: true, pass: null });
-      const on = ["active", "trialing"].includes(b.status);
-      await this.storage.put(k, { ...v, subId: b.sub || v.subId, customer: b.customer || v.customer, subActive: on && !v.pending, subStatus: b.status });
+      const on = ["active", "trialing"].includes(b.status), ended = b.status === "canceled" && v.subStatus !== "canceled";
+      await this.storage.put(k, { ...v, subId: b.sub || v.subId, customer: b.customer || v.customer, subActive: on && !v.pending, subStatus: b.status, ...(ended ? { subEnded: Date.now() } : {}) });
+      if (ended && !v.pending) await this.notify("A Regular cancelled: " + shownPass(b.pass), ["Email: " + (v.note || "unknown"), v.paid ? "A Regular since " + new Date(v.paid).toUTCString().slice(5, 16) : null]);
       return json({ ok: true, pass: v && shownPass(b.pass), active: on });
     }
     // the Stripe customer behind a subscription code, for the billing portal (wrong codes count as failed guesses)
@@ -737,6 +776,11 @@ async function gate(req, env) {
 }
 
 export default {
+  // every morning (wrangler.toml [triggers]): the last 24 hours' sales, Tables, reports and errors, by email to ALERT_TO
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil((async () => { const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
+      .catch((e) => logErr(env, { src: "server", where: "morning summary", msg: clip(e && e.message || e, 300) })));
+  },
   async fetch(req, env) {
     try { return await route(req, env); }
     catch (err) { logErr(env, { src: "server", where: req.method + " " + new URL(req.url).pathname, msg: err.message, stack: clip(err.stack, 1500) }); return json({ error: "Something went wrong on our side." }, 500); }
@@ -852,7 +896,7 @@ async function route(req, env) {
       const o = (ev.data && ev.data.object) || {}, pass = o.metadata && o.metadata.pass;
       let result = "ignored";
       if ((ev.type === "checkout.session.completed" && settled(o)) || ev.type === "checkout.session.async_payment_succeeded")
-        result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer), disc: o.metadata && o.metadata.discount })).json();
+        result = await (await call(env, "/claim", { session: o.id, email: (o.customer_details && o.customer_details.email) || "", pass, pi: piOf(o.payment_intent), sub: piOf(o.subscription), customer: piOf(o.customer), disc: o.metadata && o.metadata.discount, amount: o.amount_total })).json();
       else if ((ev.type === "customer.subscription.updated" || ev.type === "customer.subscription.created" || ev.type === "customer.subscription.deleted") && pass)
         result = await (await call(env, "/substatus", { pass, sub: o.id, customer: piOf(o.customer), status: ev.type === "customer.subscription.deleted" ? "canceled" : o.status })).json();
       else if (ev.type === "checkout.session.async_payment_failed" && pass) {
@@ -886,7 +930,7 @@ async function route(req, env) {
       if (!/^cs_[A-Za-z0-9_]{10,200}$/.test(id)) return json({ error: "That isn’t a checkout session." }, 400);
       const s = await stripeSession(env, id);
       if (!settled(s)) return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
-      const cr = await call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer), disc: s.metadata && s.metadata.discount });
+      const cr = await call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer), disc: s.metadata && s.metadata.discount, amount: s.amount_total });
       if (!cr.ok) return cr;
       return json({ ...(await cr.json()), value: typeof s.amount_total === "number" ? s.amount_total / 100 : null }); // what was paid, for the ad conversion
     }

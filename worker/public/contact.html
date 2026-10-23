@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261023075111">
+<meta name="build" content="20261023112935">
 <title>Contact us · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Get in touch with The Betrayal: questions before you book, lost booking codes and problems on the night. Email info@thebetrayal.co.uk.">
@@ -107,7 +107,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <main id="main">
 <h1>Contact us</h1>
 
-<p>Questions about a booking, a problem on the night, or a refund: send us a message here, or email <a href="mailto:info@thebetrayal.co.uk">info@thebetrayal.co.uk</a>, and we’ll reply within 1–2 working days. On a Friday or Saturday evening we aim to reply within an hour. If something goes wrong mid-game, send us your six-character Table code here and what happened. In Classic, “Report a problem” on the Keeper’s phone or the TV is quickest: it sends us a snapshot of the screen too.</p>
+<p>Questions about a booking, a problem on the night, or a refund: send us a message here, or email <a href="mailto:info@thebetrayal.co.uk">info@thebetrayal.co.uk</a>, and we’ll reply within 24 hours. If something goes wrong mid-game, send us your six-character Table code here and what happened. In Classic, “Report a problem” on the Keeper’s phone or the TV is quickest: it sends us a snapshot of the screen too.</p>
 <div class="panel">
 <form id="cf">
 <label class="fl" for="cf-mail">Your email (so we can reply)</label><input id="cf-mail" name="email" type="email" autocomplete="email" spellcheck="false" required>
@@ -130,7 +130,7 @@ document.getElementById("cf").onsubmit = async e => {
     const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: v("cf-msg") + (code && !room ? "\n\nCode: " + code : ""), email: v("cf-mail"), room, url: "/contact", device: "contact form", ua: navigator.userAgent }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || "It didn’t send");
-    e.target.reset(); out.textContent = "Thank you. Your message is in (reference " + j.id + "), and we’ll reply to your email.";
+    e.target.reset(); out.textContent = "Thank you. Your message is in (reference " + j.id + "), and we’ll reply to your email within 24 hours.";
   } catch (err) { out.className = "cf-msg err"; out.textContent = err.message + ". Please try again in a moment, or email info@thebetrayal.co.uk."; }
   b.disabled = false;
 };
