@@ -66,7 +66,7 @@ CHECK_HOST = r"""() => {
   let n; const seen = new Set();
   while ((n = walker.nextNode())) { const t = n.textContent.trim(); if (!t) continue; const el = n.parentElement, fs = parseFloat(getComputedStyle(el).fontSize); if (fs < 12 && !seen.has(el)) { seen.add(el); out.tiny.push(t.slice(0, 20) + ' ' + fs + 'px ' + el.className) } }
   return out }"""
-CHECK_TV = r"""() => { const out = [], sg = document.querySelector('#stage'), tv = document.querySelector('#tv'), sr = sg.getBoundingClientRect();
+CHECK_TV = r"""() => { const out = [], sg = document.querySelector('#stage'), tv = document.querySelector('#tv'), sr = (() => { const b = sg.getBoundingClientRect(), k = parseFloat(sg.style.scale) || 1, cy = (b.top + b.bottom) / 2; return { top: cy - b.height / k / 2, bottom: cy + b.height / k / 2, left: b.left, right: b.right } })(); // the stage's area, unscaled (src/tv.js fitStage)
   for (const el of sg.querySelectorAll('*')) { if (el.closest('svg') && el.nodeName !== 'svg') continue; const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
     if (getComputedStyle(el).position === 'absolute' && el.closest('.rt,.ring,.rolecard')) continue;
     if (r.top < sr.top - 2 || r.bottom > sr.bottom + 2 || r.left < -1 || r.right > innerWidth + 1) { out.push('stage overflow: ' + (el.className || el.nodeName) + ' ' + Math.round(r.top) + '..' + Math.round(r.bottom) + ' vs ' + Math.round(sr.top) + '..' + Math.round(sr.bottom)); break } }
@@ -84,13 +84,20 @@ def lum(h):
 def contrast(a, b): la, lb = lum(a), lum(b); return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
 
 findings = []
-print("== contrast (on #0a0807 / #17110d) ==")
-for name, hexv, *lim in [("tallow", "#ecdfc4"), ("tallow2", "#b9ab8e"), ("mist", "#8d8372"), ("brass", "#b98a3e"), ("brass2", "#f0cf82"), ("blood2", "#ea5a63"), ("blood", "#c2293a", 3.0), ("steel", "#8fa3b8"), ("verd", "#5fa88f")]:
+# the palette as it is now, read from src/style.css (text tokens on the two page backgrounds, and the button colours)
+CSS = open("src/style.css").read(); ROOT = CSS[CSS.index(":root {"):]; TOK = dict(re.findall(r"--([\w-]+):\s*(#[0-9a-fA-F]{6})", ROOT[:ROOT.index("}")]))
+BG1, BG2 = TOK["soot"], TOK["peat"]
+BTN = re.search(r"#host button\.primary, #host button\.danger, #host button\.good \{[^}]*?color: (#[0-9a-fA-F]{6})", CSS).group(1)
+print(f"== contrast (on {BG1} / {BG2}) ==")
+for name, *lim in [("tallow",), ("tallow2",), ("mist",), ("brass",), ("brass2",), ("blood2",), ("blood", 3.0), ("steel",), ("verd",)]:
     # blood only ever colours big display headlines (h1, with a glow): large text needs 3:1, everything else 4.5:1
-    need = lim[0] if lim else 4.5
-    c1, c2 = contrast(hexv, "#0a0807"), contrast(hexv, "#17110d"); print(f"  {name:8s} {hexv}  {c1:4.1f}:1  {c2:4.1f}:1" + ("   <-- below " + str(need) if min(c1, c2) < need else ""))
+    need = lim[0] if lim else 4.5; hexv = TOK[name]
+    c1, c2 = contrast(hexv, BG1), contrast(hexv, BG2); print(f"  {name:8s} {hexv}  {c1:4.1f}:1  {c2:4.1f}:1" + ("   <-- below " + str(need) if min(c1, c2) < need else ""))
     if min(c1, c2) < need: findings.append(f"contrast {name} {min(c1,c2):.1f}:1")
-print("  button.primary text #1a1208 on #c1923f:", f"{contrast('#1a1208', '#c1923f'):.1f}:1", "| danger #fff on #a81f30:", f"{contrast('#ffffff', '#a81f30'):.1f}:1", "| good #06140f on #6fc4a4:", f"{contrast('#06140f', '#6fc4a4'):.1f}:1")
+# the host's buttons are 19px bold, which counts as large text: 3:1
+for name in ("brass", "ox", "verd2"):
+    c = contrast(BTN, TOK[name]); print(f"  button text {BTN} on {name} {TOK[name]}: {c:.1f}:1" + ("   <-- below 3" if c < 3 else ""))
+    if c < 3: findings.append(f"contrast button on {name} {c:.1f}:1")
 
 with sync_playwright() as p:
     b = p.chromium.launch(); errs = []

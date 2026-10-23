@@ -379,6 +379,18 @@ function narrTV(s) {
     speechSynthesis.cancel(); speechSynthesis.speak(u);
   } catch (e) { console.warn("narrator", e) }
 }
+// A screen taller than the stage (a long question on a 16:10 TV while the sound and full-screen buttons still push the
+// stage down) shrinks to fit, never below 80%. Measured from layout, so the entrance animations don't skew it; the
+// stage changing size (those buttons going, a resize) or the fonts arriving measures again.
+let fitWatch = null;
+function fitStage() {
+  const st = $("#stage"); if (!st) return;
+  if (!fitWatch && window.ResizeObserver) { fitWatch = new ResizeObserver(() => fitStage()); fitWatch.observe(st); if (document.fonts) document.fonts.ready.then(fitStage) }
+  let top = Infinity, bot = -Infinity;
+  for (const c of st.children) { if (getComputedStyle(c).position === "absolute") continue; top = Math.min(top, c.offsetTop); bot = Math.max(bot, c.offsetTop + c.offsetHeight) }
+  const room = st.clientHeight - parseFloat(getComputedStyle(st).paddingTop), need = bot - top, k = need > room + 2 ? Math.max(0.8, room / need) : 1;
+  if (String(k === 1 ? "" : k.toFixed(3)) !== st.style.scale) st.style.scale = k === 1 ? "" : k.toFixed(3);
+}
 function renderTV() {
   if (!tvBuilt) tvBuild();
   narrTV(state);
@@ -405,6 +417,7 @@ function renderTV() {
   patch($("#top"), `<span>${s.phase === "lobby" || s.phase === "intro" ? "welcome" : "round " + s.round}${isFinal(s) && s.phase !== "lobby" ? ` · <span class="fin">the final</span>` : ""}</span><span class="brandline"><span class="crest" style="width:3.4vh;height:4vh">${ART.crest()}</span>${esc(titleOf(s))}</span><span class="potbox"><span>Purse</span><b class="num" id="potv">${moneyOf(s, lastPot === null ? s.pot : lastPot)}</b></span>`);
   patch($("#stage"), v.html, changed);
   $("#stage").style.gap = v.tight ? "1vh" : "";
+  fitStage();
   const rail = $("#rail"); patch(rail, v.night ? rail.innerHTML : railHTML(s, v.rail)); railBooted = true;
   overlays(s);
   // a candle going out

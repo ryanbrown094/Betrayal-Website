@@ -18,6 +18,13 @@ const pad = (n) => String(n).padStart(9, "0");
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
 // time-ordered keys: the newest sort last
 const gbp = (pence) => "£" + (pence / 100).toFixed(2);
+// One at a time per key. A Durable Object answers one request at a time only until it awaits something other than its
+// own storage (another object, a compression stream), so a check-then-act across such an await queues here.
+async function queued(locks, key, fn) {
+  const prev = locks.get(key) || Promise.resolve(), run = prev.then(fn, fn), tail = run.catch(() => {});
+  locks.set(key, tail);
+  try { return await run; } finally { if (locks.get(key) === tail) locks.delete(key); }
+}
 const tkey = (pre) => pre + String(Date.now()).padStart(15, "0") + Math.random().toString(36).slice(2, 6);
 async function gzip(str) { const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
 async function gunzip(bytes) { const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Response(ds.readable).text(); }
@@ -53,6 +60,7 @@ export class GameState {
     this.storage = state.storage;
     this.env = env || {};
     this.strikes = new Map(); // wrong-PIN attempts per address, so a guest can't guess the PIN by brute force
+    this.locks = new Map(); // see queued()
   }
 
   // Eight wrong PINs from one address inside a minute and that address waits a minute; thirty from everywhere
@@ -150,7 +158,12 @@ export class GameState {
       const list = (Array.isArray(b.events) ? b.events : []).slice(0, 300).map((e) => ({ t: +e.t || Date.now(), k: clip(e.k, 12), m: clip(e.m, 400), ...(e.stack ? { stack: clip(e.stack, 1500) } : {}), ...(e.src ? { src: clip(e.src, 200) } : {}) }));
       const who = { device: clip(b.device, 16), host: !!b.host, build: clip(b.build, 20), ua: clip(req.headers.get("User-Agent"), 200) };
       await this.storage.put({ evN: n, ["ev:" + pad(n)]: { at: Date.now(), ...who, list } });
-      for (const e of list.filter((x) => x.k === "error").slice(0, 10)) logErr(this.env, { src: "browser", room: meta.room, ...who, msg: e.m, stack: e.stack, where: e.src, at: e.t });
+      const errs = list.filter((x) => x.k === "error").slice(0, 10), hr = Math.floor(Date.now() / 3600000);
+      if (errs.length) { // to the master log at most 30 an hour a room, so nobody with a room code can flood it
+        const c = (await this.storage.get("errc")) || {}, used = c.h === hr ? c.n : 0, send = errs.slice(0, Math.max(0, 30 - used));
+        if (send.length) await this.storage.put("errc", { h: hr, n: used + send.length });
+        for (const e of send) logErr(this.env, { src: "browser", room: meta.room, ...who, msg: e.m, stack: e.stack, where: e.src, at: e.t });
+      }
       return json({ ok: true });
     }
 
@@ -244,25 +257,26 @@ export class GameState {
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
 
-    if (path === "/api/m/create" && req.method === "POST") {
-      if (expired) return json({ error: "This Table has closed.", room }, 423);
-      const booked = meta.pass && meta.pass !== "MASTER"; // a room from the master code or open access has no booking to prove
-      if (booked && passKey(String(body.pass || "")) !== meta.pass) return json({ error: "Only the person who booked this Table can set it up." }, 403);
-      if (!String(body.name || "").replace(/\s+/g, " ").trim()) return json({ error: "Type your name." }, 400);
-      if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
-      if (!s) {
-        s = M.newGame(now, Math.random, {});
-        // testing rooms (the master code) may fix the order of the Trials, so a test can play a known one
-        if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
-        // and play a test game against bots, with every clock at ten seconds
-        if (meta.pass === "MASTER" && body.test) s.test = true;
-        await save();
-      }
-      if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
-      const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
-      if (s.test) M.addBots(s, Math.max(M.MINP, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
-      s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
-    }
+    if (path === "/api/m/create" && req.method === "POST") return queued(this.locks, "create", async () => {
+        s = this.mstate || (this.mstate = (await this.storage.get("modern")) ?? null); // one set-up at a time, each on the game as the last left it
+        if (expired) return json({ error: "This Table has closed.", room }, 423);
+        const booked = meta.pass && meta.pass !== "MASTER"; // a room from the master code or open access has no booking to prove
+        if (booked && passKey(String(body.pass || "")) !== meta.pass) return json({ error: "Only the person who booked this Table can set it up." }, 403);
+        if (!String(body.name || "").replace(/\s+/g, " ").trim()) return json({ error: "Type your name." }, 400);
+        if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
+        if (!s) {
+          s = M.newGame(now, Math.random, {});
+          // testing rooms (the master code) may fix the order of the Trials, so a test can play a known one
+          if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
+          // and play a test game against bots, with every clock at ten seconds
+          if (meta.pass === "MASTER" && body.test) s.test = true;
+          await save();
+        }
+        if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
+        const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
+        if (s.test) M.addBots(s, Math.max(M.MINP, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
+        s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
+    });
     if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });
     // a rules bug must never lock the room: log it and carry on answering
     try { if (M.tick(s, now, ctx)) await save(); } catch (e) { logErr(this.env, { src: "server", room: meta.room, where: "modern tick", msg: e.message, stack: clip(e.stack, 1500) }); }
@@ -311,7 +325,7 @@ export class GameState {
 // Booking codes (passes): minted by the admin or by a paid Stripe checkout. A one-party code opens one room; a
 // Regular's (subscription) code opens a new room whenever they like, one at a time.
 export class Registry {
-  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; }
+  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; this.locks = new Map(); }
 
   // A paid booking's code goes to the buyer by email, once. `mailing` holds the send while it's in flight (the webhook
   // and the thank-you page can arrive together); a failed send is logged and tried again on the next claim. `to`
@@ -600,27 +614,30 @@ export class Registry {
     if (url.pathname === "/redeem") {
       if (this.tooMany(ip)) return json({ error: "Too many wrong codes. Try again in an hour." }, 429);
       if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a booking code. It looks like OATH-XXXX-XXXX." }, 400); }
-      const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
-      if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
-      if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
-      if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
-      // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
-      // back; asking for a fresh one closes that room and opens another.
-      if (v.kind === "sub") {
-        if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
-        const live = v.room && Date.now() < v.expires;
-        if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
-        if (live) await env.GAME.get(env.GAME.idFromName("room:" + v.room)).fetch("https://game/_close", { method: "POST", body: "{}" });
-        const expires = Date.now() + hours(env) * 3600000, room = await this.room(env, expires, passKey(b.pass));
-        await this.storage.put(k, { ...v, room, expires, redeemed: Date.now(), games: (v.games || 0) + 1 });
-        return json({ room, expires, sub: true });
-      }
-      // redeemed already: the same room comes back (a host who lost the link), until it runs out
-      if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That booking has been used, and its game has ended." }, 410);
-      const expires = Date.now() + hours(env) * 3600000;
-      const room = await this.room(env, expires, passKey(b.pass));
-      await this.storage.put(k, { ...v, room, expires, redeemed: Date.now() });
-      return json({ room, expires });
+      // one redemption of a code at a time: two taps at once (or two tabs) get the same room, not one each
+      return queued(this.locks, passKey(b.pass), async () => {
+        const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
+        if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
+        if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
+        if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
+        // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
+        // back; asking for a fresh one closes that room and opens another.
+        if (v.kind === "sub") {
+          if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
+          const live = v.room && Date.now() < v.expires;
+          if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
+          if (live) await env.GAME.get(env.GAME.idFromName("room:" + v.room)).fetch("https://game/_close", { method: "POST", body: "{}" });
+          const expires = Date.now() + hours(env) * 3600000, room = await this.room(env, expires, passKey(b.pass));
+          await this.storage.put(k, { ...v, room, expires, redeemed: Date.now(), games: (v.games || 0) + 1 });
+          return json({ room, expires, sub: true });
+        }
+        // redeemed already: the same room comes back (a host who lost the link), until it runs out
+        if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That booking has been used, and its game has ended." }, 410);
+        const expires = Date.now() + hours(env) * 3600000;
+        const room = await this.room(env, expires, passKey(b.pass));
+        await this.storage.put(k, { ...v, room, expires, redeemed: Date.now() });
+        return json({ room, expires });
+      });
     }
     return text("Not found", 404);
   }
@@ -802,6 +819,9 @@ async function route(req, env) {
     if (g) {
       const code = g[1].toUpperCase(); if (!isRoom(code)) return json({ error: "No game with that code" }, 404);
       const inner = new URL(req.url); inner.pathname = "/api/" + g[2];
+      // too big for a Modern request: refused here, before it's streamed to the room (refused there unread, the stream
+      // could break and become a 500)
+      if (g[2].startsWith("m") && +(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "Too large" }, 413);
       return env.GAME.get(env.GAME.idFromName("room:" + code)).fetch(new Request(inner, req));
     }
     // "Report a problem": the form, a snapshot of the screen, the trail of taps. The room is kept 90 days for its replay.

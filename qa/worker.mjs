@@ -1,6 +1,7 @@
 // The real Worker class (worker/src/index.js), driven directly with an in-memory storage: PIN limits, games kept across deploys,
 // stale-build writes, the settings rule. Usage: node qa/worker.mjs
-import { GameState } from "../worker/src/index.js";
+import worker, { GameState, Registry } from "../worker/src/index.js";
+import { shownPass } from "../worker/src/codes.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra))); ok = ok && !!cond };
 // in-memory storage with what the room uses; a Table exists only once the Registry has opened it (/_init), so each
@@ -10,6 +11,7 @@ const store = (mem) => ({ async get(k) { return mem.get(k) }, async put(k, v) { 
   async setAlarm() {}, async deleteAll() { mem.clear() } });
 const mk = async (build, mem = new Map()) => { const DO = new GameState({ storage: store(mem) }, { BUILD: build }); await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "TESTRM", expires: Date.now() + 48 * 3600e3 }) })); return { mem, DO } };
 const req = (DO, method, path, headers, body) => DO.fetch(new Request("http://x" + path, { method, headers: { "Content-Type": "application/json", ...(headers || {}) }, body: body ? JSON.stringify(body) : undefined }));
+const nap0 = () => new Promise((r) => setTimeout(r, 10));
 const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby", players: [] };
 
 // PIN guessing
@@ -64,5 +66,36 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   const { mem, DO: A } = await mk("A"); await req(A, "PUT", "/api/state", { "X-Build": "A" }, { state: { ...game, gid: "OLD", vid: "x" } });
   const { DO: B } = await mk("B", mem);
   check("after a deploy, the game's next save is taken (nothing was wiped)", (await req(B, "PUT", "/api/state", { "X-Build": "B", "X-Pin": PIN }, { state: { ...game, gid: "OLD", ver: 5, vid: "y", pvid: "x" } })).status === 200);
+}
+// requests at the same moment (the stress test's finds): a Durable Object only runs one request at a time until it awaits
+// something other than its storage, such as another object
+{
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms)), opened = [];
+  const GAME = { idFromName: (n) => n, get: (id) => ({ fetch: async () => { opened.push(id); await nap(20); return new Response("{}") } }) };
+  const reg = new Registry({ storage: store(new Map()) }, { GAME, PASS_HOURS: "48" });
+  const [key] = await reg.mint(1, "", "test"), code = shownPass(key);
+  const redeem = (i) => reg.fetch(new Request("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113." + i }, body: JSON.stringify({ pass: code }) })).then((r) => r.json());
+  const got = await Promise.all([...Array(10)].map((_, i) => redeem(i)));
+  check("one booking code redeemed ten times at once opens one Table, and all ten get it", new Set(got.map((g) => g.room)).size === 1 && opened.length === 1 && got.filter((g) => g.again).length === 9, { rooms: [...new Set(got.map((g) => g.room))], opened: opened.length });
+}
+{
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, {});
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "TESTRM", expires: Date.now() + 3600000, pass: "MASTER" }) }));
+  const res = await Promise.all(["Ann", "Ben", "Cat", "Dan", "Eve", "Fay"].map((name) => req(DO, "POST", "/api/m/create", {}, { name })));
+  const st = mem.get("modern");
+  check("six set-ups of one Modern Table at once: one host, the rest told it's set up", res.filter((r) => r.status === 200).length === 1 && res.filter((r) => r.status === 409).length === 5 && st.players.length === 1 && st.director === st.players[0].id, { codes: res.map((r) => r.status), players: st.players.length });
+}
+{
+  const calls = []; const env = { GAME: { idFromName: (n) => n, get: () => ({ fetch: async () => { calls.push(1); return new Response("{}") } }) } };
+  const r = await worker.fetch(new Request("http://x/api/g/TESTRM/m/act", { method: "POST", headers: { "Content-Type": "application/json", "Content-Length": "70000" }, body: "x".repeat(70000) }), env);
+  check("an oversized Modern request is refused with 413 before it reaches the Table", r.status === 413 && calls.length === 0, { status: r.status, calls: calls.length });
+}
+{
+  const logged = [], REGISTRY = { idFromName: () => 1, get: () => ({ fetch: async (u, init) => { if (String(u).endsWith("/err")) logged.push(JSON.parse(init.body)); return new Response("{}") } }) };
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { REGISTRY });
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "TESTRM", expires: Date.now() + 3600000, pass: "MASTER" }) }));
+  for (let i = 0; i < 6; i++) await req(DO, "POST", "/api/events", {}, { device: "tv" + i, events: [...Array(10)].map((_, j) => ({ k: "error", m: "boom " + i + "." + j })) });
+  await nap0();
+  check("a room's devices put at most 30 errors an hour in the master log (the rest stay in the room's trail)", logged.length === 30 && mem.get("evN") === 6, { logged: logged.length, batches: mem.get("evN") });
 }
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);
