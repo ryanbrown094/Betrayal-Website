@@ -156,6 +156,11 @@ check("dinner is optional: courses are off unless the host switches them on", ne
   for (const [id] of Object.entries(c.s.trial.scores)) delete c.s.trial.scores[id];
   const cw = alive(c.s).find((p) => p.role === "l"); c.s.trial.scores[cw.id] = 5; A(c, c.dir, { a: "tool", v: "endTrial" });
   check("…a Loyal winner learns the Forsworn's name, privately", viewFor(c.s, cw.id, c.now).me.confess === F[0].name && !viewFor(c.s, F[0].id, c.now).me.confess && !JSON.stringify(viewFor(c.s, null, c.now)).includes('"confess"'));
+  // …but not with no Forsworn left to name (a final reached by exiling every one of them), and no Sanctuary in the final
+  const c2 = begin(8); const F2 = c2.s.players.filter((p) => p.role === "f"), L2 = c2.s.players.filter((p) => p.role === "l");
+  F2.forEach((p) => (p.alive = false)); L2[0].alive = false; c2.s.final = true; c2.s.round = 3; c2.s.phase = "day"; c2.s.steps = []; c2.s.done.dessert = true; tick(c2.s, c2.now, ctx); A(c2, c2.dir, { a: "next" });
+  check("the final: five left, no Forsworn: no Confessor", alive(c2.s).length === 5 && c2.s.trial && c2.s.trial.special !== "confess", c2.s.trial && c2.s.trial.special);
+  check("…and the final's Trial doesn't promise Sanctuary, to the phones or the TV", viewFor(c2.s, null, c2.now).trial.prize === false && viewFor(c2.s, c2.dir, c2.now).trial.prize === false);
 
   // twists off
   const o = begin(12, { twists: false }); const all = []; for (let r = 1; r < o.s.total; r++) { o.s.round = r; o.s.steps = []; o.s.phase = "day"; o.s.trial = null; A(o, o.dir, { a: "next" }); all.push(JSON.stringify(o.s.steps)); }
@@ -385,6 +390,9 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   check("…its Trials are played, not skipped: the bots answer the questions", items > 10 && botAnswers > items * 3, { items, botAnswers });
   check("…and only the Trials one person can play, at the free tier", [...keys].every((k) => BASE_TRIALS.includes(k) && !SOLO_OFF.includes(k)), [...keys]);
   check("…the phones are told it's a practice game", viewFor(s, me, g.now).practice === true && !viewFor(setup(10, {}).s, null, g.now).practice);
+  const pr = newGame(1e12, rnd, { content: "base" }); pr.practice = true; const solo = join(pr, "Solo", 1e12, rnd).id; pr.director = solo; addBots(pr, 10, 1e12, rnd);
+  for (let i = 0; i < 12; i++) act(pr, solo, { a: "bots", v: String(pr.players.length + 1) }, 1e12, ctx);
+  check("…and in its lobby, Add a bot stops at sixteen, as the app's practice set-up does", pr.players.length === 16, pr.players.length);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

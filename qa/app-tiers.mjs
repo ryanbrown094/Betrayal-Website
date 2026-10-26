@@ -1,7 +1,8 @@
 // The iPhone app's tiers (worker/src/tiers.js), on the real Worker, Registry and rooms with in-memory storage: the app's
 // codes are a pool of their own, free games, the Night Pass's 24 hours (and its night coming back when no game in it got
 // going), the Host Pass, a host making a live free game ad-free, the codes list, and the website's rooms unchanged; also
-// that a practice game refuses a pass, and that a host whose phone died can be let back in by anyone at the table.
+// that a practice game refuses a pass, that a host whose phone died can be let back in by anyone at the table, and that
+// anyone can take over as host once the host's phone has been quiet for two minutes.
 // node qa/app-tiers.mjs
 import worker, { GameState, Registry } from "../worker/src/index.js";
 import * as T from "../worker/src/tiers.js";
@@ -199,6 +200,34 @@ check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.s
   check("…and once a player lets them in, the host's new phone has the host's place", inS === 200 && got.tok && back.view.me && back.view.me.director === true, [inS, got, back.view && back.view.me]);
   const [, old] = await poll(g.room, h.tok);
   check("…while the old phone has no place at all", old.view && !old.view.me, old.view && old.view.me);
+}
+
+// --- a host with no phone to come back on: once theirs has been quiet for two minutes, anyone still at the table may
+// take over as host (but never straight after the room wakes, before it could have heard from the host's phone)
+{
+  const [, g] = await games({ app: true }, "198.51.100.41");
+  const [, h] = await create(g.room, "Ann");
+  const toks = { Ann: h.tok };
+  for (const n of ["Bob", "Cy", "Di", "Ed", "Flo", "Gus", "Hal"]) toks[n] = (await joinAs(g.room, n))[1].tok;
+  const act = (who, body) => W("/api/g/" + g.room + "/m/act", body, { "X-Tok": toks[who] }).then(J);
+  await act("Ann", { a: "start" });
+  const [, early] = await poll(g.room, toks.Bob);
+  const [earlyS, earlyJ] = await act("Bob", { a: "takeover" });
+  check("while the host's phone is about, nobody is offered the host's place, nor can take it", !early.hostGone && earlyS === 409 && /still connected/.test(earlyJ.error), [early.hostGone, earlyS, earlyJ.error]);
+  skew += 121000; // the host's phone goes quiet for two minutes, and then the room is woken afresh
+  const r = roomDO("room:" + g.room); r.DO = new GameState({ storage: r.st }, env);
+  const [, woke] = await poll(g.room, toks.Bob);
+  check("…a room just woken doesn't offer it either (it hasn't been up long enough to hear from the host)", !woke.hostGone, woke.hostGone);
+  skew += 121000;
+  const [, gone] = await poll(g.room, toks.Bob);
+  check("…two quiet minutes later, everyone else is offered it", gone.hostGone === true, gone.hostGone);
+  const [toS, toJ] = await act("Bob", { a: "takeover" });
+  const [, cy] = await poll(g.room, toks.Cy);
+  const [cyS] = await act("Cy", { a: "takeover" });
+  check("…the first to take it is the host, and nobody else is offered it then", toS === 200 && toJ.view.me.director === true && toJ.view.director.name === "Bob" && !cy.hostGone && cyS === 409, [toS, toJ.view && toJ.view.director, cy.hostGone, cyS]);
+  const [dealS] = await act("Bob", { a: "tool", v: "deal" });
+  const [, ann] = await poll(g.room, toks.Ann);
+  check("…the new host moves the game on, and the old host's phone, back again, is a player's", dealS === 200 && ann.view.me && ann.view.me.director === false && ann.view.phase === "roles", [dealS, ann.view && ann.view.me, ann.view && ann.view.phase]);
 }
 
 // --- the app's device logs: a room keeps each phone's and TV's events under its own number, says what each is, and its

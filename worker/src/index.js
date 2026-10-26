@@ -64,6 +64,7 @@ export class GameState {
     this.env = env || {};
     this.strikes = new Map(); // wrong-PIN attempts per address, so a guest can't guess the PIN by brute force
     this.locks = new Map(); // see queued()
+    this.awake = Date.now(); // when this room last woke: it has only heard from the phones since
   }
 
   // Eight wrong PINs from one address inside a minute and that address waits a minute; thirty from everywhere
@@ -261,10 +262,16 @@ export class GameState {
     // who may let a phone back in: the host, always; and while the host's own phone has been quiet for half a minute
     // (dead, lost, left in another room), anyone still at the table may let the host back in, or the game would wait
     // for ever on the one phone that could
-    const hostQuiet = () => { const d = s && s.players.find((p) => p.id === s.director); return !!d && !(d.seen && now - d.seen < 30000); };
+    const hostQuiet = (ms = 30000) => { const d = s && s.players.find((p) => p.id === s.director); return !!d && !(d.seen && now - d.seen < ms); };
     const mayLetIn = (r) => !!me && !me.left && (s.director === me.id || (r.pid === s.director && r.pid !== me.id && hostQuiet()));
+    // and once it has been quiet for two minutes (and the room has been awake that long, so it would have heard from it),
+    // anyone still at the table may take over as host: the host may have no phone to come back on
+    const hostGone = () => hostQuiet(120000) && now - this.awake > 120000;
     // so those phones always get the requests to come back in, and none is lost between screens
-    const pending = () => { const l = me && s && s.rejoin ? s.rejoin.filter((x) => !x.tok && mayLetIn(x)) : []; return l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}; };
+    const pending = () => {
+      const l = me && s && s.rejoin ? s.rejoin.filter((x) => !x.tok && mayLetIn(x)) : [];
+      return { ...(l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}), ...(me && !me.left && s && s.director !== me.id && hostGone() ? { hostGone: true } : {}) };
+    };
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
 
@@ -285,7 +292,7 @@ export class GameState {
           if (meta.practice) s.practice = true;
           await save();
         }
-        if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
+        if (s.director) return json({ error: meta.tier ? "This Table has already been set up. Join it with your name." : "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409); // (an app Table has a tier: the app's words)
         const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
         if (s.test || s.practice) M.addBots(s, Math.max(M.MINP, Math.min(s.practice ? 16 : M.MAXP, +body.bots || (s.practice ? 10 : 8))), now, Math.random);
         s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
@@ -337,6 +344,13 @@ export class GameState {
           p.tok = M.newTok(); r.tok = p.tok; s.log = [{ t: now, m: p.name + " came back on a new phone" }, ...(s.log || [])].slice(0, 300);
         }
         else s.rejoin = s.rejoin.filter((x) => x !== r);
+        s.ver++; await save(); return view();
+      }
+      if (body.a === "takeover") {
+        if (me.left || s.director === me.id) return view();
+        if (!hostGone()) return json({ error: "The host’s phone is still connected.", view: viewOf(s, me, now), ...pending() }, 409);
+        const was = (s.players.find((p) => p.id === s.director) || {}).name || "the host";
+        s.director = me.id; s.log = [{ t: now, m: me.name + " took over as host from " + was }, ...(s.log || [])].slice(0, 300);
         s.ver++; await save(); return view();
       }
       const r = M.act(s, me.id, body, now, ctx);
@@ -778,7 +792,7 @@ export class Registry {
         if (have) {
           const k = "pass:" + have, v = await this.storage.get(k);
           if (v && sub && st) await this.storage.put(k, { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() });
-          if (v && v.revoked) return json({ error: "That purchase was refunded, so its booking code is cancelled." }, 410);
+          if (v && v.revoked) return json({ error: "That purchase was refunded, so its pass is cancelled." }, 410);
           return json({ pass: shownPass(have), sub });
         }
         if (t.revocationDate) return json({ error: "That purchase was refunded." }, 410);
@@ -904,7 +918,7 @@ export class Registry {
         const k = "pass:" + passKey(b.pass);
         let v = await this.storage.get(k);
         if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
-        if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
+        if (v.revoked) return json({ error: b.app ? "That pass has been cancelled." : "That booking has been cancelled." }, 410);
         if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
         // the app's codes and the website's are separate pools (tiers.js)
         if (b.app && v.pool !== "app") return json({ error: "That booking code is for the website, so it opens Tables there. In the app, start a free game or use a pass bought in the app." }, 403);
