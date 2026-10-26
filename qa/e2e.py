@@ -112,6 +112,27 @@ with sync_playwright() as p:
         check("the other room is untouched by this game", api.get(URL + "api/g/" + room2 + "/state").json()["state"] is None)
         tv2 = b.new_context(viewport={"width": 1280, "height": 720}, extra_http_headers=GATE_HDR).new_page(); tv2.goto(URL + "g/" + room2); tv2.wait_for_timeout(3000)
         check("a fresh room's TV shows its code and the host link", room2 in tv2.inner_text("#stage") and "#keeper" in tv2.inner_text("#stage"), tv2.inner_text("#stage")[:120])
+    if ADMIN:
+        # the feedback survey: sent from a booking code, answered on a phone, listed in the admin, stopped by its link
+        H = {"Authorization": "Bearer " + ADMIN}
+        sp = api.post(URL + "api/admin/passes", headers=H, data=json.dumps({"count": 2, "note": "e2e survey", "email": "host@example.com"})).json()["passes"]
+        sent = api.post(URL + "api/admin/survey", headers=H, data=json.dumps({"pass": sp[0]}))
+        check("the admin sends a booking code's buyer the feedback survey", sent.status == 200 and sent.json().get("to") == "host@example.com", sent.text()[:200])
+        tok = [x for x in api.get(URL + "api/admin/passes", headers=H).json()["passes"] if x["pass"] == sp[0]][0].get("survey", "")
+        sv = b.new_context(viewport={"width": 390, "height": 844}, extra_http_headers=GATE_HDR, is_mobile=True, has_touch=True).new_page(); sv.on("pageerror", lambda e: errs.append(str(e)))
+        sv.goto(URL + "survey?t=" + tok); sv.wait_for_selector("#sv:not([hidden])", timeout=8000)
+        check("the survey page opens on a phone, and its token leaves the address bar", sv.url.endswith("/survey") and sv.is_visible("#svsend"), sv.url)
+        sv.click("#svsend"); check("…it asks for all five answers", "all five" in sv.inner_text("#svmsg"))
+        for n, v in [("overall", "5"), ("recommend", "10"), ("setup", "Very easy"), ("length", "About right"), ("again", "Yes")]: sv.click(f'input[name="{n}"][value="{v}"]', force=True)
+        check("…and lets the warning go once answered", sv.inner_text("#svmsg") == "")
+        sv.fill("#comment", "Best party game we've played."); sv.click("#svsend"); sv.wait_for_selector("#done:not([hidden])", timeout=8000)
+        got = sv.is_visible("#gotcode")
+        check("…then thanks them with their code" + ("" if got else " (no Stripe key here, so the code is promised by email)"), (got and sv.inner_text("#code").startswith("THANKS")) or (not got and sv.is_visible("#nocode")))
+        fb = api.get(URL + "api/admin/surveys", headers=H).json()["surveys"]
+        check("the answer is in the admin's Feedback list", any(x.get("pass") == sp[0] and (x.get("answers") or {}).get("recommend") == 10 for x in fb))
+        sv.goto(URL + "survey?t=" + tok + "&stop=1"); sv.wait_for_selector("#off:not([hidden])", timeout=8000)
+        stopped = api.post(URL + "api/admin/survey", headers=H, data=json.dumps({"pass": sp[1]}))
+        check("its stop link stops feedback emails to that address", stopped.status == 409 and "asked not to" in stopped.text(), stopped.text()[:200])
     check("no page errors on any screen", not errs, errs[:3])
     api.delete(APIU + "state", headers={"X-Pin": PIN})
     b.close()

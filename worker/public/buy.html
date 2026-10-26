@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026150115">
+<meta name="build" content="20261026170551">
 <title>Book a Table: £10 a party or £20 a month · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Book a Table for The Betrayal: £10 for one party of 8 to 24 players, or £20 a month as a Regular. Played on everyone’s phones, with no app to install.">
@@ -239,6 +239,9 @@ document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#dtog").onclick = () => { $("#dbox").hidden = false; $("#dtog").setAttribute("aria-expanded", "true"); $("#dtog").parentNode.hidden = true; $("#dcode").focus() };
 $("#dcode").oninput = () => { $("#dcode").removeAttribute("aria-invalid"); payText() };
+// a code handed over in the link (/buy?discount=CODE, from the feedback survey's thank-you) opens the box, filled in
+const given = (new URLSearchParams(location.search).get("discount") || "").trim().toUpperCase().slice(0, 40);
+if (given) { $("#dtog").onclick(); $("#dcode").value = given; $("#dcode").blur(); payText() }
 $("#pay").onclick = async () => {
   if (busy) return;
   if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }

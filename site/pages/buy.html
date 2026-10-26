@@ -62,6 +62,9 @@ document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#dtog").onclick = () => { $("#dbox").hidden = false; $("#dtog").setAttribute("aria-expanded", "true"); $("#dtog").parentNode.hidden = true; $("#dcode").focus() };
 $("#dcode").oninput = () => { $("#dcode").removeAttribute("aria-invalid"); payText() };
+// a code handed over in the link (/buy?discount=CODE, from the feedback survey's thank-you) opens the box, filled in
+const given = (new URLSearchParams(location.search).get("discount") || "").trim().toUpperCase().slice(0, 40);
+if (given) { $("#dtog").onclick(); $("#dcode").value = given; $("#dcode").blur(); payText() }
 $("#pay").onclick = async () => {
   if (busy) return;
   if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
