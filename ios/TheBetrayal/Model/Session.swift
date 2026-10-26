@@ -171,7 +171,7 @@ final class Session {
         do {
             let r = try await API.room(room, "m/join", body: ["name": name])
             if r.json["none"].bool == true {
-                if r.json["classic"].bool == true { classic = true; return say("This Table plays Classic, which runs on the website rather than in the app.", error: true) }
+                if r.json["classic"].bool == true { classic = true; return say("This Table plays Classic, which the app doesn’t play.", error: true) }
                 return say("This Table hasn’t been set up yet. The host opens it first.", error: true)
             }
             if let t = r.json["tok"].string { setToken(t); take(r.json); screen = .play; toast = nil; start(); return }

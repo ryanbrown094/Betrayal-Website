@@ -1,6 +1,6 @@
 // The app's model against every recorded moment of a game (ios/TheBetrayal/Debug/Fixtures.json, from the real rules
 // engine), and its SVG reader against every drawing. Built and run by .github/workflows/ios-native.yml:
-//   swiftc ios/TheBetrayal/Model/{JSON,Snapshot,Logic}.swift ios/TheBetrayal/UI/Art.swift ios/ci/main.swift -o decode
+//   swiftc ios/TheBetrayal/Model/{JSON,Snapshot,Logic,API}.swift ios/TheBetrayal/UI/Art.swift ios/ci/main.swift -o decode
 //   ./decode ios/TheBetrayal/Debug/Fixtures.json
 import Foundation
 import CoreGraphics
@@ -63,6 +63,14 @@ for p in Art.crestParts { let b = p.path.boundingBox; check(b.minX >= 4 && b.max
 let moon = SVGPath.cgPath("M43 7a25 25 0 1 0 14 39A21 21 0 0 1 43 7z").boundingBoxOfPath
 check(abs(moon.minX - 11.83) < 0.3 && abs(moon.minY - 6.23) < 0.3 && abs(moon.maxX - 57) < 0.3 && abs(moon.maxY - 56.23) < 0.3, "the moon's arcs: \(moon)")
 check(Art.blob.boundingBox.width > 80 && Art.blob.boundingBox.width < 100, "the wax")
+
+// what a scanned QR code or an opened link joins: the app's own link, the website TV's, or a bare code
+for (text, room) in [("thebetrayal://join/K7Q2XM", "K7Q2XM"), ("https://thebetrayal.co.uk/m/K7Q2XM", "K7Q2XM"), ("https://thebetrayal.co.uk/t/k7q2xm", "K7Q2XM"),
+                     ("https://thebetrayal.co.uk/join?code=K7Q2XM", "K7Q2XM"), (" k7q2xm ", "K7Q2XM"), ("thebetrayal://join/", nil),
+                     ("https://example.com/K7Q2XM", nil), ("OATH-K7QM-2XRD", nil), ("", nil)] as [(String, String?)] {
+    check(Codes.room(in: text) == room, "a scan of \(text) gave \(Codes.room(in: text) ?? "nothing")")
+}
+check(Codes.room(in: Server.joinLink("K7Q2XM")) == "K7Q2XM", "the TV's own QR code")
 
 print("\(all.count) moments, \(phases.count) phases, \(kinds.count) kinds of item; \(failures) failures")
 exit(failures == 0 ? 0 : 1)

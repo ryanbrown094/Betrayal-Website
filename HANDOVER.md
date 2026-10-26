@@ -188,7 +188,7 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
 - **The server owes it what it owes the page.** It reads `viewFor()`'s fields leniently (a new field is ignored, a missing one reads as nothing), so adding fields is safe; renaming or removing one, or changing a field's meaning, needs the app changed and a new release, because phones keep old versions for weeks. Modern's routes have no build check (426), so a deploy never forces the app to reload.
 - **A change to Modern's screens or words** (`src/modern-ui.js`) is a change to the app too: the matching view in `ios/TheBetrayal/UI/`, and `node ios/tools/fixtures.mjs > ios/TheBetrayal/Debug/Fixtures.json`. A change to `src/art.js` is copied into `ios/TheBetrayal/UI/Art.swift`; a change to `src/audio.js` is re-rendered with `node ios/tools/sounds.mjs` after `./build.sh`.
 - **The TV** shows on a second display (AirPlay or a cable) as a scene of its own, never a mirror of the phone, and on an iPad through **Use this screen as the TV**.
-- **Booking codes:** the app opens a Table with one but never sells one or links to the shop (App Store rule 3.1.1). Classic stays on the website.
+- **Standalone:** the app needs the Worker's API and nothing else. It sells codes itself with Apple's in-app purchase (§6.2a), never mentions or links to the website's shop (App Store rule 3.1.1), keeps the codes on the phone, reads the TV's QR code (`thebetrayal://join/CODE`, which an iPhone's Camera also opens), and has How to play, the terms and the privacy notice of its own (`ios/TheBetrayal/UI/Pages.swift`: change them with the website's). Classic isn't in it.
 
 ---
 
@@ -375,7 +375,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   2. **Users and Access → Integrations → In-App Purchase**: generate a key. Put its Issuer ID and Key ID in the `.toml` as `APPSTORE_ISSUER_ID` and `APPSTORE_KEY_ID`, and the downloaded `.p8` in the secret: `npx wrangler secret put APPSTORE_PRIVATE_KEY -c <config> < SubscriptionKey_XXXX.p8`. Until all three are set, a purchase is kept on the phone and claimed when they are (503 "In-app purchases aren't set up on the server yet").
   3. The app's **App Information → App Store Server Notifications**: version 2, Production and Sandbox URL `https://<domain>/api/appstore/notify`.
   4. Test with a sandbox tester (Settings → Developer → Sandbox Apple Account on the phone) through TestFlight: the code appears, `/admin` shows it, a refund requested in the sandbox cancels it.
-- **`APPSTORE_LOCAL=1`** (development only, never staging or production) also takes purchases from Xcode's StoreKit testing (`ios/TheBetrayal/Debug/Store.storekit`), which Apple has never seen, on the phone's word: `npx wrangler dev --var APPSTORE_LOCAL:1`. Without it they're refused (403).
+- **`APPSTORE_LOCAL=1`** (development only, never staging or production) also takes purchases from Xcode's StoreKit testing (`ios/Store.storekit`, which the shared scheme uses when the app is run from Xcode), which Apple has never seen, on the phone's word: `npx wrangler dev --var APPSTORE_LOCAL:1`. Without it they're refused (403).
 - Tests: `node qa/appstore.mjs` (Apple's API stubbed, its token's signature checked).
 
 ### 6.3 Vars and secrets

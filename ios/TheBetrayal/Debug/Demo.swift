@@ -6,7 +6,17 @@ import SwiftUI
 //   -render-all        every moment, phone and TV, drawn to Documents/shots/*.png, then Documents/shots/done
 //   -art               every drawing, for comparing with the website's
 //   -play ROOM TOKEN   a Table as the player that token belongs to (with -server URL, the CI's local Worker)
+//   -shop [-scroll ID] the start screen with the App Store's plans priced as in Store.storekit, and two saved codes,
+//                      scrolled to ID ("book")
+//   -page NAME         How to play, the terms or the privacy notice (rules, terms, privacy)
+//   -bought            the sheet after a purchase
 enum Demo {
+    static let scroll: String? = {
+        let args = ProcessInfo.processInfo.arguments
+        guard let i = args.firstIndex(of: "-scroll"), i + 1 < args.count else { return nil }
+        return args[i + 1]
+    }()
+
     static let fixtures: [String: JSON] = {
         guard let url = Bundle.main.url(forResource: "Fixtures", withExtension: "json"), let d = try? Data(contentsOf: url), let j = try? JSON(data: d) else { return [:] }
         return j.object
@@ -16,6 +26,16 @@ enum Demo {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("-art") { return AnyView(ArtSheet()) }
         if args.contains("-render-all") { return AnyView(RenderAll()) }
+        if args.contains("-shop") || args.contains("-bought") {
+            Shop.shared.show(table: .init(id: Shop.tableID, price: "£9.99", period: nil, product: nil),
+                             regular: .init(id: Shop.regularID, price: "£19.99", period: "a month", product: nil))
+            SavedCodes.add("OATH-K7QM-2XRD", sub: false)
+            SavedCodes.add("OATH-H4WN-P9TC", sub: true)
+            Shop.shared.reload()
+            if args.contains("-bought") { return AnyView(BoughtSheet(bought: .init(pass: "OATH-K7QM-2XRD", sub: false), open: { _ in })) }
+            return AnyView(HomeView())
+        }
+        if let i = args.firstIndex(of: "-page"), i + 1 < args.count, let p = Page(rawValue: args[i + 1]) { return AnyView(PageView(page: p)) }
         if let i = args.firstIndex(of: "-play"), i + 2 < args.count {
             let room = args[i + 1]
             UserDefaults.standard.set(args[i + 2], forKey: Session.tokKey(room))

@@ -8,10 +8,15 @@ struct Target: Hashable {
     var pass: String? = nil
 }
 
-// The start screen: join a Table with its code, or open your own with a booking code. The same calls as the website's
-// home page (site/index.html: open, go, subChoice), without its prices or links to them (App Store rule 3.1.1).
+// The start screen: join a Table with its code (typed, scanned or from a link), open your own with a booking code, or
+// book one. The same calls as the website's home page (site/index.html: open, go, subChoice); booking is the App
+// Store's (Model/Shop.swift).
 struct HomeView: View {
     @State private var path: [Target] = []
+    @State private var scanning = false
+    @State private var page: Page?
+    private var shop: Shop { Shop.shared }
+    private let model = AppModel.shared
     @State private var tableCode = ""
     @State private var bookingCode = ""
     @State private var busy = false
@@ -38,13 +43,21 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            ScrollView {
-                Column {
-                    header
-                    if let recent { tonight(recent) }
-                    join
-                    host
-                    Small("Everyone plays on their own phone, the host included. Best with 8 to 16 players.").padding(.vertical, 12)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    Column {
+                        header
+                        if let recent { tonight(recent) }
+                        join
+                        host.id("host")
+                        BookCard(open: openCode, show: { page = $0 }).id("book")
+                        footer
+                    }
+                }
+                .onAppear {
+                    #if DEBUG
+                    if let a = Demo.scroll { DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { proxy.scrollTo(a, anchor: .top) } }
+                    #endif
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -53,6 +66,14 @@ struct HomeView: View {
             .navigationDestination(for: Target.self) { t in TableView(session: AppModel.shared.session(for: t)) }
         }
         .onChange(of: path) { _, now in if now.isEmpty { recent = Recent.room } }
+        .onAppear { shop.start(); follow(model.link) }
+        .onChange(of: model.link) { _, room in follow(room) }
+        .sheet(isPresented: $scanning) { ScanSheet { room in tableCode = room; joinTable() } }
+        .sheet(item: $page) { p in PageView(page: p) { page = nil } }
+        .sheet(item: Binding(get: { shop.bought }, set: { shop.bought = $0 })) { b in BoughtSheet(bought: b, open: openCode) }
+        .alert("Booking", isPresented: Binding(get: { shop.problem != nil }, set: { if !$0 { shop.problem = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: { Text(shop.problem ?? "") }
         .confirmationDialog(question?.title ?? "", isPresented: Binding(get: { question != nil }, set: { if !$0 { question = nil } }), titleVisibility: .visible, presenting: question) { q in
             switch q {
             case .regular(let room, let pass):
@@ -91,10 +112,11 @@ struct HomeView: View {
         Card {
             Eyebrow("play")
             H2("Join a game")
-            Sub("Type the Table code from the host’s phone or the TV.")
+            Sub("Type the Table code from the host’s phone or the TV, or scan the TV’s code.")
             VStack(spacing: 10) {
                 Field(placeholder: "ABC123", text: $tableCode, code: true, submit: joinTable)
                 Button("Join", action: joinTable).btn(.fill).disabled(!Codes.isRoom(tableCode))
+                Button("Scan the TV’s code") { scanning = true }.btn(.ghost)
                 Button("Use this screen as the TV") { if Codes.isRoom(tableCode) { path.append(Target(room: tableCode, start: .tv)) } }
                     .btn(.ghost, .sm).disabled(!Codes.isRoom(tableCode))
             }
@@ -106,6 +128,7 @@ struct HomeView: View {
             Eyebrow("host")
             H2("Host a game")
             Sub("Enter your booking code to open your Table. It stays open for 48 hours from when you first open it.")
+            YourCodes(open: openCode)
             VStack(spacing: 10) {
                 BookingField(text: $bookingCode, submit: hostTable)
                 Button(busy ? "Opening…" : "Open my Table", action: hostTable).btn(.ghost).disabled(busy || bookingCode.count < 4)
@@ -113,11 +136,39 @@ struct HomeView: View {
         }
     }
 
+    private var footer: some View {
+        VStack(spacing: 12) {
+            Small("Everyone plays on their own phone, the host included. Best with 8 to 16 players.", center: true)
+            Flow(spacing: 8, center: true) {
+                Button("How to play") { page = .rules }.btn(.dark, .sm, fit: true)
+                Button("Terms") { page = .terms }.btn(.dark, .sm, fit: true)
+                Button("Privacy") { page = .privacy }.btn(.dark, .sm, fit: true)
+                Link("Contact us", destination: URL(string: "mailto:" + Page.contact)!).btn(.dark, .sm, fit: true)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+    }
+
+    // a Table from a link (thebetrayal://join/CODE: the TV's QR code, read by the phone's own camera)
+    private func follow(_ room: String?) {
+        guard let room else { return }
+        model.link = nil
+        path = []
+        tableCode = room
+        joinTable()
+    }
+
+    private func openCode(_ pass: String) {
+        bookingCode = pass
+        hostTable()
+    }
+
     private func joinTable() {
         guard Codes.isRoom(tableCode) else { return }
         let room = tableCode
         Task {
-            if await API.mode(of: room) == .classic { problem = "This Table plays Classic, which runs on a laptop and a TV from the website rather than in the app."; return }
+            if await API.mode(of: room) == .classic { problem = "This Table plays Classic, which the app doesn’t play."; return }
             path.append(Target(room: room))
         }
     }
@@ -133,6 +184,7 @@ struct HomeView: View {
         defer { busy = false }
         do {
             let t = try await API.open(pass: pass, fresh: fresh)
+            if !t.test { shop.remember(pass) }
             if t.sub && t.again { question = .regular(room: t.room, pass: pass); return }
             await go(room: t.room, pass: pass, test: t.test)
         } catch { problem = error.localizedDescription }
@@ -142,7 +194,7 @@ struct HomeView: View {
     private func go(room: String, pass: String, test: Bool) async {
         switch await API.mode(of: room) {
         case .modern: path.append(Target(room: room))
-        case .classic: problem = "This Table is set up for Classic, which plays on a laptop and a TV from the website rather than in the app."
+        case .classic: problem = "This Table is set up for Classic, which the app doesn’t play. Only a new Table can be played in the app."
         case .unset: if test { question = .test(room: room, pass: pass) } else { path.append(Target(room: room, start: .create, pass: pass)) }
         }
     }

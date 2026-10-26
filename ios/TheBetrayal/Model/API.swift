@@ -11,13 +11,8 @@ enum Server {
         #endif
         return production
     }()
-    // what the TV and the lobby tell guests to type
-    static var site: String {
-        guard let host = base.host else { return "thebetrayal.co.uk" }
-        if let port = base.port { return "\(host):\(port)" }
-        return host
-    }
-    static func joinURL(_ room: String) -> String { base.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/")) + "/m/" + room }
+    // the TV's QR code: opens the app at that Table (CFBundleURLTypes in Info.plist), so joining needs no website
+    static func joinLink(_ room: String) -> String { "thebetrayal://join/" + room }
 
     static let session: URLSession = {
         let c = URLSessionConfiguration.default
@@ -87,4 +82,16 @@ enum Codes {
     // six letters and numbers (worker/src/codes.js leaves out 0, O, 1, I and L, but a mistyped code just isn't found)
     static func isRoom(_ s: String) -> Bool { s.count == 6 && s.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber) } }
     static func clean(_ s: String) -> String { String(s.uppercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) }.prefix(6)) }
+
+    // the Table in a scanned QR code or an opened link: the app's own (thebetrayal://join/ABC123), the website TV's
+    // (https://…/m/ABC123, …/t/ABC123, …/join?code=ABC123), or just the code
+    static func room(in s: String) -> String? {
+        let s = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        if isRoom(s) { return s.uppercased() }
+        guard let u = URLComponents(string: s) else { return nil }
+        if let q = u.queryItems?.first(where: { $0.name == "code" || $0.name == "room" })?.value, isRoom(q) { return q.uppercased() }
+        let parts = ((u.host.map { [$0] } ?? []) + u.path.split(separator: "/").map(String.init))
+        if let last = parts.last, isRoom(last), parts.count >= 2, ["join", "m", "t", "tv"].contains(parts[parts.count - 2].lowercased()) { return last.uppercased() }
+        return nil
+    }
 }

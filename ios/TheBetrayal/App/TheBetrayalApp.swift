@@ -12,6 +12,7 @@ struct TheBetrayalApp: App {
             Root()
                 .preferredColorScheme(.dark)
                 .tint(Theme.brass2)
+                .onOpenURL { url in AppModel.shared.link = Codes.room(in: url.absoluteString) }
         }
     }
 }
@@ -33,6 +34,7 @@ final class AppModel {
 
     private(set) var current: Session?   // the phone's own Table, as a player
     private(set) var externalTV: Session? // the same Table as the TV sees it, for a second display
+    var link: String?                      // a Table to join, from a link the app was opened with
     var externalConnected = false { didSet { sync() } }
     @ObservationIgnored private var sessions: [Target: Session] = [:]
 

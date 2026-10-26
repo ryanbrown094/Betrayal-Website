@@ -41,7 +41,7 @@ struct LobbyView: View {
         let o = v.opts
         VStack(alignment: .leading, spacing: 0) {
             H2("You’re in")
-            Sub(Text("Friends join at ") + b(Server.site + "/join") + Text(" with the code ") + b(session.room).font(Theme.ui(18, .bold)) + Text("."))
+            Sub(Text("Friends join in The Betrayal app with the code ") + b(session.room) + Text(", or by scanning the code on the TV."))
             People(list: v.players)
             Small(Words.plural(n, "player") + " · 8 to 24 can play").padding(.top, 10)
             if !me.director { WaitHost(v: v) } else {
@@ -76,7 +76,7 @@ struct LobbyView: View {
                         session.confirm("Start the game? Nobody else can join after this.", yes: "Start") { session.act("start") }
                     }
                     .btn(.fill, .big).disabled(n < 8)
-                    Small(Text("For the TV, if you want one, AirPlay this phone to it, or open ") + b(Server.site + "/t/" + session.room, size: 15) + Text(" on a laptop and cast it."), center: true).padding(.top, 12)
+                    Small(Text("For the TV, if you want one, AirPlay this phone to it: the TV shows the game, never your screen. Or open the app on an iPad, type ") + b(session.room, size: 15) + Text(" and choose ") + b("Use this screen as the TV", size: 15) + Text("."), center: true).padding(.top, 12)
                 }
             }
         }

@@ -3,7 +3,8 @@
 A native iPhone and iPad app for **Modern**: everyone plays on their own phone, against the same game server and API as
 the website (`worker/src/index.js`, `worker/src/modern.js`). Nothing in it is a web view. Every screen of
 `src/modern-ui.js` is redrawn in SwiftUI, with the palette and type of `src/modern.css`, the art of `src/art.js` and the
-music of `src/audio.js`. Classic stays on the website.
+music of `src/audio.js`. It stands on its own: booking, joining, the TV, How to play, the terms and the privacy notice
+are all in the app, so it needs the game server (the Worker's API) but none of the website's pages. Classic isn't in it.
 
 ## Run it
 
@@ -20,18 +21,35 @@ replace each other on a phone; change it in the target's settings to keep both.
 
 **To test on your own:** enter the master passcode as the booking code and choose **Play against bots**.
 
+**Buying, from Xcode:** the shared scheme runs the app with `ios/Store.storekit` (Xcode's StoreKit testing: test prices,
+Apple's test purchase sheet, no money). The real server refuses those purchases ("only work on a development server")
+and the app says so. To get a code from one, run the Worker locally with `npx wrangler dev --var APPSTORE_LOCAL:1` and
+launch the app with `-server http://<your Mac's address>:8787` (Edit Scheme → Run → Arguments). To try real sandbox
+purchases (TestFlight, or a sandbox tester), set the scheme's StoreKit Configuration to None; that needs the products set
+up in App Store Connect (HANDOVER §6.2a).
+
 ## What it does
 
-- **The start screen** (`UI/HomeView.swift`): join a Table with its code, use the device as a Table's TV, or open your
-  own Table with a booking code. It makes the website's calls (`POST /api/games`, then `GET /api/g/CODE/m`), offers
-  "carry on or start a new game" to a Regular and the test choice to the master passcode, and refuses a Table already
-  set up for Classic. It shows no prices and no link to buy (App Store rule 3.1.1).
+- **The start screen** (`UI/HomeView.swift`): join a Table with its code, by scanning the TV's QR code (`UI/Scanner.swift`)
+  or from a `thebetrayal://join/CODE` link; use the device as a Table's TV; open your own Table with a booking code. It
+  makes the website's calls (`POST /api/games`, then `GET /api/g/CODE/m`), offers "carry on or start a new game" to a
+  Regular and the test choice to the master passcode, and refuses a Table already set up for Classic.
+- **Booking** (`Model/Shop.swift`, `UI/ShopView.swift`): a Table (consumable) and the Regular plan (monthly
+  subscription) with Apple's in-app purchase, at the App Store's price. Each purchase goes to `POST /api/appstore/claim`,
+  which checks it with Apple and returns its booking code (HANDOVER §6.2a); only then does the app finish the purchase,
+  so a code is never lost to a dropped connection (unfinished purchases are claimed again at the next launch). Codes
+  bought, or used to open a Table, are kept on the phone under **Your booking codes**. **Restore purchases** brings a
+  Regular to a new phone; **Manage subscription** is Apple's own sheet.
+- **How to play, the terms and the privacy notice** (`UI/Pages.swift`): the website's pages rewritten for the app (Apple
+  takes the payments, codes are kept on the phone, the camera reads QR codes). Change them with the website's.
 - **The game** (`UI/PhoneView.swift`, `PhonePhases.swift`, `PhoneTrial.swift`, `Tools.swift`): every phase, every
   Trial, the host's tools (with the three checks before **Show me the roles**), pause, rejoin requests and last words,
   in the page's words. `Model/Session.swift` does what the page's `poll`, `send`, `doJoin` and `doCreate` do: it polls
   `GET /api/g/CODE/m` about once a second (faster during Snap, slower in the background), sends taps to `m/act`, and
   keeps the phone's token under the page's own storage name (`bt-m-CODE`).
 - **The TV** (`UI/TVView.swift`): the TV page's every screen, sized to the screen as the page sizes it in `vh` and `vw`.
+  Its QR code is `thebetrayal://join/CODE`: an iPhone's Camera opens the app at that Table. Guests need the app (there's
+  no Android version); the app's scanner also reads the website TV's codes.
   - **On a TV:** AirPlay the phone to a TV (or use a cable). The app gives the second display a scene of its own
     (`ExternalDisplay` in `App/TheBetrayalApp.swift`) showing the TV of the Table the phone is at, with the music. It
     never mirrors the phone, so a player's role can't reach the TV.
@@ -69,9 +87,11 @@ play the whole game):
 
 1. `ios/ci/main.swift` builds the model with `swiftc` and reads every moment of `Debug/Fixtures.json` (a whole game
    recorded from the real rules engine by `ios/tools/fixtures.mjs`), and every drawing.
-2. It builds the app (Debug and Release) and runs it in the iPhone simulator: the start screen, the art (`-art`), two
-   dozen recorded moments as the phone shows them (`-demo NAME`), and every moment as phone and TV drawn offscreen
-   (`-render-all`, which can't draw text fields).
+2. It builds the app (Debug and Release) and runs it in the iPhone simulator: the start screen, the art (`-art`), the
+   booking card and saved codes with made-up prices (`-shop -scroll book`), the sheet after a purchase (`-bought`), the
+   three pages (`-page rules`), two dozen recorded moments as the phone shows them (`-demo NAME`), and every moment as
+   phone and TV drawn offscreen (`-render-all`, which can't draw text fields). `ios/ci/main.swift` also checks which
+   Table a scanned code or link opens.
 3. It starts the real Worker (`wrangler dev`, with a test master passcode), and `ios/ci/drive.py` plays a game against
    bots as the host while the app shows the host's phone (`-server URL -play ROOM TOKEN`), photographing each new screen.
    Pushes play the first round; a run by hand can play the whole game.
@@ -87,5 +107,9 @@ the Release bundle.
 
 - A real iPhone, a real AirPlay TV, and the sound through a speaker: the simulator can't show a second display from the
   CI, and nobody has heard the rendered music on a device. Try both before a party.
-- App Store review: hosting needs a booking code bought on the website, which Apple may question (rule 3.1.1 and 3.1.3).
-  Joining a Table never needs one.
+- Buying: the StoreKit code has only been built, never run against the App Store. The server's half is tested with
+  Apple stubbed (`node qa/appstore.mjs`) and with an Xcode-style purchase on `wrangler dev`. Before release: a sandbox
+  purchase of each product through TestFlight, a restore on a second device, and a sandbox refund.
+- The QR scanner and the `thebetrayal://` link need a real iPhone (the simulator has no camera).
+- App Store review: a booking code bought on the website still opens a Table in the app. Rule 3.1.3(b) (multiplatform
+  services) allows that because the same things are on sale in the app; the app never mentions or links to the website's shop.

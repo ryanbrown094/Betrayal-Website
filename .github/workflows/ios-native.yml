@@ -38,7 +38,7 @@ jobs:
 
       - name: The model reads every recorded moment
         run: |
-          swiftc ios/TheBetrayal/Model/JSON.swift ios/TheBetrayal/Model/Snapshot.swift ios/TheBetrayal/Model/Logic.swift ios/TheBetrayal/UI/Art.swift ios/ci/main.swift -o decode
+          swiftc ios/TheBetrayal/Model/JSON.swift ios/TheBetrayal/Model/Snapshot.swift ios/TheBetrayal/Model/Logic.swift ios/TheBetrayal/Model/API.swift ios/TheBetrayal/UI/Art.swift ios/ci/main.swift -o decode
           ./decode ios/TheBetrayal/Debug/Fixtures.json
 
       - name: Build (Debug)
@@ -73,6 +73,10 @@ jobs:
           }
           shot 00-home 6
           shot 01-art 4 -art
+          shot 02-home-codes 6 -shop -scroll host
+          shot 03-home-book 6 -shop -scroll book
+          shot 04-bought 4 -bought
+          for p in rules terms privacy; do shot "05-page-$p" 4 -page "$p"; done
           for d in lobby-host oath roles-veil roles-forsworn day-host trial-intro-forsworn quiz-open quiz-reveal-host trial-done-winner \
                    word-open change-open snap-open truths-prep-teller talk-crown vote-mine reveal-words night-forsworn-picked \
                    dawn-revealed trust end-host day-host-tools; do

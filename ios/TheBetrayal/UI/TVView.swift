@@ -112,10 +112,10 @@ struct TVBody: View {
         switch v.phase {
         case "lobby":
             HStack(spacing: u.vw * 5) {
-                QRBox(text: Server.joinURL(session.room)).frame(width: u.vh * 30, height: u.vh * 30)
+                QRBox(text: Server.joinLink(session.room)).frame(width: u.vh * 30, height: u.vh * 30)
                 VStack(alignment: .leading, spacing: u.vh * 1.5) {
                     Text(session.room).font(Theme.book(u.vh * 13, fixed: true)).tracking(u.vh * 1.5).foregroundStyle(Theme.brass2)
-                    (Text("Scan, or go to ") + Text(Server.site + "/join").font(Theme.ui(u.vh * 3.4, .bold, fixed: true)).foregroundColor(Theme.tallow))
+                    (Text("Scan, or type the code in ") + Text("The Betrayal").font(Theme.ui(u.vh * 3.4, .bold, fixed: true)).foregroundColor(Theme.tallow) + Text(" app"))
                         .font(Theme.ui(u.vh * 3.4, fixed: true)).foregroundStyle(Theme.tallow2)
                 }
             }
