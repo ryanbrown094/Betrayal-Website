@@ -19,7 +19,7 @@ const elapsed = s => s.startedAt ? (x => Math.floor(x / 60) + "h" + String(Math.
 
 const PHASE_NAME = { lobby: "Welcome", intro: "Titles", night0: "The Oath", day: "Day", mission: "Trial", shield: "Prizes", mingle: "Interval", table: "Reckoning", reveal: "Reckoning", night: "Night", morning: "Dawn", endvote: "Trust or Doubt", final: "Unmasking", final2: "Final two" };
 function renderHost() {
-  if (state && state.phase === "final") try { localStorage.setItem("candle-played", "1") } catch (e) {} // a game played to the end: the next one recommends the twists
+  if (state && state.phase === "final") try { localStorage.setItem("bt-played", "1") } catch (e) {} // a game played to the end: the next one recommends the twists
   const app = $("#app");
   if (connecting) { patch(app, `<div id="host"><div class="pinwrap"><h2>Connecting to the house…</h2><p class="note">If this doesn’t clear in a few seconds, check the phone is online.</p></div>${hstamp()}</div>`); return }
   if (roomMissing) { patch(app, `<div id="host"><div class="pinwrap"><h2>No game at this code</h2><p class="note">Table codes are six letters and numbers. Start again from the home page with your booking code: entering it again brings back the same Table.</p><button class="primary" onclick="location.href='/'">Go to the home page</button></div>${hstamp()}</div>`); return }
@@ -30,7 +30,7 @@ function renderHost() {
   }
   if (state.v !== SCHEMA) { patch(app, `<div id="host"><div class="pinwrap"><h2>A game from an older version is saved here</h2><p class="note">It can’t be continued in ${APPV}. Wipe it to set up a new game.</p><button class="danger" onclick="confirmNew()">Wipe the old game</button></div>${hstamp()}</div>`); return }
   const s = state, fin = isFinal(s);
-  if (setupDraft && serverHasGame && authed) { setupDraft = null; try { sessionStorage.removeItem("candle-draft") } catch (e) {} } // the game exists now
+  if (setupDraft && serverHasGame && authed) { setupDraft = null; try { sessionStorage.removeItem("bt-draft") } catch (e) {} } // the game exists now
   const bar = `<div class="bar"><div class="l1"><span class="ph">${fin ? "Final round" : "Round " + s.round} · ${PHASE_NAME[s.phase] || s.phase}${s.startedAt ? " · " + elapsed(s) : ""}</span><span class="pot num">${money(s.pot)}</span><button onclick="undo()" ${canUndo() ? "" : "disabled"}>Undo</button><button onclick="menuOpen=true;renderHost()">Menu</button></div>${syncErr ? '<div class="nosync" role="status">Not synced. It retries by itself, so keep going.</div>' : offline() ? '<div class="nosync" role="status">Offline. Every change is kept on this phone.</div>' : ""}${secretLine()}</div>`;
   let body = "", foot = "";
   switch (s.phase) {
@@ -132,7 +132,7 @@ function renderHost() {
   patch(app, `<div id="host">${bar}<div class="bodywrap" data-k="${s.phase}">${body}</div>${logOpen ? `<h3>The log</h3><div class="log">${(s.log || []).map(l => `<div>${esc(l)}</div>`).join("")}</div><div class="row"><button class="ghost slim" onclick="logOpen=false;renderHost()">Hide the log</button></div>` : `<div class="row"><button class="ghost slim" onclick="logOpen=true;renderHost()">Show the log (${plural((s.log || []).length, "line")})</button></div>`}${hstamp()}<div class="foot">${foot}</div>${handoffScreen(s)}${bankOpen ? bankSheet() : ""}${seatSheet(s)}${ren}${left}${menu}${plan}${sheet}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`);
 }
 async function checkPin() { const el = $("#pin"), v = el ? el.value : ""; if (!v) return; const ok = await tryPin(v); if (ok !== true) { pinMsg = typeof ok === "string" ? ok : "Wrong PIN. Try again."; if (el) el.value = ""; renderHost() } else pinMsg = "" }
-function confirmNew() { menuOpen = false; confirmSheet("Wipe this game and start over?", "Everything from tonight is deleted on the TV and the phone. There is no undo.", "Wipe the game", () => { setupDraft = null; try { sessionStorage.removeItem("candle-draft") } catch (e) {} renamePicker = leftPicker = false; renameId = null; handoff = null; newGame() }) }
+function confirmNew() { menuOpen = false; confirmSheet("Wipe this game and start over?", "Everything from tonight is deleted on the TV and the phone. There is no undo.", "Wipe the game", () => { setupDraft = null; try { sessionStorage.removeItem("bt-draft") } catch (e) {} renamePicker = leftPicker = false; renameId = null; handoff = null; newGame() }) }
 function leftAsk(id) { const p = P(id); leftPicker = false; if (!p) return renderHost(); confirmSheet(p.name + " has left the party?", "They come out of the game for good. Undo brings them back.", "Remove " + p.name, () => playerLeft(id)) }
 function renameGo() { const el = $("#rn"), id = renameId; renamePicker = false; renameId = null; if (el && el.value.trim() && id) renamePlayer(id, el.value); renderHost() }
 function showSpoil() { spoil = true; clearTimeout(spoilT); spoilT = setTimeout(() => { spoil = false; renderHost() }, 8000); renderHost() }
@@ -222,7 +222,7 @@ const SETUP0 = () => ({ names: "", cloaks: "", title: "The Betrayal", host: "", 
   rounds: 0, perRound: 0, dinnerAfter: 1, courses: false, mingle: true, narrator: false, pool: null, ghosts: true, convert: true, bargain: true, quests: true,
   shield: "mix", blade: true, champion: true, witness: true, dilemma: true, step: "welcome", touched: [], back: null });
 // A first game is Classic: the twists stay off until a game has been played to the end on this phone ("your second night").
-const seasoned = () => { try { return localStorage.getItem("candle-played") === "1" } catch (e) { return false } };
+const seasoned = () => { try { return localStorage.getItem("bt-played") === "1" } catch (e) { return false } };
 const namesOf = d => d.names.split(/\n|,/).map(x => x.trim()).filter(Boolean);
 const poolAll = () => MISSIONS.filter(m => !m.addon && m.key !== "custom").map(m => m.key);
 const draftPool = d => Array.isArray(d.pool) ? d.pool : poolAll();
@@ -286,7 +286,7 @@ function settle(d) {
 }
 const recOf = (d, k) => { const r = RECS.find(x => x[0] === k); return r ? r[1](d, tableOf(d)) : undefined };
 const blades = d => { const s = { rules: { rounds: +d.rounds || 3 }, players: [] }; return { blade: onceRound(s, "blade"), champion: onceRound(s, "champion") } };
-function saveDraft() { try { sessionStorage.setItem("candle-draft", JSON.stringify(setupDraft)) } catch (e) {} } // survives a reload for a new version
+function saveDraft() { try { sessionStorage.setItem("bt-draft", JSON.stringify(setupDraft)) } catch (e) {} } // survives a reload for a new version
 function draft() {
   const g = (id, k) => { const el = $("#" + id); if (el) setupDraft[k] = el.value };
   setupDraft = Object.assign(SETUP0(), setupDraft || {});
@@ -485,7 +485,7 @@ ${setupMsg ? `<div class="secret" role="alert">${esc(setupMsg)}</div>` : ""}</di
 <div class="foot"><button class="ghost" onclick="wBack()">Back</button><button class="primary" onclick="submitSetup()">Start game</button></div>`;
 }
 function setupForm() {
-  if (!setupDraft) try { setupDraft = JSON.parse(sessionStorage.getItem("candle-draft") || "null") } catch (e) {}
+  if (!setupDraft) try { setupDraft = JSON.parse(sessionStorage.getItem("bt-draft") || "null") } catch (e) {}
   const d = setupDraft = settle(Object.assign(SETUP0(), setupDraft || {})), n = tableOf(d), steps = wizSteps(d);
   if (d.step === "handover") return d.keeper === "friend" ? handoverForm(d) : (d.step = "review", setupForm());
   let w = steps.find(x => x.id === d.step); if (!w) { w = steps[0]; d.step = w.id }

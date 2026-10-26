@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261023123710">
+<meta name="build" content="20261026150115">
 <title>Traitors at home: how to host a traitors-style game night</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="How to run a traitors-style game at home: how many traitors for 8 to 24 players, dealing roles, the vote, the night, prizes, timings and hosting tips.">
@@ -107,7 +107,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      "@type": "HowToStep",
      "position": 8,
      "name": "The final and the reveal",
-     "text": "The final and the reveal. The last players decide whether they trust everyone left. If they do, turn over every card: if only loyal players remain, they win the pot. If a traitor is still at the table, the traitors win.",
+     "text": "The final and the reveal. The last players decide whether they trust everyone left. If they all do, turn over every card: if only loyal players remain, they win the pot; if a traitor is still at the table, the traitors win. If anyone doubts, hold another vote, this time without showing the role, and ask again.",
      "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
     }
    ]
@@ -184,10 +184,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 @font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-i400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
+/* IM Fell has only old-style figures, where a 1 reads as I and a 0 as o (£10 read £Io, a clock's 10s read IOS): every --book stack lists this face first, so its digits come from Alegreya Sans, lined up by font-variant-numeric: lining-nums */
+@font-face{font-family:"Book Figures";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format("woff2");unicode-range:U+0030-0039}
+:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "Book Figures", "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
 * { box-sizing: border-box }
 html { color-scheme: dark; -webkit-text-size-adjust: 100% }
-body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui) }
+body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui); font-variant-numeric: lining-nums }
 a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 }
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 2px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
@@ -260,7 +262,7 @@ ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:
 <li><strong>A way to hide the night.</strong> Everyone closes their eyes; sleep masks stop peeking.</li>
 <li><strong>A few party games</strong> for the day: a quiz, charades, a guessing game.</li>
 <li><strong>A prize.</strong> Chocolate coins are traditional: they can be counted, shared out and fought over.</li>
-<li><strong>An evening.</strong> Allow about 3 to 3½ hours for 8 to 12 players.</li>
+<li><strong>Time.</strong> By hand, allow about 3 to 3½ hours for 8 to 12 players. On phones, where the games are timed and scored for you, it’s nearer an hour.</li>
 </ul>
 
 <h2 id="how-many">How many traitors?</h2>
@@ -291,7 +293,7 @@ ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:
 <li><b>Night falls.</b> Everyone closes their eyes. The host wakes the traitors, who silently point at a victim, then go back to sleep.</li>
 <li><b>Dawn.</b> Everyone opens their eyes and the host names the victim. Give them thirty seconds of last words before they leave the table.</li>
 <li><b>Repeat</b> a game, a vote and a night each round, until about five players are left.</li>
-<li><b>The final and the reveal.</b> The last players decide whether they trust everyone left. If they do, turn over every card: if only loyal players remain, they win the pot. If a traitor is still at the table, the traitors win.</li>
+<li><b>The final and the reveal.</b> The last players decide whether they trust everyone left. If they all do, turn over every card: if only loyal players remain, they win the pot; if a traitor is still at the table, the traitors win. If anyone doubts, hold another vote, this time without showing the role, and ask again.</li>
 </ol>
 
 <h2 id="vote">Getting the vote right</h2>
@@ -303,14 +305,14 @@ ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:
 </ul>
 
 <h2 id="night">Making the night work</h2>
-<p>The night is where most home games go wrong: a creaking chair or a rustle of movement gives the traitors away. Keep the room quiet, ask everyone to put their heads down, and make the traitors point, not whisper. With 12 or more players, let the traitors choose two victims a night so the game doesn’t drag.</p>
+<p>The night is where most home games go wrong: a creaking chair or a rustle of movement gives the traitors away. Keep the room quiet, ask everyone to put their heads down, and make the traitors point, not whisper. While 12 or more players are left, let the traitors choose two victims a night so the game doesn’t drag.</p>
 <p>On phones it’s easier: if everyone taps a name on their screen at night, nobody can tell who is really choosing. That’s how The Betrayal does it.</p>
 
 <h2 id="prize">Prizes</h2>
 <p>A prize makes people lie properly. Put a pot of chocolate coins in the middle and add to it every time the group wins a game. If the loyal players win, they share the pot. For a nastier twist, set a target: if the traitors win, they take what the pot fell short of it, so every game they quietly lost was money in their pocket.</p>
 
 <h2 id="timings">How long it takes</h2>
-<p>A round (a game, the vote and the night) takes about 30 to 40 minutes. For 8 to 12 players, plan on about 3 to 3½ hours in all. Bigger groups need more rounds: about 4¼ hours for 16, and 5 to 6 hours for 20 and up. A sample evening for ten:</p>
+<p>By hand, a round (a game, the vote and the night) takes about 30 to 40 minutes. For 8 to 12 players, plan on about 3 to 3½ hours in all. Bigger groups need more rounds: about 4¼ hours for 16, and 5 to 6 hours for 20 and up. A sample evening for ten:</p>
 <div class="table-scroll"><table>
 <tbody>
 <tr><td>7.30pm</td><td>Arrivals and drinks</td></tr>
@@ -341,7 +343,7 @@ ol.flow { padding-left: 22px } ol.flow > li { margin: 12px 0 } ol.flow > li > b:
 <li>At night everyone taps a name, so nobody can tell who is choosing. The victim learns they were poisoned in secret, then announces it at dawn.</li>
 <li>The game plans its own rounds for your group size, up to 24 players, and ends with the Unmasking and up to six awards.</li>
 </ul>
-<p>It costs £10 for one party (a Table, open for 48 hours from first use) or £20 a month as a Regular. A TV makes it a show but is optional. For groups who’d rather put phones away, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.</p>
+<p>It costs £10 for one party (a Table, open for 48 hours from first use) or £20 a month as a Regular. A TV makes it a show but is optional. On the phones, a game takes about an hour for 8 to 10 players. For a longer, more immersive evening, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.</p>
 <div class="cta"><a class="btn" href="/buy">Book a Table</a><a class="btn ghost" href="/rules">Read the rules</a><a class="btn ghost" href="/tour">See a game</a></div>
 
 <h2 id="questions">Questions</h2>

@@ -73,7 +73,7 @@ try:
         steps = E("()=>wizSteps(setupDraft).map(w=>w.id)")
         check("no Sanctuaries: the Crown and Temptation pages go, and both are off", "champion" not in steps and "dilemma" not in steps and not E("()=>setupDraft.champion||setupDraft.dilemma"))
         E("()=>wSet('shield','mix')")
-        check("a second night (a game played to the end on this phone): the twists are recommended", E("()=>{localStorage.setItem('candle-played','1');settle(setupDraft);const d=setupDraft;return d.blade&&d.champion&&d.dilemma&&d.witness&&d.convert&&d.bargain&&d.quests}"))
+        check("a second night (a game played to the end on this phone): the twists are recommended", E("()=>{localStorage.setItem('bt-played','1');settle(setupDraft);const d=setupDraft;return d.blade&&d.champion&&d.dilemma&&d.witness&&d.convert&&d.bargain&&d.quests}"))
         E("()=>{wSet('mingle',false)}"); check("no Interval: Errands now recommended off", E("()=>setupDraft.quests===false"))
         E("()=>{wSet('ghosts',false);wGo('pool')}"); check("no Ghosts: the Statue can't be switched on", h.locator(".mpool button[disabled]").count() == 1)
         E("()=>{wSet('ghosts',true);wSet('mingle',true)}")

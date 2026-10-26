@@ -1,6 +1,8 @@
 /* ===================== CORE: store, helpers, actions, rules ===================== */
 const APPV = "1.5", SCHEMA = 12;
-const KEY = "candle-v1";
+const KEY = "bt-v1";
+// this browser's storage keys were "candle-…" before the rename: carry each one over once
+try { for (const st of [localStorage, sessionStorage]) for (const k of ["v1", "pin", "settings", "played", "device", "draft"]) { const old = st.getItem("candle-" + k); if (old == null) continue; if (st.getItem("bt-" + k) == null) st.setItem("bt-" + k, old); st.removeItem("candle-" + k) } } catch (e) {}
 const isHost = location.hash === "#keeper" || location.hash === "#host" || location.hash === "#replay-host" || /[?&]host\b/.test(location.search);
 const BUILD = (document.querySelector('meta[name="build"]') || {}).content || "";
 // Each party plays at its own Table (a room): the TV at /t/CODE, the Keeper at /t/CODE#keeper (/g/CODE and #host open the same pages). Without a room (the standalone file,
@@ -24,9 +26,9 @@ function syncClock(r) {
 // The PIN lives in localStorage so a phone that locks, or a tab Safari quietly discards, comes back into the game without a prompt.
 // A copy in memory keeps the host in when the browser refuses storage altogether.
 let memPin = "";
-const getPin = () => { try { return localStorage.getItem("candle-pin") || sessionStorage.getItem("candle-pin") || memPin } catch (e) { return memPin } };
-const setPin = v => { memPin = v; try { localStorage.setItem("candle-pin", v); sessionStorage.setItem("candle-pin", v) } catch (e) {} };
-const clearPin = () => { memPin = ""; try { localStorage.removeItem("candle-pin"); sessionStorage.removeItem("candle-pin") } catch (e) {} };
+const getPin = () => { try { return localStorage.getItem("bt-pin") || sessionStorage.getItem("bt-pin") || memPin } catch (e) { return memPin } };
+const setPin = v => { memPin = v; try { localStorage.setItem("bt-pin", v); sessionStorage.setItem("bt-pin", v) } catch (e) {} };
+const clearPin = () => { memPin = ""; try { localStorage.removeItem("bt-pin"); sessionStorage.removeItem("bt-pin") } catch (e) {} };
 const pinHeader = () => ({ "Content-Type": "application/json", "X-Pin": getPin() || (state && state.hostPin) || "", "X-Build": BUILD });
 function toast(msg, ms) { toastMsg = msg; clearTimeout(toastT); toastT = setTimeout(() => { toastMsg = null; emit() }, ms || 3500); emit() }
 const offline = () => remote && lastPollOk && Date.now() - lastPollOk > 4500;
@@ -447,7 +449,7 @@ const BANKDEFS = [
   { key: "CODEWORDS", label: "Longest Word words", items: () => CODEWORDS, min: 2 },
   { key: "QUESTS", label: "Errands", items: () => QUESTS, min: 10 }];
 const BANKKEY = { likely: "LIKELY", estimate: "ESTIMATE", hilo: "ESTIMATE", charades: "CHARADES", hum: "SONGS", draw: "PICTIONARY", memory: "MEMSETS" };
-const SETTINGS_KEY = "candle-settings";
+const SETTINGS_KEY = "bt-settings";
 let bankOff = {}, bankErr = false, bankT = null;
 const isOff = (bank, i) => !!(bankOff[bank] && bankOff[bank].includes(i));
 // what a draw may use: the switched-on items (or everything, if a bank somehow ended up with none on)

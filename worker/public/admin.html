@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261023123710">
+<meta name="build" content="20261026150115">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -32,10 +32,12 @@
 @font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-i400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
+/* IM Fell has only old-style figures, where a 1 reads as I and a 0 as o (£10 read £Io, a clock's 10s read IOS): every --book stack lists this face first, so its digits come from Alegreya Sans, lined up by font-variant-numeric: lining-nums */
+@font-face{font-family:"Book Figures";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format("woff2");unicode-range:U+0030-0039}
+:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "Book Figures", "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
 * { box-sizing: border-box }
 html { color-scheme: dark; -webkit-text-size-adjust: 100% }
-body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui) }
+body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui); font-variant-numeric: lining-nums }
 a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 }
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 2px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
@@ -391,6 +393,8 @@ function renderRooms() {
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
+// the public words for the roles and sides the game code names cloak/candle (Classic) and f/l or forsworn/loyal (Modern)
+const ROLE = { cloak: "Forsworn", candle: "Loyal", f: "Forsworn", l: "Loyal" }, SIDE = { cloaks: "The Forsworn", candles: "The Loyal", forsworn: "The Forsworn", loyal: "The Loyal" };
 let replay = null;
 async function openRoom(code, at) {
   const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
@@ -410,19 +414,19 @@ async function openRoom(code, at) {
     ap(v, h("h2", {}, "The game (Modern)"),
       kv([["Title", md.opts.title], ["Host", host ? host.name : "—"], ["Players", md.players.length + (cl.length ? " (" + cl.length + " Forsworn: " + cl.join(", ") + ")" : "")], ["Now", md.phase + " · round " + md.round + (md.final ? " (the final)" : "") + " · version " + (md.ver || 0)],
         ["Purse", md.pot + " of " + md.opts.potCap], ["Prize", md.opts.prize + ((md.opts.prizes || []).length ? " · then " + md.opts.prizes.map(x => x.what).join(", then ") : "")], ["Kill", md.opts.kill], ["Sanctuary", md.opts.shield], ["Twists", yes(md.opts.twists)], ["Courses", yes(md.opts.courses)],
-        ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? md.result.winner : "—"]]),
+        ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? SIDE[md.result.winner] || md.result.winner : "—"]]),
       h("h3", {}, "Players"),
-      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), p.role === "f" ? "Forsworn" : p.role === "l" ? "Loyal" : "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), ROLE[p.role] || "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
       recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (md.log || []).slice().reverse().map(x => secs(x.t).slice(-8) + " " + x.m).join("\n") || "(empty)")]);
   } else if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
   else {
     const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
     ap(v, h("h2", {}, "The game"),
       kv([["Title", s.brand && s.brand.title], ["Keeper", s.brand && s.brand.host], ["Players", s.players.length + " (" + cl.length + " Forsworn: " + cl.join(", ") + ")"], ["Now", s.phase + " · round " + s.round + (s.finalRound ? " (final is round " + s.finalRound + ")" : "") + " · version " + (s.ver || 0)],
-        ["Purse", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Forsworn only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner || "—"], ["App", "schema " + s.v]]),
+        ["Purse", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Forsworn only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner ? SIDE[s.winner] || s.winner : "—"], ["App", "schema " + s.v]]),
       h("h3", {}, "Game plan (setup)"), kv(Object.entries(s.rules || {}).map(([k, x]) => [RULE_WORDS[k] || k, yes(x)])),
       h("h3", {}, "Players, in seat order"),
-      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, (ROLE[p.role] || p.role || "—") + (p.converted ? " (turned by the Whisper)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
       recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (s.log || []).slice().reverse().join("\n") || "(empty)")]);
   }
   // the replay: every saved version, on a TV and a phone. Its list is what happened (the game's log: each decision, not

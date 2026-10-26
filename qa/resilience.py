@@ -21,8 +21,8 @@ with sync_playwright() as p:
     check("host phone reload keeps the PIN and the game", "welcome to round" in host.inner_text("body").lower())
     # 2 · second host with a stale PIN in storage is shown the gate and does NOT lock itself out
     h2 = page(390, 844, "#host")
-    h2.evaluate("()=>localStorage.setItem('candle-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
-    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('candle-pin')") in (None, ""))
+    h2.evaluate("()=>localStorage.setItem('bt-pin','0000')"); h2.reload(); h2.wait_for_timeout(4500)
+    check("stale stored PIN clears itself instead of polling forever", h2.evaluate("()=>localStorage.getItem('bt-pin')") in (None, ""))
     h2.fill("#pin", PIN); h2.click("text=Unlock"); h2.wait_for_timeout(2500)
     check("right PIN still unlocks after a stale one (no lockout)", "welcome to round" in h2.inner_text("body").lower(), h2.inner_text("body")[:120])
     # 3 · both phones act from the same version: one wins, the other is refreshed with a toast, states converge

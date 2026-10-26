@@ -1,5 +1,5 @@
 # Modern on the real Worker, with eight phones and a TV: the home page's Classic/Modern choice, joining by code and name,
-# the host's settings (prize tiers, twists, courses), the Oath, secret roles, a whole Rapid Quiz answered on phones that
+# the host's settings (prize tiers, twists), the Oath, secret roles, a whole Rapid Quiz answered on phones that
 # gives the Casting Vote, the Temptation, the Reckoning, a night chosen on the Forsworn's phones, dawn, the next round's
 # course, the host's tools (and the roles behind three confirmations), a lost phone let back in, the TV's QR code,
 # narrator and sound, and every Trial's screen (rendered from the rules engine through the replay mode).
@@ -77,9 +77,7 @@ with sync_playwright() as p:
     check("no kill choice in the lobby (poison is the only kill), and the default prize explains its chocolate coins", host.locator("[data-a=opt][data-k=kill]").count() == 0 and host.input_value("#prize") == "chocolate coins" and "Every 100 points in the Purse is one chocolate coin" in host.inner_text("#app"))
     host.click("summary:has-text('Better prizes')"); host.fill("#tier1", "champagne"); host.locator("#tier1").dispatch_event("change")
     check("the host's settings: a better prize for a half-full Purse (saved, so the next tap isn't lost to the redraw)", until(lambda: host.evaluate("()=>!!(V&&V.opts&&(V.opts.prizes||[]).some(x=>x.what==='champagne'))")))
-    check("twists on and dinner off by default", "Once each: the Casting Vote, the Temptation, the Crown" in host.inner_text("#app") and "No meal breaks" in host.inner_text("#app"))
-    host.click("[data-a=opt][data-k=courses][data-v=true]")
-    check("…and the host can switch dinner in courses on", until(lambda: "Dinner in courses: a starter" in host.inner_text("#app")))
+    check("twists on by default, and no dinner setting (dinner is for Classic)", "Once each: the Casting Vote, the Temptation, the Crown" in host.inner_text("#app") and host.locator("[data-a=opt][data-k=courses]").count() == 0 and "dinner in courses" not in host.inner_text("#app").lower())
     shot(host, "01-lobby-host"); shot(tv, "tv-01-lobby")
     def dialogs(d):
         if d.type == "prompt": d.accept("SHOW THE ROLES")
@@ -165,11 +163,12 @@ with sync_playwright() as p:
     check("dawn: the victim learns first, in secret", until(lambda: "You were poisoned" in phones[vi].inner_text("#app")) and victim not in tv.inner_text("#tvapp"))
     host.click("[data-a=cont]"); check("the host reveals the night", until(lambda: f"{victim} was poisoned" in tv.inner_text("#tvapp")))
     host.click("[data-a=cont]")
-    check("round two opens with the Starter", until(lambda: "The Starter" in host.inner_text("#app")))
+    nxt = lambda: (re.search(r"Next: (.*)", host.inner_text("#app")) or [None, ""])[1]
+    check("round two opens with a Trial, no meal break", until(lambda: "Next:" in host.inner_text("#app")) and "The Starter" not in host.inner_text("#app") and "The Reckoning" not in nxt())
 
     # the tools: skip a step, someone leaves, the roles behind three confirmations
     host.click("[data-a=tools]"); until(lambda: host.locator("[data-a=tool][data-v=skipStep]").count())
-    host.click("[data-a=tool][data-v=skipStep]"); check("Tools: skip the Starter", until(lambda: "The Starter" not in host.inner_text("#app") and "Next:" in host.inner_text("#app")))
+    first = nxt(); host.click("[data-a=tool][data-v=skipStep]"); check("Tools: skip today's Trial, straight to the Reckoning", until(lambda: "The Reckoning" in nxt()), [first, nxt()])
     host.click("[data-a=tools]"); host.click("summary:has-text('Take someone out')")
     gone = [i for i in L if i not in (ti, vi)][-1]
     host.click(f"[data-a=tool][data-v=remove]:has-text('{NAMES[gone]}')")
