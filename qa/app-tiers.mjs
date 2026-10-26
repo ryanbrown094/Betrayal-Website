@@ -39,7 +39,7 @@ check("tiers: no code is free, the website's codes are full, the app's are what 
 check("tiers never go down", T.higher("host", "night") === "host" && T.higher("free", "night") === "night" && T.higher("night", "free") === "night");
 const fv = T.tierView("free", {}), nv = T.tierView("night", {});
 check("what the phones read: free has ads and the base Trials, a pass none and everything", fv.tier === "free" && !fv.adFree && fv.content === "base" && nv.adFree && nv.content === "all" && !nv.ads && T.tierView("host", {}).content === "all");
-check("a free game's ads: on, with their limits, unless ADS_ENABLED is 0", fv.ads.enabled && fv.ads.interstitialMinGapSec === 240 && fv.ads.interstitialMaxPerRoom === 4 && fv.ads.bannerEnabled && !T.tierView("free", { ADS_ENABLED: "0" }).ads.enabled);
+check("a free game's ads: on, with their limits, unless ADS_ENABLED is 0", fv.ads.enabled && fv.ads.interstitialMinGapSec === 0 && fv.ads.interstitialMaxPerRoom === 30 && fv.ads.bannerEnabled && !T.tierView("free", { ADS_ENABLED: "0" }).ads.enabled);
 
 // --- the website, as it was
 const web = await mint();
