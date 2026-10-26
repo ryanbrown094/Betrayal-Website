@@ -3,6 +3,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /seal
+Disallow: /survey
 Disallow: /api/
 Disallow: /t/
 Disallow: /m/
@@ -29,6 +30,7 @@ User-agent: MistralAI-User
 Allow: /
 Disallow: /admin
 Disallow: /seal
+Disallow: /survey
 Disallow: /api/
 Disallow: /t/
 Disallow: /m/

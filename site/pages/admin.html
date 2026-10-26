@@ -52,7 +52,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
 
 <div id="dash" hidden>
   <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
-  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="discounts">Discount codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
+  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="discounts">Discount codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="feedback">Feedback<span class="cnt" id="fbcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
   <div id="t-passes">
   <div class="stats" id="stats"></div>
 
@@ -118,6 +118,11 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
     <div id="repview" hidden></div>
   </div>
 
+  <div id="t-feedback" hidden>
+    <div class="adm-row" style="margin:14px 0 10px"><p class="note" id="fbsum" style="flex:1;margin:0"></p><button class="btn ghost small" id="fbreload">Refresh</button></div>
+    <p class="note">Feedback surveys, newest first. Send one with <b>Survey</b> on a booking code. Answering it earns a one-use code for 30% off one Table, emailed to them. The recommend score is the share who’d recommend it (9 or 10) minus the share who wouldn’t (0 to 6). Tap a row for the whole answer.</p>
+    <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Booking</th><th>Answers</th><th>Anything else</th><th>Their code</th></tr></thead><tbody id="fbrows"></tbody></table></div><p class="msg" id="fbmsg"></p>
+  </div>
   <div id="t-errors" hidden>
     <div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="eq" placeholder="Message, room, source" style="width:100%"></label><label>Source <select id="ef"><option value="all">All</option><option value="browser">Players’ browsers</option><option value="server">Server</option><option value="stripe">Stripe</option><option value="report">Issue reports</option></select></label><button class="btn ghost small" id="ereload">Refresh</button></div>
     <p class="note">Every error from a player’s browser, every server exception, every Stripe webhook that failed or couldn’t be matched, and every issue report. Newest first; the last 3,000 are kept. Tap a row for the detail.</p>
@@ -174,6 +179,9 @@ function render() {
     const act = (label, cls, title, fn) => { const b = document.createElement("button"); b.className = "btn tiny " + cls; b.textContent = label; if (title) b.title = title; b.onclick = fn; td.append(b) };
     if (p.room && !p.revoked) act("Extend", "ghost", "Keep this code's Table open longer", () => extend({ pass: p.pass }, p.expires));
     if (!p.revoked && !p.pending) mail ? act("Email", "ghost", "Email this code to " + mail + " (or another address)", () => resend(p)) : act("Set email", "ghost", "The address this code's booking emails go to", () => setEmail(p));
+    if (!p.revoked && !p.pending && mail) p.noMail ? act("No survey", "ghost", "They asked not to get feedback emails when they booked", () => say($("#tmsg"), p.pass + " asked not to get feedback emails when they booked."))
+      : p.surveyAnswered ? act("Survey ✓", "ghost", "They answered the feedback survey " + when(p.surveyAnswered), () => showTab("feedback"))
+      : act("Survey", "ghost", p.surveyed ? "Feedback survey sent " + when(p.surveyed) + ". Send it again" : "Email " + mail + " the feedback survey (30% off for answering)", () => survey(p));
     if (p.revoked) act("Delete", "danger", "", () => del(p.pass));
     if (!p.revoked) act("Cancel", "danger", "", () => cancel(p.pass));
     rows.append(tr);
@@ -208,6 +216,11 @@ async function resend(p) {
   const to = prompt("Email " + p.pass + " to:", emailOf(p));
   if (to === null) return;
   try { const j = await api("resend", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Emailed " + p.pass + " to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
+}
+async function survey(p) {
+  const to = prompt((p.surveyed ? "Send the feedback survey again (the same link) for " : "Send the feedback survey for ") + p.pass + " to:", emailOf(p));
+  if (to === null) return;
+  try { const j = await api("survey", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Feedback survey sent to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function cancel(pass) {
   if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;
@@ -290,9 +303,9 @@ const row = (cells, onclick, cls) => h("tr" + (onclick ? ".click" : "") + (cls ?
 let tab = "passes";
 function showTab(t) {
   tab = t; for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", b.dataset.t === t);
-  for (const x of ["passes", "discounts", "rooms", "reports", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
+  for (const x of ["passes", "discounts", "rooms", "reports", "feedback", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
   if (t === "rooms") { $("#roomlist").hidden = false; $("#roomview").hidden = true; if (replay) replay.stop() } if (t === "reports") { $("#replist").hidden = false; $("#repview").hidden = true }
-  if (t === "discounts") loadDiscounts(); if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
+  if (t === "discounts") loadDiscounts(); if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "feedback") loadFeedback(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
   try { history.replaceState(null, "", "#" + t) } catch (e) {}
 }
 for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => showTab(b.dataset.t);
@@ -450,6 +463,25 @@ async function openReport(id) {
 
 /* the error log */
 let errors = [];
+/* Feedback */
+let surveys = [];
+async function loadFeedback() { try { surveys = (await api("surveys")).surveys || []; renderFeedback() } catch (e) { say($("#fbmsg"), e.message, true) } }
+function renderFeedback() {
+  const tb = $("#fbrows"), A = surveys.filter(s => s.answered).map(s => s.answers); tb.textContent = "";
+  const nps = A.length ? Math.round(100 * (A.filter(a => a.recommend >= 9).length - A.filter(a => a.recommend <= 6).length) / A.length) : 0;
+  $("#fbsum").textContent = surveys.length ? surveys.length + " sent · " + A.length + " answered" + (A.length ? " · " + (A.reduce((x, a) => x + a.overall, 0) / A.length).toFixed(1) + " out of 5 on average · recommend score " + nps : "") : "No surveys sent yet.";
+  for (const s of surveys) {
+    const a = s.answers;
+    const detail = h("tr", { hidden: true }, h("td", { colspan: 5 }, kv([["Email", s.email], ["Table", s.room], ["Sent", when(s.sent) + (s.sends > 1 ? " (" + s.sends + " times)" : "")], ["Answered", when(s.answered)],
+      ...(a ? [["Overall", a.overall + " out of 5"], ["Would recommend", a.recommend + " out of 10"], ["Getting going", a.setup], ["Length", a.length], ["Would host again", a.again], ["Anything else", a.comment], ["Quote", a.quote ? "Yes" + (a.name ? ", as " + a.name : "") : "No"]] : []),
+      ["Their code", s.code ? s.code + " (until " + new Date(s.until).toLocaleDateString("en-GB") + ")" : s.codeErr ? "Not made: " + s.codeErr : ""], ["Stopped feedback emails", s.stopped ? when(s.stopped) : ""]])));
+    const ans = a ? a.overall + "/5 · " + a.recommend + "/10 · " + a.setup + " · " + a.length + " · again: " + a.again : s.stopped ? "Stopped feedback emails" : "Waiting";
+    tb.append(row([s.answered ? when(s.answered) : "Sent " + when(s.sent), s.pass, ans, h("div.msgcol", {}, a && a.comment ? a.comment : "—"), s.code || (s.codeErr ? "not made" : "—")], () => { detail.hidden = !detail.hidden }), detail);
+  }
+  $("#fbcnt").textContent = surveys.filter(s => s.answered > Date.now() - 7 * 86400000).length || "";
+  say($("#fbmsg"), "");
+}
+$("#fbreload").onclick = loadFeedback;
 async function loadErrors() { try { errors = (await api("errors")).errors || []; renderErrors() } catch (e) { say($("#emsg"), e.message, true) } }
 function renderErrors() {
   const q = $("#eq").value.trim().toLowerCase(), f = $("#ef").value, tb = $("#erows"); tb.textContent = "";

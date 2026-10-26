@@ -29,18 +29,19 @@ awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) pr
 # the legal, checkout and guide pages: site/pages/NAME.html in site/page.html → worker/public/NAME.html, served at /NAME.
 # Each starts with <!-- title: … --> (short name: nav, breadcrumbs; the <title> is "NAME · The Betrayal") and
 # <!-- desc: … -->; an optional <!-- fulltitle: … --> replaces the whole <title>. The head gets a BreadcrumbList, plus
-# site/pages/NAME.jsonld if it exists (more JSON-LD); 404, admin and seal get noindex instead.
+# site/pages/NAME.jsonld if it exists (more JSON-LD); 404, admin, seal and survey get noindex instead, and admin and survey
+# (whose links carry a private token) no Tag Manager.
 SITE=https://thebetrayal.co.uk
 for f in site/pages/*.html; do
   t=$(sed -n '1s/^<!-- title: \(.*\) -->$/\1/p' "$f"); d=$(sed -n 's/^<!-- desc: \(.*\) -->$/\1/p' "$f"); slug=$(basename "$f" .html)
   ft=$(sed -n 's/^<!-- fulltitle: \(.*\) -->$/\1/p' "$f"); [ -n "$ft" ] || ft="$t · The Betrayal"
   hf=$(mktemp)
   case "$slug" in
-    404|admin|seal) printf '<meta name="robots" content="noindex">\n' > "$hf" ;;
+    404|admin|seal|survey) printf '<meta name="robots" content="noindex">\n' > "$hf" ;;
     *) printf '<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Betrayal","item":"%s/"},{"@type":"ListItem","position":2,"name":"%s","item":"%s/%s"}]}</script>\n' "$SITE" "$t" "$SITE" "$slug" > "$hf"
        if [ -f "site/pages/$slug.jsonld" ]; then { printf '<script type="application/ld+json">\n'; cat "site/pages/$slug.jsonld"; printf '</script>\n'; } >> "$hf"; fi ;;
   esac
-  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin") while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{if (slug != "admin") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
+  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
   rm -f "$hf"
 done
 # the sitemap: the home page and every indexable page, each dated by the last commit of its source (today if it has
@@ -50,7 +51,7 @@ lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git
   printf '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
   printf '<url><loc>%s/</loc><lastmod>%s</lastmod></url>\n' "$SITE" "$(lastmod site/index.html)"
   for f in site/pages/*.html; do
-    slug=$(basename "$f" .html); case "$slug" in 404|admin|seal) continue ;; esac
+    slug=$(basename "$f" .html); case "$slug" in 404|admin|seal|survey) continue ;; esac
     printf '<url><loc>%s/%s</loc><lastmod>%s</lastmod></url>\n' "$SITE" "$slug" "$(lastmod "$f")"
   done
   printf '</urlset>\n'

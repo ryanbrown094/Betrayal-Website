@@ -39,7 +39,7 @@ with sync_playwright() as p:
     pg.goto(URL + "/buy"); pg.wait_for_timeout(300)
     check("buy: the Pay button names the price", "£10" in pg.inner_text("#pay"))
     pg.click("#pay"); pg.wait_for_timeout(200)
-    check("buy: Pay without the ticks says why and goes to the first box", "Tick both boxes" in pg.inner_text("#paymsg") and pg.evaluate("document.activeElement.id") == "c1" and pg.get_attribute("#c1", "aria-invalid") == "true")
+    check("buy: Pay without the ticks says why and goes to the first box", "Tick the first two boxes" in pg.inner_text("#paymsg") and pg.evaluate("document.activeElement.id") == "c1" and pg.get_attribute("#c1", "aria-invalid") == "true")
     pg.check("#c1"); pg.click("#pay"); pg.wait_for_timeout(200)
     check("…then the second", pg.evaluate("document.activeElement.id") == "c2" and pg.get_attribute("#c1", "aria-invalid") is None)
     pg.check("#sub-plan") if pg.locator("#sub-plan").count() else pg.click("label.plan:has(input[value=sub])"); pg.wait_for_timeout(100)

@@ -26,6 +26,6 @@
     document.body.append(box); document.body.style.paddingBottom = box.offsetHeight + "px";
   }
   window.btCookieChoice = () => { choice = null; try { localStorage.removeItem("bt-consent") } catch (e) {} banner() };
-  const start = () => { if (/^\/admin/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner() };
+  const start = () => { if (/^\/(admin|survey)/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner() };
   if (document.body) start(); else addEventListener("DOMContentLoaded", start);
 })();

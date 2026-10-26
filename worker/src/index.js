@@ -1,10 +1,11 @@
 import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
-import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
+import { newRoom, newPass, isRoom, isPass, passKey, shownPass, newToken, newThanks } from "./codes.js";
 import * as M from "./modern.js";
 import { sendBooking } from "./booking-mail.js";
 import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
+import { surveyEmail, thanksEmail, sendFeedbackMail } from "./survey-mail.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -489,6 +490,7 @@ export class Registry {
       const errs = [...(await this.storage.list({ prefix: "err:", start: "err:" + String(since).padStart(15, "0") })).values()].filter((e) => e.src !== "report"), seen = new Map();
       for (const e of errs) { const m = clip(e.msg || e.where || "?", 120); seen.set(m, (seen.get(m) || 0) + 1); }
       const money = (list, f) => list.reduce((a, v) => a + (+f(v) || 0), 0), tables = sales.filter((v) => v.kind !== "sub").length, subs = sales.length - tables;
+      const svs = [...(await this.storage.list({ prefix: "survey:" })).values()], svSent = svs.filter((x) => x.sent > since).length, svIn = svs.filter((x) => x.answered > since);
       const lines = [
         "In the last 24 hours:",
         "Sales: " + (sales.length ? sales.length + " (" + [tables && tables + (tables === 1 ? " Table" : " Tables"), subs && subs + (subs === 1 ? " new Regular" : " new Regulars")].filter(Boolean).join(", ") + "), " + gbp(money(sales, (v) => v.amount)) : "none"),
@@ -497,6 +499,7 @@ export class Registry {
         failed.length ? "Payments refused: " + failed.length + " (" + failed.map(([k, v]) => shownPass(k.slice(5)) + ": " + (v.failWhy || "refused")).join("; ") + ")" : null,
         "Tables opened: " + games + (tests ? " (and " + tests + " test " + (tests === 1 ? "room" : "rooms") + ")" : ""),
         "Problem reports and messages: " + newReps.length + " new, " + open + " open",
+        svSent || svIn.length ? "Feedback: " + svSent + (svSent === 1 ? " survey" : " surveys") + " sent, " + svIn.length + " answered" + (svIn.length ? " (" + (svIn.reduce((a, x) => a + x.answers.overall, 0) / svIn.length).toFixed(1) + " out of 5 on average)" : "") : null,
         "Errors: " + (errs.length ? errs.length + ". Most common: " + [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([m, n]) => m + (n > 1 ? " (×" + n + ")" : "")).join(" · ") : "none"),
         "", "Regulars now: " + regulars];
       const subject = "The Betrayal, last 24 hours: " + (sales.length ? sales.length + (sales.length === 1 ? " sale" : " sales") + " (" + gbp(money(sales, (v) => v.amount)) + ")" : "no sales") + ", " + games + (games === 1 ? " Table" : " Tables") + ", " + errs.length + (errs.length === 1 ? " error" : " errors");
@@ -580,6 +583,77 @@ export class Registry {
       await this.storage.put("pass:" + key, { ...v, email: email || undefined });
       return json({ ok: true, pass: shownPass(key), email });
     }
+    // Feedback. The admin sends a buyer the survey ("Survey" on their booking code); answering it earns a one-use 30% code
+    // for one Table. Each survey is survey:<token> (its link's token); an address that asked to stop (by the link, or by
+    // ticking "Don't email me a feedback survey" when booking) is svoff:<address>, and that booking is noMail.
+    if (url.pathname === "/survey-send") {
+      const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
+      if (!v) return json({ error: "No such pass" }, 404);
+      if (v.revoked || v.pending) return json({ error: v.revoked ? "That code is cancelled." : "That code hasn’t been paid for." }, 409);
+      if (v.noMail) return json({ error: "They asked not to get feedback emails when they booked." }, 409);
+      const to = (String(b.to || "").trim() || String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim()).slice(0, 200);
+      if (!to) return json({ error: "There’s no email address on this code. Type one in." }, 400);
+      if (!/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(to)) return json({ error: "That isn’t an email address." }, 400);
+      if (!this.env.MAIL) return json({ error: "Email isn’t set up (no MAIL binding)." }, 503);
+      if (await this.storage.get("svoff:" + to.toLowerCase())) return json({ error: to + " asked not to get feedback emails." }, 409);
+      const old = v.survey && (await this.storage.get("survey:" + v.survey));
+      if (old && old.answered) return json({ error: "They’ve already answered" + (old.code ? " (their code is " + old.code + ")" : "") + "." }, 409);
+      const token = old ? old.token : newToken(), sent = Date.now();
+      try { await sendFeedbackMail(this.env, to, surveyEmail({ token, host: this.env.SITE_HOST || "thebetrayal.co.uk" })); }
+      catch (e) { logErr(this.env, { src: "mail", msg: "The survey email didn’t send: " + clip((e && e.message) || e, 240), pass: shownPass(key) }); return json({ error: "It didn’t send. The error log says why." }, 502); }
+      await this.storage.put({ ["survey:" + token]: { ...(old || { token, pass: key, room: v.room || null }), email: to, sent, sends: ((old && old.sends) || 0) + 1 },
+        ["pass:" + key]: { ...(await this.storage.get("pass:" + key)), survey: token, surveyed: sent } });
+      return json({ ok: true, to });
+    }
+    if (url.pathname === "/surveys") {
+      const rows = [...(await this.storage.list({ prefix: "survey:" })).values()].map(({ token, ...x }) => ({ ...x, pass: shownPass(x.pass) }));
+      return json({ surveys: rows.sort((a, c) => (c.answered || c.sent) - (a.answered || a.sent)) });
+    }
+    if (url.pathname === "/survey-get") {
+      const s = surveyOf(b) && (await this.storage.get(surveyOf(b)));
+      if (!s) return json({ error: "That survey link isn’t valid." }, 404);
+      return json({ ok: true, answered: !!s.answered, code: s.code || null, until: s.until || null, mailed: !!s.mailed, stopped: !!s.stopped });
+    }
+    if (url.pathname === "/survey-stop") {
+      const s = surveyOf(b) && (await this.storage.get(surveyOf(b)));
+      if (!s) return json({ error: "That survey link isn’t valid." }, 404);
+      await this.storage.put({ [surveyOf(b)]: { ...s, stopped: Date.now() }, ["svoff:" + s.email.toLowerCase()]: { t: Date.now(), pass: s.pass } });
+      return json({ ok: true });
+    }
+    // an answer, once: two taps on Send make one code (Stripe is awaited inside, so the check-then-act queues)
+    if (url.pathname === "/survey-answer") return queued(this.locks, "survey", async () => {
+      const s = surveyOf(b) && (await this.storage.get(surveyOf(b)));
+      if (!s) return json({ error: "That survey link isn’t valid." }, 404);
+      if (s.answered) return json({ ok: true, code: s.code || null, until: s.until || null, mailed: !!s.mailed });
+      const a = surveyAnswers(b.answers); if (a.error) return json({ error: a.error }, 400);
+      // the reward, made as the admin's Discount codes are: a Stripe coupon (30%, once) with a one-use promotion code on it
+      // for one party, good for 180 days; a clash with an existing code tries another
+      let code = null, why = "";
+      const until = Date.now() + 180 * 86400000, md = { by: "survey", percent: "30", plans: "one", pass: shownPass(s.pass) };
+      if (!this.env.STRIPE_SECRET_KEY) why = "Stripe isn’t set up (no STRIPE_SECRET_KEY)";
+      else try {
+        const cp = await stripePost(this.env, "coupons", { percent_off: 30, duration: "once", name: "Survey thanks (30% off)", metadata: md }, PROMO_VERSION);
+        for (let i = 0; i < 3 && !code; i++) {
+          const c = newThanks();
+          try { await stripePost(this.env, "promotion_codes", { promotion: { type: "coupon", coupon: cp.id }, code: c, max_redemptions: 1, expires_at: Math.floor(until / 1000), metadata: md }, PROMO_VERSION); code = c; }
+          catch (e) { why = clip(e.message, 200); }
+        }
+      } catch (e) { why = clip(e.message, 200); }
+      const rec = { ...s, answered: Date.now(), answers: a, code, until: code ? until : null, ...(code ? {} : { codeErr: why }) };
+      await this.storage.put(surveyOf(b), rec);
+      const pv = await this.storage.get("pass:" + s.pass); if (pv) await this.storage.put("pass:" + s.pass, { ...pv, surveyAnswered: rec.answered });
+      if (code) {
+        try { await sendFeedbackMail(this.env, s.email, thanksEmail({ code, until, host: this.env.SITE_HOST || "thebetrayal.co.uk" })); rec.mailed = Date.now(); await this.storage.put(surveyOf(b), rec); }
+        catch (e) { logErr(this.env, { src: "mail", msg: "The survey’s 30% code didn’t send: " + clip((e && e.message) || e, 240), pass: shownPass(s.pass) }); }
+      }
+      else logErr(this.env, { src: "stripe", msg: "No 30% code for a survey answer: " + why, pass: shownPass(s.pass) });
+      await this.notify("Feedback from " + shownPass(s.pass) + ": " + a.overall + "/5, " + a.recommend + "/10 to recommend", [
+        "Overall: " + a.overall + " out of 5", "Would recommend: " + a.recommend + " out of 10", "Getting going: " + a.setup, "Length: " + a.length, "Would host again: " + a.again,
+        a.comment ? "\nAnything else:\n" + a.comment : null, a.quote ? "\nHappy to be quoted" + (a.name ? ", as " + a.name : "") + "." : null,
+        "\nFrom " + s.email + (s.room ? " (Table " + s.room + ")" : "") + ".",
+        code ? "Their 30% code: " + code : "Their 30% code couldn’t be made (" + why + "): make one in Discount codes and email it to them."]);
+      return json({ ok: true, code, until: rec.until, mailed: !!rec.mailed });
+    });
     // the admin's "Delete": a cancelled or refunded code is removed from the list (Stripe keeps its own record of the sale)
     if (url.pathname === "/delete") {
       const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
@@ -602,7 +676,7 @@ export class Registry {
       if (rec.length >= 10) return json({ error: "Too many checkouts from here. Try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null });
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null, ...(b.noMail === true ? { noMail: true } : {}) });
       return json({ pass: shownPass(p) });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
@@ -619,6 +693,7 @@ export class Registry {
       if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), amount, note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null, ...(b.disc ? { disc: String(b.disc).slice(0, 40) } : {}),
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
+      if (v && v.noMail && b.email) await this.storage.put("svoff:" + String(b.email).trim().toLowerCase(), { t: Date.now(), pass: p, at: "checkout" });
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
       const sub = !!(v && v.kind === "sub");
       await this.notify("Sale: " + (sub ? "a Regular" : "a Table") + (amount !== null ? ", " + gbp(amount) + (sub ? " a month" : "") : ""), [
@@ -872,6 +947,18 @@ const MANAGED_PAYMENTS_VERSION = "2026-02-25.preview";
 // Discount codes are Stripe promotion codes; pinned to the version whose shape this code speaks (a promotion code names
 // its coupon in promotion[coupon])
 const PROMO_VERSION = "2025-09-30.clover";
+// A feedback survey's answers (site/pages/survey.html), checked: the five questions are required, the box and the quote
+// are not
+const SURVEY = { setup: ["Very easy", "Easy", "A bit fiddly", "Difficult"], length: ["Too short", "About right", "Too long"], again: ["Yes", "Maybe", "No"] };
+function surveyAnswers(x) {
+  x = x && typeof x === "object" ? x : {};
+  const overall = +x.overall, recommend = +x.recommend;
+  if (!(Number.isInteger(overall) && overall >= 1 && overall <= 5)) return { error: "Choose how the game was, from 1 to 5." };
+  if (!(Number.isInteger(recommend) && recommend >= 0 && recommend <= 10)) return { error: "Choose how likely you are to recommend it, from 0 to 10." };
+  for (const k of ["setup", "length", "again"]) if (!SURVEY[k].includes(x[k])) return { error: "Answer all five questions." };
+  return { overall, recommend, setup: x.setup, length: x.length, again: x.again, comment: clip(String(x.comment || "").trim(), 2000), quote: x.quote === true, name: clip(String(x.name || "").trim(), 40) };
+}
+const surveyOf = (b) => /^[a-z2-9]{24}$/.test(String(b.t || "")) ? "survey:" + b.t : null;
 // A checkout counts as paid when Stripe took the money, or when a discount made it free (no_payment_required)
 const settled = (s) => !!s && (s.payment_status === "paid" || s.payment_status === "no_payment_required");
 async function stripePost(env, path, params, version) {
@@ -1017,6 +1104,9 @@ async function route(req, env) {
       if (g[2].startsWith("m") && +(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "Too large" }, 413);
       return env.GAME.get(env.GAME.idFromName("room:" + code)).fetch(new Request(inner, req));
     }
+    // the feedback survey's page (/survey?t=…): read its survey, answer it, or stop feedback emails to its address
+    if (p === "/api/survey" && req.method === "GET") return call(env, "/survey-get", { t: url.searchParams.get("t") });
+    if (p === "/api/survey" && req.method === "POST") { const b = await req.json().catch(() => ({})); return call(env, b.stop ? "/survey-stop" : "/survey-answer", { t: b.t, answers: b.answers }); }
     // "Report a problem": the form, a snapshot of the screen, the trail of taps. The room is kept 90 days for its replay.
     if (p === "/api/report" && req.method === "POST") {
       const raw = await req.text(); if (raw.length > 4500000) return json({ error: "That report is too large to send." }, 413);
@@ -1081,13 +1171,13 @@ async function route(req, env) {
       }
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       const from = sourceOf(b.src);
-      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from }) }), pj = await pr.json();
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from, ...(b.nomail === true ? { noMail: true } : {}) }) }), pj = await pr.json();
       if (!pr.ok) return json(pj, pr.status);
       const pass = pj.pass, at = new Date().toISOString();
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), ...(disc ? { discount: disc.code } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), ...(disc ? { discount: disc.code } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at, ...(b.nomail === true ? { feedback_emails: "no" } : {}) },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
         // API version, and nothing it refuses (invoice details, extra descriptions) — just what the game needs: the pass in
@@ -1218,6 +1308,8 @@ async function route(req, env) {
       if (p === "/api/admin/app-stats" && req.method === "GET") return call(env, "/app-stats", { days: +url.searchParams.get("days") || 28 });
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
       if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
+      if (p === "/api/admin/survey" && req.method === "POST") return call(env, "/survey-send", await req.json().catch(() => ({})));
+      if (p === "/api/admin/surveys") return registry(env).fetch("https://registry/surveys");
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
       if (p === "/api/admin/setemail" && req.method === "POST") return call(env, "/setemail", await req.json().catch(() => ({})));
       if (p === "/api/admin/delete" && req.method === "POST") return call(env, "/delete", await req.json().catch(() => ({})));
@@ -1265,11 +1357,12 @@ async function route(req, env) {
     const dup = p.match(/^\/(index|terms|privacy|app-privacy|cookies|refunds|contact|buy|rules|tour|traitors-at-home|party-games-for-large-groups)\.html$/);
     if (dup) return Response.redirect(url.origin + (dup[1] === "index" ? "/" : "/" + dup[1]) + url.search, 301);
     // every page in site/pages (build.sh) needs its name here too: html_handling is "none" (wrangler.toml)
-    const page = p.match(/^\/(terms|privacy|app-privacy|cookies|refunds|contact|buy|admin|rules|tour|seal|traitors-at-home|party-games-for-large-groups)\/?$/);
+    const page = p.match(/^\/(terms|privacy|app-privacy|cookies|refunds|contact|buy|admin|rules|tour|seal|survey|traitors-at-home|party-games-for-large-groups)\/?$/);
     if (page) {
       const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
-      if (page[1] !== "admin" && page[1] !== "seal") return r;
+      if (page[1] !== "admin" && page[1] !== "seal" && page[1] !== "survey") return r;
       const h = new Headers(r.headers); h.set("X-Robots-Tag", "noindex, nofollow"); h.set("Cache-Control", "no-store"); if (page[1] === "admin") h.set("X-Frame-Options", "DENY");
+      if (page[1] === "survey") h.set("Referrer-Policy", "no-referrer"); // its address carries the survey's token
       return new Response(r.body, { status: r.status, headers: h });
     }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).

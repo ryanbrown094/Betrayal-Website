@@ -1,0 +1,94 @@
+<!-- title: Feedback -->
+<!-- desc: Tell us how your game of The Betrayal went: five quick questions, and 30% off your next Table for answering. -->
+<style>
+.q { border: 0; margin: 26px 0 0; padding: 0; min-width: 0 } .q legend { padding: 0; margin: 0 0 12px; font: 400 22px/1.25 var(--book); color: var(--ivory) }
+.opts { display: flex; flex-wrap: wrap; gap: 8px } .opts label { position: relative } .opts input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer }
+.opts span { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 46px; padding: 8px 12px; border: 1px solid rgba(230,165,140,.45); border-radius: 3px; background: #100b11; color: var(--ivory); font: 17px/1.2 var(--ui); cursor: pointer }
+.opts.n span { padding: 8px 0; width: 46px } .opts input:checked + span { background: var(--rose); border-color: var(--rose); color: #150b17; font-weight: 700 }
+.opts input:focus-visible + span { outline: 2px solid var(--rose); outline-offset: 2px }
+.scale { display: flex; justify-content: space-between; max-width: 534px; margin: 8px 0 0; font-size: 15px; color: var(--ivory2) }
+.fl { display: block; margin: 26px 0 8px; font: 400 22px/1.25 var(--book); color: var(--ivory) } .fl small { display: block; margin-top: 4px; font: 16px/1.4 var(--ui); color: var(--ivory2) }
+#comment, #qname { width: 100%; padding: 12px 14px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui) } #comment:focus, #qname:focus { border-color: var(--rose); outline: none }
+#qname { max-width: 320px; margin: 0 0 6px }
+.svmsg { min-height: 1.4em; margin: 12px 0 0 } .svmsg.err { color: #ff9dbf }
+.gift { margin: 18px 0; padding: 22px 12px; border: 1px solid var(--rose); border-radius: 6px; background: #1d1220; text-align: center }
+.gift small { display: block; font: 700 13px/1 var(--sc); letter-spacing: .14em; text-transform: uppercase; color: var(--ivory2) }
+.gift b { display: block; margin-top: 10px; font: 700 clamp(24px, 7vw, 34px)/1.1 var(--ui); letter-spacing: .1em; color: #f4c9b7; user-select: all; overflow-wrap: anywhere }
+</style>
+<h1>How did it go?</h1>
+<p id="wait" class="lede">One moment…</p>
+
+<form id="sv" hidden novalidate>
+<p class="lede">Five quick questions about your game of The Betrayal, and a box for anything else. Answer them and we’ll give you <b>30% off your next Table</b>, or a code to pass to a friend.</p>
+<fieldset class="q" data-q="overall"><legend>1. How was the game overall?</legend><div class="opts">
+<label><input type="radio" name="overall" value="1"><span>Poor</span></label><label><input type="radio" name="overall" value="2"><span>OK</span></label><label><input type="radio" name="overall" value="3"><span>Good</span></label><label><input type="radio" name="overall" value="4"><span>Great</span></label><label><input type="radio" name="overall" value="5"><span>Brilliant</span></label>
+</div></fieldset>
+<fieldset class="q" data-q="recommend"><legend>2. How likely are you to recommend The Betrayal to a friend?</legend><div class="opts n" id="nps"></div><p class="scale" aria-hidden="true"><span>0: not at all likely</span><span>10: extremely likely</span></p></fieldset>
+<fieldset class="q" data-q="setup"><legend>3. How easy was it to get going: booking, setting up and everyone joining?</legend><div class="opts">
+<label><input type="radio" name="setup" value="Very easy"><span>Very easy</span></label><label><input type="radio" name="setup" value="Easy"><span>Easy</span></label><label><input type="radio" name="setup" value="A bit fiddly"><span>A bit fiddly</span></label><label><input type="radio" name="setup" value="Difficult"><span>Difficult</span></label>
+</div></fieldset>
+<fieldset class="q" data-q="length"><legend>4. Was the game the right length?</legend><div class="opts">
+<label><input type="radio" name="length" value="Too short"><span>Too short</span></label><label><input type="radio" name="length" value="About right"><span>About right</span></label><label><input type="radio" name="length" value="Too long"><span>Too long</span></label>
+</div></fieldset>
+<fieldset class="q" data-q="again"><legend>5. Would you host another game?</legend><div class="opts">
+<label><input type="radio" name="again" value="Yes"><span>Yes</span></label><label><input type="radio" name="again" value="Maybe"><span>Maybe</span></label><label><input type="radio" name="again" value="No"><span>No</span></label>
+</div></fieldset>
+<label class="fl" for="comment">Anything else?<small>What did you love, what got in the way, what would you change? Optional.</small></label>
+<textarea id="comment" rows="6" maxlength="2000"></textarea>
+<label class="check"><input type="checkbox" id="quote"> <span>You may quote what I wrote on the website.</span></label>
+<div id="qn" hidden><label class="fl" for="qname" style="margin-top:4px">Your first name, for the quote</label><input id="qname" maxlength="40" autocomplete="given-name"></div>
+<div style="margin-top:22px"><button class="btn" id="svsend">Send my answers</button></div>
+<p class="svmsg" id="svmsg" role="status"></p>
+</form>
+
+<div id="done" hidden>
+<p class="lede">Thank you for telling us how it went.</p>
+<div id="gotcode"><p>Here’s your code: 30% off one Table, for you or for a friend to host their own.</p>
+<div class="gift"><small>30% off one Table</small><b id="code"></b></div>
+<p id="until"></p>
+<p><a class="btn" id="book" href="/buy">Book a Table with it</a></p></div>
+<p id="nocode" hidden>Your answers are in. We couldn’t make your code just now, so we’ll email it to you within a day.</p>
+</div>
+
+<div id="bad" hidden><p class="lede">That link doesn’t work. If you think it should, write to <a href="mailto:info@thebetrayal.co.uk">info@thebetrayal.co.uk</a> and we’ll sort it out.</p></div>
+<div id="off" hidden><p class="lede">Done. We won’t send you feedback emails again.</p></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s), q = new URLSearchParams(location.search), t = q.get("t") || "", stop = q.get("stop") === "1";
+  // the token stays in memory: the address bar, and any page reached from here, shows only /survey
+  try { history.replaceState(null, "", "/survey"); } catch (e) {}
+  const show = (id) => { for (const x of ["wait", "sv", "done", "bad", "off"]) $("#" + x).hidden = x !== id; };
+  const say = (m, err) => { $("#svmsg").textContent = m; $("#svmsg").className = "svmsg" + (err ? " err" : ""); };
+  const day = (ms) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const post = (body) => fetch("/api/survey", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, ...body }) }).then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }));
+  const thanks = (j) => {
+    $("#gotcode").hidden = !j.code; $("#nocode").hidden = !!j.code;
+    if (j.code) { $("#code").textContent = j.code; $("#until").textContent = "Use it once, by " + day(j.until) + "." + (j.mailed ? " We’ve emailed it to you too." : " Keep a note of it."); $("#book").href = "/buy?discount=" + encodeURIComponent(j.code); }
+    show("done"); scrollTo(0, 0);
+  };
+  for (let n = 0; n <= 10; n++) $("#nps").insertAdjacentHTML("beforeend", '<label><input type="radio" name="recommend" value="' + n + '"><span>' + n + "</span></label>");
+  $("#quote").onchange = () => { $("#qn").hidden = !$("#quote").checked; };
+  $("#sv").addEventListener("change", () => { if ($("#svmsg").classList.contains("err")) say(""); });
+  if (!/^[a-z2-9]{24}$/.test(t)) return show("bad");
+  if (stop) return void post({ stop: true }).then((r) => show(r.ok ? "off" : "bad"), () => { $("#wait").textContent = "Can’t reach us just now. Check you’re online, then open the link again."; });
+  fetch("/api/survey?t=" + encodeURIComponent(t), { cache: "no-store" }).then(async (r) => {
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return show("bad");
+    if (j.answered) return thanks(j);
+    show("sv");
+  }, () => { $("#wait").textContent = "Can’t reach us just now. Check you’re online, then open the link again."; });
+  $("#sv").onsubmit = async (e) => {
+    e.preventDefault();
+    const pick = (n) => { const x = document.querySelector('input[name="' + n + '"]:checked'); return x ? x.value : null; };
+    const a = { overall: pick("overall"), recommend: pick("recommend"), setup: pick("setup"), length: pick("length"), again: pick("again"), comment: $("#comment").value, quote: $("#quote").checked, name: $("#qname").value };
+    const miss = ["overall", "recommend", "setup", "length", "again"].find((k) => a[k] === null);
+    if (miss) { say("Answer all five questions first.", true); document.querySelector('[data-q="' + miss + '"]').scrollIntoView({ block: "center", behavior: "smooth" }); return; }
+    a.overall = +a.overall; a.recommend = +a.recommend;
+    $("#svsend").disabled = true; say("Sending…");
+    try { const r = await post({ answers: a }); if (r.ok) return thanks(r.j); say(r.j.error || "That didn’t work. Try again.", true); }
+    catch (err) { say("Can’t reach us just now. Check you’re online and try again.", true); }
+    $("#svsend").disabled = false;
+  };
+})();
+</script>

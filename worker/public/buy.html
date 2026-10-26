@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026172120">
+<meta name="build" content="20261026175448">
 <title>Book a Table: £10 a party or £20 a month · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Book a Table for The Betrayal: £10 for one party of 8 to 24 players, or £20 a month as a Regular. Played on everyone’s phones, with no app to install.">
@@ -195,6 +195,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
 <label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
+<label class="check"><input type="checkbox" id="c3"> <span>Don’t email me a feedback survey after my game. (Optional: we only ask now and then.)</span></label>
 <p class="disc"><button type="button" id="dtog" aria-expanded="false" aria-controls="dbox">Have a discount code?</button></p>
 <div id="dbox" hidden><label class="dl" for="dcode">Discount code</label><input id="dcode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"><p class="dnote">It comes off on Stripe’s page, before you pay.</p></div>
 
@@ -239,12 +240,15 @@ document.querySelectorAll("input[name=plan]").forEach(r => r.onchange = choose);
 $("#c1").onchange = $("#c2").onchange = () => update();
 $("#dtog").onclick = () => { $("#dbox").hidden = false; $("#dtog").setAttribute("aria-expanded", "true"); $("#dtog").parentNode.hidden = true; $("#dcode").focus() };
 $("#dcode").oninput = () => { $("#dcode").removeAttribute("aria-invalid"); payText() };
+// a code handed over in the link (/buy?discount=CODE, from the feedback survey's thank-you) opens the box, filled in
+const given = (new URLSearchParams(location.search).get("discount") || "").trim().toUpperCase().slice(0, 40);
+if (given) { $("#dtog").onclick(); $("#dcode").value = given; $("#dcode").blur(); payText() }
 $("#pay").onclick = async () => {
   if (busy) return;
-  if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
+  if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick the first two boxes to continue.", true) }
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", discount: disc() || undefined, src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", discount: disc() || undefined, nomail: $("#c3").checked || undefined, src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update((j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);
