@@ -45,7 +45,7 @@ Nobody is told how many Forsworn there are.
 
 ### 4.1 The Trial
 - The game picks the next Trial itself; the host’s phone shows it (“Begin: Rapid Quiz”) and the host begins it when the room is ready.
-- Every phone shows the rules, then the Trial: typed quiz answers, number guesses, higher or lower, votes, words from letters, a memory list, rock-paper-scissors bouts, Snap. In the acting Trials (Screen Charades, Hum It, Pictionary) the performer gets the word or song **privately on their phone**, and taps who guessed it. In Two Truths and a Lie, the teller chooses which of the three is the lie on their phone and everyone votes for it on theirs. Clocks run on every screen, and the game moves on when everyone has answered or time is up.
+- Every phone shows the rules, then the Trial: typed quiz answers, number guesses, higher or lower, votes, words from letters, a memory list, rock-paper-scissors bouts, Snap. In the acting Trials (Screen Charades, Hum It, Draw It) the performer gets the word or song **privately on their phone**, and taps who guessed it. In Two Truths and a Lie, the teller chooses which of the three is the lie on their phone and everyone votes for it on theirs. Clocks run on every screen, and the game moves on when everyone has answered or time is up.
 - **Points** go into the Purse. The Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it **fell short** of its target, so every point they sabotage is theirs. The prize tiers follow the same amount.
 - **Wrong answers** by a Forsworn cost the Purse 50 each (every Forsworn’s phone reminds them). The room sees the total the Forsworn gave away, never whose.
 - The winner takes the round’s prize (Sanctuary, or on the right round the Casting Vote or the Crown). Most Likely To carries no prize: just a reputation.
@@ -110,7 +110,7 @@ Classic draws from the full list: The Sharpest Eye · The Grand Deceiver · The 
 
 ## 8. The Trials
 
-Fifteen, all played on phones in Modern (details in `trials-modern.csv`): Most Likely To (no prize) · Rapid Quiz · Longest Word · Closest Guess · Higher or Lower · Memory Wall · What Changed? · Snap · Rock Paper Scissors Royale · One Leg · The Statue (needs Ghosts) · Screen Charades · Hum It · Pictionary · Two Truths and a Lie. Plus the Temptation, once a game.
+Fifteen, all played on phones in Modern (details in `trials-modern.csv`): Most Likely To (no prize) · Rapid Quiz · Longest Word · Closest Guess · Higher or Lower · Memory Wall · What Changed? · Snap · Rock Paper Scissors Royale · One Leg · The Statue (needs Ghosts) · Screen Charades · Hum It · Draw It · Two Truths and a Lie. Plus the Temptation, once a game.
 
 The question banks hold about 3,700 questions and prompts (`question-banks.md`), and nothing repeats within a game.
 

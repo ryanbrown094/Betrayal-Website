@@ -186,7 +186,7 @@ function holdings(me) {
   return c.length ? `<div class="chips">${c.map(([cls, i, t, why]) => `<details class="chip ${cls}"><summary>${ico(i)}<span>${t}</span></summary><p>${why}</p></details>`).join("")}</div>` : "";
 }
 function rejoinCard() {
-  if (!V.me.director || !rejoin.length) return "";
+  if (!rejoin.length) return ""; // the server sends requests only to phones that may answer them
   return rejoin.map((r) => `<div class="card hot"><p><b>${esc(r.name)}</b> is asking to come back in on a new phone. Only let them in if it’s really them.</p><div class="row">${btn("Let them in", "letin", r.id, "sm")}${btn("No", "keepout", r.id, "ghost sm")}</div></div>`).join("");
 }
 // the host stopped the clocks: everything waits, and nothing can be answered, until they carry on

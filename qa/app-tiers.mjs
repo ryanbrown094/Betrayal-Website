@@ -1,6 +1,7 @@
 // The iPhone app's tiers (worker/src/tiers.js), on the real Worker, Registry and rooms with in-memory storage: the app's
 // codes are a pool of their own, free games, the Night Pass's 24 hours (and its night coming back when no game in it got
-// going), the Host Pass, a host making a live free game ad-free, the codes list, and the website's rooms unchanged.
+// going), the Host Pass, a host making a live free game ad-free, the codes list, and the website's rooms unchanged; also
+// that a practice game refuses a pass, and that a host whose phone died can be let back in by anyone at the table.
 // node qa/app-tiers.mjs
 import worker, { GameState, Registry } from "../worker/src/index.js";
 import * as T from "../worker/src/tiers.js";
@@ -159,6 +160,45 @@ check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.s
   const missing = []; for (const p of pages) { const [st, body] = await get("/" + p); if (st !== 200 || body !== p + ".html") missing.push(p); }
   check("every page in site/pages is served at its address (the app's privacy notice included)", !missing.length && pages.includes("app-privacy"), missing);
   check("app-ads.txt is served as it is", (await get("/app-ads.txt"))[0] === 200);
+}
+
+// --- a practice game can't be made ad-free: a pass would be spent on bots
+{
+  const [, pg] = await games({ app: true, practice: true }, "198.51.100.41");
+  const [, ph] = await W("/api/g/" + pg.room + "/m/create", { name: "Ann", bots: 9 }).then(J);
+  const pn = await mint("night", "app");
+  const [us, uj] = await upgrade(pg.room, ph.tok, pn);
+  const [, pst] = await codes([pn]);
+  check("a practice game refuses a pass, and the pass isn't used", us === 409 && /practice/.test(uj.error) && pst.codes[0].state === "ready", [us, uj, pst]);
+}
+
+// --- a host whose phone has died: once it has been quiet for half a minute, anyone still at the table may let the host
+// back in (any game, the website's too: only the host could, so the game waited for ever)
+{
+  const [, g] = await games({ app: true }, "198.51.100.40");
+  const [, h] = await create(g.room, "Ann");
+  const toks = { Ann: h.tok };
+  for (const n of ["Bob", "Cy", "Di", "Ed", "Flo", "Gus", "Hal"]) toks[n] = (await joinAs(g.room, n))[1].tok;
+  const act = (who, body) => W("/api/g/" + g.room + "/m/act", body, { "X-Tok": toks[who] }).then(J);
+  const [startS] = await act("Ann", { a: "start" });
+  const [, asked] = await joinAs(g.room, "Ann"); // the host, on a new phone
+  const [, early] = await poll(g.room, toks.Bob);
+  const [earlyS] = await act("Bob", { a: "letin", v: asked.req });
+  check("a request in the host's name while the host's phone is about goes to nobody else, and nobody else can let it in", startS === 200 && asked.req && !early.rejoin && earlyS === 403, [startS, asked, early.rejoin, earlyS]);
+  const [, hostSees] = await poll(g.room, toks.Ann);
+  check("…the host's own phone sees it, as before", hostSees.rejoin && hostSees.rejoin[0].name === "Ann", hostSees.rejoin);
+  skew += 31000; // the host's phone goes quiet
+  const [, later] = await poll(g.room, toks.Bob);
+  check("…once it has been quiet for half a minute, the others see it", later.rejoin && later.rejoin.length === 1 && later.rejoin[0].name === "Ann", later.rejoin);
+  const [, cyAsk] = await joinAs(g.room, "Cy");
+  const [cyS] = await act("Bob", { a: "letin", v: cyAsk.req });
+  check("…but only the host's: anyone else's request still waits for the host", cyAsk.req && cyS === 403, [cyAsk, cyS]);
+  const [inS] = await act("Bob", { a: "letin", v: asked.req });
+  const [, got] = await W("/api/g/" + g.room + "/m/join", { req: asked.req }).then(J);
+  const [, back] = await poll(g.room, got.tok);
+  check("…and once a player lets them in, the host's new phone has the host's place", inS === 200 && got.tok && back.view.me && back.view.me.director === true, [inS, got, back.view && back.view.me]);
+  const [, old] = await poll(g.room, h.tok);
+  check("…while the old phone has no place at all", old.view && !old.view.me, old.view && old.view.me);
 }
 
 console.log(ok ? "\nall passed" : "\nFAILED");

@@ -122,7 +122,7 @@ The game deals them in a random order, so no two evenings run the same.
 - One Leg  Everyone up, on one leg. Put a foot down and tap “I’m out”. Last one standing wins.
 - Screen Charades  One player at a time gets a secret word on their phone and acts it out. When someone guesses, the actor taps who.
 - Hum It  Like charades, but the phone gives you a song to hum.
-- Pictionary  Like charades, but you draw it: on paper, a board, or in the air. No letters, no numbers.
+- Draw It  Like charades, but you draw it: on paper, a board, or in the air. No letters, no numbers.
 - The Statue  The living freeze. The Ghosts may do anything, short of touching, to make them move or laugh.
 - Two Truths and a Lie  One player tells three things about themselves. Everyone else votes on their phone for the lie.
 - Higher or Lower  A question and a number: is the real answer higher or lower?

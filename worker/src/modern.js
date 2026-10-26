@@ -39,7 +39,7 @@ export const TRIALS = {
   statue: { title: "The Statue", prize: true, ghosts: true, rules: "The living freeze. The Ghosts may do anything, short of touching, to make them move or laugh. Move and tap “I’m out”. Last statue standing wins." },
   charades: { title: "Screen Charades", prize: true, actor: 60, bank: "charades", rules: "One player at a time gets a secret word on their phone and acts it out, no words. When someone guesses it, the actor taps who. A point each to actor and guesser." },
   hum: { title: "Hum It", prize: true, actor: 30, bank: "songs", rules: "One player at a time gets a secret song on their phone and hums it. When someone names it, the hummer taps who. A point each." },
-  draw: { title: "Pictionary", prize: true, actor: 60, bank: "draw", rules: "One player at a time gets a secret word and draws it (paper, a chalkboard, the air). When someone guesses, the artist taps who. A point each." },
+  draw: { title: "Draw It", prize: true, actor: 60, bank: "draw", rules: "One player at a time gets a secret word and draws it (paper, a chalkboard, the air). When someone guesses, the artist taps who. A point each." },
   truths: { title: "Two Truths and a Lie", prize: true, rules: "Three players take a turn: say three things about yourself, one of them a lie. Everyone else votes for the lie on their phone. A point for every right vote, and one to the teller for every fool." },
 };
 // The iPhone app's free games (opts.content "base", worker/src/tiers.js) play these Trials and the first half of each
