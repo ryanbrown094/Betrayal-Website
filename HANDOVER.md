@@ -194,6 +194,7 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
   - **A Night Pass** (`kind: "night"`) starts its 24 hours (`activeUntil`) the first time it's used, and inside them opens games one at a time, as a Regular does. Its game stays open for `PASS_HOURS` and can always be reopened with the code. When the 24 hours are over and no game in them reached round 1 (each room answers `/_played`), the night comes back (`returned`); otherwise the code is used up (410).
   - **A Host Pass** (`kind: "host"`) works like a Regular, paid up while Apple says so (§6.2a).
   - **A live free game made ad-free:** the host posts `/api/g/CODE/m/upgrade {pass}`; the Registry's `/attach` checks the code (and starts a Night Pass's 24 hours) and the room takes its tier, which every phone and the TV read on their next poll.
+  - **Ads in free games:** a free room's `room.tier` also carries `ads` (`tiers.js` `adsConfig`): whether they're on (`ADS_ENABLED`, a var; `0` turns them off at once, with no app update) and their limits (an interstitial at most once a break, 240 seconds apart, 4 a game, none before round 2; a banner in the lobby only). The app does the showing; the server never counts them.
   - **The app's list of codes** asks `POST /api/app/codes {passes}` what each can do now (`ready`, `active` until, `ended`, `lapsed`, `cancelled`); unknown codes count as wrong guesses.
 - **Standalone:** the app needs the Worker's API and nothing else. It sells codes itself with Apple's in-app purchase (§6.2a), never mentions or links to the website's shop (App Store rule 3.1.1), keeps the codes on the phone, reads the TV's QR code (`thebetrayal://join/CODE`, which an iPhone's Camera also opens), and has How to play, the terms and the privacy notice of its own (the app's `TheBetrayal/UI/Pages.swift`: change them with the website's). Classic isn't in it.
 
@@ -406,6 +407,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 | `OPEN_ACCESS` | `1` = rooms without a code (development only) |
 | `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_ID` | the App Store Server API's In-App Purchase key (§6.2a); empty = the app's purchases wait |
 | `APPSTORE_LOCAL` | `1` = take Xcode's StoreKit-testing purchases (development only) |
+| `ADS_ENABLED` | `0` = the app's free games show no ads (§4.8); unset = they do |
 
 **Secrets** (`npx wrangler secret put NAME -c <config>`, or Workers & Pages → the Worker → Settings → Variables and Secrets): `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `STRIPE_SECRET_KEY` (`sk_test_…` on staging, `sk_live_…` on production), `STRIPE_WEBHOOK_SECRET` (`whsec_…`), `MASTER_PASS`, `APPSTORE_PRIVATE_KEY` (the In-App Purchase key's `.p8`, §6.2a).
 

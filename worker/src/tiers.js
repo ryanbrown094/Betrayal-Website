@@ -11,8 +11,12 @@ export const NIGHT_MS = 24 * 3600000;
 export const tierFor = (v) => (!v ? "free" : v.pool !== "app" ? "full" : v.kind === "host" ? "host" : v.kind === "night" ? "night" : "free");
 // never down: a pass that lapses mid-game leaves the game as it was
 export const higher = (a, b) => ((RANK[b] ?? 0) > (RANK[a] ?? 0) ? b : a);
+// how a free game shows ads, read by the app with every poll, so the limits change without an app update; ADS_ENABLED
+// "0" (a var) turns them off. Interstitials only at the start of a new round (never before round 2) and on the results,
+// at most one a break, four minutes apart, four a game; a banner only in the lobby.
+export const adsConfig = (env) => ({ enabled: !env || env.ADS_ENABLED !== "0", interstitialMinGapSec: 240, interstitialMaxPerRoom: 4, firstInterstitialAfterRound: 1, bannerEnabled: true });
 // what the phones and the TV read with every poll
-export const tierView = (tier) => ({ tier, adFree: tier !== "free", content: tier === "free" ? "base" : "all" });
+export const tierView = (tier, env) => ({ tier, adFree: tier !== "free", content: tier === "free" ? "base" : "all", ...(tier === "free" ? { ads: adsConfig(env) } : {}) });
 
 // what an app code can do now, for the app's list of codes. A Night Pass whose 24 hours are over reads "ended" here;
 // the Registry checks whether its night comes back (no game in it reached a first round).

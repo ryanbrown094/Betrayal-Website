@@ -150,7 +150,7 @@ export class GameState {
       return json({ events: rows });
     }
     const expired = Date.now() > meta.expires;
-    const room = { code: meta.room, expires: meta.expires, expired, ...(meta.tier ? { tier: T.tierView(meta.tier) } : {}) };
+    const room = { code: meta.room, expires: meta.expires, expired, ...(meta.tier ? { tier: T.tierView(meta.tier, this.env) } : {}) };
     // what a player's browser saw: taps, screens, sync trouble, errors. Anyone in the room may send (the TV has no PIN);
     // each batch is small and a room keeps EVMAX batches at most.
     if (path === "/api/events" && req.method === "POST") {
