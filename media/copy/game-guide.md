@@ -76,7 +76,7 @@ Nobody is told how many Forsworn there are.
 - Five left after the Reckoning: **no night**. The final round starts.
 
 ### 4.6 Dawn
-The host taps **Reveal the night**: every phone (and the TV) shows who died, one more candle goes out, and the poisoned have their last words.
+The host taps **Reveal the night**: every phone (and the TV) shows who died, and the poisoned have their last words.
 
 ## 5. Powers and twists: Sanctuary every round, everything else once a game
 

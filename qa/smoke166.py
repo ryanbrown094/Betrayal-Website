@@ -17,7 +17,7 @@ try:
         h.on("console", lambda m: errs.append("host: " + m.text[:200]) if "stale tap" in m.text else None)
         h.goto(f"http://localhost:{PORT}/play.html#host"); h.wait_for_timeout(1200)
         E = lambda js: h.evaluate(js)
-        E("()=>localStorage.setItem('candle-played','1')")  # a second night: the setup recommends every twist, which these checks need
+        E("()=>localStorage.setItem('bt-played','1')")  # a second night: the setup recommends every twist, which these checks need
         # setup: a pot target and the wrong-shout rule
         h.evaluate("(a)=>{setupDraft=Object.assign(SETUP0(),{names:a,pin:'1111',cloaks:'2',touched:['cloaks'],step:'pot'});renderHost()}", "\n".join(NAMES)); h.wait_for_timeout(200)
         pc = h.input_value("#potCap"); E("()=>wGo('wrong')"); body = h.inner_text("body")

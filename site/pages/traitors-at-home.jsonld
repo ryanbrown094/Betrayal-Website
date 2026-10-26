@@ -78,7 +78,7 @@
      "@type": "HowToStep",
      "position": 8,
      "name": "The final and the reveal",
-     "text": "The final and the reveal. The last players decide whether they trust everyone left. If they do, turn over every card: if only loyal players remain, they win the pot. If a traitor is still at the table, the traitors win.",
+     "text": "The final and the reveal. The last players decide whether they trust everyone left. If they all do, turn over every card: if only loyal players remain, they win the pot; if a traitor is still at the table, the traitors win. If anyone doubts, hold another vote, this time without showing the role, and ask again.",
      "url": "https://thebetrayal.co.uk/traitors-at-home#steps"
     }
    ]
