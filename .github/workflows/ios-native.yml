@@ -1,11 +1,13 @@
 name: iOS native app
 
-# Builds the native iPhone app (ios/) on one of GitHub's Macs, checks its model against a game recorded from the real
-# rules engine, and runs it in the simulator: recorded moments (-demo), every moment drawn offscreen (-render-all), and
-# a game against bots on a local Worker, the app playing the host. The pictures go to the run's "ios-native-screens"
-# artifact, and as one commit to refs/screens/ios-native (not a branch, so nothing deploys it), for a session that can
-# reach git but not the artifact store:  git fetch origin refs/screens/ios-native
-# Mac minutes count ten times against the account's Actions allowance, so it runs only when ios/ changes, or by hand.
+# Builds the native iPhone app (ios/) on the owner's Mac (a self-hosted runner: ios/README.md → Checks), checks its model
+# against a game recorded from the real rules engine, and runs it in the simulator: recorded moments (-demo), every
+# moment drawn offscreen (-render-all), and a game against bots on a local Worker, the app playing the host. The pictures
+# go to the run's "ios-native-screens" artifact, and as one commit to refs/screens/ios-native (not a branch, so nothing
+# deploys it), for a session that can reach git but not the artifact store:  git fetch origin refs/screens/ios-native
+# It runs only when ios/ changes, or by hand; by hand it can use one of GitHub's Macs instead (their minutes count ten
+# times against the account's Actions allowance). Only pushes and runs by hand start it, never a pull request, so
+# nobody without write access can run code on the Mac.
 on:
   push:
     paths:
@@ -17,6 +19,10 @@ on:
         description: "Play the whole game against bots, not just the first round (about four minutes more)"
         type: boolean
         default: false
+      github:
+        description: "On one of GitHub's Macs, not the self-hosted one (uses the account's Actions minutes)"
+        type: boolean
+        default: false
 
 concurrency:
   group: ios-native-${{ github.ref }}
@@ -24,7 +30,7 @@ concurrency:
 
 jobs:
   simulator:
-    runs-on: macos-latest
+    runs-on: ${{ inputs.github && 'macos-latest' || fromJSON('["self-hosted", "macOS"]') }}
     timeout-minutes: 45
     permissions:
       contents: write # the pictures' ref (the last step)
@@ -33,8 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Xcode
-        run: xcodebuild -version
+        run: |
+          xcodebuild -version
+          # kept between runs on a self-hosted Mac, so a build only recompiles what changed
+          echo "DD=$HOME/Library/Caches/TheBetrayal-CI" >> "$GITHUB_ENV"
 
       - name: The model reads every recorded moment
         run: |
@@ -44,22 +57,34 @@ jobs:
       - name: Build (Debug)
         run: >
           xcodebuild -quiet -project ios/TheBetrayal.xcodeproj -scheme TheBetrayal -configuration Debug
-          -destination "generic/platform=iOS Simulator" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          -destination "generic/platform=iOS Simulator" -derivedDataPath "$DD" CODE_SIGNING_ALLOWED=NO build
 
       - name: Boot the simulator
         run: |
           set -eo pipefail
-          # the newest iOS runtime's first iPhone
+          # a simulator of its own ("Betrayal CI", made once: the newest iOS runtime's newest plain iPhone), wiped each
+          # run, so the Mac's other simulators are left alone
           UDID=$(xcrun simctl list devices available -j | python3 -c '
           import json, sys
-          d = json.load(sys.stdin)["devices"]
-          ios = sorted((k for k in d if ".iOS-" in k), key=lambda k: [int(x) for x in k.split(".iOS-")[1].split("-")])
-          print(next(x["udid"] for k in reversed(ios) for x in d[k] if x["name"].startswith("iPhone")))')
+          print(next((x["udid"] for ds in json.load(sys.stdin)["devices"].values() for x in ds if x["name"] == "Betrayal CI"), ""))')
+          if [ -z "$UDID" ]; then
+            read -r RUNTIME TYPE < <(xcrun simctl list runtimes available -j | python3 -c '
+          import json, re, sys
+          rs = sorted((r for r in json.load(sys.stdin)["runtimes"] if r.get("platform") == "iOS"), key=lambda r: [int(x) for x in r["version"].split(".")])
+          if not rs: sys.exit("No iOS simulator runtime: install one in Xcode → Settings → Components")
+          ts = [t for t in rs[-1]["supportedDeviceTypes"] if t.get("productFamily") == "iPhone"]
+          plain = [t for t in ts if re.fullmatch(r"iPhone \d+", t["name"])]
+          t = max(plain, key=lambda t: int(t["name"].split()[1])) if plain else ts[-1]
+          print(rs[-1]["identifier"], t["identifier"])')
+            UDID=$(xcrun simctl create "Betrayal CI" "$TYPE" "$RUNTIME")
+          fi
           echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl shutdown "$UDID" 2>/dev/null || true
+          xcrun simctl erase "$UDID"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 || true
-          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/TheBetrayal.app
+          xcrun simctl install "$UDID" "$DD/Build/Products/Debug-iphonesimulator/TheBetrayal.app"
           mkdir -p shots/render
 
       - name: Recorded moments in the simulator
@@ -95,6 +120,7 @@ jobs:
       - name: A game against bots on a local Worker
         run: |
           npm ci --no-audit --no-fund > /dev/null
+          lsof -ti tcp:8790 | xargs kill 2>/dev/null || true # a Worker left by a cancelled run
           CI=true WRANGLER_SEND_METRICS=false npx wrangler dev --port 8790 --ip 127.0.0.1 --var ADMIN_TOKEN:dev --var MASTER_PASS:MASTERTEST --var SITE_PASSWORD: > wrangler.log 2>&1 &
           for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:8790/ && break; sleep 2; done
           python3 ios/ci/drive.py http://127.0.0.1:8790 MASTERTEST --rounds ${{ inputs.full && '0' || '1' }} \
@@ -104,7 +130,13 @@ jobs:
       - name: Build (Release)
         run: >
           xcodebuild -quiet -project ios/TheBetrayal.xcodeproj -scheme TheBetrayal -configuration Release
-          -destination "generic/platform=iOS Simulator" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+          -destination "generic/platform=iOS Simulator" -derivedDataPath "$DD" CODE_SIGNING_ALLOWED=NO build
+
+      - name: Tidy up (the Mac is kept between runs)
+        if: always()
+        run: |
+          lsof -ti tcp:8790 | xargs kill 2>/dev/null || true
+          [ -n "$UDID" ] && xcrun simctl shutdown "$UDID" 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -82,8 +82,8 @@ or new words on the page do: change `src/modern-ui.js`, then the matching view h
 
 ## Checks
 
-`.github/workflows/ios-native.yml` runs on one of GitHub's Macs whenever `ios/` changes (or by hand, with an option to
-play the whole game):
+`.github/workflows/ios-native.yml` runs on the owner's own Mac, as a GitHub Actions self-hosted runner, whenever `ios/`
+changes (or by hand, with options to play the whole game, or to use one of GitHub's Macs when the owner's is off):
 
 1. `ios/ci/main.swift` builds the model with `swiftc` and reads every moment of `Debug/Fixtures.json` (a whole game
    recorded from the real rules engine by `ios/tools/fixtures.mjs`), and every drawing.
@@ -97,8 +97,23 @@ play the whole game):
    Pushes play the first round; a run by hand can play the whole game.
 
 The pictures are the run's `ios-native-screens` artifact and, as one commit, the ref `refs/screens/ios-native` (not a
-branch, so nothing deploys it): `git fetch origin refs/screens/ios-native && git show FETCH_HEAD --stat`. Mac minutes
-count ten times against the account's Actions allowance; a run takes about ten minutes.
+branch, so nothing deploys it): `git fetch origin refs/screens/ios-native && git show FETCH_HEAD --stat`. A run takes
+about ten minutes.
+
+**Setting up the Mac as the runner** (once):
+
+1. On GitHub: the repository → **Settings → Actions → Runners → New self-hosted runner** → **macOS**, and the
+   architecture of the Mac (**ARM64** for Apple silicon). Run the commands it shows in Terminal: they download the
+   runner into a folder, and `./config.sh` registers it (accept the default name and labels).
+2. Start it: `./run.sh` in that folder, left open while work is going on; or, to have it start whenever you log in,
+   `./svc.sh install && ./svc.sh start`. GitHub shows it as **Idle** when it's ready. Runs wait in the queue while it's off.
+3. Xcode needs an iOS simulator (Xcode → Settings → Components). The run makes a simulator of its own, "Betrayal CI",
+   and wipes it each time, so your other simulators are left alone. It sets up Node itself, keeps its build in
+   `~/Library/Caches/TheBetrayal-CI` (delete it any time), and uses port 8790 while it plays.
+
+Only pushes and runs by hand start the workflow, never a pull request, so nobody without write access to the
+repository can run anything on the Mac. GitHub's own Macs (the run-by-hand option) count ten times against the
+account's Actions minutes.
 
 The Debug build's launch arguments (`Debug/Demo.swift`) are compiled out of Release, and `Fixtures.json` is left out of
 the Release bundle.
