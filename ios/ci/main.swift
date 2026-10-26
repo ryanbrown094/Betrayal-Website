@@ -59,8 +59,9 @@ for (name, svg) in Art.icons {
 }
 check(Art.crestParts.count == 12, "the crest has \(Art.crestParts.count) parts")
 for p in Art.crestParts { let b = p.path.boundingBox; check(b.minX >= 4 && b.maxX <= 116 && b.minY >= 4 && b.maxY <= 136, "the crest: out of its box \(b)") }
-let moon = SVGPath.cgPath("M43 7a25 25 0 1 0 14 39A21 21 0 0 1 43 7z").boundingBox
-check(abs(moon.minX - 7) < 1.5 && abs(moon.maxY - 57) < 1.5, "the moon's arcs: \(moon)")
+// the moon's two arcs, against the SVG spec's own arithmetic (circles centred at 36.83, 31.23 and 53.23, 25.34)
+let moon = SVGPath.cgPath("M43 7a25 25 0 1 0 14 39A21 21 0 0 1 43 7z").boundingBoxOfPath
+check(abs(moon.minX - 11.83) < 0.3 && abs(moon.minY - 6.23) < 0.3 && abs(moon.maxX - 57) < 0.3 && abs(moon.maxY - 56.23) < 0.3, "the moon's arcs: \(moon)")
 check(Art.blob.boundingBox.width > 80 && Art.blob.boundingBox.width < 100, "the wax")
 
 print("\(all.count) moments, \(phases.count) phases, \(kinds.count) kinds of item; \(failures) failures")
