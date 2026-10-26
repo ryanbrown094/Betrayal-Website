@@ -42,7 +42,12 @@ export const TRIALS = {
   draw: { title: "Pictionary", prize: true, actor: 60, bank: "draw", rules: "One player at a time gets a secret word and draws it (paper, a chalkboard, the air). When someone guesses, the artist taps who. A point each." },
   truths: { title: "Two Truths and a Lie", prize: true, rules: "Three players take a turn: say three things about yourself, one of them a lie. Everyone else votes for the lie on their phone. A point for every right vote, and one to the teller for every fool." },
 };
-export const trialKeys = (s) => Object.keys(TRIALS).filter((k) => !TRIALS[k].ghosts || ghosts(s).length);
+// The iPhone app's free games (opts.content "base", worker/src/tiers.js) play these Trials and the first half of each
+// question bank; everything else (the website's games, and the app's with a pass) plays them all.
+export const BASE_TRIALS = ["likely", "quiz", "estimate", "hilo", "charades", "countdown", "oneleg", "truths"];
+const based = (s) => s.opts.content === "base";
+const reach = (s, bank) => (based(s) ? Math.ceil(bank.length / 2) : bank.length);
+export const trialKeys = (s) => Object.keys(TRIALS).filter((k) => (!TRIALS[k].ghosts || ghosts(s).length) && (!based(s) || BASE_TRIALS.includes(k)));
 // what the Forsworn may say to each other at night: set phrases only, so nothing typed can leak
 export const WHISPERS = ["Agreed", "Not that one", "I’m under suspicion", "Vote with me tomorrow", "Stay quiet tomorrow", "Someone’s onto us"];
 const WORDS = 140; // the most a last word may run to
@@ -140,7 +145,7 @@ const fits = (w, letters) => { const c = {}; for (const ch of letters.toLowerCas
 const OPEN = { text: 20, number: 25, hilo: 15, vote: 25, word: 45, recall: 45, cell: 20, rps: 15, tempt: 30, truths: 25 };
 function makeItem(s, t, now, rnd) {
   const n = t.i, A = alive(s), used = (s.used = s.used || {});
-  const fresh = (bank, key) => { const u = (used[key] = used[key] || []), pool = bank.map((_, i) => i).filter((i) => !u.includes(i)); const i = pool.length ? pick(pool, rnd) : Math.floor(rnd() * bank.length); u.push(i); return bank[i]; };
+  const fresh = (bank, key) => { const n = reach(s, bank), u = (used[key] = used[key] || []), pool = bank.slice(0, n).map((_, i) => i).filter((i) => !u.includes(i)); const i = pool.length ? pick(pool, rnd) : Math.floor(rnd() * n); u.push(i); return bank[i]; };
   const base = { stage: "open", inputs: {}, opened: now };
   switch (t.key) {
     case "quiz": { if (n >= 8) return null; const q = fresh(n < 3 ? QUIZ_E : n < 6 ? QUIZ_M : QUIZ_H, n < 3 ? "qe" : n < 6 ? "qm" : "qh"); return { ...base, k: "text", q: q[0], a: String(q[1]), part: n < 3 ? "easy" : n < 6 ? "medium" : "brutal", end: now + OPEN.text * 1000 }; }
@@ -541,7 +546,7 @@ export function act(s, pid, a, now, ctx) {
     }
     case "accept": { if (!dir || !s.trial || s.trial.stage === "done" || !s.trial.results.length || !P(s, v) || !P(s, v).alive) return need(false); const last = s.trial.results[s.trial.results.length - 1]; if (!last.right || last.right.includes(v) || !P(s, v)) return need(false); last.right.push(v); s.trial.scores[v] = (s.trial.scores[v] || 0) + 1; return done(); }
     case "guess": { if (!it || it.k !== "actor" || it.stage !== "open" || (pid !== it.actor && !dir)) return need(false); if (v !== "none" && (!P(s, v) || v === it.actor)) return need(false); it.guess = v; it.end = now; return done(); }
-    case "reword": { if (!it || it.k !== "actor" || pid !== it.actor || it.skips >= 2) return need(false); const d = TRIALS[s.trial.key], bank = d.bank === "songs" ? SONGS : d.bank === "draw" ? PICTIONARY : CHARADES; it.word = String(pick(bank, rnd)); it.skips++; return done(); }
+    case "reword": { if (!it || it.k !== "actor" || pid !== it.actor || it.skips >= 2) return need(false); const d = TRIALS[s.trial.key], bank = d.bank === "songs" ? SONGS : d.bank === "draw" ? PICTIONARY : CHARADES; it.word = String(pick(bank.slice(0, reach(s, bank)), rnd)); it.skips++; return done(); }
     case "lie": { if (!it || it.k !== "truths" || pid !== it.teller || it.stage !== "prep" || ![1, 2, 3].includes(+v)) return need(false); it.lie = +v; return done(); }
     case "told": { if (!it || it.k !== "truths" || (pid !== it.teller && !dir) || it.stage !== "prep" || !it.lie) return need(false, "Choose which one is the lie first."); it.stage = "open"; it.from = now; it.end = now + T(s, OPEN.truths * 1000); return done(); }
     // --- the Reckoning, the night, the end
@@ -622,6 +627,7 @@ export function viewFor(s, pid, now) {
   };
   if (s.phase === "lobby") o.opts = { shield: s.opts.shield, twists: s.opts.twists, courses: s.opts.courses, prize: me && s.director === pid ? s.opts.prize : undefined, coins: me && s.director === pid ? s.opts.prize === PRIZE0 : undefined, prizes: me && s.director === pid ? s.opts.prizes : undefined, title: s.opts.title };
   if (s.phase === "day") o.next = stepLabel(s, s.steps[s.stepAt]) || "The Reckoning";
+  if (based(s)) o.locked = Object.keys(TRIALS).filter((k) => !BASE_TRIALS.includes(k)).map((k) => TRIALS[k].title); // what a pass would add
   if (s.trial) {
     const t = s.trial, it = t.item;
     o.trial = { key: t.key, title: t.title, rules: t.rules, stage: t.stage, introEnd: t.introEnd, i: t.i, prize: t.prize, offer: t.offer, scores: t.stage === "done" && t.special !== "cast" ? t.scores : undefined, winners: t.stage === "done" && t.special !== "cast" ? t.winners : undefined, points: t.stage === "done" ? t.points : undefined, sanctPublic: t.stage === "done" && t.sanct && s.opts.shield === "public" ? t.sanct : undefined, wrongF: t.stage === "done" ? t.wrongF || 0 : undefined, special: t.special === "confess" ? "secret" : t.special, byLot: t.stage === "done" ? !!t.byLot : undefined, gave: t.stage === "done" && t.gave === "crown" ? t.winners[0] : undefined };

@@ -269,7 +269,7 @@ export class GameState {
         if (!String(body.name || "").replace(/\s+/g, " ").trim()) return json({ error: "Type your name." }, 400);
         if (await this.storage.get("state")) return json({ error: "This Table is already playing Classic." }, 409);
         if (!s) {
-          s = M.newGame(now, Math.random, {});
+          s = M.newGame(now, Math.random, meta.tier ? { content: T.tierView(meta.tier).content } : {}); // an app game's tier (tiers.js) decides its Trials
           // testing rooms (the master code) may fix the order of the Trials, so a test can play a known one
           if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
           // and play a test game against bots, with every clock at ten seconds
@@ -306,6 +306,7 @@ export class GameState {
       const out = await r.json().catch(() => ({ error: "That didn’t work. Try again." }));
       if (!r.ok) return json(out, r.status);
       meta.tier = T.higher(meta.tier, out.tier); await this.storage.put("meta", meta);
+      s.opts.content = T.tierView(meta.tier).content; // every Trial and the full banks, from the next one on
       s.ver++; await save(); // every phone and the TV see the new tier with their next poll
       return view({ room: { ...room, tier: T.tierView(meta.tier) } });
     }

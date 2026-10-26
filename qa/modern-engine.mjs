@@ -1,6 +1,7 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
-import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots } from "../worker/src/modern.js";
+import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, trialKeys } from "../worker/src/modern.js";
+import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES } from "../worker/src/content.gen.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const dict = { has: (w) => w.length >= 3 };
@@ -313,6 +314,40 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   const g = begin(10), s = g.s; setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
   A(g, g.dir, { a: "pause" }); g.now += 300000; A(g, g.dir, { a: "tool", v: "voteNow" }); g.now += 5000; A(g, g.dir, { a: "pause", v: "off" });
   check("a host tool used while paused acts from the moment of the pause", s.phase === "vote" && s.vote.voteEnd - g.now === 120000, s.vote.voteEnd - g.now);
+}
+// 10. the app's free games (opts.content "base", worker/src/tiers.js): eight Trials and the first half of each question
+// bank, all evening; a pass unlocks the rest; the website's games are as they were
+{
+  const BANKS = { qe: QUIZ_E, qm: QUIZ_M, qh: QUIZ_H, lk: LIKELY, est: ESTIMATE, charades: CHARADES };
+  const playWhole = (n, opts) => {
+    const g = setup(n, opts); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
+    const keys = new Set(); let guard = 0;
+    const target = (p) => alive(g.s).find((q) => q.id !== p.id);
+    while (g.s.phase !== "end" && guard++ < 200) {
+      const s = g.s;
+      if (s.phase === "day") { A(g, g.dir, { a: "next" }); continue; }
+      if (s.phase === "break") { A(g, g.dir, { a: "brkEnd" }); continue; }
+      if (s.phase === "trial") { if (s.trial.key !== "tempt") keys.add(s.trial.key); finishCurrentTrial(g); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "talk" || s.phase === "vote") { vote(g, target); continue; }
+      if (s.phase === "night") { night(g); continue; }
+      if (s.phase === "dawn") { A(g, g.dir, { a: "cont" }); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "reveal") { run(g, 6000); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "trust") { for (const p of alive(s)) A(g, p.id, { a: "trust", v: "trust" }); run(g, 8000); continue; }
+      if (s.phase === "unmask" || s.phase === "honour") { run(g, 5000); continue; }
+      run(g, 2000);
+    }
+    return { g, keys };
+  };
+  const free = [10, 16, 24].map((n) => playWhole(n, { content: "base" }));
+  check("free games: every Trial played is one of the eight", free.every(({ keys }) => [...keys].every((k) => BASE_TRIALS.includes(k))), free.map(({ keys }) => [...keys]));
+  check("…and whole games still end", free.every(({ g }) => g.s.phase === "end"));
+  check("…every question from the first half of its bank", free.every(({ g }) => Object.entries(g.s.used || {}).every(([k, u]) => !BANKS[k] || u.every((i) => i < Math.ceil(BANKS[k].length / 2)))), free.map(({ g }) => g.s.used));
+  const web = [16, 24].map((n) => playWhole(n, {}));
+  check("the website's games still play the other Trials", web.some(({ keys }) => [...keys].some((k) => !BASE_TRIALS.includes(k))), web.map(({ keys }) => [...keys]));
+  const g = setup(10, { content: "base" });
+  check("a free game's phones are told what a pass would add", (viewFor(g.s, g.dir, g.now).locked || []).length === Object.keys(TRIALS).length - BASE_TRIALS.length && !viewFor(setup(10, {}).s, null, g.now).locked);
+  g.s.opts.content = "all";
+  check("a pass on a free game unlocks every Trial", trialKeys(g.s).length === Object.keys(TRIALS).length - 1 && !viewFor(g.s, g.dir, g.now).locked); // The Statue waits for Ghosts
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

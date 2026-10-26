@@ -103,6 +103,7 @@ check("the codes list: the Host Pass active, the website's and unknown codes lef
 const [, f2] = await games({ app: true }, "192.0.2.1");
 const [, f2c] = await create(f2.room, "Ann");
 const [, f2j] = await joinAs(f2.room, "Bob");
+check("a free game's lobby lists the Trials a pass would add", (await poll(f2.room, f2c.tok))[1].view.locked.length === 7);
 const night2 = await mint("night", "app");
 check("only the host can use a pass on the game", (await upgrade(f2.room, f2j.tok, night2))[0] === 403);
 check("a website code can't", (await upgrade(f2.room, f2c.tok, web))[0] === 403);
@@ -111,6 +112,8 @@ const [us, uj] = await upgrade(f2.room, f2c.tok, night2);
 check("the host's Night Pass makes the game ad-free at once", us === 200 && uj.room.tier.tier === "night" && uj.room.tier.adFree === true, [us, uj && uj.room]);
 const [, bobPoll] = await poll(f2.room, f2j.tok);
 check("…every other phone sees it with its next poll", bobPoll.room.tier.adFree === true && bobPoll.room.tier.content === "all", bobPoll.room);
+check("…and every Trial is unlocked", !bobPoll.view.locked && (await roomDO("room:" + f2.room).st.get("modern")).opts.content === "all");
+check("a Night Pass game plays everything from the start", npoll.view && !npoll.view.locked && (await roomDO("room:" + n1.room).st.get("modern")).opts.content === "all");
 check("…and the pass's 24 hours have started, on this game", (await games({ pass: night2, app: true }))[1].room === f2.room);
 check("using a pass again on an ad-free game is refused", (await upgrade(f2.room, f2c.tok, host))[0] === 409);
 
