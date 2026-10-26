@@ -1,5 +1,5 @@
 # End-to-end through the API: PIN gate, redaction, two-screen sync, the Witness ceremony, the Ghosts' share-or-take, wipe + fresh game.
-import json, sys, os
+import json, sys, os, time
 from playwright.sync_api import sync_playwright
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8714/"
 # Against the real Worker (wrangler dev, staging): set ADMIN_TOKEN and the test mints two passes and plays in its own room.
@@ -114,10 +114,11 @@ with sync_playwright() as p:
         check("a fresh room's TV shows its code and the host link", room2 in tv2.inner_text("#stage") and "#keeper" in tv2.inner_text("#stage"), tv2.inner_text("#stage")[:120])
     if ADMIN:
         # the feedback survey: sent from a booking code, answered on a phone, listed in the admin, stopped by its link
-        H = {"Authorization": "Bearer " + ADMIN}
-        sp = api.post(URL + "api/admin/passes", headers=H, data=json.dumps({"count": 2, "note": "e2e survey", "email": "host@example.com"})).json()["passes"]
+        # a fresh address each run: the stop link at the end bars this one from feedback emails for good
+        H, mail = {"Authorization": "Bearer " + ADMIN}, "host+%d@example.com" % int(time.time() * 1000)
+        sp = api.post(URL + "api/admin/passes", headers=H, data=json.dumps({"count": 2, "note": "e2e survey", "email": mail})).json()["passes"]
         sent = api.post(URL + "api/admin/survey", headers=H, data=json.dumps({"pass": sp[0]}))
-        check("the admin sends a booking code's buyer the feedback survey", sent.status == 200 and sent.json().get("to") == "host@example.com", sent.text()[:200])
+        check("the admin sends a booking code's buyer the feedback survey", sent.status == 200 and sent.json().get("to") == mail, sent.text()[:200])
         tok = [x for x in api.get(URL + "api/admin/passes", headers=H).json()["passes"] if x["pass"] == sp[0]][0].get("survey", "")
         sv = b.new_context(viewport={"width": 390, "height": 844}, extra_http_headers=GATE_HDR, is_mobile=True, has_touch=True).new_page(); sv.on("pageerror", lambda e: errs.append(str(e)))
         sv.goto(URL + "survey?t=" + tok); sv.wait_for_selector("#sv:not([hidden])", timeout=8000)
