@@ -3,6 +3,7 @@ import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js";
 import * as M from "./modern.js";
 import { sendBooking } from "./booking-mail.js";
+import * as AS from "./appstore.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -591,6 +592,47 @@ export class Registry {
         (v.kind === "sub" ? "A Regular" : "A Table") + (cancel ? ". It hadn’t been played, so its code is now cancelled." : v.room ? ". It had already opened a Table, which stays open." : "."), "Email: " + (v.note || "unknown")]);
       return json({ ok: true, pass: shownPass(p), cancelled: cancel });
     }
+    // an App Store purchase (appstore.js), already checked with Apple: one booking code per Table bought, one per
+    // subscription for a Regular, however often the phone claims it (after a lost reply, a restore or a new phone)
+    if (url.pathname === "/apple-claim") {
+      const t = b.txn || {}, sub = b.kind === "sub", ak = "apple:" + (sub ? "orig:" + t.originalTransactionId : "txn:" + t.transactionId), st = b.status || null;
+      return queued(this.locks, ak, async () => {
+        const have = await this.storage.get(ak);
+        if (have) {
+          const k = "pass:" + have, v = await this.storage.get(k);
+          if (v && sub && st) await this.storage.put(k, { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() });
+          if (v && v.revoked) return json({ error: "That purchase was refunded, so its booking code is cancelled." }, 410);
+          return json({ pass: shownPass(have), sub });
+        }
+        if (t.revocationDate) return json({ error: "That purchase was refunded." }, 410);
+        let p; do p = newPass(); while (await this.storage.get("pass:" + p));
+        const price = AS.priceOf(t);
+        await this.storage.put("pass:" + p, { created: Date.now(), note: "", source: "appstore", kind: sub ? "sub" : "one", paid: Date.now(),
+          apple: { txn: String(t.transactionId), orig: String(t.originalTransactionId), env: t.environment || null, storefront: t.storefront || null, price },
+          ...(sub ? { subActive: st ? st.active : true, subStatus: st ? st.status : "active", subExpires: (st && st.expires) || t.expiresDate || null, subChecked: Date.now() } : {}) });
+        await this.storage.put(ak, p);
+        await this.notify("Sale (App Store): " + (sub ? "a Regular" : "a Table") + (price ? ", " + price + (sub ? " a month" : "") : ""), ["Booking code: " + shownPass(p),
+          t.environment && t.environment !== "Production" ? "A test purchase (" + t.environment + "): no money changed hands." : null]);
+        return json({ pass: shownPass(p), sub });
+      });
+    }
+    // an App Store refund: as with Stripe's, a Table's code is cancelled if it hasn't opened a room yet
+    if (url.pathname === "/apple-refund") {
+      const p = await this.storage.get("apple:txn:" + b.transactionId), k = p && "pass:" + p, v = k && (await this.storage.get(k));
+      if (!v) return json({ ok: true, pass: null });
+      const cancel = v.kind !== "sub" && !v.room && !v.revoked;
+      await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: v.refunded || Date.now() });
+      if (!v.refunded) await this.notify("Refund (App Store): " + shownPass(p), [cancel ? "It hadn’t been played, so its code is now cancelled." : v.room ? "It had already opened a Table, which stays open." : null]);
+      return json({ ok: true, pass: shownPass(p), cancelled: cancel });
+    }
+    // a Regular bought in the app: its subscription's state, as Apple gives it
+    if (url.pathname === "/apple-sub") {
+      const p = await this.storage.get("apple:orig:" + b.orig), k = p && "pass:" + p, v = k && (await this.storage.get(k)), st = b.status;
+      if (!v || !st) return json({ ok: true, pass: null });
+      await this.storage.put(k, { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() });
+      if (v.subActive && !st.active) await this.notify("A Regular (App Store) lapsed: " + shownPass(p), ["Apple says: " + st.status]);
+      return json({ ok: true, pass: shownPass(p), active: st.active });
+    }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000;
       return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires, ...(b.master ? { test: true } : {}) });
@@ -616,13 +658,20 @@ export class Registry {
       if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a booking code. It looks like OATH-XXXX-XXXX." }, 400); }
       // one redemption of a code at a time: two taps at once (or two tabs) get the same room, not one each
       return queued(this.locks, passKey(b.pass), async () => {
-        const k = "pass:" + passKey(b.pass), v = await this.storage.get(k);
+        const k = "pass:" + passKey(b.pass);
+        let v = await this.storage.get(k);
         if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
         if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
         if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
         // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
         // back; asking for a fresh one closes that room and opens another.
         if (v.kind === "sub") {
+          // a Regular bought in the iPhone app: Apple says whether it's paid up (asked again after ten minutes, or at once if it had lapsed)
+          if (v.apple && (!v.subActive || Date.now() - (v.subChecked || 0) > 600000)) {
+            const st = await AS.subscription(env, v.apple.orig, v.apple.env === "Xcode" ? { environment: "Xcode", expiresDate: v.subExpires } : null);
+            if (st) { v = { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() }; await this.storage.put(k, v); }
+          }
+          if (!v.subActive && v.apple) return json({ error: "Your Regular plan isn’t active" + (v.subStatus === "billing retry" ? ": Apple couldn’t take the last payment." : ".") + " Renew it in the app, under Manage subscription.", sub: true }, 402);
           if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
           const live = v.room && Date.now() < v.expires;
           if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
@@ -780,6 +829,7 @@ async function gate(req, env) {
   if (!env.SITE_PASSWORD) return null;
   if (new URL(req.url).pathname.startsWith("/api/admin/")) return null; // has its own token
   if (new URL(req.url).pathname === "/api/stripe/webhook") return null; // Stripe has no cookie; it signs every call instead
+  if (new URL(req.url).pathname === "/api/appstore/notify") return null; // nor has Apple; each notice only prompts a look at Apple's own records
   const want = await gateToken(env.SITE_PASSWORD), url = new URL(req.url);
   if (url.pathname === "/__gate" && req.method === "POST") {
     const form = await req.formData().catch(() => null), pw = form ? String(form.get("password") || "") : "";
@@ -933,6 +983,40 @@ async function route(req, env) {
         result = await refundFor(env, { pi: piOf(o.payment_intent), charge: piOf(o.charge), amount: o.amount });
       await call(env, "/hook", { type: ev.type, id: ev.id, obj: o.id || null, live: !!ev.livemode, pass: (result && result.pass) || pass || null, result: typeof result === "string" ? result : clip(JSON.stringify(result), 300) });
       if (result && result.error) logErr(env, { src: "stripe", where: ev.type, msg: result.error, obj: o.id || "" });
+      return json({ received: true });
+    }
+    // The iPhone app's purchases (appstore.js): a purchase, checked with Apple, becomes a booking code. Unknown purchases
+    // count as wrong guesses, as wrong booking codes do.
+    if (p === "/api/appstore/claim" && req.method === "POST") {
+      const ip = req.headers.get("CF-Connecting-IP") || "?", hdr = { "CF-Connecting-IP": ip };
+      const g = await registry(env).fetch("https://registry/signin-check", { method: "POST", headers: hdr, body: "{}" });
+      if (!g.ok) return json(await g.json(), g.status);
+      const b = await req.json().catch(() => ({}));
+      const r = await AS.purchase(env, b.jws);
+      if (r.error) {
+        if (r.unknown || r.status === 400) await registry(env).fetch("https://registry/signin-failed", { method: "POST", headers: hdr, body: "{}" });
+        if (r.why) logErr(env, { src: "appstore", where: "claim", msg: r.error + " " + clip(r.why, 300) });
+        return json({ error: r.error }, r.status);
+      }
+      const status = r.txn.kind === "sub" ? await AS.subscription(env, r.txn.originalTransactionId, r.txn) : null;
+      return call(env, "/apple-claim", { txn: r.txn, kind: r.txn.kind, status });
+    }
+    // App Store Server Notifications, version 2 (App Store Connect → the app → App Information → Production and Sandbox
+    // Server URL: https://<domain>/api/appstore/notify). A refund cancels an unplayed Table's code; a Regular's renewal,
+    // lapse or refund updates its code. Each notice only prompts a fresh look at Apple's own records.
+    if (p === "/api/appstore/notify" && req.method === "POST") {
+      const n = AS.notice(await req.json().catch(() => null));
+      if (!n) return json({ error: "Bad notification" }, 400);
+      const P = AS.productsOf(env);
+      let result = "ignored";
+      if (n.productId === P.one && n.jws && ["REFUND", "REVOKE"].includes(n.type)) {
+        const r = await AS.purchase(env, n.jws);
+        result = r.txn && r.txn.revocationDate ? await (await call(env, "/apple-refund", { transactionId: r.txn.transactionId })).json() : r.error || "Apple shows no refund";
+      } else if (n.productId === P.sub && n.orig) {
+        const st = await AS.subscription(env, n.orig, null);
+        result = st ? await (await call(env, "/apple-sub", { orig: n.orig, status: st })).json() : "Apple couldn’t be asked";
+      }
+      await call(env, "/hook", { type: "appstore " + n.type + (n.subtype ? "/" + n.subtype : ""), id: n.uuid, obj: n.transactionId, live: n.environment === "Production", pass: (result && result.pass) || null, result: typeof result === "string" ? result : clip(JSON.stringify(result), 300) });
       return json({ received: true });
     }
     // Subscribers manage their card or cancel in Stripe's billing portal, reached with their code.

@@ -37,7 +37,7 @@ The Python harnesses need Playwright with Chromium; some tools also need Pillow.
 
 **Rules of the road:**
 
-- **Never write the Cloudflare API token, `ADMIN_TOKEN`, `ADMIN_PASSWORD`, `MASTER_PASS`, `STRIPE_SECRET_KEY` or `STRIPE_WEBHOOK_SECRET` into any file, zip or commit.** The Cloudflare token goes in the environment at deploy time (`CLOUDFLARE_API_TOKEN`); the rest are Worker secrets (`wrangler secret put`).
+- **Never write the Cloudflare API token, `ADMIN_TOKEN`, `ADMIN_PASSWORD`, `MASTER_PASS`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` or `APPSTORE_PRIVATE_KEY` into any file, zip or commit.** The Cloudflare token goes in the environment at deploy time (`CLOUDFLARE_API_TOKEN`); the rest are Worker secrets (`wrangler secret put`).
 - **Deploys must not break games in progress.** Customers may be mid-party. Never change a saved game's shape in a way a running game can't load: add fields with defaults and read them through helpers such as `rulesIn` (Classic). Classic's Keeper phone and TV refuse a saved game whose `v` differs from `SCHEMA` in `src/core.js` ("A game from an older version"), so bumping `SCHEMA` strands every Classic game in progress.
 - **Run `./build.sh` before committing.** The built pages in `worker/public` and `worker/src/content.gen.js` are committed; the Git deploy does not run `build.sh`.
 - Deploy to **staging** first, run `qa/e2e.py` against it, then production.
@@ -363,6 +363,21 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   5. Test on staging with test keys and card 4242 4242 4242 4242: the code appears and opens a Table, `/admin` shows it, a refund cancels it. Then live keys on production.
 - The publishable key isn't used: Checkout is Stripe-hosted.
 
+### 6.2a The App Store (the iPhone app's purchases)
+
+- **Two products**, sold only in the iPhone app (`ios/`) with Apple's in-app purchase: a Table, `uk.co.thebetrayal.app.table` (**consumable**), and the Regular plan, `uk.co.thebetrayal.app.regular` (**auto-renewable subscription**, monthly, in a group of its own). Apple sets the prices from the tiers chosen in App Store Connect; the app shows Apple's price in the buyer's currency. Other IDs: `APPSTORE_TABLE_PRODUCT`, `APPSTORE_REGULAR_PRODUCT`, `APPSTORE_BUNDLE_ID` (default `uk.co.thebetrayal.app`).
+- **Flow** (`worker/src/appstore.js`): the app buys with StoreKit → `POST /api/appstore/claim {jws}` (the transaction as StoreKit signed it) → the Worker reads only its transaction ID and asks Apple's App Store Server API for that transaction (production, then the sandbox on 404), checks the app and product, and for a Regular asks for the subscription's status → the Registry's `/apple-claim` mints the code (`source: "appstore"`, `apple: {txn, orig, env, storefront, price}`). One code per Table bought (`apple:txn:<id>`), one per subscription for a Regular (`apple:orig:<id>`), however often the phone claims it: the app claims again after a lost reply, a restore or on a new phone, and finishes the purchase with Apple only once it has the code. Unknown purchases count as wrong booking codes for the sign-in limit.
+- **A Regular from the App Store** opens games while Apple says it's active or in its grace period. `/redeem` asks Apple again when the last answer is over ten minutes old, or at once if it had lapsed; a lapsed one gets 402 ("Renew it in the app, under Manage subscription"). Cancelling and the card are Apple's (the app's **Manage subscription** opens Apple's sheet); `/api/portal` is for Stripe's Regulars only.
+- **Server notifications** (version 2): `POST /api/appstore/notify`, exempt from the site password. Each notice only prompts a fresh look at Apple's records: a refunded Table's code is cancelled if it hasn't opened a Table yet (as with Stripe), a Regular's renewal, lapse or refund updates its code. Every notice is in `/admin`'s webhook log as `appstore TYPE/SUBTYPE`.
+- **Alerts:** "Sale (App Store): a Table, 9.99 GBP" (with a line saying when it was a sandbox or TestFlight purchase), "Refund (App Store)", "A Regular (App Store) lapsed". Apple pays out monthly, less its commission; the price in the alert is what the buyer paid.
+- **Setting it up** (needs the Apple Developer Program):
+  1. App Store Connect → the app → **Monetization**: create the two products with those IDs, prices, names and review screenshots; the subscription needs a group. Sign the Paid Apps agreement and fill in tax and banking.
+  2. **Users and Access → Integrations → In-App Purchase**: generate a key. Put its Issuer ID and Key ID in the `.toml` as `APPSTORE_ISSUER_ID` and `APPSTORE_KEY_ID`, and the downloaded `.p8` in the secret: `npx wrangler secret put APPSTORE_PRIVATE_KEY -c <config> < SubscriptionKey_XXXX.p8`. Until all three are set, a purchase is kept on the phone and claimed when they are (503 "In-app purchases aren't set up on the server yet").
+  3. The app's **App Information → App Store Server Notifications**: version 2, Production and Sandbox URL `https://<domain>/api/appstore/notify`.
+  4. Test with a sandbox tester (Settings → Developer → Sandbox Apple Account on the phone) through TestFlight: the code appears, `/admin` shows it, a refund requested in the sandbox cancels it.
+- **`APPSTORE_LOCAL=1`** (development only, never staging or production) also takes purchases from Xcode's StoreKit testing (`ios/TheBetrayal/Debug/Store.storekit`), which Apple has never seen, on the phone's word: `npx wrangler dev --var APPSTORE_LOCAL:1`. Without it they're refused (403).
+- Tests: `node qa/appstore.mjs` (Apple's API stubbed, its token's signature checked).
+
 ### 6.3 Vars and secrets
 
 **Vars** (`[vars]`, values in the `.toml`):
@@ -382,8 +397,10 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 | `SITE_PASSWORD` | the pre-launch gate; unset = open |
 | `BUILD` | set by `deploy.sh` from `build.txt` |
 | `OPEN_ACCESS` | `1` = rooms without a code (development only) |
+| `APPSTORE_ISSUER_ID`, `APPSTORE_KEY_ID` | the App Store Server API's In-App Purchase key (§6.2a); empty = the app's purchases wait |
+| `APPSTORE_LOCAL` | `1` = take Xcode's StoreKit-testing purchases (development only) |
 
-**Secrets** (`npx wrangler secret put NAME -c <config>`, or Workers & Pages → the Worker → Settings → Variables and Secrets): `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `STRIPE_SECRET_KEY` (`sk_test_…` on staging, `sk_live_…` on production), `STRIPE_WEBHOOK_SECRET` (`whsec_…`), `MASTER_PASS`.
+**Secrets** (`npx wrangler secret put NAME -c <config>`, or Workers & Pages → the Worker → Settings → Variables and Secrets): `ADMIN_PASSWORD`, `ADMIN_TOKEN`, `STRIPE_SECRET_KEY` (`sk_test_…` on staging, `sk_live_…` on production), `STRIPE_WEBHOOK_SECRET` (`whsec_…`), `MASTER_PASS`, `APPSTORE_PRIVATE_KEY` (the In-App Purchase key's `.p8`, §6.2a).
 
 **Bindings:** `GAME` (GameState), `REGISTRY` (Registry), `ASSETS` (`worker/public`), `MAIL` (send_email, production only).
 
@@ -562,6 +579,7 @@ npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw -
 | `qa/modern-bots.py URL` | wrangler dev | the master code's *Modern test* and a whole game against bots (about three minutes); the admin's test room |
 | `node qa/modern-engine.mjs` | none | Modern's engine alone: lobby, Oath, private views, every Trial, twists, host tools, whole games at many sizes |
 | `node qa/claim.mjs` | none (Stripe and Durable Objects stubbed) | checkout, claim, signed webhook (paid, async, expired, refused, refunded before and after use), Payment Link fallback, subscriptions, the billing portal |
+| `node qa/appstore.mjs` | none (Apple's API and Durable Objects stubbed) | the iPhone app's purchases: Apple's token, a Table and a Regular claimed once however often, sandbox and Xcode purchases, wrong app or product, refunds before and after use, a lapsed Regular refused and renewed, notifications, the sign-in limit |
 | `node qa/admin.mjs` | none (stubbed) | admin sign-in, cookie flags and tampering, the attempt limit, Bearer token, cross-site requests, codes, test room |
 | `node qa/ads.mjs` | none (Google Ads API stubbed) | the sweep's script: sign-in, Google's errors and their hints, every part of the report, and every limit on changes (the £4 cap, bid steps and ceiling, negatives that would block a keyword, an ad group's last ad, non-GBP accounts, dry run vs live, partial failures) |
 | `node qa/worker.mjs` | none | the real Worker class with in-memory storage: PIN limits, stale-build writes, the settings rule |

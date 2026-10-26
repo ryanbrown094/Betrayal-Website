@@ -16,8 +16,10 @@ KEEP_DAYS = "7"          # then the room is read-only for this many days, then d
 SITE_PASSWORD = "candlelight" # pre-launch gate for the whole site; delete this line to open it to the public
 STRIPE_PRICE_ID = ""     # the one-party Table's Stripe Price (price_…), printed by tools/stripe-setup.sh; empty = checkout closed
 STRIPE_EGG_PROMO = ""     # the broken seal’s promotion code (promo_…, 10% off one party); empty = the seal offers no discount
+APPSTORE_ISSUER_ID = ""  # the iPhone app's in-app purchases (worker/src/appstore.js): App Store Connect → Users and Access → Integrations → In-App Purchase. Empty = purchases in the app wait (503)
+APPSTORE_KEY_ID = ""     # that key's ID; the key itself (its .p8 file) is the APPSTORE_PRIVATE_KEY secret
 # Secrets (never in this file), each: npx wrangler secret put NAME -c <this file>
-#   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS
+#   ADMIN_TOKEN, STRIPE_SECRET_KEY (sk_test_… on staging, sk_live_… on production), STRIPE_WEBHOOK_SECRET (whsec_…), MASTER_PASS, APPSTORE_PRIVATE_KEY (the In-App Purchase key's .p8)
 
 [assets]
 directory = "./worker/public"
