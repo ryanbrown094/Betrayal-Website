@@ -10,13 +10,13 @@
   --ox: #7a1439; --blood: #c22961; --blood2: #ea5a8f;
   --steel: #8fa3b8; --verd: #5fa88f; --verd2: #2e6b57;
   --disp: "Grenze Gotisch", "Cinzel", "Times New Roman", serif;
-  --book: "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
+  --book: "Book Figures", "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
   --ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
   --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif;
 }
 * { box-sizing: border-box }
 html, body { margin: 0; height: 100%; background: var(--soot); color: var(--tallow); -webkit-text-size-adjust: 100% }
-body { font-family: var(--ui); overflow-x: hidden }
+body { font-family: var(--ui); overflow-x: hidden; font-variant-numeric: lining-nums }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent }
 svg { display: block }
 .ico { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible }

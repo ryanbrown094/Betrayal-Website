@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026120235">
+<meta name="build" content="20261026145746">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,6 +34,8 @@
 @font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-i400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+/* IM Fell has only old-style figures, where a 1 reads as I and a 0 as o (£10 read £Io, a clock's 10s read IOS): every --book stack lists this face first, so its digits come from Alegreya Sans, lined up by font-variant-numeric: lining-nums */
+@font-face{font-family:"Book Figures";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format("woff2");unicode-range:U+0030-0039}
 /* ===================== TOKENS ===================== */
 @property --winA { syntax: "<color>"; inherits: true; initial-value: #24344d }
 @property --winB { syntax: "<color>"; inherits: true; initial-value: #0b1220 }
@@ -46,13 +48,13 @@
   --ox: #7a1439; --blood: #c22961; --blood2: #ea5a8f;
   --steel: #8fa3b8; --verd: #5fa88f; --verd2: #2e6b57;
   --disp: "Grenze Gotisch", "Cinzel", "Times New Roman", serif;
-  --book: "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
+  --book: "Book Figures", "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
   --ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
   --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif;
 }
 * { box-sizing: border-box }
 html, body { margin: 0; height: 100%; background: var(--soot); color: var(--tallow); -webkit-text-size-adjust: 100% }
-body { font-family: var(--ui); overflow-x: hidden }
+body { font-family: var(--ui); overflow-x: hidden; font-variant-numeric: lining-nums }
 button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent }
 svg { display: block }
 .ico { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; overflow: visible }
