@@ -466,7 +466,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 
 - The Modern tour game has **twists off**, so no secret prize, Temptation or Honour or Betray appears (no spoilers), and it ends in a Loyal win so the end screens are stable. Keep it that way. It passes `qr` so the TV lobby's QR code leads to `/seal`.
 - `build.sh` copies `media/web/*` to `worker/public/media/`; rebuild after regenerating images.
-- Brand: plum and rose-gold palette (`media/palette/`), Grenze Gotisch for the wordmark and the TV's big moments, IM Fell DW Pica for headings, the cracked seal as the secondary mark.
+- Brand: plum and rose-gold palette (`media/palette/`), Grenze Gotisch for the wordmark and the TV's big moments, IM Fell DW Pica for headings, the cracked seal as the secondary mark. IM Fell has only old-style figures (a 1 reads as I, a 0 as o: "£Io", a clock's "IOS"), so every `--book` stack starts with "Book Figures" (`src/fonts.css`: Alegreya Sans for the digits only) and pages set `font-variant-numeric: lining-nums`; Modern's clocks use the UI face. Keep both when adding a stylesheet.
 
 
 ### 6.9 Search (SEO) and AI answer engines (GEO)
