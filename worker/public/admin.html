@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026170822">
+<meta name="build" content="20261026173709">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -264,7 +264,8 @@ function render() {
     const act = (label, cls, title, fn) => { const b = document.createElement("button"); b.className = "btn tiny " + cls; b.textContent = label; if (title) b.title = title; b.onclick = fn; td.append(b) };
     if (p.room && !p.revoked) act("Extend", "ghost", "Keep this code's Table open longer", () => extend({ pass: p.pass }, p.expires));
     if (!p.revoked && !p.pending) mail ? act("Email", "ghost", "Email this code to " + mail + " (or another address)", () => resend(p)) : act("Set email", "ghost", "The address this code's booking emails go to", () => setEmail(p));
-    if (!p.revoked && !p.pending && mail) p.surveyAnswered ? act("Survey ✓", "ghost", "They answered the feedback survey " + when(p.surveyAnswered), () => showTab("feedback"))
+    if (!p.revoked && !p.pending && mail) p.noMail ? act("No survey", "ghost", "They asked not to get feedback emails when they booked", () => say($("#tmsg"), p.pass + " asked not to get feedback emails when they booked."))
+      : p.surveyAnswered ? act("Survey ✓", "ghost", "They answered the feedback survey " + when(p.surveyAnswered), () => showTab("feedback"))
       : act("Survey", "ghost", p.surveyed ? "Feedback survey sent " + when(p.surveyed) + ". Send it again" : "Email " + mail + " the feedback survey (30% off for answering)", () => survey(p));
     if (p.revoked) act("Delete", "danger", "", () => del(p.pass));
     if (!p.revoked) act("Cancel", "danger", "", () => cancel(p.pass));

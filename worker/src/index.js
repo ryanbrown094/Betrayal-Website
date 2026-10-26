@@ -567,11 +567,13 @@ export class Registry {
       return json({ ok: true, pass: shownPass(key), email });
     }
     // Feedback. The admin sends a buyer the survey ("Survey" on their booking code); answering it earns a one-use 30% code
-    // for one Table. Each survey is survey:<token> (its link's token); an address that asked to stop is svoff:<address>.
+    // for one Table. Each survey is survey:<token> (its link's token); an address that asked to stop (by the link, or by
+    // ticking "Don't email me a feedback survey" when booking) is svoff:<address>, and that booking is noMail.
     if (url.pathname === "/survey-send") {
       const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
       if (!v) return json({ error: "No such pass" }, 404);
       if (v.revoked || v.pending) return json({ error: v.revoked ? "That code is cancelled." : "That code hasn’t been paid for." }, 409);
+      if (v.noMail) return json({ error: "They asked not to get feedback emails when they booked." }, 409);
       const to = (String(b.to || "").trim() || String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim()).slice(0, 200);
       if (!to) return json({ error: "There’s no email address on this code. Type one in." }, 400);
       if (!/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(to)) return json({ error: "That isn’t an email address." }, 400);
@@ -657,7 +659,7 @@ export class Registry {
       if (rec.length >= 10) return json({ error: "Too many checkouts from here. Try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null });
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null, ...(b.noMail === true ? { noMail: true } : {}) });
       return json({ pass: shownPass(p) });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
@@ -674,6 +676,7 @@ export class Registry {
       if (v) await this.storage.put("pass:" + p, { ...v, pending: false, revoked: v.pending ? undefined : v.revoked, paid: Date.now(), amount, note: String(b.email || "").slice(0, 120), session: b.session, pi: b.pi || null, ...(b.disc ? { disc: String(b.disc).slice(0, 40) } : {}),
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
+      if (v && v.noMail && b.email) await this.storage.put("svoff:" + String(b.email).trim().toLowerCase(), { t: Date.now(), pass: p, at: "checkout" });
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
       const sub = !!(v && v.kind === "sub");
       await this.notify("Sale: " + (sub ? "a Regular" : "a Table") + (amount !== null ? ", " + gbp(amount) + (sub ? " a month" : "") : ""), [
@@ -1116,13 +1119,13 @@ async function route(req, env) {
       }
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       const from = sourceOf(b.src);
-      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from }) }), pj = await pr.json();
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from, ...(b.nomail === true ? { noMail: true } : {}) }) }), pj = await pr.json();
       if (!pr.ok) return json(pj, pr.status);
       const pass = pj.pass, at = new Date().toISOString();
       try {
         const common = {
           line_items: [{ price, quantity: 1 }], success_url: url.origin + "/claim?session_id={CHECKOUT_SESSION_ID}", cancel_url: url.origin + "/buy",
-          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), ...(disc ? { discount: disc.code } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at },
+          client_reference_id: pass, managed_payments: { enabled: "true" }, metadata: { pass, plan: sub ? "sub" : "one", ...(egg ? { egg: "10% off" } : {}), ...(disc ? { discount: disc.code } : {}), source: from.from, landing: from.land || "", consent_terms: at, consent_supply: at, ...(b.nomail === true ? { feedback_emails: "no" } : {}) },
         };
         // Stripe Managed Payments (Stripe is the seller of record and handles tax): managed_payments[enabled] and the preview
         // API version, and nothing it refuses (invoice details, extra descriptions) — just what the game needs: the pass in

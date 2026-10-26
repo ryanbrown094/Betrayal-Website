@@ -121,6 +121,9 @@ check("the stop link stops feedback emails to that address", r[0] === 200 && !!(
 r = await A("survey", { pass: P5 });
 check("…so the admin can't send it there again", r[0] === 409 && /asked not to/.test(r[1].error), r);
 check("…in any case of the address", (await A("survey", { pass: P5, to: "STOP@example.com" }))[0] === 409);
+const P7 = await pass("OATH-JKMN-PQRS", { email: "quiet@example.com", noMail: true }), n7 = sent.length;
+r = await A("survey", { pass: P7, to: "another@example.com" });
+check("a buyer who ticked \"Don't email me a feedback survey\" when booking isn't sent one, to any address", r[0] === 409 && /when they booked/.test(r[1].error) && sent.length === n7, r);
 
 // the admin's list and the morning summary
 r = await A("surveys");

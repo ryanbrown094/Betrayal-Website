@@ -18,6 +18,7 @@
 
 <label class="check"><input type="checkbox" id="c1"> <span>I have read and agree to the <a href="/terms">terms of sale</a> and have read the <a href="/privacy">privacy notice</a>.</span></label>
 <label class="check"><input type="checkbox" id="c2"> <span id="c2t"></span></label>
+<label class="check"><input type="checkbox" id="c3"> <span>Don’t email me a feedback survey after my game. (Optional: we only ask now and then.)</span></label>
 <p class="disc"><button type="button" id="dtog" aria-expanded="false" aria-controls="dbox">Have a discount code?</button></p>
 <div id="dbox" hidden><label class="dl" for="dcode">Discount code</label><input id="dcode" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false"><p class="dnote">It comes off on Stripe’s page, before you pay.</p></div>
 
@@ -67,10 +68,10 @@ const given = (new URLSearchParams(location.search).get("discount") || "").trim(
 if (given) { $("#dtog").onclick(); $("#dcode").value = given; $("#dcode").blur(); payText() }
 $("#pay").onclick = async () => {
   if (busy) return;
-  if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick both boxes above to continue.", true) }
+  if (!ready()) { const c = $("#c1").checked ? $("#c2") : $("#c1"); c.setAttribute("aria-invalid", "true"); c.focus(); return update("Tick the first two boxes to continue.", true) }
   busy = true; update("Opening the secure checkout…");
   try {
-    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", discount: disc() || undefined, src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
+    const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: plan(), terms: true, supply: true, egg: egg && plan() === "one", discount: disc() || undefined, nomail: $("#c3").checked || undefined, src: (() => { try { return JSON.parse(sessionStorage.getItem("bt-src") || "null") } catch (e) { return null } })() }) });
     const j = await r.json().catch(() => ({}));
     if (r.ok && j.url) { location.href = j.url; return }
     busy = false; update((j.error || "That didn’t work. Try again.") + (j.detail ? " (" + j.detail + ")" : ""), true);

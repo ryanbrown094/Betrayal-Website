@@ -344,4 +344,15 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk" }, { waitUntil: w => waits.push(w) }); await Promise.all(waits);
   check("…and the daily schedule emails it", alerts.length === n + 1 && read(alerts[n]).subject === d.subject && read(alerts[n]).body.startsWith(d.body), alerts.length - n);
 }
+// "Don't email me a feedback survey", ticked when booking: kept on the booking and in Stripe's metadata, and once it's
+// paid its address is opted out of feedback emails
+{
+  const [ns, nj] = await checkout({ terms: true, supply: true, nomail: true }, base, "192.0.2.200"), nid = nj.url.split("/").pop(), nq = made[made.length - 1].q, npass = nq.get("metadata[pass]");
+  check("opting out at checkout: noted on the booking and in Stripe's metadata", ns === 200 && (await passOf(npass)).noMail === true && nq.get("metadata[feedback_emails]") === "no", [ns, nj]);
+  check("…and nothing is noted without the tick", !(await passOf(pass1)).noMail && !made[0].q.has("metadata[feedback_emails]"));
+  sessions[nid].customer_details.email = "Quiet@Example.com"; sessions[nid].payment_status = "paid";
+  const [cs2] = await claim(nid), svoff = await reg.storage.get("svoff:quiet@example.com");
+  check("…once paid, its address is opted out", cs2 === 200 && !!svoff && svoff.at === "checkout" && (await passOf(npass)).noMail === true, svoff);
+  check("…which a booking without the tick isn't", !(await reg.storage.get("svoff:buyer@example.com")));
+}
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);
