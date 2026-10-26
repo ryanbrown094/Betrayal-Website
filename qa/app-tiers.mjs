@@ -36,7 +36,9 @@ const playRound = async (room) => { const r = roomDO("room:" + room); const s = 
 // --- the rules, on their own
 check("tiers: no code is free, the website's codes are full, the app's are what they are", T.tierFor(null) === "free" && T.tierFor({}) === "full" && T.tierFor({ kind: "sub" }) === "full" && T.tierFor({ pool: "app", kind: "night" }) === "night" && T.tierFor({ pool: "app", kind: "host" }) === "host");
 check("tiers never go down", T.higher("host", "night") === "host" && T.higher("free", "night") === "night" && T.higher("night", "free") === "night");
-check("what the phones read: free has ads and the base Trials, a pass none and everything", JSON.stringify(T.tierView("free")) === '{"tier":"free","adFree":false,"content":"base"}' && T.tierView("night").adFree && T.tierView("host").content === "all");
+const fv = T.tierView("free", {}), nv = T.tierView("night", {});
+check("what the phones read: free has ads and the base Trials, a pass none and everything", fv.tier === "free" && !fv.adFree && fv.content === "base" && nv.adFree && nv.content === "all" && !nv.ads && T.tierView("host", {}).content === "all");
+check("a free game's ads: on, with their limits, unless ADS_ENABLED is 0", fv.ads.enabled && fv.ads.interstitialMinGapSec === 240 && fv.ads.interstitialMaxPerRoom === 4 && fv.ads.bannerEnabled && !T.tierView("free", { ADS_ENABLED: "0" }).ads.enabled);
 
 // --- the website, as it was
 const web = await mint();
@@ -55,8 +57,8 @@ const [, fcr] = await create(fj.room, "Ann");
 check("…its host sets it up", fcr.tok, fcr);
 const [, fpoll] = await poll(fj.room, fcr.tok);
 check("…and every poll says it's free: ads, the base Trials", fpoll.room.tier && fpoll.room.tier.tier === "free" && fpoll.room.tier.adFree === false && fpoll.room.tier.content === "base", fpoll.room);
-const many = []; for (let i = 0; i < 11; i++) many.push((await games({ app: true }, "198.51.100.7"))[0]);
-check("at most ten free games a day from one address", many.slice(0, 10).every((x) => x === 200) && many[10] === 429, many);
+const many = []; for (let i = 0; i < 21; i++) many.push((await games({ app: true }, "198.51.100.7"))[0]);
+check("at most twenty free games a day from one address", many.slice(0, 20).every((x) => x === 200) && many[20] === 429, many);
 
 // --- the master passcode, for testing the app's tiers
 const [ms, mj] = await games({ pass: "MASTERTEST", app: true, tier: "free" });
@@ -103,6 +105,7 @@ check("the codes list: the Host Pass active, the website's and unknown codes lef
 const [, f2] = await games({ app: true }, "192.0.2.1");
 const [, f2c] = await create(f2.room, "Ann");
 const [, f2j] = await joinAs(f2.room, "Bob");
+check("a free game's lobby lists the Trials a pass would add", (await poll(f2.room, f2c.tok))[1].view.locked.length === 7);
 const night2 = await mint("night", "app");
 check("only the host can use a pass on the game", (await upgrade(f2.room, f2j.tok, night2))[0] === 403);
 check("a website code can't", (await upgrade(f2.room, f2c.tok, web))[0] === 403);
@@ -111,8 +114,40 @@ const [us, uj] = await upgrade(f2.room, f2c.tok, night2);
 check("the host's Night Pass makes the game ad-free at once", us === 200 && uj.room.tier.tier === "night" && uj.room.tier.adFree === true, [us, uj && uj.room]);
 const [, bobPoll] = await poll(f2.room, f2j.tok);
 check("…every other phone sees it with its next poll", bobPoll.room.tier.adFree === true && bobPoll.room.tier.content === "all", bobPoll.room);
+check("…and every Trial is unlocked", !bobPoll.view.locked && (await roomDO("room:" + f2.room).st.get("modern")).opts.content === "all");
+check("a Night Pass game plays everything from the start", npoll.view && !npoll.view.locked && (await roomDO("room:" + n1.room).st.get("modern")).opts.content === "all");
 check("…and the pass's 24 hours have started, on this game", (await games({ pass: night2, app: true }))[1].room === f2.room);
 check("using a pass again on an ad-free game is refused", (await upgrade(f2.room, f2c.tok, host))[0] === 409);
+
+// --- practice games: one person and the bots
+const [ps, pj] = await games({ app: true, practice: true }, "198.51.100.30");
+check("the app's practice game: a free game, marked practice", ps === 200 && pj.tier === "free" && pj.practice === true, [ps, pj]);
+const [, pc] = await create(pj.room, "Robin");
+check("…set up with nine bots and the person playing", pc.view && pc.view.players.length === 10 && pc.view.practice === true && pc.view.locked.length >= 7, pc.view && { n: pc.view.players.length, practice: pc.view.practice });
+await playRound(pj.room); await poll(pj.room, pc.tok);
+const prac = []; for (let i = 0; i < 20; i++) prac.push((await games({ app: true, practice: true }, "198.51.100.30"))[0]);
+check("at most twenty practice games a day from one address", prac.slice(0, 19).every((x) => x === 200) && prac[19] === 429, prac);
+check("…counted apart from free games", (await games({ app: true }, "198.51.100.30"))[0] === 200);
+
+// --- the app's figures: counts a day, and the weekly host conversion
+const six = async (pass, ip) => {
+  const [, g] = await games({ app: true, ...(pass ? { pass } : {}) }, ip);
+  const [, c] = await create(g.room, "Host", pass);
+  for (const n of ["Bo", "Cy", "Di", "Ed", "Flo"]) await joinAs(g.room, n);
+  await playRound(g.room); await poll(g.room, c.tok); await poll(g.room, c.tok);
+  return g.room;
+};
+await six(null, "192.0.2.60");
+await six(await mint("night", "app"), "192.0.2.61");
+check("the app's ad and offer events are counted", (await W("/api/app/event", { e: "ad_shown", placement: "P2" }).then(J))[0] === 200 && (await W("/api/app/event", { e: "upsell_clicked", placement: "U1", product: "night" }).then(J))[0] === 200);
+check("…and nothing else is", (await W("/api/app/event", { e: "whatever" }).then(J))[0] === 400);
+const [ss, sj] = await J(await W("/api/admin/app-stats?days=3", null, { Authorization: "Bearer adm" }));
+const today = sj.days && sj.days[sj.days.length - 1].counts;
+check("the admin sees today's counts", ss === 200 && today["round_started.free.6"] === 1 && today["round_started.night.6"] === 1 && today["ad_shown.P2"] === 1 && today["upsell_clicked.U1.night"] === 1 && today["room_created.free"] >= 1 && today["night_pass_activated"] >= 1, today);
+const wk = sj.conversion && sj.conversion[sj.conversion.length - 1];
+check("…and the week's host conversion: paid games of six or more, of all that got going", wk && wk.games6 === 2 && wk.paid6 === 1 && wk.rate === 50, sj.conversion);
+check("…a game is counted once, however often it's polled, and practice games not at all", today["round_started.free.6"] === 1 && today["practice_created.free"] >= 1);
+check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.status === 401 || (await W("/api/admin/app-stats")).status === 403);
 
 console.log(ok ? "\nall passed" : "\nFAILED");
 process.exit(ok ? 0 : 1);
