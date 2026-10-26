@@ -57,8 +57,8 @@ const [, fcr] = await create(fj.room, "Ann");
 check("…its host sets it up", fcr.tok, fcr);
 const [, fpoll] = await poll(fj.room, fcr.tok);
 check("…and every poll says it's free: ads, the base Trials", fpoll.room.tier && fpoll.room.tier.tier === "free" && fpoll.room.tier.adFree === false && fpoll.room.tier.content === "base", fpoll.room);
-const many = []; for (let i = 0; i < 11; i++) many.push((await games({ app: true }, "198.51.100.7"))[0]);
-check("at most ten free games a day from one address", many.slice(0, 10).every((x) => x === 200) && many[10] === 429, many);
+const many = []; for (let i = 0; i < 21; i++) many.push((await games({ app: true }, "198.51.100.7"))[0]);
+check("at most twenty free games a day from one address", many.slice(0, 20).every((x) => x === 200) && many[20] === 429, many);
 
 // --- the master passcode, for testing the app's tiers
 const [ms, mj] = await games({ pass: "MASTERTEST", app: true, tier: "free" });
@@ -125,8 +125,8 @@ check("the app's practice game: a free game, marked practice", ps === 200 && pj.
 const [, pc] = await create(pj.room, "Robin");
 check("…set up with nine bots and the person playing", pc.view && pc.view.players.length === 10 && pc.view.practice === true && pc.view.locked.length >= 7, pc.view && { n: pc.view.players.length, practice: pc.view.practice });
 await playRound(pj.room); await poll(pj.room, pc.tok);
-const prac = []; for (let i = 0; i < 5; i++) prac.push((await games({ app: true, practice: true }, "198.51.100.30"))[0]);
-check("at most five practice games a day from one address", prac.slice(0, 4).every((x) => x === 200) && prac[4] === 429, prac);
+const prac = []; for (let i = 0; i < 20; i++) prac.push((await games({ app: true, practice: true }, "198.51.100.30"))[0]);
+check("at most twenty practice games a day from one address", prac.slice(0, 19).every((x) => x === 200) && prac[19] === 429, prac);
 check("…counted apart from free games", (await games({ app: true }, "198.51.100.30"))[0] === 200);
 
 // --- the app's figures: counts a day, and the weekly host conversion

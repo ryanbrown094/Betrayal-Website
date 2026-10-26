@@ -732,11 +732,11 @@ export class Registry {
       }
       return json({ days: out, conversion: Object.values(weeks).map((w) => ({ ...w, rate: w.games6 ? Math.round((1000 * w.paid6) / w.games6) / 10 : null })) });
     }
-    // the app's free games (tiers.js): no code, so at most ten a day from one address; and its practice games (one
-    // person against the bots), at most five
+    // the app's free games (tiers.js) and its practice games (one person against the bots): no code, so at most twenty
+    // of each a day from one address (high enough for people behind one address, such as Apple's reviewers)
     if (url.pathname === "/free") {
       const practice = b.practice === true, key = (practice ? "p:" : "") + ip, t = Date.now(), rec = (this.frees.get(key) || []).filter((x) => t - x < 86400000);
-      if (rec.length >= (practice ? 5 : 10)) return json({ error: practice ? "That’s all the practice games for today. Try again tomorrow." : "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
+      if (rec.length >= 20) return json({ error: practice ? "That’s all the practice games for today. Try again tomorrow." : "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
       rec.push(t); this.frees.set(key, rec); if (this.frees.size > 5000) this.frees.clear();
       const expires = t + hours(env) * 3600000;
       return json({ room: await this.room(env, expires, null, "free", practice), expires, tier: "free", ...(practice ? { practice: true } : {}) });
