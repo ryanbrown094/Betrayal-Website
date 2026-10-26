@@ -54,7 +54,7 @@ async function alertMail(env, subject, body, replyTo) {
 }
 // Every save of a room's game is recorded (compressed) so a game can be replayed screen by screen from /admin; up to this
 // many a room. Players' browsers also send a trail of what they tapped and any errors (EVMAX batches a room).
-const RECMAX = 20000, EVMAX = 2000;
+const RECMAX = 20000, EVMAX = 6000; // a room's batches of device logs: the app's phones and TVs log every game, a dozen at a time
 
 // ---------------------------------------------------------------------------------------------------------------
 // One party's game. Writes need the host PIN (the first PUT sets it). Reads without the PIN get the redacted TV view.
@@ -147,25 +147,26 @@ export class GameState {
       return new Response(await gunzip(gz), { headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
     }
     if (path === "/_admin/events") {
-      const rows = []; for (const [, v] of await this.storage.list({ prefix: "ev:" })) for (const e of v.list || []) rows.push({ ...e, device: v.device, host: v.host, build: v.build });
+      const rows = []; for (const [, v] of await this.storage.list({ prefix: "ev:" })) for (const e of v.list || []) rows.push({ ...e, device: v.device, host: v.host, build: v.build, ...(v.app ? { app: true, role: v.role } : {}) });
       return json({ events: rows });
     }
     const expired = Date.now() > meta.expires;
     const room = { code: meta.room, expires: meta.expires, expired, ...(meta.tier ? { tier: T.tierView(meta.tier, this.env) } : {}) };
-    // what a player's browser saw: taps, screens, sync trouble, errors. Anyone in the room may send (the TV has no PIN);
-    // each batch is small and a room keeps EVMAX batches at most.
+    // what a player's browser or phone saw: taps, screens, sync trouble, errors (the app adds ads, offers, purchases and
+    // crashes, and says it's the app and whether it's the host's phone, a player's or a TV). Anyone in the room may send
+    // (the TV has no PIN); each batch is small and a room keeps EVMAX batches at most.
     if (path === "/api/events" && req.method === "POST") {
       const raw = await req.text(); if (raw.length > 32768) return text("Too large", 413);
       let b; try { b = JSON.parse(raw); } catch { return text("Bad JSON", 400); }
       const n = ((await this.storage.get("evN")) || 0) + 1; if (n > EVMAX) return json({ ok: true, full: true });
       const list = (Array.isArray(b.events) ? b.events : []).slice(0, 300).map((e) => ({ t: +e.t || Date.now(), k: clip(e.k, 12), m: clip(e.m, 400), ...(e.stack ? { stack: clip(e.stack, 1500) } : {}), ...(e.src ? { src: clip(e.src, 200) } : {}) }));
-      const who = { device: clip(b.device, 16), host: !!b.host, build: clip(b.build, 20), ua: clip(req.headers.get("User-Agent"), 200) };
+      const who = { device: clip(b.device, 16), host: !!b.host, build: clip(b.build, 20), ua: clip(req.headers.get("User-Agent"), 200), ...(b.app ? { app: true, role: clip(b.role, 8) } : {}) };
       await this.storage.put({ evN: n, ["ev:" + pad(n)]: { at: Date.now(), ...who, list } });
-      const errs = list.filter((x) => x.k === "error").slice(0, 10), hr = Math.floor(Date.now() / 3600000);
+      const errs = list.filter((x) => x.k === "error" || x.k === "crash").slice(0, 10), hr = Math.floor(Date.now() / 3600000);
       if (errs.length) { // to the master log at most 30 an hour a room, so nobody with a room code can flood it
         const c = (await this.storage.get("errc")) || {}, used = c.h === hr ? c.n : 0, send = errs.slice(0, Math.max(0, 30 - used));
         if (send.length) await this.storage.put("errc", { h: hr, n: used + send.length });
-        for (const e of send) logErr(this.env, { src: "browser", room: meta.room, ...who, msg: e.m, stack: e.stack, where: e.src, at: e.t });
+        for (const e of send) logErr(this.env, { src: who.app ? (e.k === "crash" ? "app crash" : "app") : "browser", room: meta.room, ...who, msg: e.m, stack: e.stack, where: e.src, at: e.t });
       }
       return json({ ok: true });
     }
