@@ -284,6 +284,11 @@ export class GameState {
     if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });
     // a rules bug must never lock the room: log it and carry on answering
     try { if (M.tick(s, now, ctx)) await save(); } catch (e) { logErr(this.env, { src: "server", room: meta.room, where: "modern tick", msg: e.message, stack: clip(e.stack, 1500) }); }
+    // an app game that got going (tiers.js): counted once, with its tier and size, for the app's conversion figure
+    if (meta.tier && !meta.counted && s.round >= 1) {
+      meta.counted = true; await this.storage.put("meta", meta);
+      await registry(this.env).fetch("https://registry/stat", { method: "POST", body: JSON.stringify({ e: "round_started." + meta.tier + (s.players.filter((p) => !p.left).length >= 6 ? ".6" : "") }) }).catch(() => null);
+    }
 
     if (path === "/api/m/join" && req.method === "POST") {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
@@ -341,7 +346,7 @@ export class GameState {
 // Booking codes (passes): minted by the admin or by a paid Stripe checkout. A one-party code opens one room; a
 // Regular's (subscription) code opens a new room whenever they like, one at a time.
 export class Registry {
-  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.frees = new Map(); this.writes = 0; this.locks = new Map(); }
+  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.frees = new Map(); this.evts = new Map(); this.writes = 0; this.locks = new Map(); }
 
   // A paid booking's code goes to the buyer by email, once. `mailing` holds the send while it's in flight (the webhook
   // and the thank-you page can arrive together); a failed send is logged and tried again on the next claim. `to`
@@ -406,7 +411,15 @@ export class Registry {
     let code; do code = newRoom(); while (await this.storage.get("room:" + code));
     await this.storage.put("room:" + code, { pass, expires, created: Date.now(), ...(tier ? { tier } : {}) });
     await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass, ...(tier ? { tier } : {}) }) });
+    if (tier) await this.stat("room_created." + tier);
     return code;
+  }
+
+  // The app's analytics (tiers.js): a count a day of each event, nothing about who. Events from the server itself
+  // (rooms opened, games that got going, passes used and returned, purchases) and from the app (ads and offers).
+  async stat(e, n = 1) {
+    const k = "stat:" + new Date(Date.now()).toISOString().slice(0, 10), v = (await this.storage.get(k)) || {};
+    v[e] = (v[e] || 0) + n; await this.storage.put(k, v);
   }
 
   // A Night Pass's 24 hours start the first time it's used. When they're over, the night comes back if no game in it
@@ -416,8 +429,9 @@ export class Registry {
     if (v.activeUntil && now >= v.activeUntil) {
       if (await this.played(env, v.rooms)) return { res: json({ error: "That ad-free night has been used.", kind: "night" }, 410) };
       v = { ...v, activeUntil: null, rooms: [], room: null, expires: null, returned: (v.returned || 0) + 1 };
+      await this.stat("night_pass_refunded");
     }
-    if (!v.activeUntil) v = { ...v, activeUntil: now + T.NIGHT_MS, activated: now, rooms: v.rooms || [] };
+    if (!v.activeUntil) { v = { ...v, activeUntil: now + T.NIGHT_MS, activated: now, rooms: v.rooms || [] }; await this.stat("night_pass_activated"); }
     await this.storage.put(k, v);
     return { v };
   }
@@ -665,6 +679,7 @@ export class Registry {
           apple: { txn: String(t.transactionId), orig: String(t.originalTransactionId), env: t.environment || null, storefront: t.storefront || null, price },
           ...(sub ? { subActive: st ? st.active : true, subStatus: st ? st.status : "active", subExpires: (st && st.expires) || t.expiresDate || null, subChecked: Date.now() } : {}) });
         await this.storage.put(ak, p);
+        await this.stat("purchase_completed." + (sub ? "host" : "night"));
         await this.notify("Sale (App Store): " + (sub ? "a Host Pass" : "a Night Pass") + (price ? ", " + price : ""), ["Code: " + shownPass(p),
           t.environment && t.environment !== "Production" ? "A test purchase (" + t.environment + "): no money changed hands." : null]);
         return json({ pass: shownPass(p), sub });
@@ -685,11 +700,35 @@ export class Registry {
       if (!v || !st) return json({ ok: true, pass: null });
       await this.storage.put(k, { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() });
       if (v.subActive && !st.active) await this.notify("A Host Pass (App Store) lapsed: " + shownPass(p), ["Apple says: " + st.status]);
+      if (v.subStatus !== st.status) await this.stat("host_pass_status." + String(st.status).replace(/\W+/g, "_"));
       return json({ ok: true, pass: shownPass(p), active: st.active });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
       const expires = Date.now() + hours(env) * 3600000, tier = b.tier in T.RANK && b.tier !== "full" ? b.tier : null; // the app's tiers, for testing them
       return json({ room: await this.room(env, expires, b.master ? "MASTER" : null, tier), expires, ...(b.master ? { test: true } : {}), ...(tier ? { tier } : {}) });
+    }
+    if (url.pathname === "/stat") { await this.stat(String(b.e || "").slice(0, 60)); return json({ ok: true }); }
+    // the app's own events (ads and offers): a few names only, at most three hundred an hour from one address
+    if (url.pathname === "/event") {
+      const t = Date.now(), rec = (this.evts.get(ip) || []).filter((x) => t - x < 3600000);
+      if (rec.length >= 300) return json({ error: "Too many" }, 429);
+      rec.push(t); this.evts.set(ip, rec); if (this.evts.size > 5000) this.evts.clear();
+      const name = APP_EVENTS.includes(b.e) ? b.e : null, tag = (x) => String(x || "").replace(/[^A-Za-z0-9_]/g, "").slice(0, 20);
+      if (!name) return json({ error: "Unknown event" }, 400);
+      await this.stat([name, tag(b.placement), tag(b.product || b.reason)].filter(Boolean).join("."));
+      return json({ ok: true });
+    }
+    // the admin's view of the app's figures: each day's counts, and each week's host conversion (games at a pass's tier
+    // that reached their first round with six or more, of all the app's games that did)
+    if (url.pathname === "/app-stats") {
+      const days = Math.max(1, Math.min(120, +b.days || 28)), out = [], weeks = {};
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10), counts = (await this.storage.get("stat:" + d)) || {};
+        out.push({ day: d, counts });
+        const w = weekOf(d), wk = (weeks[w] = weeks[w] || { week: w, games6: 0, paid6: 0 });
+        for (const t of ["free", "night", "host"]) { const n = counts["round_started." + t + ".6"] || 0; wk.games6 += n; if (t !== "free") wk.paid6 += n; }
+      }
+      return json({ days: out, conversion: Object.values(weeks).map((w) => ({ ...w, rate: w.games6 ? Math.round((1000 * w.paid6) / w.games6) / 10 : null })) });
     }
     // the app's free games (tiers.js): no code, so at most ten a day from one address
     if (url.pathname === "/free") {
@@ -788,6 +827,10 @@ export class Registry {
     return text("Not found", 404);
   }
 }
+
+// the app's events (the Registry's /event), and the Monday that starts a day's week, for the weekly figure
+const APP_EVENTS = ["ad_requested", "ad_shown", "ad_failed", "upsell_shown", "upsell_clicked", "purchase_started"];
+const weekOf = (day) => { const d = new Date(day + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
 
 // ---------------------------------------------------------------------------------------------------------------
 const registry = (env) => env.REGISTRY.get(env.REGISTRY.idFromName("registry"));
@@ -999,6 +1042,11 @@ async function route(req, env) {
       if (env.MASTER_PASS && same(up(b.pass), up(env.MASTER_PASS))) return call(env, "/open", { master: true, ...(app ? { tier: b.tier } : {}) });
       return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass, fresh: b.fresh === true, ...(app ? { app } : {}) }) });
     }
+    // the app's events (ads and offers), counted by day with nothing about who sent them
+    if (p === "/api/app/event" && req.method === "POST") {
+      const b = await req.json().catch(() => ({}));
+      return registry(env).fetch("https://registry/event", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify(b) });
+    }
     // the app's list of codes: what each can do now (tiers.js)
     if (p === "/api/app/codes" && req.method === "POST") {
       const b = await req.json().catch(() => ({}));
@@ -1164,6 +1212,7 @@ async function route(req, env) {
       if (p === "/api/admin/room" && req.method === "POST") return call(env, "/open", { master: true });
       if (p === "/api/admin/passes" && req.method === "POST") return call(env, "/mint", await req.json().catch(() => ({})));
       if (p === "/api/admin/passes" && req.method === "GET") return registry(env).fetch("https://registry/list");
+      if (p === "/api/admin/app-stats" && req.method === "GET") return call(env, "/app-stats", { days: +url.searchParams.get("days") || 28 });
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
       if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
