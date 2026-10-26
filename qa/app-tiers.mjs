@@ -149,5 +149,17 @@ check("…and the week's host conversion: paid games of six or more, of all that
 check("…a game is counted once, however often it's polled, and practice games not at all", today["round_started.free.6"] === 1 && today["practice_created.free"] >= 1);
 check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.status === 401 || (await W("/api/admin/app-stats")).status === 403);
 
+// --- every built page has an address (html_handling is "none", so the Worker's list of pages must name each one)
+{
+  const { readdirSync } = await import("node:fs");
+  const files = new Set(readdirSync(new URL("../worker/public/", import.meta.url)));
+  const ASSETS = { fetch: async (r) => { const f = new URL(r.url).pathname.slice(1); return new Response(f, { status: files.has(f) ? 200 : 404 }); } };
+  const get = async (path) => { const r = await worker.fetch(new Request("https://thebetrayal.co.uk" + path), { ...env, ASSETS }); return [r.status, await r.text()]; };
+  const pages = readdirSync(new URL("../site/pages/", import.meta.url)).filter((f) => f.endsWith(".html")).map((f) => f.slice(0, -5)).filter((p) => p !== "404");
+  const missing = []; for (const p of pages) { const [st, body] = await get("/" + p); if (st !== 200 || body !== p + ".html") missing.push(p); }
+  check("every page in site/pages is served at its address (the app's privacy notice included)", !missing.length && pages.includes("app-privacy"), missing);
+  check("app-ads.txt is served as it is", (await get("/app-ads.txt"))[0] === 200);
+}
+
 console.log(ok ? "\nall passed" : "\nFAILED");
 process.exit(ok ? 0 : 1);
