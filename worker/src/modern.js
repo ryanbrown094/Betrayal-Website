@@ -46,8 +46,10 @@ export const TRIALS = {
 // question bank; everything else (the website's games, and the app's with a pass) plays them all.
 export const BASE_TRIALS = ["likely", "quiz", "estimate", "hilo", "charades", "countdown", "oneleg", "truths"];
 const based = (s) => s.opts.content === "base";
+// a practice game in the app (one person and the bots) leaves out the Trials that need people in the room
+export const SOLO_OFF = ["charades", "hum", "draw", "truths", "oneleg", "statue"];
 const reach = (s, bank) => (based(s) ? Math.ceil(bank.length / 2) : bank.length);
-export const trialKeys = (s) => Object.keys(TRIALS).filter((k) => (!TRIALS[k].ghosts || ghosts(s).length) && (!based(s) || BASE_TRIALS.includes(k)));
+export const trialKeys = (s) => Object.keys(TRIALS).filter((k) => (!TRIALS[k].ghosts || ghosts(s).length) && (!based(s) || BASE_TRIALS.includes(k)) && (!s.practice || !SOLO_OFF.includes(k)));
 // what the Forsworn may say to each other at night: set phrases only, so nothing typed can leak
 export const WHISPERS = ["Agreed", "Not that one", "I’m under suspicion", "Vote with me tomorrow", "Stay quiet tomorrow", "Someone’s onto us"];
 const WORDS = 140; // the most a last word may run to
@@ -59,7 +61,8 @@ const ghosts = (s) => s.players.filter((p) => !p.alive && !p.left);
 const P = (s, id) => s.players.find((p) => p.id === id);
 const forsworn = (s) => alive(s).filter((p) => p.role === "f");
 // a test game (a master-code room, with bots): every countdown is at most ten seconds
-const T = (s, ms) => (s.test ? Math.min(ms, 10000) : ms);
+// a test game's clocks are ten seconds at most; a practice game's (one person and the bots) thirty
+const T = (s, ms) => (s.test ? Math.min(ms, 10000) : s.practice ? Math.min(ms, 30000) : ms);
 const say = (s, line, now) => { s.log = [{ t: now, m: clip(line, 300) }, ...(s.log || [])].slice(0, 300); };
 // the log is the admin's record of the evening (never sent to a phone), so it names who decided what
 const names = (s, ids) => ids.map((id) => (P(s, id) || {}).name).filter(Boolean).join(", ");
@@ -119,6 +122,28 @@ function botsMove(s, now, rnd) {
   }
   if (s.phase === "trust" && !s.trust.result) for (const p of A.filter(mine)) if (!s.trust.votes[p.id]) { s.trust.votes[p.id] = rnd() < 0.75 ? "trust" : "doubt"; ch = true; }
   if (s.phase === "honour") for (const p of A.filter((q) => mine(q) && q.role === "f")) if (!s.honour.choices[p.id]) { s.honour.choices[p.id] = rnd() < 0.5 ? "honour" : "betray"; ch = true; }
+  return ch;
+}
+
+// A practice game's bots also play the Trials: each answers an open question a few seconds in (about four, at a poll a
+// second), right about half the time (a Forsworn bot less often), so the person playing has a game to win.
+function botsAnswer(s, now, rnd) {
+  const it = s.trial && s.trial.item; if (!it || it.stage !== "open" || now - (it.from || it.opened || now) < 1500) return false;
+  const A = alive(s), right = (p) => rnd() < (p.role === "f" ? 0.3 : 0.55);
+  let ch = false;
+  for (const p of A.filter((q) => q.bot && !(q.id in it.inputs))) {
+    if (rnd() > 0.25) continue;
+    let v = null;
+    if (it.k === "text") v = right(p) ? it.a : "no idea";
+    else if (it.k === "number") v = String(Math.round(it.a * (right(p) ? 0.85 + rnd() * 0.3 : 0.4 + rnd() * 1.2)));
+    else if (it.k === "hilo") v = right(p) === it.a > it.ref ? "higher" : "lower";
+    else if (it.k === "vote") v = pick(A.filter((q) => q.id !== p.id), rnd).id;
+    else if (it.k === "word") v = shuffle([...[].concat(it.letters).join("")], rnd).slice(0, 3 + Math.floor(rnd() * 4)).join("");
+    else if (it.k === "recall") v = shuffle(it.words || [], rnd).slice(0, 2 + Math.floor(rnd() * 7)).join(", ");
+    else if (it.k === "cell") v = String(right(p) && it.changed ? it.changed[0] : Math.floor(rnd() * 12));
+    else if (it.k === "rps") { if (!(it.pairs || []).flat().includes(p.id)) continue; v = pick(["rock", "paper", "scissors"], rnd); }
+    if (v !== null) { it.inputs[p.id] = { v, t: now }; ch = true; }
+  }
   return ch;
 }
 
@@ -448,7 +473,8 @@ function afterLeaving(s, now, rnd, id) {
 export function tick(s, now, ctx) {
   if (s.paused) return false;
   const rnd = ctx.rnd; let ch = false; const mark = () => { ch = true; };
-  if (s.test && botsMove(s, now, rnd)) mark();
+  if ((s.test || s.practice) && botsMove(s, now, rnd)) mark();
+  if (s.practice && botsAnswer(s, now, rnd)) mark();
   if (s.test && s.phase === "trial" && s.trial && s.trial.key !== "tempt" && s.trial.stage === "intro" && now >= s.trial.introEnd) {
     // a test game doesn't play the Trials: everyone gets a random score
     const t = s.trial; for (const p of alive(s)) t.scores[p.id] = Math.floor(rnd() * 6); t.i = 5; t.wrongF = Math.floor(rnd() * 3);
@@ -505,7 +531,7 @@ export function act(s, pid, a, now, ctx) {
   switch (a && a.a) {
     // --- the lobby and the oath
     case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || PRIZE0; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
-    case "bots": { if (!dir || !s.test || s.phase !== "lobby") return need(false); addBots(s, Math.max(s.players.length + 1, +v || 8), now, rnd); return done(); }
+    case "bots": { if (!dir || !(s.test || s.practice) || s.phase !== "lobby") return need(false); addBots(s, Math.max(s.players.length + 1, +v || 8), now, rnd); return done(); }
     case "start": {
       if (!dir || s.phase !== "lobby") return need(false);
       if (s.players.length < MINP) return { error: "The game needs at least " + MINP + " players. " + s.players.length + " have joined." };
@@ -573,7 +599,7 @@ export function act(s, pid, a, now, ctx) {
     }
     case "trust": { if (s.phase !== "trust" || !me.alive || s.trust.result || !["trust", "doubt"].includes(v)) return need(false); s.trust.votes[pid] = v; return done(); }
     case "honour": { if (s.phase !== "honour" || !me.alive || me.role !== "f" || !["honour", "betray"].includes(v)) return need(false); s.honour.choices[pid] = v; return done(); }
-    case "again": { if (!dir || s.phase !== "end") return need(false); const keep = s.players.filter((p) => !p.left).map((p) => ({ ...p, role: null, alive: true, optIn: null, acked: false, shield: null, revealed: false, exiled: null, died: null, dying: false })); const g = newGame(now, rnd, s.opts); if (s.test) g.test = true; g.plan = s.plan; g.players = keep; g.director = s.director; g.ver = s.ver + 1; Object.keys(s).forEach((k) => delete s[k]); Object.assign(s, g); return null; }
+    case "again": { if (!dir || s.phase !== "end") return need(false); const keep = s.players.filter((p) => !p.left).map((p) => ({ ...p, role: null, alive: true, optIn: null, acked: false, shield: null, revealed: false, exiled: null, died: null, dying: false })); const g = newGame(now, rnd, s.opts); if (s.test) g.test = true; if (s.practice) g.practice = true; g.plan = s.plan; g.players = keep; g.director = s.director; g.ver = s.ver + 1; Object.keys(s).forEach((k) => delete s[k]); Object.assign(s, g); return null; }
   }
   return need(false);
 }
@@ -620,7 +646,7 @@ export function viewFor(s, pid, now) {
   const me = pid ? P(s, pid) : null, over = s.phase === "end";
   const role = (p) => (over || p.revealed ? p.role : null);
   const o = {
-    mode: "modern", test: !!s.test, ver: s.ver, now, phase: s.phase, round: s.round, final: s.final, pot: s.pot, potCap: s.opts.potCap, title: s.opts.title,
+    mode: "modern", test: !!s.test, ...(s.practice ? { practice: true } : {}), ver: s.ver, now, phase: s.phase, round: s.round, final: s.final, pot: s.pot, potCap: s.opts.potCap, title: s.opts.title,
     tiers: (s.opts.prizes || []).length > 0, director: s.director ? { id: s.director, name: (P(s, s.director) || {}).name } : null,
     players: s.players.filter((p) => !p.left).map((p) => ({ id: p.id, name: p.name, color: p.color, bot: p.bot || undefined, alive: p.alive || !!p.dying, role: role(p), shield: p.shield && !p.shield.secret && p.shield.round === s.round ? true : false, optedIn: s.phase === "oath" ? !!p.optIn : undefined, acked: s.phase === "roles" ? !!p.acked : undefined })),
     paused: s.paused ? s.paused.at : null, brk: s.brk, done: { tempt: !!s.done.tempt, starter: !!s.done.starter, main: !!s.done.main, dessert: !!s.done.dessert }, roundTrials: s.roundTrials || 0,

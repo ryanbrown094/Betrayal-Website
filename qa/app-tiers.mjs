@@ -119,6 +119,16 @@ check("a Night Pass game plays everything from the start", npoll.view && !npoll.
 check("…and the pass's 24 hours have started, on this game", (await games({ pass: night2, app: true }))[1].room === f2.room);
 check("using a pass again on an ad-free game is refused", (await upgrade(f2.room, f2c.tok, host))[0] === 409);
 
+// --- practice games: one person and the bots
+const [ps, pj] = await games({ app: true, practice: true }, "198.51.100.30");
+check("the app's practice game: a free game, marked practice", ps === 200 && pj.tier === "free" && pj.practice === true, [ps, pj]);
+const [, pc] = await create(pj.room, "Robin");
+check("…set up with nine bots and the person playing", pc.view && pc.view.players.length === 10 && pc.view.practice === true && pc.view.locked.length >= 7, pc.view && { n: pc.view.players.length, practice: pc.view.practice });
+await playRound(pj.room); await poll(pj.room, pc.tok);
+const prac = []; for (let i = 0; i < 5; i++) prac.push((await games({ app: true, practice: true }, "198.51.100.30"))[0]);
+check("at most five practice games a day from one address", prac.slice(0, 4).every((x) => x === 200) && prac[4] === 429, prac);
+check("…counted apart from free games", (await games({ app: true }, "198.51.100.30"))[0] === 200);
+
 // --- the app's figures: counts a day, and the weekly host conversion
 const six = async (pass, ip) => {
   const [, g] = await games({ app: true, ...(pass ? { pass } : {}) }, ip);
@@ -136,7 +146,7 @@ const today = sj.days && sj.days[sj.days.length - 1].counts;
 check("the admin sees today's counts", ss === 200 && today["round_started.free.6"] === 1 && today["round_started.night.6"] === 1 && today["ad_shown.P2"] === 1 && today["upsell_clicked.U1.night"] === 1 && today["room_created.free"] >= 1 && today["night_pass_activated"] >= 1, today);
 const wk = sj.conversion && sj.conversion[sj.conversion.length - 1];
 check("…and the week's host conversion: paid games of six or more, of all that got going", wk && wk.games6 === 2 && wk.paid6 === 1 && wk.rate === 50, sj.conversion);
-check("…a game is counted once, however often it's polled", today["round_started.free.6"] === 1);
+check("…a game is counted once, however often it's polled, and practice games not at all", today["round_started.free.6"] === 1 && today["practice_created.free"] >= 1);
 check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.status === 401 || (await W("/api/admin/app-stats")).status === 403);
 
 console.log(ok ? "\nall passed" : "\nFAILED");

@@ -106,7 +106,7 @@ export class GameState {
     if (path === "/_init" && req.method === "POST") {
       const b = await req.json();
       if (!(await this.storage.get("meta"))) {
-        await this.storage.put("meta", { room: b.room, expires: b.expires, pass: b.pass || null, created: Date.now(), ...(b.tier ? { tier: b.tier } : {}) });
+        await this.storage.put("meta", { room: b.room, expires: b.expires, pass: b.pass || null, created: Date.now(), ...(b.tier ? { tier: b.tier } : {}), ...(b.practice ? { practice: true } : {}) });
         await this.storage.setAlarm(b.expires + keepMs(this.env));
       }
       return json({ ok: true });
@@ -274,18 +274,20 @@ export class GameState {
           if (meta.pass === "MASTER" && Array.isArray(body.plan)) s.plan = body.plan.filter((k) => M.TRIALS[k]).slice(0, 20);
           // and play a test game against bots, with every clock at ten seconds
           if (meta.pass === "MASTER" && body.test) s.test = true;
+          // the app's practice game: one person and the bots, who play everything, Trials included (modern.js botsAnswer)
+          if (meta.practice) s.practice = true;
           await save();
         }
         if (s.director) return json({ error: "This Table’s Modern game has already been set up. Join it with the room code.", mode: "modern" }, 409);
         const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
-        if (s.test) M.addBots(s, Math.max(M.MINP, Math.min(M.MAXP, +body.bots || 8)), now, Math.random);
+        if (s.test || s.practice) M.addBots(s, Math.max(M.MINP, Math.min(s.practice ? 16 : M.MAXP, +body.bots || (s.practice ? 10 : 8))), now, Math.random);
         s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     });
     if (!s || (!s.director && path !== "/api/m")) return json({ none: true, classic: !!(await this.storage.get("state")), room });
     // a rules bug must never lock the room: log it and carry on answering
     try { if (M.tick(s, now, ctx)) await save(); } catch (e) { logErr(this.env, { src: "server", room: meta.room, where: "modern tick", msg: e.message, stack: clip(e.stack, 1500) }); }
     // an app game that got going (tiers.js): counted once, with its tier and size, for the app's conversion figure
-    if (meta.tier && !meta.counted && s.round >= 1) {
+    if (meta.tier && !meta.practice && !meta.counted && s.round >= 1) {
       meta.counted = true; await this.storage.put("meta", meta);
       await registry(this.env).fetch("https://registry/stat", { method: "POST", body: JSON.stringify({ e: "round_started." + meta.tier + (s.players.filter((p) => !p.left).length >= 6 ? ".6" : "") }) }).catch(() => null);
     }
@@ -407,11 +409,11 @@ export class Registry {
     return out;
   }
 
-  async room(env, expires, pass, tier) {
+  async room(env, expires, pass, tier, practice) {
     let code; do code = newRoom(); while (await this.storage.get("room:" + code));
-    await this.storage.put("room:" + code, { pass, expires, created: Date.now(), ...(tier ? { tier } : {}) });
-    await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass, ...(tier ? { tier } : {}) }) });
-    if (tier) await this.stat("room_created." + tier);
+    await this.storage.put("room:" + code, { pass, expires, created: Date.now(), ...(tier ? { tier } : {}), ...(practice ? { practice: true } : {}) });
+    await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass, ...(tier ? { tier } : {}), ...(practice ? { practice: true } : {}) }) });
+    if (tier) await this.stat((practice ? "practice_created." : "room_created.") + tier);
     return code;
   }
 
@@ -730,13 +732,14 @@ export class Registry {
       }
       return json({ days: out, conversion: Object.values(weeks).map((w) => ({ ...w, rate: w.games6 ? Math.round((1000 * w.paid6) / w.games6) / 10 : null })) });
     }
-    // the app's free games (tiers.js): no code, so at most ten a day from one address
+    // the app's free games (tiers.js): no code, so at most ten a day from one address; and its practice games (one
+    // person against the bots), at most five
     if (url.pathname === "/free") {
-      const t = Date.now(), rec = (this.frees.get(ip) || []).filter((x) => t - x < 86400000);
-      if (rec.length >= 10) return json({ error: "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
-      rec.push(t); this.frees.set(ip, rec); if (this.frees.size > 5000) this.frees.clear();
+      const practice = b.practice === true, key = (practice ? "p:" : "") + ip, t = Date.now(), rec = (this.frees.get(key) || []).filter((x) => t - x < 86400000);
+      if (rec.length >= (practice ? 5 : 10)) return json({ error: practice ? "That’s all the practice games for today. Try again tomorrow." : "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
+      rec.push(t); this.frees.set(key, rec); if (this.frees.size > 5000) this.frees.clear();
       const expires = t + hours(env) * 3600000;
-      return json({ room: await this.room(env, expires, null, "free"), expires, tier: "free" });
+      return json({ room: await this.room(env, expires, null, "free", practice), expires, tier: "free", ...(practice ? { practice: true } : {}) });
     }
     // the host of a free game in the app uses a pass on it (GameState's /api/m/upgrade): the game takes the pass's tier
     if (url.pathname === "/attach") {
@@ -1035,7 +1038,7 @@ async function route(req, env) {
     if (p === "/api/games" && req.method === "POST") {
       const b = await req.json().catch(() => ({})), app = b.app === true, ip = req.headers.get("CF-Connecting-IP") || "?";
       // the iPhone app (tiers.js): no code is a free game
-      if (app && !b.pass) return registry(env).fetch("https://registry/free", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: "{}" });
+      if (app && !b.pass) return registry(env).fetch("https://registry/free", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ practice: b.practice === true }) });
       if (env.OPEN_ACCESS === "1" && !b.pass) return call(env, "/open");
       // the master passcode (Worker secret MASTER_PASS) opens a fresh room every time, for testing; in the app, at any tier
       const up = (v) => String(v || "").trim().toUpperCase();
