@@ -257,8 +257,13 @@ export class GameState {
     if (me) me.seen = now; // (in memory: a phone still polling can't be taken over by a rejoin)
     if (+(req.headers.get("Content-Length") || 0) > 65536) return json({ error: "Too large" }, 413);
     const body = req.method === "POST" ? (await req.json().catch(() => null)) || {} : {};
-    // the host's phone always gets the requests to come back in, so none is lost between screens
-    const pending = () => (me && s && s.director === me.id && s.rejoin && s.rejoin.length ? { rejoin: s.rejoin.filter((x) => !x.tok).map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {});
+    // who may let a phone back in: the host, always; and while the host's own phone has been quiet for half a minute
+    // (dead, lost, left in another room), anyone still at the table may let the host back in, or the game would wait
+    // for ever on the one phone that could
+    const hostQuiet = () => { const d = s && s.players.find((p) => p.id === s.director); return !!d && !(d.seen && now - d.seen < 30000); };
+    const mayLetIn = (r) => !!me && !me.left && (s.director === me.id || (r.pid === s.director && r.pid !== me.id && hostQuiet()));
+    // so those phones always get the requests to come back in, and none is lost between screens
+    const pending = () => { const l = me && s && s.rejoin ? s.rejoin.filter((x) => !x.tok && mayLetIn(x)) : []; return l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}; };
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
 
@@ -310,6 +315,7 @@ export class GameState {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
       if (!me || s.director !== me.id) return json({ error: "Only the host can do that." }, 403);
       if (meta.tier !== "free") return json({ error: "This game is already ad-free." }, 409);
+      if (meta.practice) return json({ error: "A practice game can’t use a pass: keep it for a real night." }, 409);
       const r = await registry(this.env).fetch("https://registry/attach", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ pass: body.pass, room: meta.room, expires: meta.expires }) });
       const out = await r.json().catch(() => ({ error: "That didn’t work. Try again." }));
       if (!r.ok) return json(out, r.status);
@@ -322,8 +328,8 @@ export class GameState {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
       if (!me) return json({ error: "This phone isn’t in the game.", lost: true }, 403);
       if (body.a === "letin" || body.a === "keepout") {
-        if (s.director !== me.id) return json({ error: "Only the host can do that." }, 403);
         const r = (s.rejoin || []).find((x) => x.id === body.v); if (!r) return view();
+        if (!mayLetIn(r)) return json({ error: "Only the host can do that." }, 403);
         if (body.a === "letin") {
           const p = s.players.find((x) => x.id === r.pid);
           if (p.seen && now - p.seen < 20000) return json({ error: p.name + "’s phone is still connected, so it can’t be let in on another. Try again once it has gone quiet.", view: viewOf(s, me, now), ...pending() }, 409);
