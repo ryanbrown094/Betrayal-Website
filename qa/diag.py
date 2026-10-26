@@ -11,6 +11,10 @@ fails = []
 def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + (" — " + str(extra)[:300] if extra and not cond else ""))
     if not cond: fails.append(name)
+# a report is sent once the server answers (a snapshot, a write and an email), not after a set time
+def answered(pg):
+    try: pg.wait_for_function("() => /Your report is in|try again/.test((document.querySelector('#report') || {}).innerText || '')", timeout=15000)
+    except Exception: pass
 def api(path, body=None):
     req = urllib.request.Request(URL + path, data=json.dumps(body).encode() if body is not None else None, headers={"Authorization": "Bearer dev", "Content-Type": "application/json"}, method="POST" if body is not None else "GET")
     with urllib.request.urlopen(req) as r: return json.loads(r.read())
@@ -32,13 +36,13 @@ with sync_playwright() as p:
     check("Report a problem opens a form over the game", host.locator("#report textarea#rp-what").count() == 1)
     host.click("#report .rp-send"); host.wait_for_timeout(200)
     check("…it won't send empty", "Tell us" in host.inner_text("#rp-msg"))
-    host.fill("#rp-what", "The quiz brief looked wrong"); host.fill("#rp-mail", "host@example.com"); host.click("#report .rp-send"); host.wait_for_timeout(1500)
+    host.fill("#rp-what", "The quiz brief looked wrong"); host.fill("#rp-mail", "host@example.com"); host.click("#report .rp-send"); answered(host)
     ref = host.inner_text("#report")
     check("…and sends, with a reference", "Your report is in" in ref and "R-" in ref, ref)
     host.click("#report .rp-send"); host.wait_for_timeout(200)
     check("…then closes back to the game", host.locator("#report").count() == 0)
     # the TV has its own button
-    tv.click("#repbtn"); tv.wait_for_timeout(300); tv.fill("#rp-what", "Candles flicker oddly"); tv.click("#report .rp-send"); tv.wait_for_timeout(1500)
+    tv.click("#repbtn"); tv.wait_for_timeout(300); tv.fill("#rp-what", "Candles flicker oddly"); tv.click("#report .rp-send"); answered(tv)
     check("the TV can report too", "Your report is in" in tv.inner_text("#report"))
 
     reps = api("/api/admin/reports")["reports"]
