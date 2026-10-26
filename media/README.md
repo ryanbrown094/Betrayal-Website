@@ -2,7 +2,7 @@
 
 Everything you need to write about, sell or show The Betrayal.
 
-**Modern first.** The Betrayal is sold as a game everyone plays on their own phone (guests scan the QR code on the TV or go to thebetrayal.co.uk/join; the host plays too; no blindfolds, no chalkboards, no Keeper; the TV is optional). Classic, with one phone, a Keeper, blindfolds and chalk, is the secondary option. Lead with Modern in everything you make; the vocabulary rules are in `copy/glossary.md`.
+**Modern first.** The Betrayal is sold as a game everyone plays on their own phone (guests scan the QR code on the TV or go to thebetrayal.co.uk/join; the host plays too; no blindfolds, no chalkboards, no Keeper; the TV is optional). Classic, with one phone, a Keeper, blindfolds and chalk, is the secondary option: the longer, more immersive evening. Lead with Modern in everything you make; the vocabulary rules are in `copy/glossary.md`.
 
 | folder | what's in it |
 |---|---|

@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261023123710">
+<meta name="build" content="20261026150115">
 <title>Cookie notice · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="The cookies and storage The Betrayal uses, the advertising cookies it only uses if you say yes, and how to change your choice.">
@@ -50,10 +50,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 @font-face{font-family:'Grenze Gotisch';font-style:normal;font-weight:300 900;font-display:swap;src:url(/fonts/GrenzeGotisch-n300_900-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:italic;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-i400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'IM Fell DW Pica';font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/IMFellDWPica-n400-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
+/* IM Fell has only old-style figures, where a 1 reads as I and a 0 as o (£10 read £Io, a clock's 10s read IOS): every --book stack lists this face first, so its digits come from Alegreya Sans, lined up by font-variant-numeric: lining-nums */
+@font-face{font-family:"Book Figures";font-style:normal;font-weight:400;font-display:swap;src:url(/fonts/AlegreyaSans-n400-latin.woff2) format("woff2");unicode-range:U+0030-0039}
+:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "Book Figures", "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
 * { box-sizing: border-box }
 html { color-scheme: dark; -webkit-text-size-adjust: 100% }
-body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui) }
+body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui); font-variant-numeric: lining-nums }
 a { color: var(--rose); text-underline-offset: .18em } a:hover { color: #f4c9b7 }
 :focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; border-radius: 2px }
 .skip { position: absolute; left: 12px; top: -60px; z-index: 9; padding: 10px 14px; border-radius: 8px; background: var(--rose); color: #150b17; font-weight: 700 } .skip:focus { top: 12px }
@@ -115,15 +117,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="table-scroll"><table>
 <tr><th>Name</th><th>Type</th><th>What it does</th><th>How long</th></tr>
 <tr><td><code>cc_gate</code></td><td>Cookie</td><td>Remembers that you entered the preview password while the site is not yet public. It will be removed when we launch.</td><td>30 days</td></tr>
-<tr><td><code>candle-pin</code></td><td>Browser storage</td><td>Keeps the Keeper PIN on the Keeper’s phone, so the Keeper doesn’t have to type it for every tap.</td><td>Until the Keeper wipes the game or clears the browser</td></tr>
-<tr><td><code>candle-draft</code></td><td>Browser storage (this tab only)</td><td>Keeps the host’s game plan while it is being set up, so a reload doesn’t lose it.</td><td>Until the tab is closed or the game starts</td></tr>
-<tr><td><code>candle-played</code></td><td>Browser storage</td><td>Remembers that a Classic game has been played on this phone, so the next setup can suggest the twists.</td><td>Until cleared</td></tr>
-<tr><td><code>candle-device</code></td><td>Browser storage</td><td>A random identifier for this device, sent with problem reports and the game’s error log so we can tell which screen had the trouble. It contains nothing about you.</td><td>Until cleared</td></tr>
+<tr><td><code>bt-pin</code></td><td>Browser storage</td><td>Keeps the Keeper PIN on the Keeper’s phone, so the Keeper doesn’t have to type it for every tap.</td><td>Until the Keeper wipes the game or clears the browser</td></tr>
+<tr><td><code>bt-draft</code></td><td>Browser storage (this tab only)</td><td>Keeps the host’s game plan while it is being set up, so a reload doesn’t lose it.</td><td>Until the tab is closed or the game starts</td></tr>
+<tr><td><code>bt-played</code></td><td>Browser storage</td><td>Remembers that a Classic game has been played on this phone, so the next setup can suggest the twists.</td><td>Until cleared</td></tr>
+<tr><td><code>bt-device</code></td><td>Browser storage</td><td>A random identifier for this device, sent with problem reports and the game’s error log so we can tell which screen had the trouble. It contains nothing about you.</td><td>Until cleared</td></tr>
 <tr><td><code>bt-m-</code><i>code</i>, <code>bt-mreq-</code><i>code</i></td><td>Browser storage</td><td>Modern: keeps your place in a Table (a random token), so a reload doesn’t lose it, or a request to be let back in.</td><td>Until cleared</td></tr>
 <tr><td><code>bt-name</code>, <code>bt-pass-</code><i>code</i>, <code>bt-test-</code><i>code</i></td><td>Browser storage (this tab only)</td><td>Modern: carries your name, the booking code or a test-game choice from one page to the next while you join or set up.</td><td>Until the tab is closed</td></tr>
 <tr><td><code>bt-egg</code></td><td>Browser storage</td><td>Remembers that you found the broken seal, so the Book a Table page can apply its 10% off one party. Cleared once you’ve used it.</td><td>Until used or cleared</td></tr>
 <tr><td><code>bt-src</code></td><td>Browser storage (this tab only)</td><td>Notes how this visit reached us: the link’s campaign tags (such as <code>utm_source</code>), an advert’s click, or the site you came from. If you buy, it goes with your booking so we can see which links and adverts lead to sales. It holds nothing about you and nothing about other sites you’ve visited.</td><td>Until the tab is closed</td></tr>
-<tr><td><code>candle-v1</code>, <code>candle-settings</code></td><td>Browser storage</td><td>Only when the game is played offline without a Table: keep the game and the question-bank switches on that device.</td><td>Until cleared</td></tr>
+<tr><td><code>bt-v1</code>, <code>bt-settings</code></td><td>Browser storage</td><td>Only when the game is played offline without a Table: keep the game and the question-bank switches on that device.</td><td>Until cleared</td></tr>
 </table></div>
 
 <h2>Advertising cookies (only if you say yes)</h2>

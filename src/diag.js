@@ -4,7 +4,7 @@
 // a snapshot of the screen (the page's HTML, without its scripts) and the trail, and keeps the room for its replay.
 // /play.html#replay-tv and #replay-host show a recorded state instead of a live game: /admin drives them with replayShow().
 const REPLAY = /^#replay/.test(location.hash);
-const DEVICE = (() => { try { let d = localStorage.getItem("candle-device"); if (!d) { d = Math.random().toString(36).slice(2, 10); localStorage.setItem("candle-device", d) } return d } catch (e) { return "t" + Math.random().toString(36).slice(2, 9) } })();
+const DEVICE = (() => { try { let d = localStorage.getItem("bt-device"); if (!d) { d = Math.random().toString(36).slice(2, 10); localStorage.setItem("bt-device", d) } return d } catch (e) { return "t" + Math.random().toString(36).slice(2, 9) } })();
 const crumbs = [], evQ = []; let evT = null, lastView = null, reportBox = null;
 function crumb(k, m, extra) {
   if (REPLAY) return;

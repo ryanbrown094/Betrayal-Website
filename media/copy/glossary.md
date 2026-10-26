@@ -10,9 +10,9 @@ The words the game, the site and every piece of marketing use, how to write them
 
 **The party game of loyalty and lies.** This is the one descriptor line, everywhere: the press kit, the ads, the site and the brand guidelines. Where only a couple of words fit (an eyebrow above the name), write **a party game**. The Betrayal is a party game, not a dinner-party game: it suits a dinner, drinks and snacks, a birthday, a games night or an office do. Dinner is an option, never the point, so don’t call it “a dinner-party game” and don’t lead with food.
 
-## Dinner is optional
+## Dinner is for Classic
 
-Play it over dinner if you like: the game can serve dinner in courses between the rounds (a starter, the main course and dessert). It’s a switch the host turns on, and it’s **off by default**. In Modern it’s **Dinner in courses** in the lobby; in Classic it’s **Dinner** under Customise (three courses, one dinner break, or none, and none is pre-set). With it off, the host can still call a short break. Mention it as a choice (“if you’re eating together”), not as the shape of the evening.
+Modern is the product we lead with, and dinner isn't part of it: a Modern game takes an hour or two, so people play before or after they eat. Classic, the longer, more immersive evening, can serve dinner in courses between its rounds (a starter, the main course and dessert): **Dinner** under Customise, with three courses, one dinner break, or none, and none pre-set. In either version the host can call a short break. Mention dinner only for Classic, as a choice (“if you’re eating together”), never as the shape of the evening.
 
 ## The idea in one line
 
@@ -20,7 +20,7 @@ Everyone at the table swears an oath. A few of them are lying. They are the **Fo
 
 ## Two ways to play: Modern first
 
-Every Table can be played two ways, chosen when it’s opened. **Modern is the headline**: lead with it everywhere. Classic is the other way to play, for groups who’d rather put their phones away. It gets a line or a clearly marked section, never the lead.
+Every Table can be played two ways, chosen when it’s opened. **Modern is the headline**: lead with it everywhere. Classic is the sub-product: the longer, more immersive evening, for groups who fancy putting their phones away and settling in for about three hours. It gets a line or a clearly marked section, never the lead.
 
 - **Modern:** everyone plays on their own phone. Guests scan the QR code on the TV, or go to **thebetrayal.co.uk/join** and type the **Table code** and their name, like a pub-quiz app. The Oath is a question on every phone; roles, votes, the night and poisonings arrive in secret on each phone; every Trial is played there. The **host** plays like everyone else; their phone also moves the evening on. There’s no Keeper and nothing to buy, and the TV is optional.
 - **Classic:** a TV with a laptop, and one phone runs the game. **The Keeper** reads the script and doesn’t play (a friend can keep so the host can play); guests wear blindfolds at night and chalk their votes on small boards; the TV puts on the show.
@@ -92,9 +92,8 @@ What people choose is written in capitals: PURSE, SELF, TRUST, DOUBT.
 ## Length: say it honestly
 
 - **Best at 8 to 16 players.** The game takes 8 to 24.
-- **8 to 12 players:** about 3 to 3½ hours. Stopping for dinner adds half an hour (one break) to an hour (three courses).
-- **The Short game** (Classic): about 2 to 2½ hours for 8 to 10 players (one Trial a round, no Interval, no dinner break).
-- **Bigger tables run longer:** about 4¼ hours for 16, and 5 to 6 for 20 and up.
+- **Modern:** about an hour for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24. Dinner isn't part of Modern: play before or after you eat.
+- **Classic,** the longer, more immersive evening: about 3 to 3½ hours for 8 to 12 players; dinner in courses adds half an hour (one break) to an hour (three courses). Its Short game is about 2 to 2½ hours for 8 to 10 (one Trial a round, no Interval, no dinner break). Bigger tables run longer: about 4¼ hours for 16, and 5 to 6 for 20 and up.
 - State the capacity as a fact; never sell it as a benefit. No “up to 24 players, one very long night”.
 
 ## Marks and type

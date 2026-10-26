@@ -109,7 +109,7 @@ def post1(h=1350):
       <div style="height:{24 if q else 40}px"></div>{duo(shot('tv-reveal'), shot('phone-role'), W=800, tvw=680, phw=200, phh=390) if q else duo(shot('tv-reveal'), shot('phone-role'), tvw=800, phh=480)}
       <div class=body style="font-size:{25 if q else 29}px;margin-top:{22 if q else 40}px;max-width:900px">A party game where a few of your friends are secretly <b>Forsworn</b>, and the rest of the table has one evening to find them.</div>
       <div style="flex:1"></div>
-      <div class=facts style="font-size:{24 if q else 27}px">{''.join(f'<span>{x}</span>' for x in ('8 to 24 players', 'A phone each, no app', 'About 3 hours'))}</div>
+      <div class=facts style="font-size:{24 if q else 27}px">{''.join(f'<span>{x}</span>' for x in ('8 to 24 players', 'A phone each, no app', 'About an hour'))}</div>
       <div class=rule style="width:620px;margin:{18 if q else 26}px 0 {16 if q else 22}px"></div><div class=foot style="font-size:{25 if q else 28}px">{FOOT}</div></div>"""
 
 # ---- feed post 2: the carousel ----

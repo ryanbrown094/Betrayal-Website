@@ -29,10 +29,10 @@ Everything about the game and the brand, in one place, for building ads, social 
 
 - **Everyone plays on their own phone (Modern).** Guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and their name. Everyone plays, the host included; the host’s phone also moves the evening on.
 - **Best with 8 to 16 players**; the game takes 8 to 24.
-- **About 3 to 3½ hours** for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer (about 4¼ hours for 16, and 5 to 6 for 20 and up).
+- **About an hour** for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24. Classic, the longer way to play, takes about 3 to 3½ hours for 8 to 12.
 - **Book a Table:** £10, one party. **Become a Regular:** £20 a month, a new Table whenever you like, one at a time.
 - **You need** a phone each and a prize (chocolate coins, one for every 100 points in the Purse, unless the host sets their own). A TV is optional. No app, no accounts, no props.
-- **Setup:** open your Table, choose Modern, type your name, share the code, Start. The game plans its own Trials and Reckonings, and, if the host switches dinner in courses on, when each course is served.
+- **Setup:** open your Table, choose Modern, type your name, share the code, Start. The game plans its own Trials and Reckonings.
 - **Classic**, for groups who’d rather put their phones away: a TV with a laptop, the Keeper’s phone, and a blindfold and small chalkboard per guest. The Keeper doesn’t play (a friend can keep so the host can). Five questions to set up; a first game keeps the twists for the second night, and there’s a Short game of about 2 to 2½ hours for 8 to 10.
 
 Screenshots use invented names; the TV title and player names can be anything.

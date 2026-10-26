@@ -33,13 +33,13 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 | | |
 |---|---|
 | Players | 8 to 24, best with 8 to 16. In Modern everyone plays, including the host |
-| Length | about 3 to 3½ hours for 8 to 12 players; stopping for dinner adds half an hour to an hour. Bigger tables run longer: about 4¼ hours for 16, and 5 to 6 for 20 and up |
+| Length | about an hour for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24. Classic, the longer way to play, takes about 3 to 3½ hours for 8 to 12 |
 | You need | a phone each and a prize. A TV is optional (any laptop cast to it) |
 | Joining | scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the Table code and your name |
 | Format | web app; no download, no accounts |
 | Price | £10 a Table (one party) · £20 a month as a Regular (a new Table whenever you like, one at a time; cancel any time) |
 | A Table | one party of 8 to 24, open for 48 hours from the first use of its booking code |
-| Setup | open your Table, choose Modern, type your name, share the code, press Start. A handful of choices (public or secret Sanctuary, the prize, twists, dinner in courses); the game plans its own Trials and Reckonings |
+| Setup | open your Table, choose Modern, type your name, share the code, press Start. A handful of choices (public or secret Sanctuary, the prize, twists); the game plans its own Trials and Reckonings |
 | Trials | 15 party games played on phones (typed quizzes, votes, word games, rock-paper-scissors, charades, humming, drawing, bluffing, standing); about 3,700 questions and prompts, nothing repeated in a game |
 | Roles | the Forsworn, the Loyal and, once they’re out, Ghosts. Sanctuary every round, and twists the game explains when they happen |
 | Secrets | every role, vote, night choice and poisoning arrives on the player’s own phone. At night everyone taps, so nobody can tell who’s choosing |
@@ -55,7 +55,7 @@ Fifteen Trials, played on phones (quizzes, word games, charades where only the a
 - Nobody can tell who’s choosing: at night everyone taps their phone, and only the Forsworn’s choices count.
 - Fifteen Trials on your phone: type quiz answers, guess numbers, make words, play rock-paper-scissors, and act out charades with the word sent only to the actor.
 - The Purse decides the prize: the Loyal build it; the Forsworn, if they win, take what it fell short, so they sabotage quietly.
-- Dinner if you want it: play over dinner, drinks or snacks. Switch dinner in courses on and the game stops for a starter, the main course and dessert, each in its place between the rounds.
+- Quick to play: about an hour for 8 to 10 players, so it fits before or after dinner, or with drinks and snacks. For a longer, more immersive evening with dinner between the rounds, there’s Classic.
 - The TV is optional, and worth it: the QR code, the questions, the votes and the reveals, with music and a narrator if you want one.
 - The dead keep playing: Ghosts still call each Reckoning from beyond the table.
 - The host can pause: one tap stops every clock for the doorbell or a second helping, and anyone taken ill can be taken out of the game without their role being revealed.

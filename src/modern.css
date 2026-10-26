@@ -5,13 +5,13 @@
   --brass: #ae6249; --brass2: #e6a58c; --brass3: #582c5f;
   --ox: #7a1439; --blood: #c22961; --blood2: #ea5a8f; --steel: #8fa3b8; --verd: #5fa88f; --verd2: #2e6b57;
   --disp: "Grenze Gotisch", "Cinzel", "Times New Roman", serif;
-  --book: "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
+  --book: "Book Figures", "IM Fell DW Pica", "Cormorant Garamond", Georgia, serif;
   --ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
   --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif;
 }
 * { box-sizing: border-box }
 html, body { margin: 0; min-height: 100%; background: var(--soot); color: var(--tallow); -webkit-text-size-adjust: 100% }
-body { font-family: var(--ui); font-size: 18px; line-height: 1.4; overflow-x: hidden;
+body { font-family: var(--ui); font-size: 18px; line-height: 1.4; overflow-x: hidden; font-variant-numeric: lining-nums;
   background: radial-gradient(120% 60% at 50% 0%, #1d1020 0%, var(--soot) 70%) fixed }
 body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .06; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") }
 body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; background: radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.55)) }
@@ -73,7 +73,7 @@ label.l { display: block; font: 600 15px/1.3 var(--ui); color: var(--tallow2); m
 .pick button .seal { width: 34px; height: 34px; flex: none }
 .pick button.on { border-color: var(--brass2); background: #2b1520; box-shadow: inset 0 0 0 1px var(--brass2) }
 .pick button:disabled { opacity: .4 }
-.clock { font-family: var(--book); font-size: 22px; color: var(--brass2); font-variant-numeric: tabular-nums }
+.clock { font-family: var(--ui); font-weight: 700; font-size: 22px; color: var(--brass2); font-variant-numeric: tabular-nums lining-nums }
 .clock.low { color: var(--blood2); animation: pulse 1s ease-in-out infinite } @keyframes pulse { 50% { opacity: .55 } }
 .bar.sticky { position: sticky; top: 0; z-index: 2; margin: 8px 0 14px }
 .bigclock .clock { font-size: 56px }
@@ -184,7 +184,7 @@ body.tv.night { background: #030204 }
 
 /* ---------- the host's tools, the TV's buttons, the QR code ---------- */
 .tool { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #25172a } .tool > div { flex: 1 } .tool .btn { flex: none }
-.tbtn { min-height: 34px; min-width: 44px; padding: 4px 10px; font-size: 14px; font-weight: 600 }
+.tbtn { min-height: 40px; min-width: 44px; padding: 4px 10px; font-size: 14px; font-weight: 600 }
 .tvbtns { position: fixed; left: 2vw; bottom: 2vh; display: flex; gap: 8px; z-index: 3; opacity: .55 } .tvbtns:hover { opacity: 1 }
 .tvbtns .btn { width: auto; min-height: 36px; font-size: 14px }
 .qrbox { width: 30vh; height: 30vh; padding: 0; border-radius: 1.4vh; overflow: hidden; box-shadow: 0 0 6vh rgba(230,165,140,.18) } .qrbox svg { width: 100%; height: 100% }
@@ -202,13 +202,15 @@ body.tv .pausebox > div { max-width: 80vw } body.tv .pausebox h1 { font-size: 9v
 .whispers { list-style: none; margin: 8px 0 12px; padding: 0; font-size: 16px } .whispers li { padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.06) } .whispers b { color: var(--blood2); font-weight: 600; margin-right: 6px }
 .wh { display: flex; flex-wrap: wrap; gap: 8px } .wh .btn { flex: 1 1 auto }
 .tbtn .pz { display: none } .top .me { min-width: 0 } .top .me .seal { flex: none }
-@media (max-width: 380px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }
+@media (max-width: 480px) { .tbtn .pz { display: inline } .tbtn .lbl { display: none } .top { gap: 6px } }
 
 /* the host's bar: a long name shortens, "host" follows it in small letters, the pause icon is two bars */
 .top .me { flex: 1 1 auto } .top .me .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .top .me .hosttag { flex: none; font: 600 15px/1 var(--sc); letter-spacing: .03em; font-style: normal; color: var(--brass2) }
 .tbtn .pz { gap: 4px; align-items: center; height: 14px } .tbtn .pz i { display: block; width: 4px; height: 14px; border-radius: 1px; background: currentColor }
-@media (max-width: 380px) { .tbtn .pz { display: inline-flex } .top .me .hosttag { display: none } .top .tbtn { padding: 4px 9px } }
+/* on a phone the pause is its icon, and in play the host's own buttons say who's host, so the tag gives way to the name */
+@media (max-width: 480px) { .tbtn .pz { display: inline-flex } .top:has(.tbtn[data-a=pause]) .hosttag { display: none } .top .tbtn { padding: 4px 11px } }
+@media (max-width: 380px) { .top .me .hosttag { display: none } }
 body:has(.pausebox) { overflow: hidden } .pausebox .btn.sm { margin: 0 auto } body.tv .tvbtns { z-index: 21 }
 .whisp .wh { display: grid; grid-template-columns: 1fr 1fr; gap: 8px } .whisp .wh .btn { width: 100% }
 .tvmain .lastw { width: min(70vw, 100%) }
