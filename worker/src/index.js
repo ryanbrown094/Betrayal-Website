@@ -4,6 +4,7 @@ import { newRoom, newPass, isRoom, isPass, passKey, shownPass } from "./codes.js
 import * as M from "./modern.js";
 import { sendBooking } from "./booking-mail.js";
 import * as AS from "./appstore.js";
+import * as T from "./tiers.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -105,7 +106,7 @@ export class GameState {
     if (path === "/_init" && req.method === "POST") {
       const b = await req.json();
       if (!(await this.storage.get("meta"))) {
-        await this.storage.put("meta", { room: b.room, expires: b.expires, pass: b.pass || null, created: Date.now() });
+        await this.storage.put("meta", { room: b.room, expires: b.expires, pass: b.pass || null, created: Date.now(), ...(b.tier ? { tier: b.tier } : {}) });
         await this.storage.setAlarm(b.expires + keepMs(this.env));
       }
       return json({ ok: true });
@@ -149,7 +150,7 @@ export class GameState {
       return json({ events: rows });
     }
     const expired = Date.now() > meta.expires;
-    const room = { code: meta.room, expires: meta.expires, expired };
+    const room = { code: meta.room, expires: meta.expires, expired, ...(meta.tier ? { tier: T.tierView(meta.tier) } : {}) };
     // what a player's browser saw: taps, screens, sync trouble, errors. Anyone in the room may send (the TV has no PIN);
     // each batch is small and a room keeps EVMAX batches at most.
     if (path === "/api/events" && req.method === "POST") {
@@ -168,6 +169,8 @@ export class GameState {
       return json({ ok: true });
     }
 
+    // asked by the Registry when a Night Pass's window closes: did a game here reach its first round?
+    if (path === "/_played") { const m = await this.storage.get("modern"); return json({ played: !!(m && m.round >= 1) }); }
     if (path === "/_mode") return json({ mode: (await this.storage.get("modern")) ? "modern" : (await this.storage.get("state")) ? "classic" : null });
     if (path.startsWith("/api/m")) return this.modern(req, url, path, meta, room, expired);
 
@@ -295,6 +298,17 @@ export class GameState {
       const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
+    if (path === "/api/m/upgrade" && req.method === "POST") {
+      if (expired) return json({ error: "This Table has closed.", room }, 423);
+      if (!me || s.director !== me.id) return json({ error: "Only the host can do that." }, 403);
+      if (meta.tier !== "free") return json({ error: "This game is already ad-free." }, 409);
+      const r = await registry(this.env).fetch("https://registry/attach", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ pass: body.pass, room: meta.room, expires: meta.expires }) });
+      const out = await r.json().catch(() => ({ error: "That didn’t work. Try again." }));
+      if (!r.ok) return json(out, r.status);
+      meta.tier = T.higher(meta.tier, out.tier); await this.storage.put("meta", meta);
+      s.ver++; await save(); // every phone and the TV see the new tier with their next poll
+      return view({ room: { ...room, tier: T.tierView(meta.tier) } });
+    }
     if (path === "/api/m/act" && req.method === "POST") {
       if (expired) return json({ error: "This Table has closed.", room }, 423);
       if (!me) return json({ error: "This phone isn’t in the game.", lost: true }, 403);
@@ -326,7 +340,7 @@ export class GameState {
 // Booking codes (passes): minted by the admin or by a paid Stripe checkout. A one-party code opens one room; a
 // Regular's (subscription) code opens a new room whenever they like, one at a time.
 export class Registry {
-  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.writes = 0; this.locks = new Map(); }
+  constructor(state, env) { this.storage = state.storage; this.env = env || {}; this.fails = new Map(); this.frees = new Map(); this.writes = 0; this.locks = new Map(); }
 
   // A paid booking's code goes to the buyer by email, once. `mailing` holds the send while it's in flight (the webhook
   // and the thank-you page can arrive together); a failed send is logged and tried again on the next claim. `to`
@@ -373,22 +387,59 @@ export class Registry {
   }
   failed(ip) { const rec = this.fails.get(ip) || []; rec.push(Date.now()); this.fails.set(ip, rec); }
 
-  async mint(count, note, source, kind, email) {
-    const out = [];
+  async mint(count, note, source, kind, email, pool) {
+    const out = [], app = pool === "app";
+    if (app && kind !== "night" && kind !== "host") throw new Error("An app code is a Night Pass or a Host Pass");
     for (let i = 0; i < count; i++) {
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      // a free unlimited code (from the admin page) works like a subscription that never lapses, until it's cancelled
-      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin", ...(email ? { email } : {}), ...(kind === "sub" ? { kind: "sub", subActive: true, subStatus: "free" } : {}) });
+      // a free unlimited code (from the admin page) works like a subscription that never lapses, until it's cancelled;
+      // an app code (tiers.js) is a Night Pass, or a Host Pass that never lapses
+      const sub = app ? kind === "host" : kind === "sub";
+      await this.storage.put("pass:" + p, { created: Date.now(), note: String(note || "").slice(0, 120), source: source || "admin", ...(email ? { email } : {}), ...(app ? { pool: "app", kind } : {}), ...(sub ? { kind: app ? "host" : "sub", subActive: true, subStatus: "free" } : {}) });
       out.push(p);
     }
     return out;
   }
 
-  async room(env, expires, pass) {
+  async room(env, expires, pass, tier) {
     let code; do code = newRoom(); while (await this.storage.get("room:" + code));
-    await this.storage.put("room:" + code, { pass, expires, created: Date.now() });
-    await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass }) });
+    await this.storage.put("room:" + code, { pass, expires, created: Date.now(), ...(tier ? { tier } : {}) });
+    await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_init", { method: "POST", body: JSON.stringify({ room: code, expires, pass, ...(tier ? { tier } : {}) }) });
     return code;
+  }
+
+  // A Night Pass's 24 hours start the first time it's used. When they're over, the night comes back if no game in it
+  // reached its first round (a lobby that never started isn't a night). Returns {v} (saved), or {res} to refuse with.
+  async nightWindow(env, k, v) {
+    const now = Date.now();
+    if (v.activeUntil && now >= v.activeUntil) {
+      if (await this.played(env, v.rooms)) return { res: json({ error: "That ad-free night has been used.", kind: "night" }, 410) };
+      v = { ...v, activeUntil: null, rooms: [], room: null, expires: null, returned: (v.returned || 0) + 1 };
+    }
+    if (!v.activeUntil) v = { ...v, activeUntil: now + T.NIGHT_MS, activated: now, rooms: v.rooms || [] };
+    await this.storage.put(k, v);
+    return { v };
+  }
+
+  async played(env, rooms) {
+    for (const r of rooms || []) {
+      const g = await env.GAME.get(env.GAME.idFromName("room:" + r)).fetch("https://game/_played").catch(() => null);
+      if (!g || !g.ok || (await g.json()).played) return true; // can't ask: count it as played
+    }
+    return false;
+  }
+
+  // a subscription's code (the website's Regular, the app's Host Pass): Apple, for one bought in the app, says whether
+  // it's paid up (asked again after ten minutes, or at once if it had lapsed). Returns {v}, or {res} to refuse with.
+  async subActive(env, k, v) {
+    if (v.apple && (!v.subActive || Date.now() - (v.subChecked || 0) > 600000)) {
+      const st = await AS.subscription(env, v.apple.orig, v.apple.env === "Xcode" ? { environment: "Xcode", expiresDate: v.subExpires } : null);
+      if (st) { v = { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() }; await this.storage.put(k, v); }
+    }
+    const what = v.kind === "host" ? "Host Pass" : "Regular plan";
+    if (!v.subActive && v.apple) return { res: json({ error: "Your " + what + " isn’t active" + (v.subStatus === "billing retry" ? ": Apple couldn’t take the last payment." : ".") + " Renew it in the app, under Manage subscription.", sub: true }, 402) };
+    if (!v.subActive) return { res: json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402) };
+    return { v };
   }
 
   async fetch(req) {
@@ -397,7 +448,8 @@ export class Registry {
     if (url.pathname === "/mint") {
       const email = String(b.email || "").trim().slice(0, 200);
       if (email && !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(email)) return json({ error: "That isn’t an email address." }, 400);
-      return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind, email)).map(shownPass) });
+      if (b.pool === "app" && b.kind !== "night" && b.kind !== "host") return json({ error: "An app code is a Night Pass (kind night) or a Host Pass (kind host)." }, 400);
+      return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind, email, b.pool)).map(shownPass) });
     }
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
     if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts. Try again in an hour." }, 429) : json({ ok: true });
@@ -592,10 +644,11 @@ export class Registry {
         (v.kind === "sub" ? "A Regular" : "A Table") + (cancel ? ". It hadn’t been played, so its code is now cancelled." : v.room ? ". It had already opened a Table, which stays open." : "."), "Email: " + (v.note || "unknown")]);
       return json({ ok: true, pass: shownPass(p), cancelled: cancel });
     }
-    // an App Store purchase (appstore.js), already checked with Apple: one booking code per Table bought, one per
-    // subscription for a Regular, however often the phone claims it (after a lost reply, a restore or a new phone)
+    // an App Store purchase (appstore.js), already checked with Apple: one code per Night Pass bought, one per
+    // subscription for a Host Pass, however often the phone claims it (after a lost reply, a restore or a new phone).
+    // They're the app's codes (pool "app", tiers.js).
     if (url.pathname === "/apple-claim") {
-      const t = b.txn || {}, sub = b.kind === "sub", ak = "apple:" + (sub ? "orig:" + t.originalTransactionId : "txn:" + t.transactionId), st = b.status || null;
+      const t = b.txn || {}, sub = b.kind === "host", ak = "apple:" + (sub ? "orig:" + t.originalTransactionId : "txn:" + t.transactionId), st = b.status || null;
       return queued(this.locks, ak, async () => {
         const have = await this.storage.get(ak);
         if (have) {
@@ -607,35 +660,75 @@ export class Registry {
         if (t.revocationDate) return json({ error: "That purchase was refunded." }, 410);
         let p; do p = newPass(); while (await this.storage.get("pass:" + p));
         const price = AS.priceOf(t);
-        await this.storage.put("pass:" + p, { created: Date.now(), note: "", source: "appstore", kind: sub ? "sub" : "one", paid: Date.now(),
+        await this.storage.put("pass:" + p, { created: Date.now(), note: "", source: "appstore", pool: "app", kind: sub ? "host" : "night", paid: Date.now(),
           apple: { txn: String(t.transactionId), orig: String(t.originalTransactionId), env: t.environment || null, storefront: t.storefront || null, price },
           ...(sub ? { subActive: st ? st.active : true, subStatus: st ? st.status : "active", subExpires: (st && st.expires) || t.expiresDate || null, subChecked: Date.now() } : {}) });
         await this.storage.put(ak, p);
-        await this.notify("Sale (App Store): " + (sub ? "a Regular" : "a Table") + (price ? ", " + price + (sub ? " a month" : "") : ""), ["Booking code: " + shownPass(p),
+        await this.notify("Sale (App Store): " + (sub ? "a Host Pass" : "a Night Pass") + (price ? ", " + price : ""), ["Code: " + shownPass(p),
           t.environment && t.environment !== "Production" ? "A test purchase (" + t.environment + "): no money changed hands." : null]);
         return json({ pass: shownPass(p), sub });
       });
     }
-    // an App Store refund: as with Stripe's, a Table's code is cancelled if it hasn't opened a room yet
+    // an App Store refund: as with Stripe's, a Night Pass is cancelled if its night hasn't started
     if (url.pathname === "/apple-refund") {
       const p = await this.storage.get("apple:txn:" + b.transactionId), k = p && "pass:" + p, v = k && (await this.storage.get(k));
       if (!v) return json({ ok: true, pass: null });
-      const cancel = v.kind !== "sub" && !v.room && !v.revoked;
+      const cancel = v.kind !== "host" && !v.activeUntil && !v.room && !v.revoked;
       await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: v.refunded || Date.now() });
       if (!v.refunded) await this.notify("Refund (App Store): " + shownPass(p), [cancel ? "It hadn’t been played, so its code is now cancelled." : v.room ? "It had already opened a Table, which stays open." : null]);
       return json({ ok: true, pass: shownPass(p), cancelled: cancel });
     }
-    // a Regular bought in the app: its subscription's state, as Apple gives it
+    // a Host Pass: its subscription's state, as Apple gives it
     if (url.pathname === "/apple-sub") {
       const p = await this.storage.get("apple:orig:" + b.orig), k = p && "pass:" + p, v = k && (await this.storage.get(k)), st = b.status;
       if (!v || !st) return json({ ok: true, pass: null });
       await this.storage.put(k, { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() });
-      if (v.subActive && !st.active) await this.notify("A Regular (App Store) lapsed: " + shownPass(p), ["Apple says: " + st.status]);
+      if (v.subActive && !st.active) await this.notify("A Host Pass (App Store) lapsed: " + shownPass(p), ["Apple says: " + st.status]);
       return json({ ok: true, pass: shownPass(p), active: st.active });
     }
     if (url.pathname === "/open") { // a room without a pass: MASTER_PASS (testing) or OPEN_ACCESS (development)
-      const expires = Date.now() + hours(env) * 3600000;
-      return json({ room: await this.room(env, expires, b.master ? "MASTER" : null), expires, ...(b.master ? { test: true } : {}) });
+      const expires = Date.now() + hours(env) * 3600000, tier = b.tier in T.RANK && b.tier !== "full" ? b.tier : null; // the app's tiers, for testing them
+      return json({ room: await this.room(env, expires, b.master ? "MASTER" : null, tier), expires, ...(b.master ? { test: true } : {}), ...(tier ? { tier } : {}) });
+    }
+    // the app's free games (tiers.js): no code, so at most ten a day from one address
+    if (url.pathname === "/free") {
+      const t = Date.now(), rec = (this.frees.get(ip) || []).filter((x) => t - x < 86400000);
+      if (rec.length >= 10) return json({ error: "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
+      rec.push(t); this.frees.set(ip, rec); if (this.frees.size > 5000) this.frees.clear();
+      const expires = t + hours(env) * 3600000;
+      return json({ room: await this.room(env, expires, null, "free"), expires, tier: "free" });
+    }
+    // the host of a free game in the app uses a pass on it (GameState's /api/m/upgrade): the game takes the pass's tier
+    if (url.pathname === "/attach") {
+      if (this.tooMany(ip)) return json({ error: "Too many wrong codes. Try again in an hour." }, 429);
+      if (!isPass(b.pass)) { this.failed(ip); return json({ error: "That isn’t a booking code. It looks like OATH-XXXX-XXXX." }, 400); }
+      return queued(this.locks, passKey(b.pass), async () => {
+        const k = "pass:" + passKey(b.pass);
+        let v = await this.storage.get(k);
+        if (!v) { this.failed(ip); return json({ error: "We don’t recognise that code." }, 404); }
+        if (v.revoked) return json({ error: "That pass has been cancelled." }, 410);
+        if (v.pool !== "app" || (v.kind !== "night" && v.kind !== "host")) return json({ error: "That code isn’t a pass bought in the app." }, 403);
+        const ok = v.kind === "night" ? await this.nightWindow(env, k, v) : await this.subActive(env, k, v);
+        if (ok.res) return ok.res;
+        v = ok.v;
+        await this.storage.put(k, { ...v, room: b.room, expires: b.expires, games: (v.games || 0) + 1, ...(v.kind === "night" ? { rooms: [...(v.rooms || []), b.room] } : {}) });
+        return json({ tier: T.tierFor(v), kind: v.kind, ...(v.activeUntil ? { until: v.activeUntil } : {}) });
+      });
+    }
+    // what the app's codes on a phone can do now (its list of codes): wrong codes count as wrong guesses
+    if (url.pathname === "/status") {
+      if (this.tooMany(ip)) return json({ error: "Too many wrong codes. Try again in an hour." }, 429);
+      const out = [];
+      for (const c of (Array.isArray(b.passes) ? b.passes : []).slice(0, 50)) {
+        if (!isPass(c)) continue;
+        const v = await this.storage.get("pass:" + passKey(c));
+        if (!v) { this.failed(ip); continue; }
+        if (v.pool !== "app") continue;
+        const st = T.statusOf(v, Date.now());
+        if (st.state === "ended" && !(await this.played(env, v.rooms))) Object.assign(st, { state: "ready", until: null }); // it comes back when next used
+        out.push({ pass: shownPass(c), ...st });
+      }
+      return json({ codes: out });
     }
     // a subscription changed (renewed, failed, cancelled): its code opens games only while it's active or trialing
     if (url.pathname === "/substatus") {
@@ -663,22 +756,25 @@ export class Registry {
         if (!v) { this.failed(ip); return json({ error: "We don’t recognise that booking code. Check it against your receipt." }, 404); }
         if (v.revoked) return json({ error: "That booking has been cancelled." }, 410);
         if (v.pending) return json({ error: "That booking is waiting for its payment to clear. Try again in a minute." }, 402);
-        // a subscription code: a new game whenever they like, one at a time. Entering it again brings the current game
-        // back; asking for a fresh one closes that room and opens another.
-        if (v.kind === "sub") {
-          // a Regular bought in the iPhone app: Apple says whether it's paid up (asked again after ten minutes, or at once if it had lapsed)
-          if (v.apple && (!v.subActive || Date.now() - (v.subChecked || 0) > 600000)) {
-            const st = await AS.subscription(env, v.apple.orig, v.apple.env === "Xcode" ? { environment: "Xcode", expiresDate: v.subExpires } : null);
-            if (st) { v = { ...v, subActive: st.active, subStatus: st.status, subExpires: st.expires, subChecked: Date.now() }; await this.storage.put(k, v); }
-          }
-          if (!v.subActive && v.apple) return json({ error: "Your Regular plan isn’t active" + (v.subStatus === "billing retry" ? ": Apple couldn’t take the last payment." : ".") + " Renew it in the app, under Manage subscription.", sub: true }, 402);
-          if (!v.subActive) return json({ error: "Your subscription isn’t active" + (v.subStatus === "past_due" ? ": the last payment didn’t go through." : ".") + " Use “Manage subscription” to sort it out.", sub: true }, 402);
+        // the app's codes and the website's are separate pools (tiers.js)
+        if (b.app && v.pool !== "app") return json({ error: "That booking code is for the website, so it opens Tables there. In the app, start a free game or use a pass bought in the app." }, 403);
+        if (!b.app && v.pool === "app") return json({ error: "That code is for The Betrayal app. Open it there." }, 403);
+        // a subscription code (the website's Regular, the app's Host Pass), or a Night Pass in its 24 hours: a new game
+        // whenever they like, one at a time. Entering it again brings the current game back; asking for a fresh one
+        // closes that room and opens another.
+        if (v.kind === "sub" || v.kind === "host" || v.kind === "night") {
+          // a Night Pass's game outlives its 24 hours (a Table is open for PASS_HOURS): its host can always get back to it
+          if (v.kind === "night" && !b.fresh && v.room && Date.now() < v.expires) return json({ room: v.room, expires: v.expires, again: true, sub: false, kind: "night", tier: "night", until: v.activeUntil });
+          const ok = v.kind === "night" ? await this.nightWindow(env, k, v) : await this.subActive(env, k, v);
+          if (ok.res) return ok.res;
+          v = ok.v;
+          const tier = T.tierFor(v), sub = v.kind !== "night", extra = { sub, ...(v.pool === "app" ? { kind: v.kind, tier, ...(v.activeUntil ? { until: v.activeUntil } : {}) } : {}) };
           const live = v.room && Date.now() < v.expires;
-          if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, sub: true });
+          if (live && !b.fresh) return json({ room: v.room, expires: v.expires, again: true, ...extra });
           if (live) await env.GAME.get(env.GAME.idFromName("room:" + v.room)).fetch("https://game/_close", { method: "POST", body: "{}" });
-          const expires = Date.now() + hours(env) * 3600000, room = await this.room(env, expires, passKey(b.pass));
-          await this.storage.put(k, { ...v, room, expires, redeemed: Date.now(), games: (v.games || 0) + 1 });
-          return json({ room, expires, sub: true });
+          const expires = Date.now() + hours(env) * 3600000, room = await this.room(env, expires, passKey(b.pass), v.pool === "app" ? tier : null);
+          await this.storage.put(k, { ...v, room, expires, redeemed: Date.now(), games: (v.games || 0) + 1, ...(v.kind === "night" ? { rooms: [...(v.rooms || []), room] } : {}) });
+          return json({ room, expires, ...extra });
         }
         // redeemed already: the same room comes back (a host who lost the link), until it runs out
         if (v.room) return Date.now() < v.expires ? json({ room: v.room, expires: v.expires, again: true }) : json({ error: "That booking has been used, and its game has ended." }, 410);
@@ -865,7 +961,7 @@ async function route(req, env) {
     }
     const locked = await gate(req, env); if (locked) return locked;
     const url = new URL(req.url), p = url.pathname;
-    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events|m|m\/create|m\/join|m\/act)$/);
+    const g = p.match(/^\/api\/g\/([A-Za-z0-9]{6})\/(state|settings|events|m|m\/create|m\/join|m\/act|m\/upgrade)$/);
     if (g) {
       const code = g[1].toUpperCase(); if (!isRoom(code)) return json({ error: "No game with that code" }, 404);
       const inner = new URL(req.url); inner.pathname = "/api/" + g[2];
@@ -893,13 +989,19 @@ async function route(req, env) {
       return json({ id: r.id });
     }
     if (p === "/api/games" && req.method === "POST") {
-      const b = await req.json().catch(() => ({}));
+      const b = await req.json().catch(() => ({})), app = b.app === true, ip = req.headers.get("CF-Connecting-IP") || "?";
+      // the iPhone app (tiers.js): no code is a free game
+      if (app && !b.pass) return registry(env).fetch("https://registry/free", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: "{}" });
       if (env.OPEN_ACCESS === "1" && !b.pass) return call(env, "/open");
-      // the master passcode (Worker secret MASTER_PASS) opens a fresh room every time, for testing
+      // the master passcode (Worker secret MASTER_PASS) opens a fresh room every time, for testing; in the app, at any tier
       const up = (v) => String(v || "").trim().toUpperCase();
-      if (env.MASTER_PASS && same(up(b.pass), up(env.MASTER_PASS))) return call(env, "/open", { master: true });
-      const ip = req.headers.get("CF-Connecting-IP") || "?";
-      return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass, fresh: b.fresh === true }) });
+      if (env.MASTER_PASS && same(up(b.pass), up(env.MASTER_PASS))) return call(env, "/open", { master: true, ...(app ? { tier: b.tier } : {}) });
+      return registry(env).fetch("https://registry/redeem", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ pass: b.pass, fresh: b.fresh === true, ...(app ? { app } : {}) }) });
+    }
+    // the app's list of codes: what each can do now (tiers.js)
+    if (p === "/api/app/codes" && req.method === "POST") {
+      const b = await req.json().catch(() => ({}));
+      return registry(env).fetch("https://registry/status", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ passes: b.passes }) });
     }
     // Buy: the /buy page posts both ticks here; we open a pending pass and a Checkout Session for it, and send the buyer
     // to Stripe. Settings: STRIPE_SECRET_KEY (secret), STRIPE_PRICE_ID (var: the one-party Table's Price), STRIPE_SUB_PRICE_ID
@@ -998,7 +1100,7 @@ async function route(req, env) {
         if (r.why) logErr(env, { src: "appstore", where: "claim", msg: r.error + " " + clip(r.why, 300) });
         return json({ error: r.error }, r.status);
       }
-      const status = r.txn.kind === "sub" ? await AS.subscription(env, r.txn.originalTransactionId, r.txn) : null;
+      const status = r.txn.kind === "host" ? await AS.subscription(env, r.txn.originalTransactionId, r.txn) : null;
       return call(env, "/apple-claim", { txn: r.txn, kind: r.txn.kind, status });
     }
     // App Store Server Notifications, version 2 (App Store Connect → the app → App Information → Production and Sandbox
@@ -1009,10 +1111,10 @@ async function route(req, env) {
       if (!n) return json({ error: "Bad notification" }, 400);
       const P = AS.productsOf(env);
       let result = "ignored";
-      if (n.productId === P.one && n.jws && ["REFUND", "REVOKE"].includes(n.type)) {
+      if (n.productId === P.night && n.jws && ["REFUND", "REVOKE"].includes(n.type)) {
         const r = await AS.purchase(env, n.jws);
         result = r.txn && r.txn.revocationDate ? await (await call(env, "/apple-refund", { transactionId: r.txn.transactionId })).json() : r.error || "Apple shows no refund";
-      } else if (n.productId === P.sub && n.orig) {
+      } else if (n.productId === P.host && n.orig) {
         const st = await AS.subscription(env, n.orig, null);
         result = st ? await (await call(env, "/apple-sub", { orig: n.orig, status: st })).json() : "Apple couldn’t be asked";
       }

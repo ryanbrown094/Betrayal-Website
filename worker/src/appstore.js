@@ -1,15 +1,15 @@
-// The App Store. The iPhone app (ryanbrown094/Betrayal-App) sells a Table and the Regular plan with Apple's in-app purchase; the app sends each
-// purchase's signed transaction to /api/appstore/claim, and the Registry gives it a booking code, one per purchase (one
-// per subscription for a Regular). Nothing the phone sends is trusted: the transaction is looked up with Apple's App
+// The App Store. The iPhone app (ryanbrown094/Betrayal-App) sells the Night Pass and the Host Pass (tiers.js) with Apple's
+// in-app purchase; the app sends each purchase's signed transaction to /api/appstore/claim, and the Registry gives it a
+// code from the app's pool, one per purchase (one per subscription for a Host Pass). Nothing the phone sends is trusted: the transaction is looked up with Apple's App
 // Store Server API, which answers for the purchase, its product and app, and any refund.
-// Settings: APPSTORE_BUNDLE_ID, APPSTORE_TABLE_PRODUCT and APPSTORE_REGULAR_PRODUCT (vars, with defaults below),
+// Settings: APPSTORE_BUNDLE_ID, APPSTORE_NIGHT_PRODUCT and APPSTORE_HOST_PRODUCT (vars, with defaults below),
 // APPSTORE_ISSUER_ID and APPSTORE_KEY_ID (vars: App Store Connect → Users and Access → Integrations → In-App Purchase),
 // APPSTORE_PRIVATE_KEY (secret: that key's .p8 file). APPSTORE_LOCAL=1 (development only, never production) also takes
 // purchases made with Xcode's StoreKit testing, which Apple has never seen, on the phone's word.
 const HOSTS = { Production: "https://api.storekit.itunes.apple.com", Sandbox: "https://api.storekit-sandbox.itunes.apple.com" };
 
 export const bundleOf = (env) => env.APPSTORE_BUNDLE_ID || "uk.co.thebetrayal.app";
-export const productsOf = (env) => ({ one: env.APPSTORE_TABLE_PRODUCT || "uk.co.thebetrayal.app.table", sub: env.APPSTORE_REGULAR_PRODUCT || "uk.co.thebetrayal.app.regular" });
+export const productsOf = (env) => ({ night: env.APPSTORE_NIGHT_PRODUCT || "uk.co.thebetrayal.app.night", host: env.APPSTORE_HOST_PRODUCT || "uk.co.thebetrayal.app.host" });
 export const configured = (env) => !!(env.APPSTORE_ISSUER_ID && env.APPSTORE_KEY_ID && env.APPSTORE_PRIVATE_KEY);
 export const local = (env) => env.APPSTORE_LOCAL === "1";
 
@@ -67,11 +67,11 @@ export async function purchase(env, jws) {
   }
   const P = productsOf(env);
   if (txn.bundleId !== bundleOf(env)) return { error: "That purchase was made in another app.", status: 400 };
-  if (txn.productId !== P.one && txn.productId !== P.sub) return { error: "That isn’t a Table or the Regular plan.", status: 400 };
-  return { txn: { ...txn, kind: txn.productId === P.sub ? "sub" : "one" } };
+  if (txn.productId !== P.night && txn.productId !== P.host) return { error: "That isn’t a Night Pass or a Host Pass.", status: 400 };
+  return { txn: { ...txn, kind: txn.productId === P.host ? "host" : "night" } };
 }
 
-// Is a Regular's subscription paid up? Apple's statuses: 1 active, 2 expired, 3 billing retry, 4 grace period, 5 revoked.
+// Is a Host Pass's subscription paid up? Apple's statuses: 1 active, 2 expired, 3 billing retry, 4 grace period, 5 revoked.
 // Returns {active, status, expires} or null when Apple can't be asked.
 export async function subscription(env, orig, txn) {
   if (txn && txn.environment === "Xcode") return local(env) ? { active: !txn.revocationDate && (!txn.expiresDate || txn.expiresDate > Date.now()), status: "xcode", expires: txn.expiresDate || null } : null;
