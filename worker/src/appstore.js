@@ -1,4 +1,4 @@
-// The App Store. The iPhone app (ios/) sells a Table and the Regular plan with Apple's in-app purchase; the app sends each
+// The App Store. The iPhone app (ryanbrown094/Betrayal-App) sells a Table and the Regular plan with Apple's in-app purchase; the app sends each
 // purchase's signed transaction to /api/appstore/claim, and the Registry gives it a booking code, one per purchase (one
 // per subscription for a Regular). Nothing the phone sends is trusted: the transaction is looked up with Apple's App
 // Store Server API, which answers for the purchase, its product and app, and any refund.
