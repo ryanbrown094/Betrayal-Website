@@ -85,6 +85,7 @@ worker/public/        build output, fonts/, icons, words.txt (Longest Word dicti
 media/                logos/, palette/, screenshots/ (Classic), web/ (site images), social/, copy/, launch/, brand guidelines PDF
 tools/                see §6.8; tools/ads/ is the daily Google Ads sweep (§6.10)
 qa/                   test harnesses (§8)
+ios/                  the native iPhone and iPad app for Modern (§4.8, ios/README.md); .github/workflows/ios-native.yml checks it
 ```
 
 ---
@@ -180,6 +181,14 @@ The code keeps its own identifiers; players only see the public words. Saved gam
 | `candle-pin`, `candle-played`, `candle-draft`, `candle-settings` (browser storage); `cc_admin`, `cc_gate` (cookies) | storage keys and cookies |
 
 The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's hash prefix (`cloak-and-candle-gate:`) are bound to live data: renaming a Worker creates a new one with empty Durable Objects (every booking code and room lost), and renaming a cookie signs everyone out.
+
+### 4.8 The iPhone app (native)
+
+- **`ios/`** is a SwiftUI app for Modern, with no web view: it calls the same API as `modern.html` (`/api/games`, `/api/g/CODE/m`, `m/create`, `m/join`, `m/act`) and redraws every screen of `src/modern-ui.js`. Read `ios/README.md` before changing it.
+- **The server owes it what it owes the page.** It reads `viewFor()`'s fields leniently (a new field is ignored, a missing one reads as nothing), so adding fields is safe; renaming or removing one, or changing a field's meaning, needs the app changed and a new release, because phones keep old versions for weeks. Modern's routes have no build check (426), so a deploy never forces the app to reload.
+- **A change to Modern's screens or words** (`src/modern-ui.js`) is a change to the app too: the matching view in `ios/TheBetrayal/UI/`, and `node ios/tools/fixtures.mjs > ios/TheBetrayal/Debug/Fixtures.json`. A change to `src/art.js` is copied into `ios/TheBetrayal/UI/Art.swift`; a change to `src/audio.js` is re-rendered with `node ios/tools/sounds.mjs` after `./build.sh`.
+- **The TV** shows on a second display (AirPlay or a cable) as a scene of its own, never a mirror of the phone, and on an iPad through **Use this screen as the TV**.
+- **Booking codes:** the app opens a Table with one but never sells one or links to the shop (App Store rule 3.1.1). Classic stays on the website.
 
 ---
 
@@ -556,6 +565,7 @@ npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw -
 | `node qa/admin.mjs` | none (stubbed) | admin sign-in, cookie flags and tampering, the attempt limit, Bearer token, cross-site requests, codes, test room |
 | `node qa/ads.mjs` | none (Google Ads API stubbed) | the sweep's script: sign-in, Google's errors and their hints, every part of the report, and every limit on changes (the £4 cap, bid steps and ceiling, negatives that would block a keyword, an ad group's last ad, non-GBP accounts, dry run vs live, partial failures) |
 | `node qa/worker.mjs` | none | the real Worker class with in-memory storage: PIN limits, stale-build writes, the settings rule |
+| `.github/workflows/ios-native.yml` | a GitHub Mac, when `ios/` changes | the native app: its model against a recorded game (`ios/ci/main.swift`), Debug and Release builds, recorded moments in the simulator, and a game against bots on `wrangler dev` with the app as the host (`ios/ci/drive.py`); pictures at `refs/screens/ios-native` |
 | `qa/break.py` | starts `qa/server.mjs` :8717 itself (leave the port free) | sync and hand attacks: two phones, lost replies, offline taps, wipes, rate limits, holds |
 | `qa/banks.py` | own server :8717 | every bank item on the TV at 4:3, 16:9 and 16:10; duplicates and well-formedness |
 | `qa/audit.py` | own server :8718 | phone widths, TV sizes and player counts: overflow, tap targets, tiny text, and contrast read from `src/style.css` |
