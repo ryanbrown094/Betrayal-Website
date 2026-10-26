@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026203624">
+<meta name="build" content="20261026215943">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -267,6 +267,7 @@ function render() {
     if (!p.revoked && !p.pending && mail) p.noMail ? act("No survey", "ghost", "They asked not to get feedback emails when they booked", () => say($("#tmsg"), p.pass + " asked not to get feedback emails when they booked."))
       : p.surveyAnswered ? act("Survey ✓", "ghost", "They answered the feedback survey " + when(p.surveyAnswered), () => showTab("feedback"))
       : act("Survey", "ghost", p.surveyed ? "Feedback survey sent " + when(p.surveyed) + ". Send it again" : "Email " + mail + " the feedback survey (30% off for answering)", () => survey(p));
+    if (!p.pending && (!p.revoked || p.paid) && mail) act(p.apologised ? "Apology ✓" : "Apologise", "ghost", p.apologised ? "Apology sent " + when(p.apologised) + (p.apologisedTo ? " to " + p.apologisedTo : "") + ". Send it again (the same free code, unless it's been used)" : "Email " + mail + " an apology with a free game (a new one-party code)", () => apologise(p));
     if (p.revoked) act("Delete", "danger", "", () => del(p.pass));
     if (!p.revoked) act("Cancel", "danger", "", () => cancel(p.pass));
     rows.append(tr);
@@ -306,6 +307,11 @@ async function survey(p) {
   const to = prompt((p.surveyed ? "Send the feedback survey again (the same link) for " : "Send the feedback survey for ") + p.pass + " to:", emailOf(p));
   if (to === null) return;
   try { const j = await api("survey", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Feedback survey sent to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
+}
+async function apologise(p) {
+  const to = prompt(p.apologised ? "Send the apology for " + p.pass + " again (the same free code, unless it's been used) to:" : "Apologise for " + p.pass + " with a free game? It emails a new one-party booking code to:", emailOf(p));
+  if (to === null) return;
+  try { const j = await api("apology", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Apology sent to " + j.to + " with the free code " + j.code + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function cancel(pass) {
   if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;

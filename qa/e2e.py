@@ -134,6 +134,12 @@ with sync_playwright() as p:
         sv.goto(URL + "survey?t=" + tok + "&stop=1"); sv.wait_for_selector("#off:not([hidden])", timeout=8000)
         stopped = api.post(URL + "api/admin/survey", headers=H, data=json.dumps({"pass": sp[1]}))
         check("its stop link stops feedback emails to that address", stopped.status == 409 and "asked not to" in stopped.text(), stopped.text()[:200])
+        # the admin's apology: a free one-party code, emailed (feedback opt-outs don't stop it), that opens a Table
+        ap = api.post(URL + "api/admin/apology", headers=H, data=json.dumps({"pass": sp[1]}))
+        free = ap.json().get("code", "") if ap.status == 200 else ""
+        check("the admin's Apologise emails the buyer a free booking code", free.startswith("OATH-") and ap.json().get("to") == mail, ap.text()[:200])
+        fg = api.post(URL + "api/games", data=json.dumps({"pass": free}))
+        check("…which opens a Table", fg.status == 200 and len(fg.json().get("room", "")) > 0, fg.text()[:200])
     check("no page errors on any screen", not errs, errs[:3])
     api.delete(APIU + "state", headers={"X-Pin": PIN})
     b.close()
