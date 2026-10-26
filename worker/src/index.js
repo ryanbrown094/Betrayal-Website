@@ -5,7 +5,7 @@ import * as M from "./modern.js";
 import { sendBooking } from "./booking-mail.js";
 import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
-import { surveyEmail, thanksEmail, sendFeedbackMail } from "./survey-mail.js";
+import { surveyEmail, thanksEmail, apologyEmail, sendFeedbackMail } from "./survey-mail.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -590,6 +590,31 @@ export class Registry {
       await this.storage.put("pass:" + key, { ...v, email: email || undefined });
       return json({ ok: true, pass: shownPass(key), email });
     }
+    // The admin's "Apologise": a new one-party booking code, free, emailed to the buyer with an apology. Sending again
+    // re-sends the same code until it's used or cancelled, then makes a new one. The code is apology for <their code>
+    // in the From column, and their code keeps `apology` (the free code's key) and `apologised`.
+    if (url.pathname === "/apology") return queued(this.locks, "apology", async () => {
+      const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
+      if (!v) return json({ error: "No such pass" }, 404);
+      if (v.pending || (v.revoked && !v.paid)) return json({ error: "That code was never paid for." }, 409);
+      const to = (String(b.to || "").trim() || String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim()).slice(0, 200);
+      if (!to) return json({ error: "There’s no email address on this code. Type one in." }, 400);
+      if (!/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(to)) return json({ error: "That isn’t an email address." }, 400);
+      if (!this.env.MAIL) return json({ error: "Email isn’t set up (no MAIL binding)." }, 503);
+      const old = v.apology && (await this.storage.get("pass:" + v.apology));
+      let free = old && !old.revoked && !old.room ? v.apology : null;
+      if (!free) {
+        [free] = await this.mint(1, "", "apology", null, to);
+        await this.storage.put("pass:" + free, { ...(await this.storage.get("pass:" + free)), from: "apology for " + shownPass(key) });
+        await this.storage.put("pass:" + key, { ...(await this.storage.get("pass:" + key)), apology: free });
+      }
+      try { await sendFeedbackMail(this.env, to, apologyEmail({ code: shownPass(free), host: this.env.SITE_HOST || "thebetrayal.co.uk" })); }
+      catch (e) { logErr(this.env, { src: "mail", msg: "The apology email didn’t send: " + clip((e && e.message) || e, 240), pass: shownPass(key) }); return json({ error: "It didn’t send. The error log says why. Its free code " + shownPass(free) + " is kept for the next try." }, 502); }
+      const t = Date.now();
+      await this.storage.put({ ["pass:" + key]: { ...(await this.storage.get("pass:" + key)), apologised: t, apologisedTo: to },
+        ["pass:" + free]: { ...(await this.storage.get("pass:" + free)), mailed: t, mailedTo: to } });
+      return json({ ok: true, to, code: shownPass(free) });
+    });
     // Feedback. The admin sends a buyer the survey ("Survey" on their booking code); answering it earns a one-use 30% code
     // for one Table. Each survey is survey:<token> (its link's token); an address that asked to stop (by the link, or by
     // ticking "Don't email me a feedback survey" when booking) is svoff:<address>, and that booking is noMail.
@@ -1316,6 +1341,7 @@ async function route(req, env) {
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
       if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
       if (p === "/api/admin/survey" && req.method === "POST") return call(env, "/survey-send", await req.json().catch(() => ({})));
+      if (p === "/api/admin/apology" && req.method === "POST") return call(env, "/apology", await req.json().catch(() => ({})));
       if (p === "/api/admin/surveys") return registry(env).fetch("https://registry/surveys");
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));
       if (p === "/api/admin/setemail" && req.method === "POST") return call(env, "/setemail", await req.json().catch(() => ({})));

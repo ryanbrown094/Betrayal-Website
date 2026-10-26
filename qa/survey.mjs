@@ -1,6 +1,7 @@
 // The feedback survey, with Stripe, the mail binding and the Durable Objects stubbed: the admin sends it from a booking
 // code; the page reads it, answers it once for a one-use 30% code (or stops feedback emails); the owner hears of each
-// answer; the admin lists them; the morning summary counts them. node qa/survey.mjs
+// answer; the admin lists them; the morning summary counts them. Then the admin's apology with a free game.
+// node qa/survey.mjs
 import worker, { Registry } from "../worker/src/index.js";
 import { passKey } from "../worker/src/codes.js";
 import { register } from "node:module";
@@ -133,6 +134,43 @@ check("…with the answers and the code, shown as OATH-, and no link token", row
 check("the admin list needs the admin", (await W("/api/admin/surveys").then(J))[0] === 401);
 const d = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
 check("the morning summary counts feedback sent and answered", /Feedback: 6 surveys sent, 5 answered \(5\.0 out of 5 on average\)/.test(d.body), d.body);
+
+// the apology: a new one-party booking code, free, emailed from the admin
+{
+  const passCount = async () => (await reg.storage.list({ prefix: "pass:" })).size;
+  check("the admin's apology route needs the admin", (await W("/api/admin/apology", { method: "POST", body: "{}" }).then(J))[0] === 401);
+  check("…an unknown code is refused", (await A("apology", { pass: "OATH-ZZZZ-ZZZZ" }))[0] === 404);
+  check("…and an unpaid one", (await A("apology", { pass: "OATH-CDEF-GHJK" }))[0] === 409);
+  check("…and one with no address, until one is typed", (await A("apology", { pass: "OATH-BCDE-FGHJ" }))[0] === 400);
+  const PA = await pass("OATH-KMNP-QRST", { email: "sorry@example.com", room: "ASDFGH" }), na = sent.length, pa = await passCount();
+  r = await A("apology", { pass: PA });
+  const ma = sent.at(-1), free = r[1].code, fv = free && (await reg.storage.get("pass:" + passKey(free)));
+  check("Apologise emails the buyer a new booking code", r[0] === 200 && r[1].to === "sorry@example.com" && /^OATH-/.test(free) && free !== PA && sent.length === na + 1 && ma.to === "sorry@example.com" && (await passCount()) === pa + 1, r);
+  check("…saying sorry, with the code and a link that fills it in", /sorry/i.test(ma.subject) && ma.html.includes(free) && ma.text.includes("/?code=" + free + "#start") && /enjoy it this time/.test(ma.text), ma.subject);
+  check("…from the bookings address, replies to us", ma.from.email === "bookings@thebetrayal.co.uk" && ma.replyTo === "info@thebetrayal.co.uk", ma.from);
+  check("…the free code is one party, unused, for their address, and says where it came from", fv && !fv.kind && !fv.room && !fv.revoked && fv.source === "apology" && fv.email === "sorry@example.com" && fv.from === "apology for " + PA && !!fv.mailed, fv);
+  pv = await reg.storage.get("pass:" + passKey(PA));
+  check("…and their booking remembers it", pv.apology === passKey(free) && pv.apologised > 0 && pv.apologisedTo === "sorry@example.com", pv);
+  r = await A("apology", { pass: PA, to: "other@example.com" });
+  check("sending it again sends the same free code (to an address typed in), and makes no other", r[0] === 200 && r[1].code === free && sent.at(-1).to === "other@example.com" && (await passCount()) === pa + 1, r);
+  const opened = await W("/api/games", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.50" }, body: JSON.stringify({ pass: free }) }).then(J);
+  check("the free code opens a Table", opened[0] === 200 && !!opened[1].room, opened);
+  r = await A("apology", { pass: PA });
+  check("once it's been used, another apology makes a new code", r[0] === 200 && /^OATH-/.test(r[1].code) && r[1].code !== free && (await passCount()) === pa + 2, r);
+  const PB = await pass("OATH-MNPQ-RSTV", { email: "b@example.com" }), pb = await passCount();
+  mailFail = true; r = await A("apology", { pass: PB }); mailFail = false;
+  const kept = (r[1].error || "").match(/OATH-[A-Z0-9-]+/);
+  check("if the email doesn't send, the admin is told, and the free code is kept", r[0] === 502 && !!kept && (await passCount()) === pb + 1, r);
+  r = await A("apology", { pass: PB });
+  check("…so trying again sends that same code", r[0] === 200 && kept && r[1].code === kept[0] && (await passCount()) === pb + 1, r);
+  const PC = await pass("OATH-NPQR-STVW", { email: "c@example.com" }), pc = await passCount();
+  const both = await Promise.all([A("apology", { pass: PC }), A("apology", { pass: PC })]);
+  check("two taps at once make one free code", both.every((x) => x[0] === 200) && both[0][1].code === both[1][1].code && (await passCount()) === pc + 1, both);
+  await pass("OATH-PQRS-TVWX", { email: "refunded@example.com", revoked: Date.now() });
+  check("a refunded booking can still be sent an apology", (await A("apology", { pass: "OATH-PQRS-TVWX" }))[0] === 200);
+  await pass("OATH-QRST-VWXY", { email: "never@example.com", revoked: Date.now(), paid: null });
+  check("…but not a cancelled code that was never paid for", (await A("apology", { pass: "OATH-QRST-VWXY" }))[0] === 409);
+}
 
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED");
 process.exit(ok ? 0 : 1);

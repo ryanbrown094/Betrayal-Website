@@ -1,5 +1,5 @@
-// The feedback emails: the survey a buyer is sent from the admin ("Survey" on their booking code), and the 30% code
-// they get for answering it. Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
+// The emails the admin sends a buyer by hand: the feedback survey ("Survey" on their booking code) and the 30% code
+// they get for answering it, and an apology with a free game ("Apologise"). Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
 // they reach real inboxes only once the domain is set up for sending (HANDOVER §6.4a).
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -56,6 +56,14 @@ function frame({ site, host, title, preheader, eyebrow, heading, body, button, f
 </html>`;
 }
 const para = (html) => `<tr><td style="font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:25px;color:#D9C2BA;padding:0 0 14px 0">${html}</td></tr>`;
+const codeBox = (label, c) => `<tr><td align="center" style="padding:6px 0 10px 0">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+              <td align="center" bgcolor="#1D1220" style="background:#1D1220;border:1px solid #E6A58C;border-radius:6px;padding:22px 12px">
+                <div style="font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#AFA198;padding:0 0 8px 0">${esc(label)}</div>
+                <div class="code" style="font-family:'Courier New',Courier,monospace;font-size:30px;line-height:36px;font-weight:bold;letter-spacing:4px;color:#F4C9B7">${c}</div>
+              </td>
+            </tr></table>
+          </td></tr>`;
 
 // the survey: five questions and a box, for 30% off a Table
 export function surveyEmail({ token, host }) {
@@ -89,14 +97,7 @@ The Betrayal · ${host}
 export function thanksEmail({ code, until, host }) {
   const site = "https://" + host, book = `${site}/buy?discount=${encodeURIComponent(code)}`, c = esc(code);
   const subject = "Your 30% off code for The Betrayal";
-  const box = `<tr><td align="center" style="padding:6px 0 10px 0">
-            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
-              <td align="center" bgcolor="#1D1220" style="background:#1D1220;border:1px solid #E6A58C;border-radius:6px;padding:22px 12px">
-                <div style="font-family:Helvetica,Arial,sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#AFA198;padding:0 0 8px 0">30% off one Table</div>
-                <div class="code" style="font-family:'Courier New',Courier,monospace;font-size:30px;line-height:36px;font-weight:bold;letter-spacing:4px;color:#F4C9B7">${c}</div>
-              </td>
-            </tr></table>
-          </td></tr>`;
+  const box = codeBox("30% off one Table", c);
   const html = frame({
     site, host, title: subject, preheader: `Your code: ${code}. 30% off one Table, until ${day(until)}.`,
     eyebrow: "Thank you", heading: "Your 30% off",
@@ -121,7 +122,38 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// Both go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
+// the apology: a new booking code for one free Table, sent when a game went wrong
+export function apologyEmail({ code, host }) {
+  const site = "https://" + host, open = `${site}/?code=${encodeURIComponent(code)}#start`, c = esc(code);
+  const subject = "We’re sorry: a free game of The Betrayal";
+  const lead = "We’re sorry your game of The Betrayal wasn’t the night we meant it to be.";
+  const offer = "We’d love you to give it another go, on us. Here’s a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.";
+  const how = "Use it whenever you like. On the night, tap the button below on the phone you’ll play on, or go to " + host + " and enter the code. We hope you enjoy it this time.";
+  const html = frame({
+    site, host, title: subject, preheader: `Your free booking code: ${code}. One Table, whenever you’re ready.`,
+    eyebrow: "An apology", heading: "We’re sorry", body: para(lead) + para(offer) + codeBox("One free Table", c) + para(how),
+    button: ["Open your Table", open],
+    foot: `If anything gets in the way again, reply to this email and we’ll put it right, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `We're sorry
+
+We're sorry your game of The Betrayal wasn't the night we meant it to be.
+
+We'd love you to give it another go, on us. Here's a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.
+
+Your code: ${code}
+
+Use it whenever you like. On the night, go to ${host} on the phone you'll play on and enter the code. We hope you enjoy it this time.
+Open your Table: ${open}
+
+If anything gets in the way again, reply to this email and we'll put it right, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// All three go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
 export async function sendFeedbackMail(env, to, m) {
   if (!env || !env.MAIL) throw new Error("no MAIL binding");
   const host = env.SITE_HOST || "thebetrayal.co.uk";
