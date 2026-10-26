@@ -1,6 +1,6 @@
 // The App Store, with Apple's App Store Server API and the Durable Objects stubbed: a purchase from the iPhone app becomes
-// a booking code (once, however often it's claimed), a Regular's code follows its subscription, refunds cancel an unplayed
-// Table, and nothing the phone says is believed without asking Apple. node qa/appstore.mjs
+// a code from the app's pool (once, however often it's claimed), a Host Pass's code follows its subscription, refunds
+// cancel an unused Night Pass, and nothing the phone says is believed without asking Apple. node qa/appstore.mjs
 import worker, { Registry } from "../worker/src/index.js";
 import { passKey } from "../worker/src/codes.js";
 import { register } from "node:module";
@@ -25,7 +25,7 @@ reg.env = { ...reg.env, ...env0 };
 // a JWS as Apple and StoreKit write them (the signature isn't read: only Apple's own answers are believed)
 const b64u = (s) => Buffer.from(s).toString("base64url");
 const jws = (o) => b64u(JSON.stringify({ alg: "ES256", x5c: [] })) + "." + b64u(JSON.stringify(o)) + ".sig";
-const T = (id, o) => ({ transactionId: String(id), originalTransactionId: String((o && o.orig) || id), bundleId: "uk.co.thebetrayal.app", productId: "uk.co.thebetrayal.app.table", type: "Consumable", purchaseDate: Date.now(), environment: "Production", storefront: "GBR", price: 9990, currency: "GBP", ...(o || {}) });
+const T = (id, o) => ({ transactionId: String(id), originalTransactionId: String((o && o.orig) || id), bundleId: "uk.co.thebetrayal.app", productId: "uk.co.thebetrayal.app.night", type: "Consumable", purchaseDate: Date.now(), environment: "Production", storefront: "GBR", price: 9990, currency: "GBP", ...(o || {}) });
 
 // the stubbed App Store Server API: what it knows, and every call made to it
 const apple = { Production: {}, Sandbox: {} }, subs = {}, calls = [];
@@ -48,28 +48,28 @@ globalThis.fetch = async (u, init) => {
 const W = (path, init) => worker.fetch(new Request("https://thebetrayal.co.uk" + path, init), env);
 const J = async (r) => [r.status, await r.json().catch(() => ({}))];
 const claim = (o, ip) => W("/api/appstore/claim", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip || "203.0.113.1" }, body: JSON.stringify({ jws: typeof o === "string" ? o : jws(o) }) }).then(J);
-const redeem = (pass, fresh) => W("/api/games", { method: "POST", body: JSON.stringify({ pass, fresh }) }).then(J);
+const redeem = (pass, fresh) => W("/api/games", { method: "POST", body: JSON.stringify({ pass, fresh, app: true }) }).then(J);
 const passOf = async (p) => reg.storage.get("pass:" + passKey(p));
 const notify = (type, t) => W("/api/appstore/notify", { method: "POST", body: JSON.stringify({ signedPayload: jws({ notificationType: type, notificationUUID: "n-" + type, data: { environment: "Production", signedTransactionInfo: jws(t) } }) }) }).then(J);
 
-// a Table, bought in the app
+// a Night Pass, bought in the app
 apple.Production["1001"] = T(1001);
 const [s1, c1] = await claim(T(1001));
-check("a Table bought in the app becomes a booking code", s1 === 200 && /^OATH-/.test(c1.pass) && c1.sub === false, [s1, c1]);
+check("a Night Pass bought in the app becomes a code", s1 === 200 && /^OATH-/.test(c1.pass) && c1.sub === false, [s1, c1]);
 const call1 = calls[calls.length - 1];
 check("the purchase is looked up with Apple, by its transaction", call1 && call1.what === "transactions" && call1.id === "1001" && call1.host === "Production");
 check("the App Store Server API token is ES256, signed with the In-App Purchase key", call1 && call1.verified && call1.head.alg === "ES256" && call1.head.kid === "KEY123");
 check("its claims: issuer, audience, bundle, twenty minutes", call1 && call1.claims.iss === "issuer-1" && call1.claims.aud === "appstoreconnect-v1" && call1.claims.bid === "uk.co.thebetrayal.app" && call1.claims.exp - call1.claims.iat === 1200);
 const r1 = await passOf(c1.pass);
-check("its record: from the App Store, paid, with Apple's references and price", r1 && r1.source === "appstore" && r1.paid && r1.apple.txn === "1001" && r1.apple.price === "9.99 GBP" && !r1.kind.startsWith("sub"), r1);
-check("the owner hears of the sale", alerts.some((m) => String(m.raw || "").includes("Sale (App Store): a Table, 9.99 GBP")));
+check("its record: from the App Store, paid, with Apple's references and price", r1 && r1.source === "appstore" && r1.paid && r1.apple.txn === "1001" && r1.apple.price === "9.99 GBP" && r1.kind === "night" && r1.pool === "app", r1);
+check("the owner hears of the sale", alerts.some((m) => String(m.raw || "").includes("Sale (App Store): a Night Pass, 9.99 GBP")));
 const [, c1b] = await claim(T(1001));
 check("claimed again (a lost reply, a restore): the same code", c1b.pass === c1.pass);
 const [rs1, rj1] = await redeem(c1.pass);
 check("the code opens a Table", rs1 === 200 && /^[A-Z0-9]{6}$/.test(rj1.room), [rs1, rj1]);
 
 // what the phone says isn't believed
-const [s2] = await claim(T(1001, { productId: "uk.co.thebetrayal.app.table", transactionId: "1001", price: 1 }));
+const [s2] = await claim(T(1001, { productId: "uk.co.thebetrayal.app.night", transactionId: "1001", price: 1 }));
 check("the phone's own copy of a known purchase changes nothing (Apple's record is used)", s2 === 200 && (await passOf(c1.pass)).apple.price === "9.99 GBP");
 const [s3, c3] = await claim(T(9999));
 check("a purchase Apple doesn't know is refused", s3 === 404 && /doesn’t know/.test(c3.error), [s3, c3]);
@@ -77,7 +77,7 @@ check("…after asking the production App Store, then the sandbox", calls.slice(
 apple.Production["1002"] = T(1002, { bundleId: "com.someone.else" });
 check("a purchase from another app is refused", (await claim(T(1002)))[0] === 400);
 apple.Production["1003"] = T(1003, { productId: "uk.co.thebetrayal.app.gems" });
-check("a product that isn't a Table or the Regular plan is refused", (await claim(T(1003)))[0] === 400);
+check("a product that isn't a Night Pass or a Host Pass is refused", (await claim(T(1003)))[0] === 400);
 check("something that isn't a transaction is refused", (await claim("not.a.jws"))[0] === 400 && (await claim({ transactionId: "../../x" }))[0] === 400);
 apple.Production["1004"] = T(1004, { revocationDate: Date.now() });
 check("a refunded purchase gets no code", (await claim(T(1004)))[0] === 410);
@@ -106,16 +106,16 @@ const [s7] = await claim(T(1005));
 check("with the App Store unreachable, the phone is told to try again (502)", s7 === 502);
 appleDown = false;
 
-// a Regular, bought in the app
-apple.Production["5001"] = T(5001, { productId: "uk.co.thebetrayal.app.regular", type: "Auto-Renewable Subscription", expiresDate: Date.now() + 30 * 86400000, price: 19990 });
+// a Host Pass, bought in the app
+apple.Production["5001"] = T(5001, { productId: "uk.co.thebetrayal.app.host", type: "Auto-Renewable Subscription", expiresDate: Date.now() + 30 * 86400000, price: 19990 });
 subs["5001"] = { status: 1, expires: Date.now() + 30 * 86400000 };
-const [s8, c8] = await claim(T(5001, { productId: "uk.co.thebetrayal.app.regular" }));
-check("a Regular bought in the app becomes a Regular's code", s8 === 200 && c8.sub === true && (await passOf(c8.pass)).kind === "sub" && (await passOf(c8.pass)).subActive === true, [s8, c8]);
-apple.Production["5002"] = T(5002, { orig: 5001, productId: "uk.co.thebetrayal.app.regular", type: "Auto-Renewable Subscription", transactionReason: "RENEWAL" });
+const [s8, c8] = await claim(T(5001, { productId: "uk.co.thebetrayal.app.host" }));
+check("a Host Pass bought in the app becomes a Host Pass's code", s8 === 200 && c8.sub === true && (await passOf(c8.pass)).kind === "host" && (await passOf(c8.pass)).subActive === true, [s8, c8]);
+apple.Production["5002"] = T(5002, { orig: 5001, productId: "uk.co.thebetrayal.app.host", type: "Auto-Renewable Subscription", transactionReason: "RENEWAL" });
 const [, c8b] = await claim(T(5002, { orig: 5001 }));
 check("a renewal (a new transaction, the same subscription) gives back the same code", c8b.pass === c8.pass, c8b);
 const [rs8, rj8] = await redeem(c8.pass);
-check("the Regular's code opens a Table", rs8 === 200 && rj8.sub === true && rj8.room, [rs8, rj8]);
+check("the Host Pass's code opens a Table", rs8 === 200 && rj8.sub === true && rj8.room, [rs8, rj8]);
 subs["5001"] = { status: 2, expires: Date.now() - 1000 };
 await reg.storage.put("pass:" + passKey(c8.pass), { ...(await passOf(c8.pass)), subChecked: 0 });
 const [rs9, rj9] = await redeem(c8.pass, true);
@@ -124,23 +124,23 @@ subs["5001"] = { status: 4, expires: Date.now() + 86400000 };
 const [rs10] = await redeem(c8.pass, true);
 check("in Apple's grace period it works again, checked at once", rs10 === 200);
 subs["5001"] = { status: 3, expires: Date.now() - 1000 };
-const [, nj] = await notify("DID_FAIL_TO_RENEW", T(5001, { productId: "uk.co.thebetrayal.app.regular" }));
+const [, nj] = await notify("DID_FAIL_TO_RENEW", T(5001, { productId: "uk.co.thebetrayal.app.host" }));
 const after = await passOf(c8.pass);
 check("Apple's notice of a failed renewal updates the code from Apple's record", nj.received && after.subActive === false && after.subStatus === "billing retry", after);
-check("…and the owner hears it lapsed", alerts.some((m) => String(m.raw || "").includes("A Regular (App Store) lapsed")));
+check("…and the owner hears it lapsed", alerts.some((m) => String(m.raw || "").includes("A Host Pass (App Store) lapsed")));
 
 // refunds
 apple.Production["1006"] = T(1006);
 const [, c11] = await claim(T(1006));
 apple.Production["1006"] = T(1006, { revocationDate: Date.now() });
 await notify("REFUND", T(1006));
-check("Apple's refund notice cancels an unplayed Table's code", (await passOf(c11.pass)).revoked && (await redeem(c11.pass))[0] === 410);
+check("Apple's refund notice cancels an unused Night Pass", (await passOf(c11.pass)).revoked && (await redeem(c11.pass))[0] === 410);
 check("…and claiming it again says it was refunded", (await claim(T(1006)))[0] === 410);
 await notify("REFUND", T(1001));
 check("a refund notice that Apple's record doesn't bear out changes nothing", !(await passOf(c1.pass)).revoked);
 apple.Production["1001"] = T(1001, { revocationDate: Date.now() });
 await notify("REFUND", T(1001));
-check("a refunded Table that was already played keeps its room", !(await passOf(c1.pass)).revoked && (await passOf(c1.pass)).refunded);
+check("a refunded Night Pass that was already used keeps its room", !(await passOf(c1.pass)).revoked && (await passOf(c1.pass)).refunded);
 check("a forged notice is never acted on without Apple (bad body: 400)", (await W("/api/appstore/notify", { method: "POST", body: "{}" }).then(J))[0] === 400);
 
 // guessing
