@@ -14,6 +14,8 @@ jobs:
   simulator:
     runs-on: macos-latest
     timeout-minutes: 30
+    permissions:
+      contents: write # the screenshots' git blobs (the last step)
     steps:
       - uses: actions/checkout@v4
 
@@ -54,3 +56,15 @@ jobs:
         with:
           name: ios-screens
           path: shots/
+
+      # each screenshot as a git blob on no branch (git clears them away in time), its id in the log: a session that
+      # can reach only api.github.com fetches it with  gh api repos/OWNER/REPO/git/blobs/ID
+      - name: Screenshots as blobs
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in shots/*.png; do
+            python3 -c 'import base64, json, sys; print(json.dumps({"encoding": "base64", "content": base64.b64encode(open(sys.argv[1], "rb").read()).decode()}))' "$f" > blob.json
+            echo "$(basename "$f") blob $(gh api --method POST "repos/$GITHUB_REPOSITORY/git/blobs" --input blob.json --jq .sha)"
+          done
