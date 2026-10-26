@@ -201,5 +201,21 @@ check("the figures need the admin's token", (await W("/api/admin/app-stats"))?.s
   check("…while the old phone has no place at all", old.view && !old.view.me, old.view && old.view.me);
 }
 
+// --- the app's device logs: a room keeps each phone's and TV's events under its own number, says what each is, and its
+// errors and crashes reach the error log with the room's code
+{
+  const [, g] = await games({ app: true }, "198.51.100.42");
+  const ev = (body) => W("/api/g/" + g.room + "/events", body).then(J);
+  const [e1] = await ev({ app: true, role: "host", host: true, device: "aaaa1111", build: "1.0 (1)", events: [{ t: 1, k: "open", m: "app · host · iPhone" }, { t: 2, k: "ad", m: "ad_shown · P2" }] });
+  await ev({ app: true, role: "player", device: "bbbb2222", build: "1.0 (1)", events: [{ t: 3, k: "error", m: "Can’t reach the game", src: "Session.send" }, { t: 4, k: "crash", m: "EXC_BAD_ACCESS", stack: "frames" }] });
+  await ev({ device: "cccc3333", events: [{ t: 5, k: "view", m: "lobby" }] }); // a browser, as before
+  const [, got] = await W("/api/admin/room/" + g.room + "/events", null, { Authorization: "Bearer adm" }).then(J);
+  const ids = new Set((got.events || []).map((e) => e.device)), ad = (got.events || []).find((e) => e.k === "ad"), web = (got.events || []).find((e) => e.device === "cccc3333");
+  check("a room's log keeps each device's events, and says which are the app's and what each is", e1 === 200 && ids.size === 3 && ad.app === true && ad.role === "host" && web && !web.app && !web.role, got);
+  const [, errsJ] = await W("/api/admin/errors", null, { Authorization: "Bearer adm" }).then(J);
+  const mine = (errsJ.errors || []).filter((e) => e.room === g.room);
+  check("…and the app's errors and crashes reach the error log with the room's code", mine.some((e) => e.src === "app" && e.device === "bbbb2222") && mine.some((e) => e.src === "app crash"), mine);
+}
+
 console.log(ok ? "\nall passed" : "\nFAILED");
 process.exit(ok ? 0 : 1);

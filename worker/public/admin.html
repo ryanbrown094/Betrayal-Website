@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261026193837">
+<meta name="build" content="20261026203624">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -115,7 +115,7 @@ table.list td, table.list th { font-size: 14.5px } table.list tr.click { cursor:
 .tlhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px } .tlhead label { font-size: 14.5px; color: var(--ivory2); cursor: pointer } .tlhead input { accent-color: var(--rose) }
 details.devs > summary { cursor: pointer } details.devs > summary h2 { display: inline } details.devs > summary span { margin-left: 12px; font-size: 15px; color: var(--ivory2) }
 .snapbox { position: relative; overflow: hidden; border-radius: 3px; border: 1px solid rgba(230,165,140,.25); background: #000; margin: 8px 0 } .snapbox iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #09070a }
-.ev-error td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) }
+.ev-error td, .ev-crash td { color: #ff9dbf } .ev-sync td, .ev-net td { color: #e8c07a } .ev-report td { color: var(--rose) } .ev-ad td, .ev-offer td, .ev-buy td { color: #9ed3c0 }
 .t-unused { color: var(--ivory2) } .t-play { color: #7fd3b4 } .t-used { color: #877e78 } .t-pending { color: #e8c07a } .t-failed { color: #ffb38a } .t-cancel { color: #ff9dbf } .t-sub { color: var(--rose) }
 @media (max-width: 1040px) {
   table.passes thead { display: none } table.passes tr { display: block; padding: 10px 0; border-bottom: 1px solid rgba(230,165,140,.18) }
@@ -496,13 +496,33 @@ async function openRoom(code, at) {
     play.onclick = () => { if (timer) return replay.stop(); play.textContent = "Pause"; timer = setInterval(() => { if (k >= shown.length - 1) return replay.stop(); step(1) }, +speed.value) };
     let loaded = 0; for (const f of [tv, ph]) f.onload = () => { if (++loaded === 2) setTimeout(() => go(at ? Math.min(at, recs.length) : recs.length), 300) };
   }
-  // what the devices sent
-  const ef = h("select", { "aria-label": "Which events" }, [["all", "Everything"], ["error", "Errors"], ["sync", "Sync and network"], ["tap", "Taps"], ["view", "Screens"], ["report", "Reports"]].map(([v, l]) => h("option", { value: v }, l)));
-  const tb = h("tbody", {}), draw = () => { tb.textContent = ""; const want = ef.value; for (const e of evs.slice().reverse()) if (want === "all" || e.k === want || (want === "sync" && e.k === "net")) tb.append(row([secs(e.t), (e.host ? "phone " : "TV ") + e.device, e.k, h("div", {}, e.m, e.stack ? h("div.mono", {}, e.stack) : null)], null, "ev-" + e.k)) };
-  ef.onchange = draw; draw();
-  const errs = evs.filter(e => e.k === "error").length;
-  ap(v, h("details.devs", {}, h("summary", {}, h("h2", {}, "What the devices saw"), h("span", {}, evs.length + (evs.length === 1 ? " report" : " reports") + (errs ? ", " + errs + (errs === 1 ? " error" : " errors") : ""))),
-    h("p.note", {}, "Each TV and phone in this room sends what it showed, what was tapped (button names only, never anything typed), connection trouble and errors. Newest first."), ef,
+  // what the devices sent: every phone and TV that was at this Table (the app's say whether they're the host's, a
+  // player's or a TV, and which player), then the log of all of them or one
+  const names = {}; if (md) for (const p of md.players) names[p.id] = p.name;
+  const devs = new Map();
+  for (const e of evs) {
+    const d = devs.get(e.device) || { id: e.device, app: !!e.app, role: "", first: e.t, last: e.t, n: 0, errs: 0, ads: 0, from: "", player: "" };
+    d.first = Math.min(d.first, e.t); d.last = Math.max(d.last, e.t); d.n++;
+    if (e.app && e.role) d.role = e.role; else if (!e.app) d.role = e.host ? "phone" : "TV";
+    if (e.k === "error" || e.k === "crash") d.errs++;
+    if (e.k === "ad" && /^ad_shown/.test(e.m)) d.ads++;
+    if (e.k === "open" && !d.from) d.from = e.m;
+    if (e.k === "who") d.player = e.m.split(" ")[1] || "";
+    devs.set(e.device, d);
+  }
+  const label = d => (names[d.player] ? names[d.player] + ": " : "") + (d.role === "host" ? "host's phone" : d.role === "player" ? "phone" : d.role === "tv" ? "TV" : d.role || "device") + " " + d.id + (d.app ? " (app)" : "");
+  const dl = [...devs.values()].sort((x, y) => x.first - y.first);
+  const df = h("select", { "aria-label": "Which device" }, [h("option", { value: "" }, "Every device")].concat(dl.map(d => h("option", { value: d.id }, label(d)))));
+  const KINDS = { error: ["error", "crash"], sync: ["net", "vis", "sync"], ad: ["ad"], offer: ["offer", "buy"], act: ["act", "tap"], view: ["view"], report: ["report"] };
+  const ef = h("select", { "aria-label": "Which events" }, [["all", "Everything"], ["error", "Errors and crashes"], ["ad", "Ads"], ["offer", "Offers and purchases"], ["act", "What was tapped or sent"], ["view", "Screens"], ["sync", "Connection and background"], ["report", "Reports"]].map(([v, l]) => h("option", { value: v }, l)));
+  const tb = h("tbody", {}), draw = () => { tb.textContent = ""; const want = ef.value, dev = df.value; for (const e of evs.slice().reverse()) if ((!dev || e.device === dev) && (want === "all" || (KINDS[want] || [want]).includes(e.k))) tb.append(row([secs(e.t), label(devs.get(e.device)), e.k, h("div", {}, e.m, e.stack ? h("div.mono", {}, e.stack) : null)], null, "ev-" + e.k)) };
+  ef.onchange = draw; df.onchange = draw; draw();
+  const errs = evs.filter(e => e.k === "error" || e.k === "crash").length;
+  const devTable = h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Device", "What it is", "First seen", "Last seen", "Events", "Errors", "Ads shown"].map(x => h("th", {}, x)))),
+    h("tbody", {}, dl.map(d => row([label(d), d.from || "—", secs(d.first), secs(d.last), d.n + "", d.errs ? h("b", { style: "color:#ff9dbf" }, d.errs + "") : "0", d.ads + ""], () => { df.value = d.id; draw() })))));
+  ap(v, h("details.devs", {}, h("summary", {}, h("h2", {}, "What the devices saw"), h("span", {}, dl.length + (dl.length === 1 ? " device, " : " devices, ") + evs.length + (evs.length === 1 ? " event" : " events") + (errs ? ", " + errs + (errs === 1 ? " error" : " errors") : ""))),
+    h("p.note", {}, "Each TV and phone at this Table sends what it showed, what was tapped or sent (button and action names only, never anything typed), ads and offers, purchases, connection trouble, errors and crashes, under a number of its own at this Table. Tap a device to see only its log. Newest first."),
+    devTable, h("p", {}, df, " ", ef),
     h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["When", "Device", "Kind", "What"].map(x => h("th", {}, x)))), tb))));
 }
 
