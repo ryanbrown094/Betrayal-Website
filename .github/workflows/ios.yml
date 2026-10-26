@@ -1,0 +1,56 @@
+name: iOS app
+
+# Builds the iPhone app (app/) on one of GitHub's Macs and runs it in the simulator: the start screen, the bridge check
+# (GameModel.selfTestPage) and a Table from the live server, as screenshots in the run's "ios-screens" artifact.
+# Mac minutes count ten times against the account's Actions allowance, so it runs only when app/ changes, or by hand.
+on:
+  push:
+    paths:
+      - "app/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Xcode
+        run: xcodebuild -version
+
+      - name: Build
+        run: >
+          xcodebuild -quiet -project app/TheBetrayal.xcodeproj -scheme TheBetrayal -configuration Debug
+          -destination "generic/platform=iOS Simulator" -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+
+      - name: Run in the simulator
+        run: |
+          set -eo pipefail
+          # the newest iOS runtime's first iPhone
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)["devices"]
+          ios = sorted((k for k in d if ".iOS-" in k), key=lambda k: [int(x) for x in k.split(".iOS-")[1].split("-")])
+          print(next(x["udid"] for k in reversed(ios) for x in d[k] if x["name"].startswith("iPhone")))')
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/TheBetrayal.app
+          mkdir -p shots
+          shot() {
+            name=$1; wait=$2; shift 2
+            xcrun simctl terminate "$UDID" uk.co.thebetrayal.app 2>/dev/null || true
+            xcrun simctl launch "$UDID" uk.co.thebetrayal.app "$@"
+            sleep "$wait"
+            xcrun simctl io "$UDID" screenshot "shots/$name.png"
+          }
+          shot 1-start 8
+          shot 2-bridge 8 -selftest
+          shot 3-table 15 -open TESTAB
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-screens
+          path: shots/
