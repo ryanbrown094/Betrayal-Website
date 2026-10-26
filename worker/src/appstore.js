@@ -34,7 +34,8 @@ async function token(env) {
 }
 
 // a GET from the App Store Server API: production first, then the sandbox (TestFlight and sandbox testers), as Apple
-// advises when a transaction's environment isn't known. Returns {status, json, env}.
+// advises when a transaction's environment isn't known. Production also says 401 to every call until the app's first
+// release, so the sandbox is asked then too (TestFlight, and App Review's own purchases). Returns {status, json, env}.
 async function apple(env, path) {
   const auth = "Bearer " + (await token(env));
   let last = null;
@@ -42,7 +43,7 @@ async function apple(env, path) {
     const r = await fetch(host + path, { headers: { Authorization: auth } });
     const json = await r.json().catch(() => ({}));
     last = { status: r.status, json, env: name };
-    if (r.status !== 404) return last;
+    if (r.status !== 404 && r.status !== 401) return last;
   }
   return last;
 }

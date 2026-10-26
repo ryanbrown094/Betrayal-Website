@@ -29,7 +29,7 @@ const T = (id, o) => ({ transactionId: String(id), originalTransactionId: String
 
 // the stubbed App Store Server API: what it knows, and every call made to it
 const apple = { Production: {}, Sandbox: {} }, subs = {}, calls = [];
-let appleDown = false;
+let appleDown = false, unreleased = false;
 globalThis.fetch = async (u, init) => {
   u = String(u);
   const m = u.match(/^https:\/\/api\.storekit(-sandbox)?\.itunes\.apple\.com\/inApps\/v1\/(transactions|subscriptions)\/(\d+)$/);
@@ -38,6 +38,7 @@ globalThis.fetch = async (u, init) => {
   const verified = !!(h && p && s) && (await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pair.publicKey, Buffer.from(s, "base64url"), new TextEncoder().encode(h + "." + p)));
   calls.push({ host: m[1] ? "Sandbox" : "Production", what: m[2], id: m[3], verified, head: JSON.parse(Buffer.from(h || "", "base64url").toString() || "{}"), claims: JSON.parse(Buffer.from(p || "", "base64url").toString() || "{}") });
   if (appleDown) return new Response("{}", { status: 500 });
+  if (unreleased && !m[1]) return new Response(JSON.stringify({ errorCode: 401 }), { status: 401 });
   if (!verified) return new Response("{}", { status: 401 });
   const where = apple[m[1] ? "Sandbox" : "Production"];
   if (m[2] === "transactions") return where[m[3]] ? new Response(JSON.stringify({ signedTransactionInfo: jws(where[m[3]]) })) : new Response(JSON.stringify({ errorCode: 4040010 }), { status: 404 });
@@ -87,6 +88,12 @@ apple.Sandbox["2001"] = T(2001, { environment: "Sandbox" });
 const [s4, c4] = await claim(T(2001, { environment: "Sandbox" }));
 check("a sandbox purchase (TestFlight) is found in the sandbox", s4 === 200 && (await passOf(c4.pass)).apple.env === "Sandbox", [s4, c4]);
 check("…and the owner is told it was a test", alerts.some((m) => mailText(m).includes("A test purchase (Sandbox)")));
+// before the app's first release Apple's production API says 401 to everything: the sandbox is still asked
+unreleased = true;
+apple.Sandbox["2002"] = T(2002, { environment: "Sandbox" });
+const [s4b, c4b] = await claim(T(2002, { environment: "Sandbox" }));
+check("before the app's first release (production says 401), a sandbox purchase is still found", s4b === 200 && /^OATH-/.test(c4b.pass) && calls.slice(-2).map((c) => c.host).join() === "Production,Sandbox", [s4b, c4b]);
+unreleased = false;
 
 // Xcode's StoreKit testing: only on a development server
 const x = T(3001, { environment: "Xcode" });
@@ -105,6 +112,12 @@ appleDown = true;
 const [s7] = await claim(T(1005));
 check("with the App Store unreachable, the phone is told to try again (502)", s7 === 502);
 appleDown = false;
+// a key Apple doesn't know: refused in both places, never mistaken for an unknown purchase
+const other = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+env = { ...env0, APPSTORE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\n" + Buffer.from(await crypto.subtle.exportKey("pkcs8", other.privateKey)).toString("base64") + "\n-----END PRIVATE KEY-----" };
+const [s7b, c7b] = await claim(T(1001));
+check("with a wrong key, the phone is told to try again (502)", s7b === 502 && /couldn’t check/.test(c7b.error) && calls.slice(-2).map((c) => c.host).join() === "Production,Sandbox", [s7b, c7b]);
+env = env0;
 
 // a Host Pass, bought in the app
 apple.Production["5001"] = T(5001, { productId: "uk.co.thebetrayal.app.host", type: "Auto-Renewable Subscription", expiresDate: Date.now() + 30 * 86400000, price: 19990 });
