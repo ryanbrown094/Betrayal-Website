@@ -69,7 +69,7 @@ struct Small: View {
 
 // bold words within a line, as the page's <b>
 func bold(_ s: String) -> Text { Text(s).font(Theme.ui(18, .bold)) }
-func b(_ s: String, size: CGFloat = 18) -> Text { Text(s).font(Theme.ui(size, .bold)).foregroundColor(Theme.tallow) }
+func b(_ s: String, size: CGFloat = 18) -> Text { Text(s).font(Theme.ui(size, .bold)) }
 
 struct Question: View { // .q
     let text: String
@@ -284,7 +284,7 @@ struct Meter: View {
                 RoundedRectangle(cornerRadius: 2).fill(Color(hex: 0x1B111D))
                 Rectangle().fill(Theme.brass).frame(width: g.size.width * min(1, CGFloat(pot) / CGFloat(max(1, cap)))).animation(.easeOut(duration: 0.8), value: pot)
                 if tiers { Rectangle().fill(.white.opacity(0.4)).frame(width: 2).offset(x: g.size.width / 2) }
-                Text("\(pot) / \(cap)").font(Theme.ui(font, .bold, fixed: true)).foregroundStyle(.white).shadow(color: .black, radius: 1, y: 1)
+                Text(verbatim: "\(pot) / \(cap)").font(Theme.ui(font, .bold, fixed: true)).foregroundStyle(.white).shadow(color: .black, radius: 1, y: 1)
                     .frame(maxWidth: .infinity)
             }
             .clipShape(RoundedRectangle(cornerRadius: 2))
@@ -380,8 +380,8 @@ struct Waiting: View {
             Crest().frame(width: 40, height: 48).foregroundStyle(Theme.brass2)
                 .opacity(breathe ? 0.45 : 1).scaleEffect(breathe ? 0.94 : 1)
                 .onAppear { withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { breathe = true } }
-            Text("Waiting for " + who).font(Theme.ui(16)).foregroundStyle(Theme.tallow2)
-            Text(line).font(Theme.book(15)).foregroundStyle(Theme.mist)
+            Text("Waiting for " + who).font(Theme.ui(18)).foregroundStyle(Theme.tallow2)
+            Text(line).font(Theme.bookItalic(18)).foregroundStyle(Theme.mist)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)

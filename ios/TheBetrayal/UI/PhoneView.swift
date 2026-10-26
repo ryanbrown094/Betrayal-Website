@@ -258,7 +258,7 @@ struct TopBar: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 12) {
-                Text(["lobby", "oath", "roles"].contains(v.phase) ? "Table \(session.room)" : "Purse \(v.pot)")
+                Text(verbatim: ["lobby", "oath", "roles"].contains(v.phase) ? "Table \(session.room)" : "Purse \(v.pot)")
                     .font(Theme.sc(14)).tracking(0.5).monospacedDigit().foregroundStyle(Theme.brass2).lineLimit(1).fixedSize()
                 if me.director && v.paused == nil && !["lobby", "end"].contains(v.phase) {
                     Button { session.confirm("Pause the game? Every clock stops until you carry on.", yes: "Pause") { session.act("pause") } } label: {

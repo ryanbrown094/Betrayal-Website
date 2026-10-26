@@ -200,7 +200,7 @@ struct SnapPlay: View {
             let prev = (i ?? 0) > 0 ? x.snapSymbol((i ?? 0) - 1) : nil
             VStack(spacing: 0) {
                 ZStack {
-                    if let sym { Icon(name: sym).padding(.horizontal, 50).foregroundStyle(Theme.brass2) }
+                    if let sym { Icon(name: sym).frame(width: 210, height: 210).foregroundStyle(Theme.brass2) }
                     else { HStack(spacing: 6) { Sub("Get ready…"); Clock(end: x.start).padding(.bottom, 12) } }
                 }
                 .frame(maxWidth: .infinity).frame(height: 300)
@@ -393,7 +393,7 @@ struct GhostItem: View {
             case "cell": if let g = x.grid { Cells(grid: g) } else { H2("Something is changing…") }
             case "snap":
                 TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                    if let s = x.snapSymbol(x.snapIndex(at: session.gameNow())) { Icon(name: s).padding(.horizontal, 50).frame(height: 300).frame(maxWidth: .infinity).foregroundStyle(Theme.brass2) }
+                    if let s = x.snapSymbol(x.snapIndex(at: session.gameNow())) { Icon(name: s).frame(width: 210, height: 210).frame(maxWidth: .infinity, minHeight: 300).foregroundStyle(Theme.brass2) }
                     else { H2("Get ready") }
                 }
             case "rps":
@@ -435,7 +435,7 @@ struct TrialDone: View {
             H1(TrialDone.head(v, t))
             if t.special == "cast" { Sub("Whoever won holds it now. Only they know.") }
             if w != nil && t.byLot && t.key != "tempt" { Small("A tie at the top, settled by lot.") }
-            (Text(Words.signed(t.points)).font(Theme.book(30)) + Text(" to the Purse").font(Theme.ui(15))).foregroundStyle(Theme.brass2).monospacedDigit().padding(.bottom, 4)
+            (Text(Words.signed(t.points)).font(Theme.book(30)).foregroundColor(Theme.brass2) + Text(" to the Purse").font(Theme.book(15)).foregroundColor(Theme.tallow2)).monospacedDigit().padding(.bottom, 4)
             Meter(pot: v.pot, cap: v.potCap, tiers: v.tiers)
             if t.wrongF > 0 { Small("The Forsworn gave " + Words.plural(t.wrongF, "wrong answer") + ", and the Purse paid for them.") }
             if let s = t.sanctPublic { Banner(.sanct, v.name(s) + " takes Sanctuary for tonight.") }

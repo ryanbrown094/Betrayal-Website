@@ -18,7 +18,7 @@ struct TVView: View {
                             Text((v.title ?? "The Betrayal") + " · " + (v.final ? "the final" : v.round > 0 ? "round \(v.round)" : "table " + session.room))
                                 .font(Theme.sc(u.vh * 2.4, fixed: true)).tracking(u.vh * 0.29).foregroundStyle(Theme.tallow2)
                             Spacer()
-                            if v.phase != "lobby" { Text("Purse \(v.pot)").font(Theme.sc(u.vh * 3.2, fixed: true)).tracking(u.vh * 0.38).monospacedDigit().foregroundStyle(Theme.brass2) }
+                            if v.phase != "lobby" { Text(verbatim: "Purse \(v.pot)").font(Theme.sc(u.vh * 3.2, fixed: true)).tracking(u.vh * 0.38).monospacedDigit().foregroundStyle(Theme.brass2) }
                         }
                         TVBody(v: v, u: u)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -166,7 +166,9 @@ struct TVBody: View {
                 eyebrow("dawn")
                 if d.revealed {
                     h1(d.victims.isEmpty ? "Nobody was poisoned" : Words.andList(d.victims.map(Words.nb)) + (d.victims.count > 1 ? " were" : " was") + " poisoned")
-                    if let last = d.lastEnd { HStack(spacing: u.vw * 0.6) { sub("Last words"); clock(last) } } else if d.saved > 0 { sub("Sanctuary held.") }
+                    if let last = d.lastEnd {
+                        HStack(alignment: .firstTextBaseline, spacing: u.vw * 0.6) { Text("Last words").font(Theme.ui(u.vh * 3, fixed: true)).foregroundStyle(Theme.tallow2); clock(last) }
+                    } else if d.saved > 0 { sub("Sanctuary held.") }
                     if d.victims.contains(where: { n in d.likely.contains { $0.name == n } }) { Epitaphs(d: d, tv: true, vh: u.vh) }
                     else { TVPeople(v: v, list: v.players, u: u) }
                 } else { h1("Heads up"); sub("Who made it through the night?") }
@@ -290,6 +292,7 @@ struct TVBody: View {
 
     @ViewBuilder private func end(_ r: GameResult) -> some View {
         let fw = r.forsworn
+        let inner = u.vw * 86 // the screen less its sides (5vw each) and the 4vw between the columns
         HStack(alignment: .center, spacing: u.vw * 4) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(fw ? "The Forsworn win" : "The Loyal win").font(Theme.disp(u.size.width / u.size.height < 1.5 ? u.vh * 7 : u.vh * 9, fixed: true)).foregroundStyle(fw ? Theme.blood2 : Theme.brass2)
@@ -307,7 +310,7 @@ struct TVBody: View {
                 if !r.peeked.isEmpty { count("the host opened the roles in round " + r.peeked.map(String.init).joined(separator: ", ")).padding(.top, u.vh * 2) }
             }
             .multilineTextAlignment(.leading)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: inner / 2.1, alignment: .leading)
             VStack(spacing: u.vh * 3) {
                 TVPeople(v: v, list: v.players, u: u, roles: true, end: true)
                 if !r.awards.isEmpty {
@@ -326,8 +329,7 @@ struct TVBody: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity)
-            .layoutPriority(1.1)
+            .frame(width: inner * 1.1 / 2.1)
         }
     }
 
@@ -398,26 +400,23 @@ struct TVPeople: View {
         let narrow = u.size.width / u.size.height < 1.5
         let w = many ? (end && narrow ? u.vw * 7.2 : u.vw * 8) : max(u.vw * 9, min(u.vh * 15, u.vw * 9.6))
         let seal = many ? (end && narrow ? u.vh * 4.4 : u.vh * 5.4) : u.vh * 7
-        VStack(spacing: u.vh * 1.4) {
-            ForEach(Array(stride(from: 0, to: n, by: per)), id: \.self) { r in
-                HStack(alignment: .top, spacing: u.vw * 1.4) {
-                    ForEach(list[r..<min(r + per, n)]) { p in
-                        let ok = mark?(p) ?? false
-                        VStack(spacing: u.vh * 0.6) {
-                            Seal(p).frame(width: seal, height: seal)
-                                .shadow(color: ok ? Theme.verd.opacity(0.8) : roles && p.forsworn ? Theme.blood2.opacity(0.8) : .clear, radius: u.vh * (ok ? 1.2 : 1.4))
-                            Text(p.name).font(Theme.ui(many ? u.vh * 1.9 : u.vh * 2.2, fixed: true)).foregroundStyle(Theme.tallow).lineLimit(2).multilineTextAlignment(.center)
-                            if roles, let role = p.role {
-                                Text(role == "f" ? "forsworn" : "loyal").font(Theme.sc(end && many && narrow ? u.vh * 1.6 : u.vh * 2.1, fixed: true)).tracking(u.vh * 0.17)
-                                    .foregroundStyle(role == "f" ? Theme.blood2 : Theme.loyalSoft)
-                            }
-                        }
-                        .frame(width: w)
-                        .opacity(answered ? (ok ? 1 : 0.4) : (!p.alive && !end) ? 0.35 : 1)
+        Flow(spacing: u.vw * 1.4, lineSpacing: u.vh * 1.4, center: true) {
+            ForEach(list) { p in
+                let ok = mark?(p) ?? false
+                VStack(spacing: u.vh * 0.6) {
+                    Seal(p).frame(width: seal, height: seal)
+                        .shadow(color: ok ? Theme.verd.opacity(0.8) : roles && p.forsworn ? Theme.blood2.opacity(0.8) : .clear, radius: u.vh * (ok ? 1.2 : 1.4))
+                    Text(p.name).font(Theme.ui(many ? u.vh * 1.9 : u.vh * 2.2, fixed: true)).foregroundStyle(Theme.tallow).lineLimit(2).multilineTextAlignment(.center)
+                    if roles, let role = p.role {
+                        Text(role == "f" ? "forsworn" : "loyal").font(Theme.sc(end && many && narrow ? u.vh * 1.6 : u.vh * 2.1, fixed: true)).tracking(u.vh * 0.17)
+                            .foregroundStyle(role == "f" ? Theme.blood2 : Theme.loyalSoft)
                     }
                 }
+                .frame(width: w)
+                .opacity(answered ? (ok ? 1 : 0.4) : (!p.alive && !end) ? 0.35 : 1)
             }
         }
+        .frame(maxWidth: min(u.vw * 88, CGFloat(per) * (w + u.vw * 1.4)))
     }
 }
 
@@ -448,7 +447,7 @@ struct TVScores: View {
                                 .shadow(color: e.key == w ? Theme.brass2.opacity(0.8) : .clear, radius: u.vh)
                             Text(v.name(e.key)).foregroundStyle(e.key == w ? Theme.brass2 : Theme.tallow)
                             Spacer()
-                            Text("\(e.value)").font(Theme.ui(u.vh * 3, .bold, fixed: true)).foregroundStyle(Theme.brass2)
+                            Text(verbatim: "\(e.value)").font(Theme.ui(u.vh * 3, .bold, fixed: true)).foregroundStyle(Theme.brass2)
                         }
                         .font(Theme.ui(u.vh * 3, fixed: true))
                     }
@@ -508,9 +507,10 @@ struct QRBox: View {
     let text: String
     var body: some View {
         Group {
-            if let img = QR.image(text) { Image(decorative: img, scale: 1).interpolation(.none).resizable().scaledToFit() }
-            else { Color(hex: 0xEFE0D4) }
+            if let img = QR.image(text) { Image(decorative: img, scale: 1).interpolation(.none).resizable().scaledToFit().padding(10) }
+            else { Color.clear }
         }
+        .background(Color(hex: 0xEFE0D4))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .shadow(color: Theme.brass2.opacity(0.18), radius: 30)
     }

@@ -140,28 +140,39 @@ struct Backdrop: View {
     var night = false
     var tv = false
     var body: some View {
-        ZStack {
-            Theme.soot
-            if night && tv { Color(hex: 0x030204) }
-            else if tv {
-                GeometryReader { g in
-                    ZStack {
-                        RadialGradient(colors: [Theme.dusk, Theme.soot], center: .top, startRadius: 0, endRadius: max(g.size.width, g.size.height) * 0.7)
-                        RadialGradient(colors: [Color(hex: 0xD96A4C, alpha: 0.18), .clear], center: UnitPoint(x: 0.5, y: 1.1), startRadius: 0, endRadius: g.size.width * 0.55)
-                    }
+        GeometryReader { g in
+            let w = g.size.width
+            let h = g.size.height
+            ZStack {
+                Theme.soot
+                if night && tv { Color(hex: 0x030204) }
+                else if tv {
+                    // body.tv: radial-gradient(90vw 70vh at 50% 110%, rgba(217,106,76,.18), transparent 62%), radial-gradient(120vw 80vh at 50% 0%, #1d1020, soot 70%)
+                    CSSGlow(stops: [.init(color: Theme.dusk, location: 0), .init(color: Theme.soot, location: 0.7)], at: UnitPoint(x: 0.5, y: 0), rx: 1.2 * w, ry: 0.8 * h)
+                    CSSGlow(stops: [.init(color: Color(hex: 0xD96A4C, alpha: 0.18), location: 0), .init(color: .clear, location: 0.62)], at: UnitPoint(x: 0.5, y: 1.1), rx: 0.9 * w, ry: 0.7 * h)
+                } else {
+                    // body: radial-gradient(120% 60% at 50% 0%, #1d1020 0%, soot 70%)
+                    CSSGlow(stops: [.init(color: Theme.dusk, location: 0), .init(color: Theme.soot, location: 0.7)], at: UnitPoint(x: 0.5, y: 0), rx: 1.2 * w, ry: 0.6 * h)
                 }
-            } else {
-                GeometryReader { g in
-                    RadialGradient(colors: [Theme.dusk, Theme.soot], center: .top, startRadius: 0, endRadius: max(g.size.height * 0.45, g.size.width * 0.85))
-                }
-            }
-            Grain.image.map { Image(decorative: $0, scale: 1).resizable(resizingMode: .tile).opacity(0.06) }
-            GeometryReader { g in
-                RadialGradient(colors: [.clear, .black.opacity(0.55)], center: UnitPoint(x: 0.5, y: 0.4), startRadius: max(g.size.width, g.size.height) * 0.42, endRadius: max(g.size.width, g.size.height) * 0.85)
+                Grain.image.map { Image(decorative: $0, scale: 1).resizable(resizingMode: .tile).opacity(0.06) }
+                // body::after: radial-gradient(130% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.55))
+                CSSGlow(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], at: UnitPoint(x: 0.5, y: 0.4), rx: 1.3 * w, ry: 0.9 * h)
             }
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
+    }
+}
+
+// a CSS radial-gradient with its own radii: a circle of the height's radius, stretched to the width's
+private struct CSSGlow: View {
+    let stops: [Gradient.Stop]
+    let at: UnitPoint
+    let rx: CGFloat
+    let ry: CGFloat
+    var body: some View {
+        RadialGradient(gradient: Gradient(stops: stops), center: at, startRadius: 0, endRadius: max(1, ry))
+            .scaleEffect(x: rx / max(1, ry), y: 1, anchor: at)
     }
 }
 

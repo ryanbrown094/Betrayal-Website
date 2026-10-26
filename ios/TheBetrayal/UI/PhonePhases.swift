@@ -425,7 +425,7 @@ struct NightView: View {
                 else {
                     VStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(w.enumerated()), id: \.offset) { _, x in
-                            (Text(x.name + " ").font(Theme.ui(16, .bold)).foregroundColor(Theme.blood2) + Text(x.text).font(Theme.ui(16)).foregroundColor(Theme.tallow))
+                            (Text(x.name + "  ").font(Theme.ui(16, .bold)).foregroundColor(Theme.blood2) + Text(x.text).font(Theme.ui(16)).foregroundColor(Theme.tallow))
                                 .padding(.vertical, 4).frame(maxWidth: .infinity, alignment: .leading)
                                 .overlay(alignment: .bottom) { Rectangle().fill(.white.opacity(0.06)).frame(height: 1) }
                         }
