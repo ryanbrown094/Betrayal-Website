@@ -29,6 +29,9 @@ struct GameView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Leave") { leaving = true }.font(Theme.ui(17))
                 }
+                ToolbarItem(placement: .principal) {
+                    Text("Table \(target.room)").font(Theme.sc(18)).foregroundStyle(Theme.tallow)
+                }
             }
             .confirmationDialog("Leave this Table?", isPresented: $leaving, titleVisibility: .visible) {
                 Button("Leave", role: .destructive) { dismiss() }

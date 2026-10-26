@@ -4,9 +4,6 @@ import SwiftUI
 struct TheBetrayalApp: App {
     init() {
         Theme.registerFonts()
-        if let font = UIFont(name: "AlegreyaSansSC-Medium", size: 18) {
-            UINavigationBar.appearance().titleTextAttributes = [.font: font, .foregroundColor: UIColor(Theme.tallow)]
-        }
     }
 
     var body: some Scene {
