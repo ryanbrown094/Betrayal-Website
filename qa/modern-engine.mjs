@@ -1,6 +1,7 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
-import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots } from "../worker/src/modern.js";
+import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys } from "../worker/src/modern.js";
+import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES } from "../worker/src/content.gen.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const dict = { has: (w) => w.length >= 3 };
@@ -313,6 +314,77 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   const g = begin(10), s = g.s; setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
   A(g, g.dir, { a: "pause" }); g.now += 300000; A(g, g.dir, { a: "tool", v: "voteNow" }); g.now += 5000; A(g, g.dir, { a: "pause", v: "off" });
   check("a host tool used while paused acts from the moment of the pause", s.phase === "vote" && s.vote.voteEnd - g.now === 120000, s.vote.voteEnd - g.now);
+}
+// 10. the app's free games (opts.content "base", worker/src/tiers.js): eight Trials and the first half of each question
+// bank, all evening; a pass unlocks the rest; the website's games are as they were
+{
+  const BANKS = { qe: QUIZ_E, qm: QUIZ_M, qh: QUIZ_H, lk: LIKELY, est: ESTIMATE, charades: CHARADES };
+  const playWhole = (n, opts) => {
+    const g = setup(n, opts); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
+    const keys = new Set(); let guard = 0;
+    const target = (p) => alive(g.s).find((q) => q.id !== p.id);
+    while (g.s.phase !== "end" && guard++ < 200) {
+      const s = g.s;
+      if (s.phase === "day") { A(g, g.dir, { a: "next" }); continue; }
+      if (s.phase === "break") { A(g, g.dir, { a: "brkEnd" }); continue; }
+      if (s.phase === "trial") { if (s.trial.key !== "tempt") keys.add(s.trial.key); finishCurrentTrial(g); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "talk" || s.phase === "vote") { vote(g, target); continue; }
+      if (s.phase === "night") { night(g); continue; }
+      if (s.phase === "dawn") { A(g, g.dir, { a: "cont" }); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "reveal") { run(g, 6000); A(g, g.dir, { a: "cont" }); continue; }
+      if (s.phase === "trust") { for (const p of alive(s)) A(g, p.id, { a: "trust", v: "trust" }); run(g, 8000); continue; }
+      if (s.phase === "unmask" || s.phase === "honour") { run(g, 5000); continue; }
+      run(g, 2000);
+    }
+    return { g, keys };
+  };
+  const free = [10, 16, 24].map((n) => playWhole(n, { content: "base" }));
+  check("free games: every Trial played is one of the eight", free.every(({ keys }) => [...keys].every((k) => BASE_TRIALS.includes(k))), free.map(({ keys }) => [...keys]));
+  check("…and whole games still end", free.every(({ g }) => g.s.phase === "end"));
+  check("…every question from the first half of its bank", free.every(({ g }) => Object.entries(g.s.used || {}).every(([k, u]) => !BANKS[k] || u.every((i) => i < Math.ceil(BANKS[k].length / 2)))), free.map(({ g }) => g.s.used));
+  const web = [16, 24].map((n) => playWhole(n, {}));
+  check("the website's games still play the other Trials", web.some(({ keys }) => [...keys].some((k) => !BASE_TRIALS.includes(k))), web.map(({ keys }) => [...keys]));
+  const g = setup(10, { content: "base" });
+  check("a free game's phones are told what a pass would add", (viewFor(g.s, g.dir, g.now).locked || []).length === Object.keys(TRIALS).length - BASE_TRIALS.length && !viewFor(setup(10, {}).s, null, g.now).locked);
+  g.s.opts.content = "all";
+  check("a pass on a free game unlocks every Trial", trialKeys(g.s).length === Object.keys(TRIALS).length - 1 && !viewFor(g.s, g.dir, g.now).locked); // The Statue waits for Ghosts
+}
+// 11. the app's practice game: one person and the bots, who play everything, Trials included, at its free tier
+{
+  let now = 1e12; const s = newGame(now, rnd, { content: "base" }); s.practice = true;
+  const me = join(s, "Robin", now, rnd).id; addBots(s, 10, now, rnd);
+  const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
+  A(g, me, { a: "start" }); A(g, me, { a: "optin", v: "any" }); run(g, 2000); A(g, me, { a: "ack" }); run(g, 2000);
+  const keys = new Set(), mine = () => alive(s).some((p) => p.id === me);
+  let botAnswers = 0, items = 0, guard = 0, seen = null;
+  while (s.phase !== "end" && guard++ < 4000) {
+    if (s.phase === "day") { A(g, me, { a: "next" }); continue; }
+    if (s.phase === "break") { A(g, me, { a: "brkEnd" }); continue; }
+    if (s.phase === "trial") {
+      const t = s.trial, it = t.item;
+      if (t.key !== "tempt") keys.add(t.key);
+      if (it && it.stage === "open") {
+        if (seen !== it) { seen = it; items++; }
+        if (mine() && !(me in it.inputs) && ["text", "number", "hilo", "vote", "word", "recall", "cell"].includes(it.k)) A(g, me, { a: "ans", v: it.k === "vote" ? alive(s).find((p) => p.id !== me).id : it.k === "hilo" ? "higher" : it.k === "cell" ? "3" : it.k === "number" ? "100" : "a" });
+        if (it.k === "rps" && (it.pairs || []).flat().includes(me) && !(me in it.inputs)) A(g, me, { a: "ans", v: "rock" });
+        if (it.k === "snap" && rnd() < 0.2) A(g, me, { a: "ans" });
+        botAnswers += Object.keys(it.inputs).filter((id) => id !== me).length;
+      }
+      if (t.stage === "done") A(g, me, { a: "cont" });
+      run(g, 1000); continue;
+    }
+    if (s.phase === "talk") { A(g, me, { a: "tool", v: "voteNow" }); run(g, 1000); continue; }
+    if (s.phase === "vote") { if (mine() && !(me in s.vote.ballots)) { const c = alive(s).filter((q) => q.id !== me && q.id !== s.vote.immune && (!s.vote.revote || s.vote.revote.includes(q.id))); if (c.length) A(g, me, { a: "ballot", v: c[0].id }); } run(g, 1000); continue; }
+    if (s.phase === "night") { if (mine()) { const p = s.players.find((q) => q.id === me); if (p.role === "f") { const t = alive(s).filter((q) => q.role !== "f"); for (let i = 0; i < s.night.kills; i++) A(g, me, { a: "pick", v: t[i].id }); } else A(g, me, { a: "sleep" }); } run(g, 1000); continue; }
+    if (s.phase === "dawn") { A(g, me, { a: "cont" }); A(g, me, { a: "cont" }); run(g, 1000); continue; }
+    if (s.phase === "reveal") { run(g, 6000); A(g, me, { a: "cont" }); continue; }
+    if (s.phase === "trust") { if (mine()) A(g, me, { a: "trust", v: "trust" }); run(g, 8000); continue; }
+    run(g, 2000);
+  }
+  check(`a practice game (one person, nine bots) plays to the end (${s.result && s.result.winner}, ${s.round} rounds)`, s.phase === "end", { phase: s.phase, guard });
+  check("…its Trials are played, not skipped: the bots answer the questions", items > 10 && botAnswers > items * 3, { items, botAnswers });
+  check("…and only the Trials one person can play, at the free tier", [...keys].every((k) => BASE_TRIALS.includes(k) && !SOLO_OFF.includes(k)), [...keys]);
+  check("…the phones are told it's a practice game", viewFor(s, me, g.now).practice === true && !viewFor(setup(10, {}).s, null, g.now).practice);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);
