@@ -49,7 +49,7 @@ Every line follows `01-game/glossary-and-naming.md`: public words only, no TV pr
 - At night everyone taps their phone, but only the Forsworn’s taps count, so nobody can tell who’s choosing.
 - If you’re poisoned, you’ll find out on your phone. Say nothing until dawn.
 - Charades, but only the actor’s phone knows the word.
-- If you’re eating together, switch on dinner in courses and the game stops for each course between the rounds.
+- About an hour for ten players: play it before dinner, after dinner, or with drinks.
 - The Loyal build the Purse, and the Forsworn, if they win, take whatever it falls short, so they sabotage it quietly.
 - For a night with the phones put away, Classic has a Keeper, blindfolds and chalkboards.
 

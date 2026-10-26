@@ -235,8 +235,6 @@ function lobby(me) {
   <div style="height:8px"></div><label class="l" for="tier2">At a full Purse</label><input class="f" id="tier2" maxlength="80" placeholder="e.g. dinner out" value="${esc(((o.prizes || []).find((x) => x.at === 1) || {}).what || "")}" data-tier="1"></details>
   <label class="l" style="margin-top:12px">Twists</label>${two("twists", [true, "On"], [false, "Off"])}
   <p class="small">${o.twists ? "Once each: the Casting Vote, the Temptation, the Crown, and the Confessor in the final." : "Off: a plainer game, good for a first night."}</p>
-  <label class="l">Eating as you play?</label>${two("courses", [true, "Yes, in courses"], [false, "No"])}
-  <p class="small">${o.courses ? "Dinner in courses: a starter, a main and dessert are served between the rounds." : "No meal breaks. Turn this on to serve dinner in courses between the rounds. You can always call a short break."}</p>
   <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
   <p class="small center">For the TV, if you want one, open <b>${esc(SITE)}/t/${CODE}</b> on a laptop and cast it.</p></div>`;
   return h;

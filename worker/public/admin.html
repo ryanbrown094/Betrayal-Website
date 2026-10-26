@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261023123710">
+<meta name="build" content="20261026095352">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -391,6 +391,8 @@ function renderRooms() {
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
+// the public words for the roles and sides the game code names cloak/candle (Classic) and f/l or forsworn/loyal (Modern)
+const ROLE = { cloak: "Forsworn", candle: "Loyal", f: "Forsworn", l: "Loyal" }, SIDE = { cloaks: "The Forsworn", candles: "The Loyal", forsworn: "The Forsworn", loyal: "The Loyal" };
 let replay = null;
 async function openRoom(code, at) {
   const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
@@ -410,19 +412,19 @@ async function openRoom(code, at) {
     ap(v, h("h2", {}, "The game (Modern)"),
       kv([["Title", md.opts.title], ["Host", host ? host.name : "—"], ["Players", md.players.length + (cl.length ? " (" + cl.length + " Forsworn: " + cl.join(", ") + ")" : "")], ["Now", md.phase + " · round " + md.round + (md.final ? " (the final)" : "") + " · version " + (md.ver || 0)],
         ["Purse", md.pot + " of " + md.opts.potCap], ["Prize", md.opts.prize + ((md.opts.prizes || []).length ? " · then " + md.opts.prizes.map(x => x.what).join(", then ") : "")], ["Kill", md.opts.kill], ["Sanctuary", md.opts.shield], ["Twists", yes(md.opts.twists)], ["Courses", yes(md.opts.courses)],
-        ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? md.result.winner : "—"]]),
+        ["Host looked at the roles", (md.peeked || []).length ? "yes, round " + md.peeked.map(x => x.round).join(", ") : "no"], ["Winner", md.result ? SIDE[md.result.winner] || md.result.winner : "—"]]),
       h("h3", {}, "Players"),
-      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), p.role === "f" ? "Forsworn" : p.role === "l" ? "Loyal" : "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Oath"].map(x => h("th", {}, x)))), h("tbody", {}, md.players.map(p => row([p.name + (p.id === md.director ? " (host)" : ""), ROLE[p.role] || "—", p.left ? "left the party" : p.alive ? "alive" : "out", p.optIn || ""]))))),
       recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (md.log || []).slice().reverse().map(x => secs(x.t).slice(-8) + " " + x.m).join("\n") || "(empty)")]);
   } else if (!s) ap(v, h("p.note", {}, "No game in this room right now (never started, or wiped). The recording below still has anything that was played."));
   else {
     const cl = s.players.filter(p => p.role === "cloak").map(p => p.name);
     ap(v, h("h2", {}, "The game"),
       kv([["Title", s.brand && s.brand.title], ["Keeper", s.brand && s.brand.host], ["Players", s.players.length + " (" + cl.length + " Forsworn: " + cl.join(", ") + ")"], ["Now", s.phase + " · round " + s.round + (s.finalRound ? " (final is round " + s.finalRound + ")" : "") + " · version " + (s.ver || 0)],
-        ["Purse", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Forsworn only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner || "—"], ["App", "schema " + s.v]]),
+        ["Purse", s.pot + " " + (s.potUnit || "") + " of " + s.potCap], ["Wrong answers cost", s.wrongRule === "all" ? "everyone" : "Forsworn only"], ["Prize", s.prize], ["Evening", (s.hours || "?") + " hours" + (s.startedAt ? ", started " + secs(s.startedAt) : "")], ["Winner", s.winner ? SIDE[s.winner] || s.winner : "—"], ["App", "schema " + s.v]]),
       h("h3", {}, "Game plan (setup)"), kv(Object.entries(s.rules || {}).map(([k, x]) => [RULE_WORDS[k] || k, yes(x)])),
       h("h3", {}, "Players, in seat order"),
-      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, p.role + (p.converted ? " (converted)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
+      h("div.table-scroll", {}, h("table.list", {}, h("thead", {}, h("tr", {}, ["Name", "Role", "State", "Sanctuary"].map(x => h("th", {}, x)))), h("tbody", {}, s.players.map(p => row([p.name, (ROLE[p.role] || p.role || "—") + (p.converted ? " (turned by the Whisper)" : ""), p.left ? "left the party" : p.alive ? "alive" : "out", p.shield || ""]))))),
       recs.length ? null : [h("h3", {}, "Game log"), h("div.mono", {}, (s.log || []).slice().reverse().join("\n") || "(empty)")]);
   }
   // the replay: every saved version, on a TV and a phone. Its list is what happened (the game's log: each decision, not

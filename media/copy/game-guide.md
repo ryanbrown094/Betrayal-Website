@@ -15,12 +15,12 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 1. **Open the Table (the host, before or as guests arrive).** Enter the booking code, choose **Modern**, type your name, **Open the Table**. Share the Table code, or put the TV on so guests can scan its QR code. While they join, the host makes four quick choices (secret or public Sanctuary, the prize, twists on or off, dinner in courses on or off) and presses **Start**. Details in `setup-guide.md`.
 2. **The Oath.** Every phone asks the same question in secret: **“Would you like to be Forsworn?”** (Yes, make me Forsworn / I’d rather be Loyal / Either way). Nobody sees anyone’s answer. The game uses the answers when it deals the roles, but can’t always give everyone what they asked for.
 3. **Roles.** Each guest holds their phone close and taps to see their role. The Forsworn see each other’s names on their phones (a lone Forsworn is told they’re alone). Everyone taps “Got it” and the role hides again.
-4. **Rounds**, each: Trial(s) → the result and prizes → (a break) → the Reckoning → reveal → night → dawn. If the host switches dinner in courses on, a starter, a main and dessert come between the rounds (4.3).
+4. **Rounds**, each: Trial(s) → the result and prizes → (a break) → the Reckoning → reveal → night → dawn.
 5. **The final**, with five or fewer: from here on exiles aren’t revealed, and the table votes TRUST or DOUBT on their phones.
 6. **The Unmasking**: every seal turned, the winners, the prize the Purse has earned, then **Honour or Betray** if two or more Forsworn survived.
 7. **Awards**, up to six. Then the host can **play again with the same people**.
 
-**How long:** 8 to 12 players, about 3 to 3½ hours; stopping for dinner adds half an hour to an hour. Bigger tables run longer, because they need more rounds to get down to five: about 4¼ hours for 16, and 5 to 6 for 20 and up. `table-sizes.csv` lists every size. (Classic also has a Short game of about 2 to 2½ hours for 8 to 10.) In marketing, state the length honestly and never sell a big table or a long night as a benefit.
+**How long:** Modern takes about an hour for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24, because bigger tables need more rounds to get down to five. Classic, the longer way to play, takes about 3 to 3½ hours for 8 to 12 (dinner in courses adds half an hour to an hour; its Short game is about 2 to 2½ hours for 8 to 10). `table-sizes.csv` lists every size. In marketing, state the length honestly and never sell a big table or a long night as a benefit.
 
 ### The host
 
@@ -55,9 +55,9 @@ Nobody is told how many Forsworn there are.
 - Set by the host before the game: **public** (everyone sees who won it) or **secret** (only the winner knows, on their phone).
 - If a Forsworn wins Sanctuary it does nothing (Forsworn can’t be killed). With secret Sanctuary, only they learn so.
 
-### 4.3 Breaks and dinner
+### 4.3 Breaks
 - **A short break** (the Interval, 10 minutes): the host can call one before any Trial or Reckoning. Private chats, deals, accusations. The host can add 5 minutes or end it early.
-- **Dinner in courses** (optional, off by default; the host switches it on in the lobby): for a Table that’s eating together, a starter, a main and dessert, each served between the rounds. With courses off, the host can still call a short break, for food or anything else.
+- **No dinner setting.** A Modern game takes an hour or two, so people play before or after they eat. Dinner in courses belongs to Classic (see the Classic section).
 
 ### 4.4 The Reckoning
 - **Talk. Accuse. Defend.** A few minutes of open debate, with a clock on every phone and the TV.

@@ -12,11 +12,11 @@ Replace anything in [brackets]. Keep it personal: these work because they come f
 
 ## 2 · Asking a friend to be a seed host (a free Table)
 
-> Would you host a game of The Betrayal for your friends in the next two weeks? I’ll give you a free Table. You need 8+ people with their phones, and about 3 to 3½ hours (a bit longer if you stop for dinner). A TV is a nice extra, not a must. You play too: the game runs itself, and your phone just says when to begin the next bit. In return, I’d like a quick review afterwards and, if everyone’s happy, a couple of short clips (the vote and the reveals are the best bits). No pressure if not.
+> Would you host a game of The Betrayal for your friends in the next two weeks? I’ll give you a free Table. You need 8+ people with their phones, and about an hour (up to two with a big group). A TV is a nice extra, not a must. You play too: the game runs itself, and your phone just says when to begin the next bit. In return, I’d like a quick review afterwards and, if everyone’s happy, a couple of short clips (the vote and the reveals are the best bits). No pressure if not.
 
 ## 3 · Your own Instagram / Facebook launch post
 
-> After [x] months of evenings and weekends, it’s live. The Betrayal is the party game of loyalty and lies, played on everyone’s phone: a few of your guests are secretly Forsworn, the rest have one night to find them. Trials, Sanctuary, a vote every round, dinner in courses if you’re eating together, and each night a candle goes out.
+> After [x] months of evenings and weekends, it’s live. The Betrayal is the party game of loyalty and lies, played on everyone’s phone: a few of your guests are secretly Forsworn, the rest have one night to find them. Trials, Sanctuary, a vote every round, and each night someone is poisoned. About an hour for ten.
 >
 > Best with 8 to 16 players · Book a Table, £10 · thebetrayal.co.uk
 > If you host it, tag me. I want to see who you exile.
@@ -38,7 +38,7 @@ Replace anything in [brackets]. Keep it personal: these work because they come f
 
 > **I made a hidden-role party game that everyone plays on their own phone, host included**
 >
-> I built this for a party at my own house and it went down well, so I turned it into a proper product. Guests scan a QR code on the TV or go to a /join page and type a code and their name, pub-quiz style. The Oath is a secret question on each phone, roles arrive privately, all the Trials (quizzes, word games, rock-paper-scissors, charades where only the actor’s phone shows the word) are played on phones, and so is the vote. At night the Forsworn choose on their phones while everyone else taps too, so nobody can tell who’s choosing. Everyone plays, including the host: the game plans itself and the host’s phone just moves it on. The TV is optional. It’s best with 8 to 16 players and takes about 3 to 3½ hours for 8 to 12, a bit longer if you stop for dinner (it can serve dinner in courses between the rounds, but that’s off unless you want it). For groups who’d rather put their phones away, there’s also a Classic mode with a Keeper, blindfolds and chalkboards.
+> I built this for a party at my own house and it went down well, so I turned it into a proper product. Guests scan a QR code on the TV or go to a /join page and type a code and their name, pub-quiz style. The Oath is a secret question on each phone, roles arrive privately, all the Trials (quizzes, word games, rock-paper-scissors, charades where only the actor’s phone shows the word) are played on phones, and so is the vote. At night the Forsworn choose on their phones while everyone else taps too, so nobody can tell who’s choosing. Everyone plays, including the host: the game plans itself and the host’s phone just moves it on. The TV is optional. It’s best with 8 to 16 players and takes about an hour for 8 to 10, up to about two hours for 24. For a longer, more immersive evening with phones away, there’s also a Classic mode with a Keeper, blindfolds and chalkboards.
 >
 > It’s £10 a party, or £20 a month if you host often. I’d love feedback from people who run big game nights. What would stop you trying it? [link]
 
