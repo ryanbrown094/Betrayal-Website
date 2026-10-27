@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261027115455">
+<meta name="build" content="20261027150526">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -1173,7 +1173,7 @@ function night(me) {
   if (!me.alive) return `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">The Forsworn are choosing. Ghosts, watch in silence.</p>`;
   if (me.role === "f") {
     const votes = {}; for (const ps of Object.values(me.picks || {})) for (const nm of ps) votes[nm] = (votes[nm] || 0) + 1;
-    h += `${me.split ? `<div class="banner">You don’t agree yet. The night waits until every Forsworn chooses the same.</div>` : ""}<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". Every Forsworn must choose the same " + n.kills + "." : "Choose who is poisoned tonight. Every Forsworn must choose the same one."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
+    h += `${me.split ? `<div class="banner">You don’t agree yet. The night waits until you choose the same; if its clock runs out first, the most chosen goes.</div>` : ""}<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". Every Forsworn must choose the same " + n.kills + "." : "Choose who is poisoned tonight. Every Forsworn must choose the same one."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
     ${Object.entries(me.picks || {}).filter(([nm]) => nm !== me.name).map(([nm, ps]) => `<p class="small">${esc(nm)}: ${ps.length ? esc(andList(ps)) : "not yet"}</p>`).join("")}<p class="small">${(me.mine || []).length} of ${n.kills} chosen</p></div>`;
     const wh = me.chat ? `<details class="more whisp"${me.chat.length ? " open" : ""}><summary>Talk to the Forsworn${me.chat.length ? " · " + me.chat.length : ""}</summary>${chatBox(me)}</details>` : "";
     return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">${me.split ? "Change it to match, or persuade them to." : "Chosen. You can change it until everyone’s done."}</p>` : "") + wh;
