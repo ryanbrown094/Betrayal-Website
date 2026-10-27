@@ -50,9 +50,12 @@ const based = (s) => s.opts.content === "base";
 export const SOLO_OFF = ["charades", "hum", "draw", "truths", "oneleg", "statue"];
 const reach = (s, bank) => (based(s) ? Math.ceil(bank.length / 2) : bank.length);
 export const trialKeys = (s) => Object.keys(TRIALS).filter((k) => (!TRIALS[k].ghosts || ghosts(s).length) && (!based(s) || BASE_TRIALS.includes(k)) && (!s.practice || !SOLO_OFF.includes(k)));
-// what the Forsworn may say to each other at night: set phrases only, so nothing typed can leak
+// the Forsworn's chat, from the roles to the end: set phrases (one tap, at a glance) or a short typed message. Only the
+// living Forsworn see it, and it's never logged.
 export const WHISPERS = ["Agreed", "Not that one", "I’m under suspicion", "Vote with me tomorrow", "Stay quiet tomorrow", "Someone’s onto us"];
-const WORDS = 140; // the most a last word may run to
+const WORDS = 140; // the most a last word, or a chat message, may run to
+const chatting = (s, me) => me && me.alive && me.role === "f" && forsworn(s).length > 1 && !["lobby", "oath", "end"].includes(s.phase);
+const chat = (s, pid, text, now) => { s.chat = (s.chat || []).concat([{ f: pid, m: clip(text, WORDS), t: now }]).slice(-200); };
 const TEMPT = { title: "The Temptation", prize: false, rules: "One word, in secret: PURSE, for the table, or SELF, for yourself. Exactly one SELF takes Sanctuary and the Purse grows. Nobody: the Purse grows double. Two or more: nobody gets it, and the Purse shrinks." };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -116,7 +119,11 @@ function botsMove(s, now, rnd) {
   if (s.phase === "night") {
     const n = s.night;
     for (const p of A.filter(mine)) {
-      if (p.role === "f" && ![].concat(n.picks[p.id] || []).length) { const t = shuffle(A.filter((q) => q.role !== "f"), rnd).slice(0, n.kills).map((q) => q.id); if (t.length) { n.picks[p.id] = t; ch = true; } }
+      if (p.role === "f") {
+        const has = (f) => [].concat(n.picks[f.id] || []).length > 0, F = forsworn(s), lead = F.find((f) => !f.bot && has(f)) || F.find((f) => f.bot && has(f));
+        const want = lead ? [].concat(n.picks[lead.id]) : shuffle(A.filter((q) => q.role !== "f"), rnd).slice(0, n.kills).map((q) => q.id);
+        if (want.length && [].concat(n.picks[p.id] || []).join() !== want.join()) { n.picks[p.id] = want.slice(); ch = true; }
+      }
       if (p.role !== "f" && !n.slept[p.id]) { n.slept[p.id] = true; ch = true; }
     }
   }
@@ -356,7 +363,8 @@ function finishTrial(s, now, rnd) {
 }
 function openReckoning(s, now) {
   s.phase = "talk"; s.trial = null; s.brk = null;
-  s.vote = { stage: "talk", talkEnd: now + T(s, (s.opts.talkEach || 30) * 1000 * alive(s).length), ballots: {}, calls: {}, revote: null, second: !!(s.vote && s.vote.firstDone && s.vote.round === s.round), round: s.round, secret: s.final };
+  const talk = (s.opts.talkEach || 30) * 1000 * alive(s).length;
+  s.vote = { stage: "talk", talkEnd: now + (s.practice ? talk : T(s, talk)), ballots: {}, calls: {}, revote: null, second: !!(s.vote && s.vote.firstDone && s.vote.round === s.round), round: s.round, secret: s.final };
   say(s, "The Reckoning", now);
 }
 function openVote(s, now) { s.phase = "vote"; s.vote.stage = "vote"; s.vote.voteEnd = now + T(s, 120000); }
@@ -396,10 +404,12 @@ function startNight(s, now) {
   s.night = { picks: {}, slept: {}, kills: killsAt(a), end: now + T(s, 120000) };
   say(s, "Night falls", now);
 }
+// the Forsworn have all chosen the same: the night waits for that, so a split vote is chosen again, not settled by lot
+function agreed(s) { const sets = forsworn(s).map((f) => [].concat(s.night.picks[f.id] || []).slice().sort().join()); return sets.every((x) => x === sets[0]); }
 function resolveNight(s, now, rnd) {
   const n = s.night, c = {}, F = forsworn(s);
   for (const f of F) for (const tg of [].concat(n.picks[f.id] || [])) if (P(s, tg) && P(s, tg).alive && P(s, tg).role !== "f") c[tg] = (c[tg] || 0) + 1;
-  let order = Object.entries(c).sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+  let order = shuffle(Object.entries(c), rnd).sort((a, b) => b[1] - a[1]).map((x) => x[0]); // (a tie, by lot)
   const loyal = alive(s).filter((p) => p.role !== "f").map((p) => p.id);
   while (order.length < n.kills && loyal.length > order.length) { const r = pick(loyal.filter((id) => !order.includes(id)), rnd); order.push(r); } // Forsworn who chose nobody: the house chooses
   say(s, "Night picks: " + (F.length ? F.map((f) => f.name + " → " + (names(s, [].concat(n.picks[f.id] || [])) || "nobody")).join(", ") : "none"), now);
@@ -461,6 +471,15 @@ function shiftClocks(s, d) {
   mv(s.brk, "end"); mv(s.vote, "talkEnd", "voteEnd"); mv(s.reveal, "roleAt", "at"); mv(s.night, "end"); mv(s.dawn, "lastEnd", "at");
   mv(s.trust, "end", "at"); mv(s.unmask, "next"); mv(s.honour, "end");
 }
+// the host ends a Trial: the questions that finished count, and the one still open doesn't, so the moment the host
+// taps makes no difference; in a knockout (Rock Paper Scissors, One Leg, the Statue) everyone still in shares the lead,
+// and a tie is settled by lot
+function endEarly(s, t, it) {
+  if (!it || it.stage === "reveal") return;
+  const A = alive(s).map((p) => p.id);
+  const still = it.k === "rps" ? (t.left || A).filter((id) => A.includes(id)) : it.k === "survive" ? A.filter((id) => !it.out.includes(id)) : [];
+  for (const id of still) t.scores[id] = (t.scores[id] || 0) + 1;
+}
 // the clock running now, as [object, key], for the host's "a minute more"
 function clockNow(s) {
   const it = s.trial && s.trial.item;
@@ -516,7 +535,7 @@ export function tick(s, now, ctx) {
   if (s.phase === "reveal" && s.reveal && s.reveal.roleAt && now >= s.reveal.roleAt && !s.reveal.shown) { s.reveal.shown = true; P(s, s.reveal.id).revealed = true; mark(); }
   if (s.phase === "night") {
     const n = s.night, A = alive(s), F = forsworn(s);
-    const fDone = F.every((f) => [].concat(n.picks[f.id] || []).length >= Math.min(n.kills, A.length - F.length)), lDone = A.filter((p) => p.role !== "f").every((p) => n.slept[p.id]);
+    const fDone = F.every((f) => [].concat(n.picks[f.id] || []).length >= Math.min(n.kills, A.length - F.length)) && agreed(s), lDone = A.filter((p) => p.role !== "f").every((p) => n.slept[p.id]);
     if ((fDone && lDone) || now >= n.end) { resolveNight(s, now, rnd); mark(); }
   }
   if (s.phase === "trust") {
@@ -537,7 +556,7 @@ export function act(s, pid, a, now, ctx) {
   const dir = s.director === pid, rnd = ctx.rnd, it = s.trial && s.trial.item, v = a && a.v;
   const done = () => { s.ver++; return null; };
   const need = (ok, msg) => (ok ? null : { error: msg || "That can’t be done right now." });
-  if (s.paused && !["pause", "tool", "words"].includes(a && a.a)) return need(false, "The game is paused.");
+  if (s.paused && !["pause", "tool", "words", "chat", "whisper"].includes(a && a.a)) return need(false, "The game is paused.");
   switch (a && a.a) {
     // --- the lobby and the oath
     case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || PRIZE0; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
@@ -590,10 +609,12 @@ export function act(s, pid, a, now, ctx) {
     // --- the Reckoning, the night, the end
     case "ballot": { if (s.phase !== "vote") return need(false); const tg = P(s, v); if (!tg || !tg.alive || v === pid || v === s.vote.immune || (s.vote.revote && !s.vote.revote.includes(v))) return need(false); if (me.alive) s.vote.ballots[pid] = v; else s.vote.calls[pid] = v; return done(); }
     case "pick": { if (s.phase !== "night" || !me.alive || me.role !== "f") return need(false); const tg = P(s, v); if (!tg || !tg.alive || tg.role === "f") return need(false); const n = s.night, cur = [].concat(n.picks[pid] || []); n.picks[pid] = n.kills > 1 ? (cur.includes(v) ? cur.filter((x) => x !== v) : cur.concat([v]).slice(-n.kills)) : [v]; return done(); }
-    case "whisper": {
-      if (s.phase !== "night" || !me.alive || me.role !== "f" || forsworn(s).length < 2 || !WHISPERS[+v]) return need(false);
-      const w = (s.night.wh = s.night.wh || []); if (w.filter((x) => x.f === pid).length >= 8) return need(false, "That’s enough whispering for one night.");
-      w.push({ f: pid, m: +v, t: now }); return done();
+    case "whisper": { if (!chatting(s, me) || !WHISPERS[+v]) return need(false); chat(s, pid, WHISPERS[+v], now); return done(); }
+    case "chat": {
+      const text = String(v || "").replace(/\s+/g, " ").trim(); if (!text) return need(false, "Type something first.");
+      if (!chatting(s, me)) return need(false);
+      if ((s.chat || []).some((x) => x.f === pid && now - x.t < 800)) return null; // (a double tap)
+      chat(s, pid, text, now); return done();
     }
     case "words": {
       const text = clip(String(v || "").replace(/\s+/g, " ").trim(), WORDS); if (!text) return need(false, "Type something first.");
@@ -621,7 +642,7 @@ function tool(s, pid, a, now, ctx, done, need) {
   const rnd = ctx.rnd, t = s.trial, it = t && t.item, who = a.who && P(s, a.who);
   switch (a.v) {
     case "skip": if (t && t.stage === "intro") { nextItem(s, now, rnd); return done(); } if (it && ["open", "study", "prep", "blank"].includes(it.stage)) { it.end = now; if (it.k === "truths" && it.stage === "prep") it.lie = it.lie || 1; return done(); } return need(false);
-    case "endTrial": if (!t || t.stage === "done") return need(false); if (it && it.stage === "open") { it.res = score(s, t, it, ctx); t.results.push(it.res); t.i++; } finishTrial(s, now, rnd); return done();
+    case "endTrial": if (!t || t.stage === "done") return need(false); endEarly(s, t, it); finishTrial(s, now, rnd); return done();
     case "voteNow": if (s.phase !== "talk") return need(false); openVote(s, now); return done();
     case "closeVote": if (s.phase !== "vote") return need(false); closeVote(s, now, rnd); return done();
     case "more": { const c = clockNow(s); if (!c) return need(false); c[0][c[1]] = Math.max(c[0][c[1]], now) + 60000; return done(); }
@@ -712,7 +733,12 @@ export function viewFor(s, pid, now) {
     }
     if (s.phase === "dawn" && !s.dawn.revealed && s.dawn.victims.includes(pid)) o.me.victim = true;
     if (s.phase === "reveal" && s.reveal.id === pid && !s.reveal.secret) o.me.words = s.reveal.words || "";
-    if (s.phase === "night" && me.alive && me.role === "f" && forsworn(s).length > 1) { o.me.whispers = (s.night.wh || []).slice(-12).map((x) => [x.f === pid ? "You" : P(s, x.f).name, WHISPERS[x.m]]); o.me.whisperSay = WHISPERS; }
+    if (chatting(s, me)) {
+      const lines = (s.chat || []).map((x) => [x.f === pid ? "You" : (P(s, x.f) || {}).name || "?", x.m]);
+      o.me.chat = lines.slice(-40); o.me.whisperSay = WHISPERS;
+      if (s.phase === "night") o.me.whispers = lines.slice(-12);
+    }
+    if (s.phase === "night" && me.alive && me.role === "f" && forsworn(s).every((f) => [].concat(s.night.picks[f.id] || []).length >= Math.min(s.night.kills, alive(s).length - forsworn(s).length)) && !agreed(s)) o.me.split = true;
     if (s.trial && s.trial.stage === "done" && s.trial.sanct === pid) o.me.wonSanct = me.role === "f" ? "wasted" : "yes";
     if (s.phase === "end") o.me.won = s.result.to.includes(pid);
     if (s.cast && s.cast.id === pid && !s.cast.used && me.alive) o.me.cast = true;

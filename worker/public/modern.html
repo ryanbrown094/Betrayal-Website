@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261027120529">
+<meta name="build" content="20261027140228">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -742,7 +742,7 @@ function toggleMute() { MUSIC.mute(!muted); if (typeof tvRefresh === "function")
 let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) || [])[1] || "").toUpperCase();
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
-let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, online = true, pollT = 0;
+let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, myrole = 0, online = true, pollT = 0;
 const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
 let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
@@ -902,6 +902,7 @@ function phone() {
   if (screen === "replay") return phone0(me, phase(me));
   if (peekList) return topBar(me) + peekScreen();
   if (tools && me.director) return topBar(me) + toolScreen(me);
+  if (myrole && !["lobby", "oath", "roles"].includes(V.phase)) return topBar(me) + rolePanel(me);
   return phone0(me, phase(me) + quick(me));
 }
 // the host's moves for this moment, on their own screen; the rest wait in Tools
@@ -918,7 +919,7 @@ const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span cl
 function phone0(me, body) {
   return `${topBar(me)}
   ${rejoinCard()}${takeOverCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
-  ${holdings(me)}
+  ${holdings(me)}${["lobby", "oath", "roles", "end"].includes(V.phase) ? "" : `<div class="row" style="justify-content:flex-end;margin:-4px 0 10px">${btn("Your role", "myrole1", null, "ghost sm")}</div>`}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
 }
@@ -1014,7 +1015,7 @@ function toolScreen(me) {
   if (V.phase === "day" && me.canSkip) add("Skip “" + esc(V.next) + "”", "skipStep", "Leave it out and go to the next step.");
   if (t && t.stage === "intro") add("Start the Trial now", "skip", "Skip the rest of the introduction.");
   if (it && ["open", "study", "prep", "blank"].includes(it.stage)) add("Close this question now", "skip", "Whatever has been answered counts.");
-  if (t && t.stage !== "done") add("End this Trial now", "endTrial", "It’s scored as it stands.");
+  if (t && t.stage !== "done") add("End this Trial now", "endTrial", "The questions that finished count; the one still open doesn’t.");
   if (V.phase === "talk") add("Open the vote now", "voteNow", "Cut the talking short.");
   if (V.phase === "vote") add("Close the vote now", "closeVote", "Counts the votes in; nobody else can vote.");
   if (V.phase === "night") add("End the night now", "dawnNow", "Anyone who hasn’t chosen is chosen for.");
@@ -1172,13 +1173,27 @@ function night(me) {
   if (!me.alive) return `<div class="eyebrow">the night</div><h1>Heads down</h1><p class="sub">The Forsworn are choosing. Ghosts, watch in silence.</p>`;
   if (me.role === "f") {
     const votes = {}; for (const ps of Object.values(me.picks || {})) for (const nm of ps) votes[nm] = (votes[nm] || 0) + 1;
-    h += `<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". The " + n.kills + " chosen most by the Forsworn are poisoned." : "Choose who is poisoned tonight. The one chosen most goes."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
+    h += `${me.split ? `<div class="banner">You don’t agree yet. The night waits until every Forsworn chooses the same.</div>` : ""}<div class="card hot"><p>${n.kills > 1 ? "Choose " + n.kills + ". Every Forsworn must choose the same " + n.kills + "." : "Choose who is poisoned tonight. Every Forsworn must choose the same one."}${me.sanct && me.sanct.length ? ` <b>${esc(andList(me.sanct))}</b> ${me.sanct.length > 1 ? "hold" : "holds"} Sanctuary.` : ""}</p>
     ${Object.entries(me.picks || {}).filter(([nm]) => nm !== me.name).map(([nm, ps]) => `<p class="small">${esc(nm)}: ${ps.length ? esc(andList(ps)) : "not yet"}</p>`).join("")}<p class="small">${(me.mine || []).length} of ${n.kills} chosen</p></div>`;
-    const wh = me.whispers ? `<details class="more whisp"${me.whispers.length ? " open" : ""}><summary>Whisper to the Forsworn${me.whispers.length ? " · " + me.whispers.length : ""}</summary>${me.whispers.length ? `<ul class="whispers">${me.whispers.map(([n, m]) => `<li><b>${esc(n)}</b> ${esc(m)}</li>`).join("")}</ul>` : `<p class="small">Only the Forsworn see these.</p>`}<div class="wh">${(me.whisperSay || []).map((m, i) => btn(esc(m), "whisper", i, "dark sm")).join("")}</div></details>` : "";
-    return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">Chosen. You can change it until everyone’s done.</p>` : "") + wh;
+    const wh = me.chat ? `<details class="more whisp"${me.chat.length ? " open" : ""}><summary>Talk to the Forsworn${me.chat.length ? " · " + me.chat.length : ""}</summary>${chatBox(me)}</details>` : "";
+    return h + pickList(me.targets.map(P), "pick", me.mine, (p) => (votes[p.name] ? `<b class="tag">${votes[p.name]}</b>` : "") + ((me.sanct || []).includes(p.name) ? `<b class="tag sanct">Sanctuary</b>` : "")) + (me.mine && me.mine.length >= n.kills ? `<p class="small center" style="margin-top:10px">${me.split ? "Change it to match, or persuade them to." : "Chosen. You can change it until everyone’s done."}</p>` : "") + wh;
   }
   h += `<p>Who do you suspect most? Nothing happens to them; tapping only keeps the night secret.</p>`;
   return h + (n.done ? `<div class="done">${ico("moon")}<div>Done. Heads down until dawn.</div></div>` : pickList(alive().filter((p) => p.id !== me.id), "sleep"));
+}
+// the Forsworn's conversation: what's been said, the set phrases, and a line to type (the night's panel, and Your role)
+function chatBox(me) {
+  const c = me.chat || [];
+  return `${c.length ? `<ul class="whispers">${c.slice(-20).map(([n, m]) => `<li><b>${esc(n)}</b> ${esc(m)}</li>`).join("")}</ul>` : `<p class="small">Only the living Forsworn see these.</p>`}<div class="wh">${(me.whisperSay || []).map((m, i) => btn(esc(m), "whisper", i, "dark sm")).join("")}</div>
+  <div class="row" style="margin-top:8px"><input class="f" id="chatin" maxlength="140" placeholder="A message to the Forsworn" autocomplete="off">${btn("Send", "chatf", "chatin", "sm")}</div>`;
+}
+// Your role, the same button on every phone: inside, the role, and for the Forsworn their allies and their chat, so a
+// glance at a phone gives nothing away
+function rolePanel(me) {
+  if (myrole === 1) return `<div class="veil" data-a="myrole2"><div><div class="eyebrow">your role</div><h2>Hold your phone close</h2><p class="sub">Tap here when nobody can see your screen.</p></div></div><div style="height:12px"></div>${btn("Back to the game", "myrole0", null, "ghost sm")}`;
+  const f = me.role === "f";
+  return `<div class="card role ${f ? "f" : "l"}"><div class="sigil">${ART.bigSeal(f ? "t" : "good", f ? "blade" : "candle")}</div><h1>${f ? "Forsworn" : "Loyal"}</h1>${f ? (me.allies && me.allies.length ? `<p>Your fellow Forsworn: <b>${me.allies.map((a) => esc(a.name) + (a.alive ? "" : " (out)")).join(", ")}</b></p>` : `<p>You are the only Forsworn. Trust nobody.</p>`) : `<p class="sub">You are true to the table. Find the Forsworn.</p>`}</div>
+  ${me.chat ? `<h2 class="sec">Talk to the Forsworn</h2>${chatBox(me)}` : ""}<div style="height:14px"></div>${btn("Hide my role", "myrole0", null, "big")}`;
 }
 function dawn(me) {
   const d = V.dawn;
@@ -1335,6 +1350,8 @@ document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
   const a = b.dataset.a, v = b.dataset.v;
   if (a === "peek") { peek = true; return draw(); }
+  if (a === "myrole0" || a === "myrole1" || a === "myrole2") { myrole = +a.slice(-1); return draw(); }
+  if (a === "chatf") { const x = document.getElementById(v); if (!x || !x.value.trim()) return; const val = x.value.trim(); x.value = ""; return send({ a: "chat", v: val }); }
   if (a === "tools") { tools = tools ? 0 : 1; peekList = null; return draw(); }
   if (a === "unpeek") { peekList = null; tools = 0; return draw(); }
   if (a === "sound") { if (typeof AC !== "undefined" && AC) toggleMute(); else enableSound(); last = ""; return draw(); }
@@ -1373,7 +1390,7 @@ document.addEventListener("click", async (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Enter" || e.shiftKey) return; const t = e.target; if (!t.id) return;
   if (t.id === "name" || t.id === "code") { e.preventDefault(); return screen === "create" ? doCreate() : doJoin(); }
-  if (t.tagName === "INPUT") { const b = document.querySelector(`[data-a="ansf"][data-v="${t.id}"],[data-a="wordsf"][data-v="${t.id}"]`); if (b) { e.preventDefault(); b.click(); } }
+  if (t.tagName === "INPUT") { const b = document.querySelector(`[data-a="ansf"][data-v="${t.id}"],[data-a="chatf"][data-v="${t.id}"],[data-a="wordsf"][data-v="${t.id}"]`); if (b) { e.preventDefault(); b.click(); } }
 });
 document.addEventListener("change", (e) => {
   const t = e.target; if (!t.dataset) return;
