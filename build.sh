@@ -32,6 +32,14 @@ awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) pr
 # site/pages/NAME.jsonld if it exists (more JSON-LD); 404, admin, seal and survey get noindex instead, and admin and survey
 # (whose links carry a private token) no Tag Manager.
 SITE=https://thebetrayal.co.uk
+# a page's dates: the last commit of its source (today if it has uncommitted changes, or without git), the first, and
+# either as "27 October 2026"
+lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git log -1 --format=%cs -- "$1" 2>/dev/null) && [ -n "$m" ]; then echo "$m"; else date -u +%Y-%m-%d; fi; }
+firstmod() { m=$(git log --diff-filter=A --follow --format=%cs -- "$1" 2>/dev/null | tail -1); [ -n "$m" ] && echo "$m" || lastmod "$1"; }
+longdate() { y=${1%%-*}; r=${1#*-}; m=${r%%-*}; d=${r#*-}; set -- January February March April May June July August September October November December; eval "echo ${d#0} \${${m#0}} $y"; }
+# the guides are Articles: dated in their JSON-LD (for search and AI answer engines, which favour current pages) and,
+# visibly, at the foot of the page
+ARTICLES=" rules traitors-at-home party-games-for-large-groups "
 for f in site/pages/*.html; do
   t=$(sed -n '1s/^<!-- title: \(.*\) -->$/\1/p' "$f"); d=$(sed -n 's/^<!-- desc: \(.*\) -->$/\1/p' "$f"); slug=$(basename "$f" .html)
   ft=$(sed -n 's/^<!-- fulltitle: \(.*\) -->$/\1/p' "$f"); [ -n "$ft" ] || ft="$t · The Betrayal"
@@ -41,12 +49,17 @@ for f in site/pages/*.html; do
     *) printf '<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"The Betrayal","item":"%s/"},{"@type":"ListItem","position":2,"name":"%s","item":"%s/%s"}]}</script>\n' "$SITE" "$t" "$SITE" "$slug" > "$hf"
        if [ -f "site/pages/$slug.jsonld" ]; then { printf '<script type="application/ld+json">\n'; cat "site/pages/$slug.jsonld"; printf '</script>\n'; } >> "$hf"; fi ;;
   esac
-  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
+  upd=""
+  case "$ARTICLES" in *" $slug "*)
+    mod=$(lastmod "$f"); org='{"@type":"Organization","@id":"'$SITE'/#org","name":"The Betrayal","url":"'$SITE'/","logo":{"@type":"ImageObject","url":"'$SITE'/icon-512.png"}}'
+    printf '<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","@id":"%s/%s#article","headline":"%s","description":"%s","url":"%s/%s","mainEntityOfPage":"%s/%s","inLanguage":"en-GB","datePublished":"%s","dateModified":"%s","image":"%s/media/og-card.png","author":%s,"publisher":%s,"about":{"@id":"%s/#game"}}</script>\n' \
+      "$SITE" "$slug" "$ft" "$d" "$SITE" "$slug" "$SITE" "$slug" "$(firstmod "$f")" "$mod" "$SITE" "$org" "$org" "$SITE" >> "$hf"
+    upd="<p class=\"updated\">Updated <time datetime=\"$mod\">$(longdate "$mod")</time></p>" ;;
+  esac
+  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" -v upd="$upd" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{if (slug != "admin" && slug != "survey") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; if (upd != "") print upd; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
   rm -f "$hf"
 done
-# the sitemap: the home page and every indexable page, each dated by the last commit of its source (today if it has
-# uncommitted changes, or without git)
-lastmod() { if [ -z "$(git status --porcelain -- "$1" 2>/dev/null)" ] && m=$(git log -1 --format=%cs -- "$1" 2>/dev/null) && [ -n "$m" ]; then echo "$m"; else date -u +%Y-%m-%d; fi; }
+# the sitemap: the home page and every indexable page, each dated by the last commit of its source (lastmod, above)
 {
   printf '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
   printf '<url><loc>%s/</loc><lastmod>%s</lastmod></url>\n' "$SITE" "$(lastmod site/index.html)"

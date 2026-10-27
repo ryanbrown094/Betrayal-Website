@@ -20,7 +20,7 @@
       + '.bt-consent .in{max-width:980px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px}.bt-consent p{margin:0;flex:1 1 320px;color:#d9c2ba}.bt-consent a{color:#e6a58c}'
       + '.bt-consent .b{display:flex;gap:10px}.bt-consent button{min-height:44px;padding:8px 20px;border-radius:3px;border:1px solid #e6a58c;font:700 15px/1 "Alegreya Sans SC","Alegreya Sans",sans-serif;letter-spacing:.04em;cursor:pointer}'
       + '.bt-consent .y{background:#e6a58c;color:#150b17}.bt-consent .n{background:transparent;color:#e8d0c8}</style>'
-      + '<div class="in"><p>Can we use Google’s advertising cookies? They tell us which of our adverts bring people here, and nothing else. They stay off unless you say yes. <a href="/cookies">More about cookies</a></p>'
+      + '<div class="in"><p>Can we use Google’s advertising cookies? They tell us which of our adverts lead to bookings. Nothing else. They stay off unless you say yes. <a href="/cookies">More about cookies</a></p>'
       + '<div class="b"><button type="button" class="n">No thanks</button><button type="button" class="y">Yes, that’s fine</button></div></div>';
     box.querySelector(".y").onclick = () => set("yes"); box.querySelector(".n").onclick = () => set("no");
     document.body.append(box); document.body.style.paddingBottom = box.offsetHeight + "px";
