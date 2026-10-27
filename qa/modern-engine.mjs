@@ -450,5 +450,70 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   }
   check(`…the final comes at five or fewer (${finalAt} left), and the Loyal win`, finalAt !== null && finalAt <= 5 && s.phase === "end" && s.result.winner === "loyal" && !s.honour, [s.phase, finalAt, guard]);
 }
+// 12. from the owner's playtest: a practice game talks as long as a real one; ending a Trial counts what finished; the
+// Forsworn must agree on the night's victim; the Forsworn's chat
+{
+  let now = 1e12; const s = newGame(now, rnd, {}); s.practice = true; const me = join(s, "Ryan", now, rnd).id; addBots(s, 10, now, rnd);
+  const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
+  A(g, me, { a: "start" }); A(g, me, { a: "optin", v: "any" }); run(g, 1000); A(g, me, { a: "ack" }); run(g, 1000);
+  setStep(g, { k: "reckon" }); A(g, me, { a: "next" });
+  check(`a practice game's talk is thirty seconds a player too, not its thirty-second cap (${Math.round((s.vote.talkEnd - g.now) / 1000)}s)`, s.phase === "talk" && s.vote.talkEnd - g.now === 30000 * alive(s).length);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  const right = g.ids[5]; A(g, right, { a: "ans", v: s.trial.item.a }); A(g, g.ids[6], { a: "ans", v: s.trial.item.a });
+  check("end a Trial during its first question: that question doesn't count, so nobody has won", A(g, g.dir, { a: "tool", v: "endTrial" }) === null && s.trial.stage === "done" && s.trial.winners.length === 0 && s.trial.points === 0, [s.trial.scores, s.trial.winners]);
+  A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  A(g, right, { a: "ans", v: s.trial.item.a }); A(g, g.dir, { a: "tool", v: "skip" }); run(g, 1000); // the first question finishes, with one right answer
+  run(g, 6000); const second = s.trial.item;
+  for (const id of g.ids.slice(1, 6)) A(g, id, { a: "ans", v: second.a }); // half the table answers the second, right
+  A(g, g.dir, { a: "tool", v: "endTrial" });
+  check("…during a later one: only what finished counts (the first question's winner wins)", s.trial.stage === "done" && s.trial.winners.length === 1 && s.trial.winners[0] === right && Object.keys(s.trial.scores).length === 1, s.trial.scores);
+  A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "trial", key: "rps" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" }); run(g, 1000);
+  A(g, g.dir, { a: "tool", v: "endTrial" });
+  check("…a knockout ended mid-bout: everyone still in shares the lead, and one wins by lot", s.trial.stage === "done" && s.trial.winners.length === 1 && s.trial.byLot === true, [s.trial.winners, s.trial.byLot]);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const [F1, F2] = [s.players[3], s.players[4]], L = s.players.filter((p) => p.role === "l");
+  exile(g, 9); run(g, 6000); A(g, g.dir, { a: "cont" });
+  check("the night falls after an exile", s.phase === "night");
+  A(g, F1.id, { a: "pick", v: L[0].id }); A(g, F2.id, { a: "pick", v: L[1].id }); for (const p of alive(s)) if (p.role === "l") A(g, p.id, { a: "sleep" }); run(g, 2000);
+  check("the Forsworn choose differently: the night waits, and their phones say they don't agree", s.phase === "night" && viewFor(s, F1.id, g.now).me.split === true && viewFor(s, L[2].id, g.now).me.split === undefined && !JSON.stringify(viewFor(s, null, g.now)).includes("split"));
+  A(g, F2.id, { a: "pick", v: L[0].id }); run(g, 1000);
+  check("…once they agree, dawn, and their choice is poisoned", s.phase === "dawn" && s.dawn.victims.length === 1 && s.dawn.victims[0] === L[0].id, s.dawn);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const [F1, F2] = [s.players[3], s.players[4]], L = s.players.filter((p) => p.role === "l");
+  exile(g, 9); run(g, 6000); A(g, g.dir, { a: "cont" });
+  A(g, F1.id, { a: "pick", v: L[0].id }); A(g, F2.id, { a: "pick", v: L[1].id }); for (const p of alive(s)) if (p.role === "l") A(g, p.id, { a: "sleep" });
+  run(g, 125000, 1000);
+  check("…if they never agree, at the night's end one of their choices is poisoned, by lot", s.phase === "dawn" && s.dawn.victims.length === 1 && [L[0].id, L[1].id].includes(s.dawn.victims[0]), s.dawn);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); s.players[4].bot = true; s.practice = true; A(g, g.dir, { a: "cont" });
+  const L = s.players.filter((p) => p.role === "l");
+  exile(g, 9); run(g, 6000); A(g, g.dir, { a: "cont" });
+  A(g, s.players[3].id, { a: "pick", v: L[2].id }); for (const p of alive(s)) if (p.role === "l") A(g, p.id, { a: "sleep" }); run(g, 2000);
+  check("a practice bot that's Forsworn follows the person's choice", s.phase === "dawn" && s.dawn.victims[0] === L[2].id, s.dawn);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const [F1, F2] = [s.players[3], s.players[4]], loyal = g.ids[1];
+  check("chat: a Forsworn can write to the others at any time of day", A(g, F1.id, { a: "chat", v: "  Vote   Sophie tonight  " }) === null && A(g, F2.id, { a: "whisper", v: 0 }) === null);
+  const seen = viewFor(s, F2.id, g.now).me.chat;
+  check("…both see the conversation, typed and set phrases, each named", JSON.stringify(seen) === JSON.stringify([[F1.name, "Vote Sophie tonight"], ["You", "Agreed"]]), seen);
+  check("…a Loyal can't write, and never sees it; nor does the TV", !!A(g, loyal, { a: "chat", v: "hello" }).error && viewFor(s, loyal, g.now).me.chat === undefined && !JSON.stringify(viewFor(s, null, g.now)).includes("Sophie tonight"));
+  check("…nothing empty, a double tap counts once, and nothing typed reaches the game's log", !!A(g, F1.id, { a: "chat", v: "   " }).error && A(g, F1.id, { a: "chat", v: "x" }) === null && s.chat.length === 2 && !JSON.stringify(s.log).includes("Sophie tonight"));
+  A(g, g.dir, { a: "pause" }); g.now += 2000;
+  check("…it carries on while the game is paused", A(g, F1.id, { a: "chat", v: "Paused, quick" }) === null && s.chat.length === 3);
+  A(g, g.dir, { a: "pause", v: "off" });
+  const X = exile(g, 3); run(g, 6000);
+  check("…an exiled Forsworn leaves the conversation, and with one left there's nobody to talk to", !!A(g, F1.id, { a: "chat", v: "still here?" }).error && viewFor(s, F2.id, g.now).me.chat === undefined && X === F1);
+}
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);
