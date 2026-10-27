@@ -385,7 +385,6 @@ function closeVote(s, now, rnd) {
 }
 function afterReveal(s, now) {
   const A = alive(s);
-  if (!forsworn(s).length && !s.final) return goFinal(s, now);
   if (s.final) { if (A.length <= 2) return startUnmask(s, now); if (A.length <= 4) return startTrust(s, now); return openReckoning(s, now); }
   if (s.vote && !s.vote.second && A.length + 1 > 16 && exilesAt(A.length + 1) === 2 && A.length > 5) { openReckoning(s, now); s.vote.second = true; return; }
   if (A.length <= 5) return goFinal(s, now);
@@ -417,7 +416,7 @@ function revealDawn(s, now) {
 function nextRound(s, now) {
   s.round++; s.phase = "day"; s.roundTrials = 0; s.dawn = null; s.night = null; s.reveal = null; s.vote = null;
   for (const p of s.players) if (p.shield && p.shield.round < s.round) p.shield = null;
-  if (alive(s).length <= 5 || !forsworn(s).length) { s.final = true; say(s, "The final", now); }
+  if (alive(s).length <= 5) { s.final = true; say(s, "The final", now); }
   planDay(s);
 }
 function startTrust(s, now) { s.phase = "trust"; s.trust = { votes: {}, end: now + T(s, 120000) }; }
@@ -474,14 +473,12 @@ function clockNow(s) {
   if (s.phase === "honour") return [s.honour, "end"];
   return null;
 }
-// someone the host took out of the game: if no Forsworn is left, the hunt is over and the final begins
+// someone the host took out of the game: their turn in a Trial ends, and an Oath they hadn't sworn is dealt. Nothing
+// says whether any Forsworn are left: with none, the game plays on to its final, and the house poisons in their place.
 function afterLeaving(s, now, rnd, id) {
   const it = s.trial && s.trial.item;
   if (it && (it.actor === id || it.teller === id) && ["open", "prep"].includes(it.stage)) { it.end = now; if (it.k === "truths") it.lie = it.lie || 1; }
   if (s.phase === "oath" && s.players.every((p) => p.left || p.optIn)) return deal(s, now, rnd);
-  // (a dawn or an exile already under way plays out, and the next round sees there's nobody left to hunt)
-  if (["lobby", "oath", "roles", "reveal", "dawn", "unmask", "honour", "end"].includes(s.phase) || s.final || forsworn(s).length) return;
-  goFinal(s, now);
 }
 
 export function tick(s, now, ctx) {

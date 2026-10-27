@@ -191,7 +191,7 @@ for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
     if (s.phase === "break") { A(g, g.dir, { a: "brkEnd" }); continue; }
     if (s.phase === "trial") { finishCurrentTrial(g); A(g, g.dir, { a: "cont" }); continue; }
     if (s.phase === "talk" || s.phase === "vote") { vote(g, target); continue; }
-    if (s.phase === "night") { sawNight = true; const v = viewFor(s, s.players.find((p) => p.role === "f" && p.alive).id, g.now); check(`${n}p night ${s.round}: a Forsworn phone sees targets and allies`, v.me.targets && v.me.targets.length && Array.isArray(v.me.allies)); night(g); continue; }
+    if (s.phase === "night") { sawNight = true; const f = s.players.find((p) => p.role === "f" && p.alive); if (f) { const v = viewFor(s, f.id, g.now); check(`${n}p night ${s.round}: a Forsworn phone sees targets and allies`, v.me.targets && v.me.targets.length && Array.isArray(v.me.allies)); } night(g); continue; }
     if (s.phase === "dawn") { const vic = s.dawn.victims; if (vic.length) check(`${n}p dawn: the victim is told first, in secret`, viewFor(s, vic[0], g.now).me.victim && !viewFor(s, null, g.now).dawn.victims); A(g, g.dir, { a: "cont" }); A(g, g.dir, { a: "cont" }); continue; }
     if (s.phase === "reveal") { run(g, 6000); A(g, g.dir, { a: "cont" }); continue; }
     if (s.phase === "trust") {
@@ -291,14 +291,16 @@ const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" })
   check("…they're gone from every screen, and their phone says so", !viewFor(s, null, g.now).players.some((p) => p.id === s.players[3].id) && viewFor(s, s.players[3].id, g.now).me.left === true && !!A(g, s.players[3].id, { a: "sleep" }).error);
   check("…a Forsworn still at the table: the game goes on", s.phase === "day" && !s.final);
   A(g, g.dir, { a: "tool", v: "remove", who: s.players[4].id });
-  check("…no Forsworn left: straight to the final", s.final && s.phase === "day");
+  check("…no Forsworn left: nothing says so, and the round goes on", !s.final && s.phase === "day" && !viewFor(s, g.ids[1], g.now).final);
 }
 {
   const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
   exile(g, 6); run(g, 6000); A(g, g.dir, { a: "cont" });
   const before = alive(s).length;
   A(g, g.dir, { a: "tool", v: "remove", who: s.players[3].id }); A(g, g.dir, { a: "tool", v: "remove", who: s.players[4].id });
-  check("…at night too: nobody dies, and the final begins", s.final && s.phase === "day" && alive(s).length === before - 2 && !s.players.some((p) => p.dying));
+  check("…at night too: the night goes on, and with no Forsworn to choose, the house poisons in their place", s.phase === "night" && !s.final && alive(s).length === before - 2);
+  for (const p of alive(s)) A(g, p.id, { a: "sleep" }); run(g, 1000);
+  check("…someone is poisoned at dawn, as on any night", s.phase === "dawn" && s.dawn.victims.length === s.night.kills && s.dawn.victims.every((id) => s.players.find((p) => p.id === id).role === "l"), s.dawn);
 }
 {
   const g = setup(9); A(g, g.dir, { a: "start" }); for (const id of g.ids.slice(0, 8)) A(g, id, { a: "optin", v: "any" });
@@ -428,6 +430,25 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   const g = begin(10), s = g.s; delete s.opts.talkEach; s.opts.talk = 240; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
   setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
   check("a game from before: thirty seconds a player", s.vote.talkEnd - g.now === 30000 * alive(s).length);
+}
+{ // every Forsworn exiled before the final: nothing says so; the game plays on to its usual final, and the Loyal win
+  const g = begin(12), s = g.s; roles(g, [3]); A(g, g.dir, { a: "cont" });
+  exile(g, 3); run(g, 6000); A(g, g.dir, { a: "cont" });
+  check("the last Forsworn exiled: no early final, and the night falls as usual", s.phase === "night" && !s.final);
+  let guard = 0, finalAt = null;
+  while (s.phase !== "end" && guard++ < 300) {
+    if (s.final && finalAt === null) finalAt = alive(s).length;
+    if (s.phase === "night") { for (const p of alive(s)) A(g, p.id, { a: "sleep" }); run(g, 1000); }
+    else if (s.phase === "dawn") { A(g, g.dir, { a: "cont" }); A(g, g.dir, { a: "cont" }); }
+    else if (s.phase === "day") A(g, g.dir, { a: "next" });
+    else if (s.phase === "break") A(g, g.dir, { a: "brkEnd" });
+    else if (s.phase === "trial") { finishCurrentTrial(g); A(g, g.dir, { a: "cont" }); }
+    else if (s.phase === "talk" || s.phase === "vote") vote(g, (p) => alive(s).find((q) => q.id !== p.id));
+    else if (s.phase === "reveal") { run(g, 6000); A(g, g.dir, { a: "cont" }); }
+    else if (s.phase === "trust") { for (const p of alive(s)) A(g, p.id, { a: "trust", v: "trust" }); run(g, 1000); A(g, g.dir, { a: "cont" }); }
+    else run(g, 4000);
+  }
+  check(`…the final comes at five or fewer (${finalAt} left), and the Loyal win`, finalAt !== null && finalAt <= 5 && s.phase === "end" && s.result.winner === "loyal" && !s.honour, [s.phase, finalAt, guard]);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

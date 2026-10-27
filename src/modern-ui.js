@@ -6,7 +6,7 @@
 let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) || [])[1] || "").toUpperCase();
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
-let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], online = true, pollT = 0;
+let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, online = true, pollT = 0;
 const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
 let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
@@ -35,6 +35,7 @@ function take(j) {
   if (j.now) off = j.now - Date.now();
   if (j.view) { V = j.view; off = V.now - Date.now(); }
   if (j.rejoin) rejoin = j.rejoin; else if (j.view) rejoin = [];
+  if (j.view) hostGone = !!j.hostGone; // the host's phone has been quiet two minutes: anyone may take over
   if (j.peek) peekList = j.peek;
 }
 async function poll() {
@@ -180,7 +181,7 @@ function quick(me) {
 const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
-  ${rejoinCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
+  ${rejoinCard()}${takeOverCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
   ${holdings(me)}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
@@ -195,6 +196,7 @@ function holdings(me) {
   if (me.confess) c.push(["ghost", "eye", me.confess === "self" ? "The Confessor: nobody else" : "A Forsworn: " + esc(me.confess), me.confess === "self" ? "The Confessor’s prize: no other Forsworn is left at the table. It’s just you." : "The Confessor’s prize: " + esc(me.confess) + " is Forsworn. Only you know."]);
   return c.length ? `<div class="chips">${c.map(([cls, i, t, why]) => `<details class="chip ${cls}"><summary>${ico(i)}<span>${t}</span></summary><p>${why}</p></details>`).join("")}</div>` : "";
 }
+const takeOverCard = () => (hostGone ? `<div class="card hot"><p><b>${esc(V.director ? V.director.name : "The host")}</b>’s phone has gone quiet. If they can’t come back, someone can take over as host and move the evening on.</p>${btn("Take over as host", "takeover", null, "sm")}</div>` : "");
 function rejoinCard() {
   if (!rejoin.length) return ""; // the server sends requests only to phones that may answer them
   return rejoin.map((r) => `<div class="card hot"><p><b>${esc(r.name)}</b> is asking to come back in on a new phone. Only let them in if it’s really them.</p><div class="row">${btn("Let them in", "letin", r.id, "sm")}${btn("No", "keepout", r.id, "ghost sm")}</div></div>`).join("");
@@ -286,7 +288,7 @@ function toolScreen(me) {
   const people2 = (a) => `<div class="pick ${pickCls()}">${others.map((p) => `<button data-a="tool" data-v="${a}" data-who="${p.id}">${ART.seal(p)}<span class="nm">${esc(p.name)}</span></button>`).join("")}</div>`;
   return `<h2>Host tools</h2><p class="sub">For when something goes wrong. Nothing here shows you anyone’s role, except the last one.</p>
   <div class="stack">${list.join("") || `<p class="small">Nothing to fix at this moment.</p>`}</div>
-  <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role. If nobody Forsworn is left, the final begins.</p>${people2("remove")}</details>
+  <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role.</p>${people2("remove")}</details>
   <details class="more"><summary>Make someone else the host</summary><p class="small">Their phone gets these controls, and yours loses them.</p>${people2("host")}</details>
   <details class="more"><summary>Music on this phone</summary><p class="small">If there’s no TV, this phone can play the music and sounds.</p>${btn(typeof AC !== "undefined" && AC ? (muted ? "Sound on" : "Sound off") : "Play music here", "sound", null, "dark sm")}</details>
   <div class="card" style="margin-top:18px;border-color:#6a2733"><p class="small"><b style="color:var(--blood2)">The last resort.</b> Only if the game can’t carry on otherwise, say a phone died and nobody remembers who was Forsworn.</p>${btn("Show me the roles…", "peek1", null, "ghost sm")}</div>`;
@@ -628,6 +630,7 @@ document.addEventListener("click", async (e) => {
   if (a === "ack") peek = false;
   if (a === "start" && !confirm("Start the game? Nobody else can join after this.")) return;
   if (a === "again" && !confirm("Start a new game with the same players?")) return;
+  if (a === "takeover" && !confirm("Take over as host?")) return;
   if (a === "sleep") return send({ a: "sleep" });
   send(v != null ? { a, v } : { a });
 });
