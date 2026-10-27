@@ -6,7 +6,7 @@
 let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) || [])[1] || "").toUpperCase();
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
-let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], online = true, pollT = 0;
+let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, online = true, pollT = 0;
 const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
 let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
@@ -35,6 +35,7 @@ function take(j) {
   if (j.now) off = j.now - Date.now();
   if (j.view) { V = j.view; off = V.now - Date.now(); }
   if (j.rejoin) rejoin = j.rejoin; else if (j.view) rejoin = [];
+  if (j.view) hostGone = !!j.hostGone; // the host's phone has been quiet two minutes: anyone may take over
   if (j.peek) peekList = j.peek;
 }
 async function poll() {
@@ -165,12 +166,22 @@ function phone() {
   if (screen === "replay") return phone0(me, phase(me));
   if (peekList) return topBar(me) + peekScreen();
   if (tools && me.director) return topBar(me) + toolScreen(me);
-  return phone0(me, phase(me));
+  return phone0(me, phase(me) + quick(me));
+}
+// the host's moves for this moment, on their own screen; the rest wait in Tools
+function quick(me) {
+  if (!me.director || V.paused) return "";
+  const it = V.trial && V.trial.item, b = [];
+  if (it && ["open", "study", "prep"].includes(it.stage) && it.k !== "snap") b.push(btn("Close this question", "tool", "skip", "dark sm"));
+  if (V.phase === "talk") b.push(btn("Open the vote now", "tool", "voteNow", "sm"), btn("+1 minute", "tool", "more", "dark sm"));
+  if (V.phase === "vote") b.push(btn("Close the vote", "tool", "closeVote", "dark sm"), btn("+1 minute", "tool", "more", "dark sm"));
+  if (V.phase === "night") b.push(btn("End the night", "tool", "dawnNow", "dark sm"));
+  return b.length ? dirCard(`<div class="row">${b.join("")}</div>`) : "";
 }
 const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
-  ${rejoinCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
+  ${rejoinCard()}${takeOverCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
   ${holdings(me)}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
@@ -185,6 +196,7 @@ function holdings(me) {
   if (me.confess) c.push(["ghost", "eye", me.confess === "self" ? "The Confessor: nobody else" : "A Forsworn: " + esc(me.confess), me.confess === "self" ? "The Confessor’s prize: no other Forsworn is left at the table. It’s just you." : "The Confessor’s prize: " + esc(me.confess) + " is Forsworn. Only you know."]);
   return c.length ? `<div class="chips">${c.map(([cls, i, t, why]) => `<details class="chip ${cls}"><summary>${ico(i)}<span>${t}</span></summary><p>${why}</p></details>`).join("")}</div>` : "";
 }
+const takeOverCard = () => (hostGone ? `<div class="card hot"><p><b>${esc(V.director ? V.director.name : "The host")}</b>’s phone has gone quiet. If they can’t come back, someone can take over as host and move the evening on.</p>${btn("Take over as host", "takeover", null, "sm")}</div>` : "");
 function rejoinCard() {
   if (!rejoin.length) return ""; // the server sends requests only to phones that may answer them
   return rejoin.map((r) => `<div class="card hot"><p><b>${esc(r.name)}</b> is asking to come back in on a new phone. Only let them in if it’s really them.</p><div class="row">${btn("Let them in", "letin", r.id, "sm")}${btn("No", "keepout", r.id, "ghost sm")}</div></div>`).join("");
@@ -270,11 +282,13 @@ function toolScreen(me) {
   if (V.phase === "talk") add("Open the vote now", "voteNow", "Cut the talking short.");
   if (V.phase === "vote") add("Close the vote now", "closeVote", "Counts the votes in; nobody else can vote.");
   if (V.phase === "night") add("End the night now", "dawnNow", "Anyone who hasn’t chosen is chosen for.");
+  if ((it && ["open", "study", "prep"].includes(it.stage) && it.end && it.k !== "snap") || ["talk", "vote", "night", "honour"].includes(V.phase) || (V.phase === "dawn" && V.dawn.lastEnd) || (V.phase === "trust" && !V.trust.result)) add("Add a minute", "more", "A minute more on the clock that’s running.");
+  if (!["lobby", "end"].includes(V.phase)) add("End the game now", "end", "Everyone’s role is shown, and it’s scored as it stands: if any Forsworn are still in, they win.");
   const others = V.players.filter((p) => p.id !== me.id);
   const people2 = (a) => `<div class="pick ${pickCls()}">${others.map((p) => `<button data-a="tool" data-v="${a}" data-who="${p.id}">${ART.seal(p)}<span class="nm">${esc(p.name)}</span></button>`).join("")}</div>`;
   return `<h2>Host tools</h2><p class="sub">For when something goes wrong. Nothing here shows you anyone’s role, except the last one.</p>
   <div class="stack">${list.join("") || `<p class="small">Nothing to fix at this moment.</p>`}</div>
-  <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role. If nobody Forsworn is left, the final begins.</p>${people2("remove")}</details>
+  <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role.</p>${people2("remove")}</details>
   <details class="more"><summary>Make someone else the host</summary><p class="small">Their phone gets these controls, and yours loses them.</p>${people2("host")}</details>
   <details class="more"><summary>Music on this phone</summary><p class="small">If there’s no TV, this phone can play the music and sounds.</p>${btn(typeof AC !== "undefined" && AC ? (muted ? "Sound on" : "Sound off") : "Play music here", "sound", null, "dark sm")}</details>
   <div class="card" style="margin-top:18px;border-color:#6a2733"><p class="small"><b style="color:var(--blood2)">The last resort.</b> Only if the game can’t carry on otherwise, say a phone died and nobody remembers who was Forsworn.</p>${btn("Show me the roles…", "peek1", null, "ghost sm")}</div>`;
@@ -289,7 +303,7 @@ function trial(me) {
   const t = V.trial, it = t.item;
   if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1>${esc(t.title)}</h1><p>${esc(t.rules)}</p>
     ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer costs the Purse 50, and if you win you take every point it falls short, so sabotage quietly.</div>` : ""}
-    <p class="sub">Starts in ${clock(t.introEnd)}</p>`;
+    ${t.introEnd ? `<p class="sub">Starts in ${clock(t.introEnd)}</p>` : me.director ? dirCard(`${btn("Start the Trial", "cont", null, "big")}<p class="small center">When everyone has heard the rules.</p>`) : waitHost()}`;
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
   const head = `<div class="ihead"><div class="eyebrow">${esc(t.title)} · ${it.part ? esc(it.part) + " · " : ""}${it.stage === "reveal" ? t.i : t.i + 1}</div>${it.stage === "open" || it.stage === "study" || it.stage === "prep" ? clock(it.end) : ""}</div>${["open", "study", "prep", "blank"].includes(it.stage) && it.end && it.from ? `<div class="bar sticky"><i data-from="${it.from}" data-end="${it.end}"></i></div>` : ""}`;
@@ -443,7 +457,7 @@ function dawn(me) {
 }
 function trust(me) {
   const t = V.trust;
-  if (t.result) return `<h1>${t.result === "trust" ? "The table trusts" : "Doubt"}</h1><p class="sub">${t.result === "trust" ? "Everyone chose Trust. The masks come off." : plural(t.count, "player") + " doubted. Another Reckoning."}</p>`;
+  if (t.result) return `<h1>${t.result === "trust" ? "The table trusts" : "Doubt"}</h1><p class="sub">${t.result === "trust" ? "Everyone chose Trust. The masks come off." : plural(t.count, "player") + " doubted. Another Reckoning."}</p>` + dirCard(btn("Continue", "cont")) + waitHost();
   if (!me.alive) return `<div class="eyebrow">trust or doubt</div><h1>The survivors decide</h1><p class="sub">${t.voted} of ${t.of} have chosen.</p>`;
   return `<h1>Do you trust everyone left?</h1><p class="sub">If every survivor chooses Trust, the game ends and the masks come off. One Doubt, and there’s another Reckoning. No answer in time counts as Doubt.</p>${t.end ? `<p>${clock(t.end)}</p>` : ""}` +
     (t.mine ? `<div class="done">${ico("handshake")}<div>You chose <b>${t.mine.toUpperCase()}</b>.<br><span class="small">${t.voted} of ${t.of} in.</span></div></div>` : `<div class="grid2">${btn("Trust", "trust", "trust", "big verd")}${btn("Doubt", "trust", "doubt", "big blood")}</div>`);
@@ -457,7 +471,7 @@ function honour(me) {
 }
 function end(me) {
   const r = V.result, fw = r.winner === "forsworn";
-  return `<h1 class="disp">${fw ? "The Forsworn win" : "The Loyal win"}</h1>
+  return `<h1 class="disp">${fw ? "The Forsworn win" : "The Loyal win"}</h1>${r.early ? `<p class="small">The host ended the game here, so it’s scored as it stood.</p>` : ""}
   <p class="sub">${r.how === "betrayed" ? andList(r.to.map(esc)) + " betrayed the others at the last, and takes it all." : r.how === "nobody" ? "Too many betrayed, so nobody takes the prize." : r.to.length ? "The prize goes to " + andList(r.to.map(esc)) + "." : ""}</p>
   <div class="card center prize"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.pot <= 0 ? "an empty" : "a half-empty") : r.pot >= r.cap ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(prizeText(r))}</p><p class="small">${fw ? (r.won ? "The Loyal built " + r.pot + " of " + r.cap + ", so the Forsworn take the " + r.won + " it fell short." : "The Loyal filled the Purse, so there was nothing left for the Forsworn to take.") : "The Purse: " + r.pot + " of " + r.cap + "."}${r.coins != null ? " One coin for every 100 points." : ""}</p></div>
   ${me.won ? `<div class="banner sanct">${ico("crown")}<span>You won.</span></div>` : ""}
@@ -488,7 +502,7 @@ function tvBody(url) {
     case "break": return `<div class="eyebrow">a break</div><h1>${esc(V.brk.name)}</h1><p>${clock(V.brk.end)}</p>`;
     case "trial": {
       const t = V.trial, x = t.item;
-      if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1 class="disp">${esc(t.title)}</h1><p class="sub">${esc(t.rules)}</p><p>${clock(t.introEnd)}</p>`;
+      if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1 class="disp">${esc(t.title)}</h1><p class="sub">${esc(t.rules)}</p>${t.introEnd ? `<p>${clock(t.introEnd)}</p>` : ""}`;
       if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie at the top, settled by lot</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} takes the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won holds it. Only they know.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} takes Sanctuary.</p>` : t.prize && w ? `<p class="sub">Did they take Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}`; }
       return x ? `<div class="eyebrow">${esc(t.title)} · ${x.stage === "reveal" ? t.i : t.i + 1}</div>` + (x.stage === "reveal" ? tvReveal(x) : tvItem(x)) : "";
     }
@@ -501,7 +515,7 @@ function tvBody(url) {
     case "unmask": { const keep = V.players; V.players = V.unmask.order.map(P); const h = `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`; V.players = keep; return h; }
     case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p><p class="tvcount">${V.honour.made} of ${V.honour.of} chosen${V.honour.end ? " · " + clock(V.honour.end) : ""}</p>`;
     case "end": { const r = V.result, fw = r.winner === "forsworn";
-      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}">${fw ? "The Forsworn win" : "The Loyal win"}</h1><div class="prizecard"><span>the prize</span><h2>${esc(prizeText(r))}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
+      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}">${fw ? "The Forsworn win" : "The Loyal win"}</h1>${r.early ? `<p class="sub">The host ended the game here.</p>` : ""}<div class="prizecard"><span>the prize</span><h2>${esc(prizeText(r))}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
       <div class="endr">${tvPeople(null, true, "end")}${r.awards && r.awards.length ? `<ul class="tvawards">${r.awards.slice(0, V.players.length > 16 ? 2 : 4).map((a) => `<li>${seal(a.id)}<span><b>${esc(a.title)}</b>${esc(a.name)} ${esc(a.why)}</span></li>`).join("")}</ul>` : ""}</div></div>`; }
   }
   return "";
@@ -598,7 +612,7 @@ document.addEventListener("click", async (e) => {
   }
   if (a === "tool") {
     const who = b.dataset.who, nm = who ? P(who).name : "";
-    const ask = { remove: "Take " + nm + " out of the game? They can’t come back.", host: "Make " + nm + " the host? Your phone loses these controls.", endTrial: "End this Trial now?", closeVote: "Close the vote now?", dawnNow: "End the night now?", deal: "Deal the roles now?", skipStep: "Skip this step?" }[v];
+    const ask = { remove: "Take " + nm + " out of the game? They can’t come back.", host: "Make " + nm + " the host? Your phone loses these controls.", endTrial: "End this Trial now?", end: "End the game now? Everyone’s role is shown, and it’s scored as it stands.", closeVote: "Close the vote now?", dawnNow: "End the night now?", deal: "Deal the roles now?", skipStep: "Skip this step?" }[v];
     if (ask && !confirm(ask)) return;
     tools = 0; return send({ a: "tool", v, who });
   }
@@ -616,6 +630,7 @@ document.addEventListener("click", async (e) => {
   if (a === "ack") peek = false;
   if (a === "start" && !confirm("Start the game? Nobody else can join after this.")) return;
   if (a === "again" && !confirm("Start a new game with the same players?")) return;
+  if (a === "takeover" && !confirm("Take over as host?")) return;
   if (a === "sleep") return send({ a: "sleep" });
   send(v != null ? { a, v } : { a });
 });

@@ -106,9 +106,10 @@ with sync_playwright() as p:
     # the Trial with the Casting Vote: a whole quiz on phones
     host.click("[data-a=next]")
     check("the quiz's introduction names the Casting Vote as its prize", until(lambda: "Casting Vote" in phones[1].inner_text("#app")))
-    host.click("[data-a=tools]"); check("Tools: start the Trial now", until(lambda: host.locator("[data-a=tool][data-v=skip]").count() == 1)); host.click("[data-a=tool][data-v=skip]")
+    check("the Trial waits for the host: no countdown, and Start the Trial on the host's phone only", until(lambda: host.locator("[data-a=cont]").count() == 1) and "Starts in" not in phones[1].inner_text("#app") and phones[1].locator("[data-a=cont]").count() == 0)
+    host.click("[data-a=cont]")
     seen = set()
-    for qn in range(8):
+    for qn in range(15):
         until(lambda: phones[1].locator("input.f").count() > 0, 25)
         q = until(lambda: phones[1].locator("p.q").inner_text(), 5); seen.add(q)
         for i, pg in enumerate(phones):   # Ryan knows every answer; the rest guess
@@ -119,7 +120,7 @@ with sync_playwright() as p:
             check("quiz: each phone locks its answer, then the answer shows on phones and TV", "Right:" in phones[1].inner_text("#app") and until(lambda: "Right:" in tv.inner_text("#tvapp"), 4))
             check("…and the host can still accept a near miss", until(lambda: host.locator("text=Mark a near miss right").count() == 1, 4))
             shot(phones[2], "06-quiz-reveal"); shot(tv, "tv-02-quiz-reveal")
-    check("quiz: eight questions, one after another, by themselves", until(lambda: "the result" in host.inner_text("#app"), 30) and len(seen) >= 6, len(seen))
+    check("quiz: fifteen questions, one after another, by themselves", until(lambda: "the result" in host.inner_text("#app"), 30) and len(seen) >= 12, len(seen))
     check("the winner (Ryan, who knew every answer) alone is told they hold the Casting Vote", until(lambda: "You won the Casting Vote" in phones[1].inner_text("#app"), 5) and sum("You won the Casting Vote" in q.inner_text("#app") for q in phones) == 1)
     check("…and nobody else, the TV included, is told who won it", until(lambda: "The Casting Vote is taken" in tv.inner_text("#tvapp"), 4) and "Ryan wins" not in tv.inner_text("#tvapp") and "Ryan wins" not in phones[2].inner_text("#app"))
     shot(host, "07-trial-result"); host.click("[data-a=cont]")
