@@ -85,6 +85,10 @@ with sync_playwright() as p:
         check(f"seo {u}: FAQ and HowTo JSON-LD say exactly what the page says", not missing, missing)
         if u == "/": check("seo /: Organization, WebSite, Product with both prices in GBP, FAQPage", {"Organization", "WebSite", "Product", "FAQPage"} <= types and sorted(o["price"] for g in items if g.get("offers") for o in g["offers"]) == ["10.00", "20.00"], types)
         if u == "/traitors-at-home": check("seo /traitors-at-home: HowTo and FAQPage, and it says it isn't affiliated", {"HowTo", "FAQPage"} <= types and "not affiliated with" in m["text"])
+        if u in ("/rules", "/traitors-at-home", "/party-games-for-large-groups"):
+            art = next((g for g in items if g["@type"] == "Article"), {})
+            shown = sp.get_attribute("p.updated time", "datetime") if sp.locator("p.updated time").count() else None
+            check(f"seo {u}: an Article, dated, with the same date shown on the page", art.get("headline") and art.get("datePublished", "9") <= art.get("dateModified", "") and shown == art.get("dateModified"), (art.get("datePublished"), art.get("dateModified"), shown))
     check("seo: every page has its own title and description", len(titles) == len(INDEXED) and len(descs) == len(INDEXED))
     home = sp.goto(URL + "/"); ht = sp.content()
     check("seo: The Traitors is only a question on the home page, never its title", "Is it like The Traitors?" in ht and "Traitors" not in sp.title())

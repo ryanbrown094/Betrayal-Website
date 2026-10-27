@@ -127,6 +127,8 @@ with sync_playwright() as p:
 
     # the Temptation, straight after
     until(lambda: host.locator("[data-a=next]").count()); check("next: the Temptation", "The Temptation" in host.inner_text("#app")); host.click("[data-a=next]")
+    # like every Trial, it waits on its introduction until the host starts it
+    until(lambda: host.locator("[data-a=cont]").count() == 1, 10); host.click("[data-a=cont]")
     until(lambda: all(q.locator("[data-a=ans][data-v=purse]").count() for q in phones), 25)
     for q in phones: q.click("[data-a=ans][data-v=purse]")
     check("the Temptation: all PURSE doubles the offer", until(lambda: "The table held" in host.inner_text("#app"), 15))
@@ -176,7 +178,7 @@ with sync_playwright() as p:
     check("Tools: someone who left is taken out, without a word about their role", until(lambda: NAMES[gone] not in tv.inner_text("#tvapp")) and tv.inner_text("#tvapp").lower().count("loyal") == 1)
     check("…and their phone says they've left", until(lambda: "You’ve left the game" in phones[gone].inner_text("#app")))
     host.click("[data-a=tools]"); shot(host, "12-tools")
-    check("Tools: no role shown on the tools screen", "Forsworn" not in host.inner_text("#app").replace("who was Forsworn", ""))
+    check("Tools: no role shown on the tools screen", "Forsworn" not in host.inner_text("#app").replace("who was Forsworn", "").replace("if any Forsworn are still in", ""))
     host.click("[data-a=peek1]")
     check("…the roles after three confirmations", until(lambda: "Everyone’s role" in host.inner_text("#app") and host.inner_text("#app").count("Forsworn") >= 2))
     host.click("[data-a=unpeek]"); check("…and hidden again", until(lambda: "Everyone’s role" not in host.inner_text("#app")))

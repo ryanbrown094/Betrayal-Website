@@ -1,6 +1,8 @@
 // The real Worker class (worker/src/index.js), driven directly with an in-memory storage: PIN limits, games kept across deploys,
-// stale-build writes, the settings rule. Usage: node qa/worker.mjs
+// stale-build writes, the settings rule; and the morning's IndexNow call. Usage: node qa/worker.mjs
 import worker, { GameState, Registry } from "../worker/src/index.js";
+import { indexNow, INDEXNOW_KEY } from "../worker/src/indexnow.js";
+import { readFileSync, existsSync } from "node:fs";
 import { shownPass } from "../worker/src/codes.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra))); ok = ok && !!cond };
@@ -97,5 +99,21 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   for (let i = 0; i < 6; i++) await req(DO, "POST", "/api/events", {}, { device: "tv" + i, events: [...Array(10)].map((_, j) => ({ k: "error", m: "boom " + i + "." + j })) });
   await nap0();
   check("a room's devices put at most 30 errors an hour in the master log (the rest stay in the room's trail)", logged.length === 30 && mem.get("evN") === 6, { logged: logged.length, batches: mem.get("evN") });
+}
+// IndexNow: yesterday's pages from the sitemap, once, with the key its file holds
+{
+  const xml = '<url><loc>https://thebetrayal.co.uk/</loc><lastmod>2026-10-26</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/rules</loc><lastmod>2026-10-27</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/tour</loc><lastmod>2026-10-26</lastmod></url>';
+  const env = { SITE_HOST: "thebetrayal.co.uk", ASSETS: { fetch: async () => new Response(xml) } }, calls = [], real = globalThis.fetch; let reply = 200;
+  globalThis.fetch = async (u, init) => { calls.push({ u: String(u), body: JSON.parse(init.body) }); return new Response("", { status: reply }); };
+  const r = await indexNow(env, Date.parse("2026-10-27T07:00:00Z")), c = calls[0];
+  check("IndexNow: the pages dated yesterday, and only those, sent once", r.sent === 2 && calls.length === 1 && c.u === "https://api.indexnow.org/indexnow" && JSON.stringify(c.body.urlList) === JSON.stringify(["https://thebetrayal.co.uk/", "https://thebetrayal.co.uk/tour"]), calls);
+  check("…with the host, the key and where its file is", c.body.host === "thebetrayal.co.uk" && c.body.key === INDEXNOW_KEY && c.body.keyLocation === "https://thebetrayal.co.uk/" + INDEXNOW_KEY + ".txt");
+  const file = new URL("../worker/public/" + INDEXNOW_KEY + ".txt", import.meta.url);
+  check("…and that file is published, holding the key", existsSync(file) && readFileSync(file, "utf8").trim() === INDEXNOW_KEY);
+  check("a morning with nothing new sends nothing", (await indexNow(env, Date.parse("2026-10-30T07:00:00Z"))).sent === 0 && calls.length === 1);
+  check("another site's address (a staging host) sends nothing", (await indexNow({ ...env, SITE_HOST: "staging.example" }, Date.parse("2026-10-27T07:00:00Z"))).sent === 0 && calls.length === 1);
+  reply = 422; let err = null; try { await indexNow(env, Date.parse("2026-10-27T07:00:00Z")); } catch (e) { err = e.message; }
+  check("a refusal is an error (the morning job logs it)", /422/.test(err || ""), err);
+  globalThis.fetch = real;
 }
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);
