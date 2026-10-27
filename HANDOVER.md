@@ -513,6 +513,10 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 | `tools/brand/make_seal.py` | the cracked wax seal (`media/logos/the-betrayal-seal*`) and the app and browser icons | `./build.sh` first |
 | `tools/brand/make_creatives.py` | ads, social images and print card | |
 | `tools/brand/make_guidelines.py` | `media/The-Betrayal-Brand-Guidelines.pdf` | after make_creatives |
+| `tools/brand/make_crest.py` | the engraved crest for large sizes (social, print, profile pictures); the plain mark stays the small-size logo | |
+| `tools/brand/make_google.py` | Google Ads logo images, the crest and wordmark at each shape Google asks for (`media/social/google/`) | `tools/brand/make_crest.py` once first |
+| `tools/brand/make_instagram.py` | the Instagram launch pack: profile picture, first posts, three stories and a PDF of what to post when (`media/social/instagram/`) | `tools/brand/make_crest.py` once first |
+| `tools/brand/make_tiktok.py` | the 16-second vertical launch video for TikTok, Reels and Shorts, with the game's score (`media/social/tiktok/`) | `tools/brand/make_crest.py` once first; needs `pip install imageio-ffmpeg` |
 
 - The Modern tour game has **twists off**, so no secret prize, Temptation or Honour or Betray appears (no spoilers), and it ends in a Loyal win so the end screens are stable. Keep it that way. It passes `qr` so the TV lobby's QR code leads to `/seal`.
 - `build.sh` copies `media/web/*` to `worker/public/media/`; rebuild after regenerating images.
