@@ -12,7 +12,7 @@ export const tierFor = (v) => (!v ? "free" : v.pool !== "app" ? "full" : v.kind 
 // never down: a pass that lapses mid-game leaves the game as it was
 export const higher = (a, b) => ((RANK[b] ?? 0) > (RANK[a] ?? 0) ? b : a);
 // how a free game shows ads, read by the app with every poll, so the limits change without an app update; ADS_ENABLED
-// "0" (a var) turns them off. Interstitials only at natural breaks: each Reckoning's debate from round 2, and the
+// "0" (a var) turns them off. Interstitials only at natural breaks: as each day starts from round 2, and the
 // results, one a break; no time apart and no cap beyond that (30 is more breaks than any game has); a banner only in
 // the lobby.
 export const adsConfig = (env) => ({ enabled: !env || env.ADS_ENABLED !== "0", interstitialMinGapSec: 0, interstitialMaxPerRoom: 30, firstInterstitialAfterRound: 1, bannerEnabled: true });
