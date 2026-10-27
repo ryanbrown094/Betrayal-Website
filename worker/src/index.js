@@ -7,6 +7,7 @@ import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
 import { surveyEmail, thanksEmail, apologyEmail, sendFeedbackMail } from "./survey-mail.js";
 import { indexNow } from "./indexnow.js";
+import { emailHash } from "./email-hash.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -1329,7 +1330,8 @@ async function route(req, env) {
       if (!settled(s)) return json({ error: "We can’t see a completed payment for this checkout yet. Refresh in a moment." }, 402);
       const cr = await call(env, "/claim", { session: id, email: (s.customer_details && s.customer_details.email) || "", pass: s.metadata && s.metadata.pass, pi: piOf(s.payment_intent), sub: piOf(s.subscription), customer: piOf(s.customer), disc: s.metadata && s.metadata.discount, amount: s.amount_total });
       if (!cr.ok) return cr;
-      return json({ ...(await cr.json()), value: typeof s.amount_total === "number" ? s.amount_total / 100 : null }); // what was paid, for the ad conversion
+      // what was paid, and the checkout email hashed (never the address), for the ad conversion
+      return json({ ...(await cr.json()), value: typeof s.amount_total === "number" ? s.amount_total / 100 : null, emailHash: await emailHash(s.customer_details && s.customer_details.email) });
     }
     if (p === "/api/admin/login" && req.method === "POST") {
       if (!env.ADMIN_USER || !env.ADMIN_PASSWORD) return json({ error: "The admin sign-in isn’t set up." }, 503);

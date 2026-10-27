@@ -2,6 +2,8 @@
 // parameters), the claim from the thank-you page, the signed webhook (paid, expired, refunded) and what a pending,
 // paid, expired or refunded pass may do. node qa/claim.mjs
 import worker, { Registry } from "../worker/src/index.js";
+import { emailHash } from "../worker/src/email-hash.js";
+import { createHash } from "node:crypto";
 import { passKey } from "../worker/src/codes.js";
 import { register } from "node:module";
 // the Workers runtime's cloudflare:email, stubbed for Node, so the owner's alert emails can be read back
@@ -101,6 +103,12 @@ sessions.cs_test_000000000000.payment_status = "paid";
 const [cs, cj] = await claim("cs_test_000000000000"), again = await claim("cs_test_000000000000");
 check("paid: the claim returns the same pass the invoice carries, every time", cs === 200 && cj.pass === pass1 && again[1].pass === pass1, [cs, cj, again]);
 check("…and the pass is active", (await passOf(pass1)).pending === false && (await passOf(pass1)).note === "buyer@example.com");
+// enhanced conversions: the thank-you page gets the checkout email hashed (SHA-256 hex of the normalised address), never the address
+const sha = (x) => createHash("sha256").update(x).digest("hex");
+check("the claim gives the thank-you page the buyer's email hashed, and not the address", cj.emailHash === sha("buyer@example.com") && !JSON.stringify(cj).includes("buyer@example.com"), cj);
+check("…normalised as Google asks: trimmed, lower case, no full stops before a Gmail address's @", (await emailHash("  Jane.Doe@Gmail.com ")) === sha("janedoe@gmail.com") && (await emailHash("Jane.Doe@GoogleMail.com")) === sha("janedoe@googlemail.com"));
+check("…other addresses keep their full stops", (await emailHash("jane.doe@example.com")) === sha("jane.doe@example.com"));
+check("…and anything that isn't an address has no hash", (await emailHash("")) === null && (await emailHash(null)) === null && (await emailHash("not-an-email")) === null && (await emailHash("x@")) === null);
 check("an active pass opens a room", (await redeem(pass1))[0] === 200);
 check("the same code typed with the old CNDL- prefix, or none, finds the same Table", (await redeem("CNDL-" + pass1.slice(5)))[1].room === (await redeem(pass1.slice(5)))[1].room);
 check("not a session id: 400", (await claim("bogus"))[0] === 400);
@@ -355,5 +363,12 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const [cs2] = await claim(nid), svoff = await reg.storage.get("svoff:quiet@example.com");
   check("…once paid, its address is opted out", cs2 === 200 && !!svoff && svoff.at === "checkout" && (await passOf(npass)).noMail === true, svoff);
   check("…which a booking without the tick isn't", !(await reg.storage.get("svoff:buyer@example.com")));
+}
+// a checkout with no email on it: no hash
+{
+  const [, ej] = await checkout({ terms: true, supply: true }, base, "192.0.2.201"), eid = ej.url.split("/").pop();
+  sessions[eid].customer_details = { email: null }; sessions[eid].payment_status = "paid";
+  const [es, ec] = await claim(eid);
+  check("a checkout with no email address claims with no hash", es === 200 && ec.emailHash === null && !!ec.pass, ec);
 }
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);
