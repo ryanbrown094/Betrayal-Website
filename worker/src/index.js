@@ -6,6 +6,7 @@ import { sendBooking } from "./booking-mail.js";
 import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
 import { surveyEmail, thanksEmail, apologyEmail, sendFeedbackMail } from "./survey-mail.js";
+import { indexNow } from "./indexnow.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -1119,10 +1120,12 @@ async function gate(req, env) {
 }
 
 export default {
-  // every morning (wrangler.toml [triggers]): the last 24 hours' sales, Tables, reports and errors, by email to ALERT_TO
+  // every morning (wrangler.toml [triggers]): the last 24 hours' sales, Tables, reports and errors, by email to ALERT_TO;
+  // and yesterday's changed pages to IndexNow
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => { const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
       .catch((e) => logErr(env, { src: "server", where: "morning summary", msg: clip(e && e.message || e, 300) })));
+    ctx.waitUntil(indexNow(env).catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
   },
   async fetch(req, env) {
     try { return await route(req, env); }

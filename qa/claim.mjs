@@ -341,7 +341,8 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const d = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
   check("the morning summary counts the last 24 hours", /^The Betrayal, last 24 hours: \d+ sales \(£[\d.]+\), \d+ Tables?, \d+ errors?$/.test(d.subject) && /Sales: \d+ \(\d+ Tables, 1 new Regular\)/.test(d.body) && /Refunds: \d+, £/.test(d.body) && /Regulars who cancelled: /.test(d.body) && /Payments refused: /.test(d.body), d);
   const waits = [], n = alerts.length;
-  await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk" }, { waitUntil: w => waits.push(w) }); await Promise.all(waits);
+  // (the same morning job tells IndexNow of yesterday's pages: none here, in an empty sitemap)
+  await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk", ASSETS: { fetch: async () => new Response("") } }, { waitUntil: w => waits.push(w) }); await Promise.all(waits);
   check("…and the daily schedule emails it", alerts.length === n + 1 && read(alerts[n]).subject === d.subject && read(alerts[n]).body.startsWith(d.body), alerts.length - n);
 }
 // "Don't email me a feedback survey", ticked when booking: kept on the booking and in Stripe's metadata, and once it's
