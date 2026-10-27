@@ -9,7 +9,7 @@ for (const key of Object.keys(TRIALS)) {
   act(s, ids[0], { a: "start" }, now, ctx); act(s, ids[0], { a: "tool", v: "deal" }, now, ctx); act(s, ids[0], { a: "tool", v: "begin" }, now, ctx); tick(s, now, ctx);
   if (key === "statue") s.players[7].alive = false;
   s.steps = [{ k: "trial", key }, { k: "reckon" }]; s.stepAt = 0; act(s, ids[0], { a: "next" }, now, ctx);
-  now += 13000; tick(s, now, ctx);
+  act(s, ids[0], { a: "cont" }, now, ctx); now += 1000; tick(s, now, ctx); // the host starts it
   const it = s.trial.item, actor = it.actor || it.teller;
   if (it.k === "snap") now = it.start + 1000;
   const who = actor && actor !== ids[1] ? ids[1] : ids[2];
