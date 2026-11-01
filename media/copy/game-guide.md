@@ -47,7 +47,8 @@ Nobody is told how many Forsworn there are.
 - The game picks the next Trial itself; the host’s phone shows it (“Begin: Rapid Quiz”) and the host begins it when the room is ready.
 - Every phone shows the rules, then the Trial: typed quiz answers, number guesses, higher or lower, votes, words from letters, a memory list, rock-paper-scissors bouts, Snap. In the acting Trials (Screen Charades, Hum It, Draw It) the performer gets the word or song **privately on their phone**, and taps who guessed it. In Two Truths and a Lie, the teller chooses which of the three is the lie on their phone and everyone votes for it on theirs. Clocks run on every screen, and the game moves on when everyone has answered or time is up.
 - **Points** go into the Purse. The Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it **fell short** of its target, so every point they sabotage is theirs. The prize tiers follow the same amount.
-- **Wrong answers** by a Forsworn cost the Purse 50 each (every Forsworn’s phone reminds them). The room sees the total the Forsworn gave away, never whose.
+- **Wrong answers** by a Forsworn cost the Purse 50 each (every Forsworn’s phone reminds them), up to half the Trial’s share, except on the Rapid Quiz’s five brutal questions. The room sees the total the Forsworn gave away, never whose.
+- **Knockouts** (Rock Paper Scissors Royale, One Leg, The Statue) have a winner but no score for the table, so each adds half its share to the Purse.
 - The winner takes the round’s prize (Sanctuary, or on the right round the Casting Vote or the Crown). Most Likely To carries no prize: just a reputation.
 
 ### 4.2 Prizes: Sanctuary (every round)
@@ -60,7 +61,7 @@ Nobody is told how many Forsworn there are.
 - **No dinner setting.** A Modern game takes an hour or two, so people play before or after they eat. Dinner in courses belongs to Classic (see the Classic section).
 
 ### 4.4 The Reckoning
-- **Talk. Accuse. Defend.** A few minutes of open debate, with a clock on every phone and the TV.
+- **Talk. Accuse. Defend.** Thirty seconds of open debate for each player still in, four minutes at most, with a clock on every phone and the TV.
 - Then everyone votes **on their phone**, for anyone still alive. The counts are shown when the vote closes.
 - Most votes is **exiled**. A tie goes to a revote between the tied players, unless the Casting Vote breaks it (section 5); a tie that won’t break is settled by lot.
 - **Ghosts’ call:** the Ghosts vote too, on who they think will go. It doesn’t count, but it’s remembered, and the best Ghost can win an award.

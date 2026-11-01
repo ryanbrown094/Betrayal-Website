@@ -211,6 +211,58 @@ with sync_playwright() as p:
     check("admin replay: back to the start shows the lobby", code in ad.frame_locator(".tvbox iframe").locator("#tvapp").inner_text())
     shot(ad, "admin-room")
 
+    # from the paying customers' games (October 2026): the lobby's QR code and Share on every phone; a phone that lost its
+    # place carries on under its own name; the host told whose phone has gone quiet; what each device saw reaches /admin;
+    # Report a problem; the host's phone buzzes for what waits on it; and one tap rates the game
+    ADM = "async ([u, c]) => (await fetch(u, {headers: {Authorization: 'Bearer dev'}})).json()"
+    h2 = page(); h2.goto(URL + "/join"); room2 = h2.evaluate("async () => (await (await fetch('/api/games', {method:'POST', body: JSON.stringify({pass:'MASTERTEST'})})).json()).room")
+    h2.on("dialog", lambda d: d.accept()); h2.goto(URL + "/m/" + room2 + "#create"); h2.fill("#name", "Hosty"); h2.click("[data-a=create]")
+    sam, kit = page(), page()
+    for pg, nm in ((sam, "Sam"), (kit, "Kit")): pg.goto(URL + "/m/" + room2); pg.fill("#name", nm); pg.click("[data-a=join]")
+    check("lobby: every phone shows the join QR code and Share", until(lambda: sam.locator(".lobbyqr svg").count() == 1 and h2.locator(".lobbyqr [data-a=share]").count() == 1 and "Kit" in h2.inner_text("#app")))
+    sam.evaluate("() => { window.__shared = []; navigator.share = (d) => { __shared.push(d.url); return Promise.resolve(); } }"); sam.click("[data-a=share]")
+    check("…Share sends this Table's join link", until(lambda: sam.evaluate("__shared[0] || ''").endswith("/m/" + room2), 5), sam.evaluate("__shared"))
+    sam.click("[data-a=report1]"); sam.fill("#rpwhat", "Testing the report from a Modern phone"); sam.click("[data-a=report2]")
+    rid = until(lambda: re.search(r"R-[A-Z0-9]{6}", sam.inner_text("#app")).group(0), 10)
+    check("Report a problem: sent from a phone, with a reference", bool(rid), sam.inner_text("#app")[:200])
+    rep = next((x for x in h2.evaluate(ADM, [URL + "/api/admin/reports", ""])["reports"] if x["id"] == rid), {}) if rid else {}
+    check("…in /admin's reports, with its room and a picture of the screen", rep.get("room") == room2 and rep.get("snapParts", 0) > 0, rep)
+    sam.click("[data-a=report0]")
+    evs = h2.evaluate(ADM, [URL + "/api/admin/room/" + room2 + "/events", ""])["events"]
+    check("the device trail: what Sam's phone saw reached /admin (open, who, screens, taps)", {"open", "who", "view", "tap", "report"} <= {e["k"] for e in evs} and any("Sam" in e["m"] for e in evs if e["k"] == "who"), sorted({e["k"] for e in evs}))
+    sam.context.close(); kit.context.close(); time.sleep(21)
+    sam = page(); sam.goto(URL + "/m/" + room2); sam.fill("#name", "Sam"); sam.click("[data-a=join]")
+    check("a lost phone in the lobby: its name is taken, and it's offered Sam's place", until(lambda: sam.locator("[data-a=reclaim]").count() == 1 and "already called Sam" in sam.inner_text("#app"), 5))
+    sam.click("[data-a=reclaim]")
+    check("…which it takes: Sam once, on the new phone", until(lambda: "You’re in" in sam.inner_text("#app") and h2.inner_text("#app").count("Sam") == 1, 5))
+    errs[:] = [e for e in errs if "400" not in e]  # the taken name above is a 400, as it should be
+    time.sleep(42)
+    check("the host is told a phone has been quiet a minute, and takes it off the list", until(lambda: "Kit: this phone hasn’t been seen for a minute" in h2.inner_text("#app"), 10), h2.inner_text("#app")[:300])
+    h2.click("[data-a=tool][data-v=remove]")
+    check("…Kit is gone, Sam stays", until(lambda: "Kit" not in h2.inner_text("#app") and "Sam" in h2.inner_text("#app"), 5))
+    h2.context.close(); sam.on("dialog", lambda d: d.accept())  # the host's phone is lost; nothing else changes in the lobby
+    check("…the host's phone gone two minutes: Sam is offered the host's place, though nothing in the game has changed", until(lambda: sam.locator("[data-a=takeover]").count() == 1, 150))
+    sam.click("[data-a=takeover]")
+    check("…and takes it", until(lambda: "Before you start" in sam.inner_text("#app"), 5))
+    sam.context.close()
+
+    bz = page(); bz.add_init_script("window.__vib = []; navigator.vibrate = (p) => { __vib.push(String(p)); return true; }"); bz.on("dialog", lambda d: d.accept())
+    bz.goto(URL + "/join"); room3 = bz.evaluate("async () => (await (await fetch('/api/games', {method:'POST', body: JSON.stringify({pass:'MASTERTEST'})})).json()).room")
+    bz.goto(URL + "/m/" + room3 + "#create-bots"); bz.fill("#name", "Ryan"); bz.click("[data-a=create]")
+    until(lambda: bz.locator("[data-a=start]:not([disabled])").count()); bz.click("[data-a=start]")
+    until(lambda: bz.locator("[data-a=optin][data-v=any]").count(), 5); bz.click("[data-a=optin][data-v=any]")
+    until(lambda: bz.locator(".veil").count(), 5); bz.click(".veil"); bz.click("[data-a=ack]")
+    until(lambda: bz.locator("[data-a=next]").count(), 10); bz.wait_for_timeout(500); bz.evaluate("__vib.length = 0"); bz.click("[data-a=next]")
+    check("the host's phone buzzes when a Trial's result is in by itself, not straight after its own tap", until(lambda: bz.locator("[data-a=cont]").count() and bz.evaluate("__vib.includes('70,50,70')"), 30), bz.evaluate("__vib"))
+    check("…and again when it has waited a minute", until(lambda: bz.evaluate("__vib.includes('70,50,70,50,70')"), 70), bz.evaluate("__vib"))
+    bz.click("[data-a=tools]"); bz.click("[data-a=tool][data-v=end]")
+    check("the end: one tap rates the game", until(lambda: bz.locator("[data-a=rate]").count() == 5, 10))
+    bz.click("[data-a=rate][data-v='4']")
+    check("…and says thanks", until(lambda: "Thanks for rating it 4 out of 5" in bz.inner_text("#app"), 5))
+    log = [x["m"] for x in (bz.evaluate(ADM, [URL + "/api/admin/room/" + room3 + "/room", ""]).get("modern") or {}).get("log", [])]
+    check("…kept in the game's log for /admin", "Ryan rated the game 4 out of 5" in log, log[:3])
+    bz.context.close()
+
     wide = [i for i, q in enumerate(phones) if not q.is_closed() and q.evaluate("document.documentElement.scrollWidth") > q.viewport_size["width"]]
     check("no phone scrolls sideways (320px included)", not wide, wide)
     check("no page errors", not errs, errs[:5])
