@@ -413,7 +413,7 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   const count = (p) => parts.filter((x) => x === p).length;
   check(`Rapid Quiz: fifteen questions, five easy, five medium, five brutal (${parts.length}: ${count("easy")}/${count("medium")}/${count("brutal")})`, s.trial.i === 15 && count("easy") === 5 && count("medium") === 5 && count("brutal") === 5 && parts.slice(0, 5).every((p) => p === "easy") && parts.slice(10).every((p) => p === "brutal"));
   A(g, g.dir, { a: "cont" }); setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
-  check(`the Reckoning: thirty seconds of talk for each of the ${alive(s).length} players still in`, s.phase === "talk" && s.vote.talkEnd - g.now === 30000 * alive(s).length);
+  check(`the Reckoning: thirty seconds of talk for each of the ${alive(s).length} players still in, four minutes at most`, s.phase === "talk" && s.vote.talkEnd - g.now === Math.min(240000, 30000 * alive(s).length));
   const t0 = s.vote.talkEnd;
   check("a minute more: only the host", !!A(g, g.ids[1], { a: "tool", v: "more" }).error && A(g, g.dir, { a: "tool", v: "more" }) === null && s.vote.talkEnd === t0 + 60000);
   A(g, g.dir, { a: "tool", v: "voteNow" }); const v0 = s.vote.voteEnd; A(g, g.dir, { a: "tool", v: "more" });
@@ -429,7 +429,7 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
 { // a game saved before talkEach (its opts said talk: 240, the whole time) talks thirty seconds a player, not two hours
   const g = begin(10), s = g.s; delete s.opts.talkEach; s.opts.talk = 240; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
   setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
-  check("a game from before: thirty seconds a player", s.vote.talkEnd - g.now === 30000 * alive(s).length);
+  check("a game from before: thirty seconds a player, four minutes at most", s.vote.talkEnd - g.now === Math.min(240000, 30000 * alive(s).length));
 }
 { // every Forsworn exiled before the final: nothing says so; the game plays on to its usual final, and the Loyal win
   const g = begin(12), s = g.s; roles(g, [3]); A(g, g.dir, { a: "cont" });
@@ -457,7 +457,7 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   const g = { s, now, dir: me, ids: s.players.map((p) => p.id) };
   A(g, me, { a: "start" }); A(g, me, { a: "optin", v: "any" }); run(g, 1000); A(g, me, { a: "ack" }); run(g, 1000);
   setStep(g, { k: "reckon" }); A(g, me, { a: "next" });
-  check(`a practice game's talk is thirty seconds a player too, not its thirty-second cap (${Math.round((s.vote.talkEnd - g.now) / 1000)}s)`, s.phase === "talk" && s.vote.talkEnd - g.now === 30000 * alive(s).length);
+  check(`a practice game's talk is thirty seconds a player too, not its thirty-second cap (${Math.round((s.vote.talkEnd - g.now) / 1000)}s)`, s.phase === "talk" && s.vote.talkEnd - g.now === Math.min(240000, 30000 * alive(s).length));
 }
 {
   const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
@@ -514,6 +514,47 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
   A(g, g.dir, { a: "pause", v: "off" });
   const X = exile(g, 3); run(g, 6000);
   check("…an exiled Forsworn leaves the conversation, and with one left there's nobody to talk to", !!A(g, F1.id, { a: "chat", v: "still here?" }).error && viewFor(s, F2.id, g.now).me.chat === undefined && X === F1);
+}
+// 13. from the paying customers' games (October 2026): the talk stops at four minutes; a knockout fills half its offer; a
+// brutal quiz question's wrong answers cost nothing; one tap rates the game; a big table's votes are logged in full
+// (the host told whose phone has gone quiet is the Worker's: qa/worker.mjs)
+{
+  const g = begin(21), s = g.s; roles(g, [3, 4, 5, 6]); A(g, g.dir, { a: "cont" });
+  s.players.forEach((p, i) => (p.name = (p.name + " Longname").slice(0, 13) + String.fromCharCode(97 + i)));
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
+  check(`21 players: four minutes of talk, not ten and a half (${(s.vote.talkEnd - g.now) / 1000}s)`, s.phase === "talk" && s.vote.talkEnd - g.now === 240000);
+  const X = s.players[7]; vote(g, (p) => (p === X ? s.players[8] : X));
+  const line = (s.log.find((x) => x.m.startsWith("Votes:")) || {}).m || "";
+  check(`…and its votes are logged whole (${line.length} characters, every voter named)`, line.length > 300 && s.players.every((p) => line.includes(p.name + " →")), line.slice(-80));
+}
+{
+  const g = begin(8), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" });
+  check("8 players: thirty seconds each, four minutes", s.vote.talkEnd - g.now === 240000);
+}
+for (const key of ["rps", "oneleg"]) {
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  const r = playTrial(g, key), half = Math.round(s.trial.offer / 2 / 50) * 50;
+  check(`${TRIALS[key].title} fills half its offer (${s.trial.points} of ${s.trial.offer}), not next to nothing`, !r && s.trial.stage === "done" && s.trial.points === half && s.pot === half);
+}
+{
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  const F = [s.players[3].id, s.players[4].id]; let guard = 0;
+  while (s.trial.stage !== "done" && guard++ < 3000) {
+    const it = s.trial.item;
+    if (it && it.stage === "open" && !Object.keys(it.inputs).length) for (const p of alive(s)) A(g, p.id, { a: "ans", v: F.includes(p.id) ? "wrong" : it.a });
+    g.now += 1000; tick(s, g.now, ctx);
+  }
+  check(`Rapid Quiz: the Forsworn's wrong answers count on the easy and medium questions only (${s.trial.wrongF} of 30)`, s.trial.stage === "done" && s.trial.wrongF === 20);
+}
+{
+  const g = begin(8), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  check("a rating only at the end", !!A(g, g.ids[2], { a: "rate", v: 5 }).error);
+  A(g, g.dir, { a: "tool", v: "end" });
+  check("…one tap each, 1 to 5, kept in the log and shown back to that phone", A(g, g.ids[2], { a: "rate", v: "4" }) === null && !!A(g, g.ids[2], { a: "rate", v: 5 }).error && !!A(g, g.ids[3], { a: "rate", v: 9 }).error
+    && s.log[0].m === s.players[2].name + " rated the game 4 out of 5" && viewFor(s, g.ids[2], g.now).me.rated === 4 && viewFor(s, g.ids[3], g.now).me.rated === 0);
+  check("…and a new game starts unrated", A(g, g.dir, { a: "again" }) === null && !s.ratings);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

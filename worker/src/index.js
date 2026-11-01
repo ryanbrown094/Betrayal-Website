@@ -269,10 +269,14 @@ export class GameState {
     // and once it has been quiet for two minutes (and the room has been awake that long, so it would have heard from it),
     // anyone still at the table may take over as host: the host may have no phone to come back on
     const hostGone = () => hostQuiet(120000) && now - this.awake > 120000;
+    // and the host is told whose phone has been quiet a minute (a closed tab, a flat battery), since the room woke: once
+    // the game is going, every vote, night and question would wait on it to its clock
+    const away = () => (me && s && s.director === me.id ? s.players.filter((p) => !p.left && !p.bot && p.id !== me.id && now - Math.max(p.seen || p.joined || 0, this.awake) > 60000).map((p) => p.id) : []);
     // so those phones always get the requests to come back in, and none is lost between screens
     const pending = () => {
       const l = me && s && s.rejoin ? s.rejoin.filter((x) => !x.tok && mayLetIn(x)) : [];
-      return { ...(l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}), ...(me && !me.left && s && s.director !== me.id && hostGone() ? { hostGone: true } : {}) };
+      const q = away();
+      return { ...(l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}), ...(me && !me.left && s && s.director !== me.id && hostGone() ? { hostGone: true } : {}), ...(q.length ? { away: q } : {}) };
     };
     const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
@@ -318,7 +322,18 @@ export class GameState {
         s.rejoin = (s.rejoin || []).filter((x) => x.pid !== p.id).concat([{ id: Math.random().toString(36).slice(2, 10), pid: p.id, t: now }]).slice(-10); s.ver++; await save();
         return json({ req: s.rejoin[s.rejoin.length - 1].id, waiting: true });
       }
-      const j = M.join(s, body.name, now, Math.random); if (j.error) return json(j, 400);
+      const j = M.join(s, body.name, now, Math.random);
+      if (j.error) {
+        // the name is taken: if that player's phone has gone quiet (a closed tab, or the QR code's own browser), this may
+        // be the same person in another browser, who carries on as them once they say so (else they'd join twice)
+        const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, M.NAMEMAX).toLowerCase(), p = s.players.find((x) => !x.bot && x.name.toLowerCase() === name);
+        const quiet = !!p && now - (p.seen || p.joined || 0) > 20000 && now - this.awake > 20000;
+        if (quiet && body.reclaim === true) {
+          p.tok = M.newTok(); p.seen = now; s.log = [{ t: now, m: p.name + " came back on a new phone" }, ...(s.log || [])].slice(0, 300);
+          s.ver++; await save(); return json({ tok: p.tok, view: viewOf(s, p, now), room });
+        }
+        return json({ ...j, ...(quiet ? { reclaim: p.name } : {}) }, 400);
+      }
       s.ver++; await save(); return json({ tok: j.tok, view: viewOf(s, { id: j.id }, now), room });
     }
     if (path === "/api/m/upgrade" && req.method === "POST") {

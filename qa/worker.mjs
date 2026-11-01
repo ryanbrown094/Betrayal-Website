@@ -116,4 +116,33 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   check("a refusal is an error (the morning job logs it)", /422/.test(err || ""), err);
   globalThis.fetch = real;
 }
+// Modern's lobby: a phone that lost its place (a closed tab, the QR code's own browser) carries on under its own name once
+// the old phone has been quiet 20 seconds and it says it's them; otherwise the name stays taken
+{
+  const { DO } = await mk("1"), real = Date.now; let skew = 0; Date.now = () => real() + skew;
+  const post = async (path, body, tok) => { const r = await req(DO, "POST", "/api/m/" + path, tok ? { "X-Tok": tok } : null, body); return [r.status, await r.json()]; };
+  const [, host] = await post("create", { name: "Ann" }), [, sam] = await post("join", { name: "Sam" });
+  const [s1, now1] = await post("join", { name: "sam" });
+  check("Modern lobby: a name whose phone is still there is taken, with no offer to carry on as them", s1 === 400 && /Add an initial/.test(now1.error) && !now1.reclaim, now1);
+  skew = 25000; await req(DO, "GET", "/api/m", { "X-Tok": host.tok }); // the host's phone keeps polling
+  const [s2, offer] = await post("join", { name: "Sam" }), [s3, hostName] = await post("join", { name: "Ann" });
+  check("…once Sam's phone has been quiet 20 seconds, a new phone asking for Sam is offered the place; not the host's, still polling", s2 === 400 && offer.reclaim === "Sam" && s3 === 400 && !hostName.reclaim, [offer, hostName]);
+  const [s4, took] = await post("join", { name: "Sam", reclaim: true }), old = await (await req(DO, "GET", "/api/m", { "X-Tok": sam.tok })).json();
+  check("…and takes it when it says it's them: still one Sam, on the new phone, and the old phone has lost its place", s4 === 200 && !!took.tok && took.tok !== sam.tok && took.view.me.name === "Sam" && took.view.players.length === 2 && !old.view.me, [s4, took.error]);
+  Date.now = real;
+}
+// the host is told whose phone has been quiet a minute (it would hold every clock), in every reply, "nothing new" too;
+// nobody else is told, and not before the room has been awake a minute (it hasn't heard from the phones yet)
+{
+  const { mem, DO } = await mk("1"), real = Date.now; let skew = 0; Date.now = () => real() + skew;
+  const post = async (path, body) => (await req(DO, "POST", "/api/m/" + path, null, body)).json();
+  const get = async (D, tok, q) => (await req(D, "GET", "/api/m" + (q || ""), { "X-Tok": tok })).json();
+  const host = await post("create", { name: "Ann" }), bo = await post("join", { name: "Bo" }), cy = await post("join", { name: "Cy" });
+  skew = 61000; await get(DO, cy.tok); // Cy's phone is still polling; Bo's hasn't asked since it joined
+  const full = await get(DO, host.tok), same = await get(DO, host.tok, "?v=" + full.view.ver + "&me=" + full.view.me.id), cys = await get(DO, cy.tok);
+  check("Modern: the host is told Bo's phone has been quiet a minute, in a full reply and a 'nothing new' one; not Cy's, and nobody else is told", JSON.stringify(full.away) === JSON.stringify([bo.view.me.id]) && same.same === true && JSON.stringify(same.away) === JSON.stringify([bo.view.me.id]) && !cys.away, [full.away, same, cys.away]);
+  const { DO: woke } = await mk("1", mem);
+  check("…but not from a room that has just woken", !(await get(woke, host.tok)).away);
+  Date.now = real;
+}
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);

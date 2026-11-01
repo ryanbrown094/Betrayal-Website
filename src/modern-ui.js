@@ -6,7 +6,7 @@
 let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) || [])[1] || "").toUpperCase();
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
-let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, myrole = 0, online = true, pollT = 0;
+let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, away = [], myrole = 0, online = true, pollT = 0;
 const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
 let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
@@ -26,6 +26,70 @@ const clock = (end, from) => `<span class="clock" data-end="${end}"></span>` + (
 const btn = (label, a, v, cls, extra) => `<button class="btn ${cls || ""}" data-a="${a}"${v != null ? ` data-v="${esc(v)}"` : ""}${extra || ""}>${label}</button>`;
 
 // ---------------------------------------------------------------------------------------------------------------
+// what this phone or TV saw, for /admin: each screen, what was tapped (button labels, never anything typed), connection
+// trouble and errors, sent to the Table's log every 15 seconds (an error at once); and Report a problem
+const DEVICE = (() => { const d = store.get("bt-device") || Math.random().toString(36).slice(2, 10); store.set("bt-device", d); return d; })();
+const BUILDV = (document.querySelector('meta[name="build"]') || {}).content || "";
+const crumbs = [], evQ = []; let evT = 0, whoSent = "", reporting = 0, reportSnap = "", reportId = "", gameHtml = "", tapAt = 0;
+function crumb(k, m, extra) {
+  if (screen === "replay" || !CODE) return;
+  const e = { t: Date.now(), k, m: String(m == null ? "" : m).slice(0, 400), ...(extra || {}) };
+  crumbs.push(e); if (crumbs.length > 300) crumbs.shift();
+  evQ.push(e); if (evQ.length > 500) evQ.shift();
+  if (k === "error") flushEv(); else if (!evT) evT = setTimeout(flushEv, 15000);
+}
+function flushEv(beacon) {
+  clearTimeout(evT); evT = 0;
+  if (!CODE || !evQ.length || !/^https?:$/.test(location.protocol)) return;
+  const url = "/api/g/" + CODE + "/events", body = JSON.stringify({ device: DEVICE, host: !isTV(), build: BUILDV, events: evQ.splice(0, 80) }); // well under the server's 32 KB a batch
+  if (evQ.length) evT = setTimeout(flushEv, 1000);
+  if (beacon && navigator.sendBeacon) { navigator.sendBeacon(url, new Blob([body], { type: "application/json" })); return; }
+  fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+}
+if (screen !== "replay") {
+  addEventListener("error", (e) => crumb("error", e.message || "error", { stack: e.error && e.error.stack ? String(e.error.stack) : "", src: (e.filename || "") + ":" + (e.lineno || 0) + ":" + (e.colno || 0) }));
+  addEventListener("unhandledrejection", (e) => { const r = e.reason; crumb("error", "Unhandled promise: " + ((r && r.message) || r), { stack: r && r.stack ? String(r.stack) : "" }); });
+  document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest("button,a,summary,[data-a]"); if (b) crumb("tap", (b.getAttribute("aria-label") || b.textContent || "").trim().replace(/\s+/g, " ").slice(0, 90)); }, true);
+  addEventListener("pagehide", () => flushEv(true));
+  document.addEventListener("visibilitychange", () => { crumb("vis", document.visibilityState); if (document.visibilityState === "hidden") flushEv(true); });
+  addEventListener("online", () => crumb("net", "online")); addEventListener("offline", () => crumb("net", "offline"));
+}
+async function gzB64(str) {
+  if (!window.CompressionStream) return "";
+  const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close();
+  const u = new Uint8Array(await new Response(cs.readable).arrayBuffer()); let b = ""; for (let i = 0; i < u.length; i += 32768) b += String.fromCharCode.apply(null, u.subarray(i, i + 32768));
+  return btoa(b);
+}
+// the game's screen as it was before Tools or the report opened: the page's HTML and styles without its scripts
+function snapshot() {
+  const d = document.documentElement.cloneNode(true);
+  d.querySelectorAll("script").forEach((x) => x.remove());
+  const a = d.querySelector("#app"); if (a && gameHtml) a.innerHTML = gameHtml;
+  return "<!doctype html>" + d.outerHTML.replace("<head>", '<head><base href="' + location.origin + '/">');
+}
+function reportScreen() {
+  if (reporting === 2) return `<h2>Thank you</h2><p class="sub">Your report is in. Its reference is <b>${esc(reportId)}</b>, in case you write to us about it. If you left your email, we’ll reply within 24 hours.</p>${btn("Back to the game", "report0", null, "big")}`;
+  return `<h2>Report a problem</h2><p class="sub">Tell us what went wrong. We’ll get a picture of the screen you were on and a record of what happened in this game, so you don’t need to describe everything.</p>
+  <label class="l" for="rpwhat">What happened?</label><textarea class="f" id="rpwhat" rows="4"></textarea>
+  <label class="l" for="rpexp">What did you expect to happen? (optional)</label><textarea class="f" id="rpexp" rows="2"></textarea>
+  <label class="l" for="rpmail">Your email, if you’d like a reply (optional)</label><input class="f" id="rpmail" type="email" autocomplete="email" spellcheck="false">
+  <div style="height:12px"></div><div class="row">${btn("Send report", "report2")}${btn("Cancel", "report0", null, "ghost")}</div>${msg()}`;
+}
+async function sendReport() {
+  const val = (id) => String(($("#" + id) || {}).value || "").trim(), what = val("rpwhat");
+  if (!what) return say("Tell us what went wrong first.", true);
+  say("Sending…"); flushEv();
+  try {
+    const body = { room: CODE, device: DEVICE, host: !!(V && V.me && V.me.director), build: BUILDV + " modern", ua: navigator.userAgent, url: location.pathname, what, expected: val("rpexp"), email: val("rpmail"),
+      phase: V ? V.phase + " · round " + V.round : screen, ver: V ? V.ver : 0, screen: { w: innerWidth, h: innerHeight, dpr: devicePixelRatio || 1 }, crumbs: crumbs.slice(-200), snap: reportSnap ? await gzB64(reportSnap) : "" };
+    const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "It didn’t send (" + r.status + ")");
+    crumb("report", "sent " + j.id); reportId = j.id; reporting = 2; say("");
+  } catch (e) { say((e.message || "It didn’t send") + ". Check the connection and try again.", true); }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
 async function api(path, body) {
   const r = await fetch("/api/g/" + (CODE || body.code) + "/" + path, { method: body ? "POST" : "GET", headers: { "Content-Type": "application/json", ...(tok ? { "X-Tok": tok } : {}) }, body: body ? JSON.stringify(body) : undefined, cache: "no-store" });
   const j = await r.json().catch(() => ({ error: "The server didn’t answer properly." }));
@@ -35,8 +99,12 @@ function take(j) {
   if (j.now) off = j.now - Date.now();
   if (j.view) { V = j.view; off = V.now - Date.now(); }
   if (j.rejoin) rejoin = j.rejoin; else if (j.view) rejoin = [];
-  if (j.view) hostGone = !!j.hostGone; // the host's phone has been quiet two minutes: anyone may take over
+  // the host's phone quiet two minutes (anyone may take over), and for the host, whose phones are quiet: both come with
+  // every reply, "nothing new" included, since a game stalled on a dead phone changes nothing
+  if (j.view || j.same) { hostGone = !!j.hostGone; away = j.away || []; }
   if (j.peek) peekList = j.peek;
+  const me = V && V.me, who = me ? (me.director ? "host " : "player ") + me.id : "";
+  if (who && who !== whoSent) { whoSent = who; crumb("who", who + " · " + me.name); }
 }
 async function poll() {
   clearTimeout(pollT);
@@ -51,8 +119,9 @@ async function poll() {
         if (r.j.none) { if (r.j.classic) return (location.href = "/t/" + CODE); V = null; screen = screen === "tv" ? "tv" : "nogame"; }
         else take(r.j);
       }
+      if (!online) crumb("net", "reconnected");
       online = true;
-    } catch (e) { online = false; }
+    } catch (e) { if (online) crumb("net", "lost the game: " + (e.message || e)); online = false; }
     draw();
   }
   const it = V && V.trial && V.trial.item, fast = it && it.k === "snap" && it.stage === "open";
@@ -63,8 +132,8 @@ async function send(a) {
   try {
     const r = await api("m/act", a);
     if (r.j.lost) { tok = null; store.set(TOKKEY, null); screen = "join"; say("This phone lost its place. Type your name to ask the host to let you back in.", true); }
-    else { take(r.j); if (r.j.error) say(r.j.error, true); }
-  } catch (e) { say("Can’t reach the game. Check you’re online.", true); }
+    else { take(r.j); if (r.j.error) { crumb("act", (a.a || "") + (a.a === "tool" ? " " + a.v : "") + ": " + r.j.error); say(r.j.error, true); } }
+  } catch (e) { crumb("net", (a.a || "") + " didn’t reach the game"); say("Can’t reach the game. Check you’re online.", true); }
   busy = false; document.body.classList.remove("busy"); draw();
 }
 function say(t, err) { toast = t ? (err ? "!" : "") + t : ""; clearTimeout(toastT); if (t) toastT = setTimeout(() => { toast = ""; draw(); }, 5000); draw(); }
@@ -80,7 +149,10 @@ function draw() {
   root.innerHTML = html; last = html;
   // a new screen fades in; the same screen with a new count or clock doesn't
   const k = root.querySelector("[data-k]"), key = screen + (k ? k.dataset.k : "");
-  if (k && key !== lastKey) { k.classList.add("fade"); if (key && lastKey) cue(); } lastKey = key;
+  if (k && key !== lastKey) { k.classList.add("fade"); if (key && lastKey) cue(); }
+  if (key !== lastKey) crumb("view", key + (V ? " · round " + V.round : ""));
+  lastKey = key;
+  if (!isTV() && !tools && !reporting && !peekList && !myrole) gameHtml = html;
   if (isTV() && narr) speak();
   for (const [id, v] of Object.entries(keep)) { const x = document.getElementById(id); if (x && v) x.value = v; }
   if (focus) { const x = document.getElementById(focus); if (x) { x.focus(); try { x.setSelectionRange(sel, sel); } catch (e) {} } }
@@ -110,6 +182,26 @@ function needsMe() {
   return "";
 }
 function buzzNew() { const k = needsMe(); if (k && k !== buzzed) { if (buzzed || k !== "roles") vib([70, 50, 70]); buzzed = k; } }
+// what waits on the host's tap alone (Begin, Start the Trial, Continue after a result, an exile, the dawn or Trust or
+// Doubt): the host's phone buzzes when one comes up by itself, not straight after their own tap, and again if it's
+// still waiting a minute later; a Ghost host's too
+let hostK = "", hostAt = 0, nudged = "";
+function hostWait() {
+  if (!V || !V.me || !V.me.director || V.me.left || V.paused || screen !== "play") return "";
+  const t = V.trial, d = V.dawn;
+  if (V.phase === "day") return "day" + V.round + "." + V.roundTrials;
+  if (t && t.stage === "intro") return "intro" + V.round + t.key;
+  if (t && t.stage === "done") return "done" + V.round + t.key;
+  if (V.phase === "reveal" && V.reveal && (V.reveal.role || V.reveal.secret)) return "exile" + V.reveal.id;
+  if (V.phase === "dawn" && d && (!d.revealed || !d.lastEnd || tnow() >= d.lastEnd)) return "dawn" + V.round + (d.revealed ? "b" : "a");
+  if (V.phase === "trust" && V.trust && V.trust.result) return "trust" + V.round;
+  return "";
+}
+function nudgeHost() {
+  const k = hostWait();
+  if (k !== hostK) { hostK = k; hostAt = now(); nudged = ""; if (k && now() - tapAt > 3000) vib([70, 50, 70]); return; }
+  if (k && !nudged && now() - hostAt > 60000) { nudged = k; vib([70, 50, 70, 50, 70]); }
+}
 // when this phone still owes an answer: the clock it has to beat
 function owedEnd() {
   if (!V || !V.me || !V.me.alive || V.paused) return 0;
@@ -125,7 +217,7 @@ function clocks() {
   document.querySelectorAll("[data-end].clock").forEach((c) => { const s = Math.max(0, Math.ceil((+c.dataset.end - t) / 1000)); c.textContent = s >= 60 ? Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0") : s + "s"; c.classList.toggle("low", s <= 5); });
   document.querySelectorAll("i[data-from]").forEach((b) => { const a = +b.dataset.from, e = +b.dataset.end; b.style.width = Math.max(0, Math.min(100, (100 * (e - t)) / Math.max(1, e - a))) + "%"; });
 }
-setInterval(() => { const it = V && V.trial && V.trial.item; if (it && it.k === "snap" && it.stage === "open") draw(); else clocks(); tickSound(); buzzLate(); if (typeof AC !== "undefined" && AC && V) MUSIC.setScene(sceneOf()); }, 200);
+setInterval(() => { const it = V && V.trial && V.trial.item; if (it && it.k === "snap" && it.stage === "open") draw(); else clocks(); tickSound(); buzzLate(); nudgeHost(); if (typeof AC !== "undefined" && AC && V) MUSIC.setScene(sceneOf()); }, 200);
 
 // ---------------------------------------------------------------------------------------------------------------
 // before the game: join, create, choose
@@ -134,8 +226,9 @@ function joinScreen() {
   return `${brand()}<div class="card fade"><h2>Join a game</h2><p class="sub">Everyone plays on their own phone, and your role never leaves this screen.</p>
   <div class="stack">${CODE ? `<p>Table <b class="num">${CODE}</b></p>` : `<div><label class="l" for="code">Table code</label><input class="f code" id="code" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" enterkeyhint="next"></div>`}
   <div><label class="l" for="name">Your name</label><input class="f" id="name" maxlength="14" autocomplete="given-name" placeholder="As the table knows you" enterkeyhint="go"${CODE ? " autofocus" : ""}></div>
-  ${btn("Join", "join", null, "big")}</div>${msg()}</div>`;
+  ${btn("Join", "join", null, "big")}${reclaim ? `<p class="small">If ${esc(reclaim)} is you, in another browser or on another phone, you can carry on as them.</p>${btn("It’s me: carry on as " + esc(reclaim), "reclaim", null, "dark")}` : ""}</div>${msg()}</div>`;
 }
+let reclaim = ""; // the name this phone was told is taken by a phone that has gone quiet: it may be this person's own
 function createScreen() {
   if (TESTGAME) return `${brand("test game")}<div class="card fade"><h2>A test game against bots</h2>
   <p class="sub">Table ${CODE}. You host, and the bots swear, vote, choose at night and trust by themselves. Trials give everyone a random score, and every countdown is ten seconds.</p>
@@ -164,6 +257,7 @@ function phone() {
   const me = V.me;
   if (me.left) return `${brand()}<div class="card fade center"><h2>You’ve left the game</h2><p class="sub">The host has taken you out of this one. Thanks for playing, and keep what you know to yourself.</p></div>`;
   if (screen === "replay") return phone0(me, phase(me));
+  if (reporting) return topBar(me) + reportScreen();
   if (peekList) return topBar(me) + peekScreen();
   if (tools && me.director) return topBar(me) + toolScreen(me);
   if (myrole && !["lobby", "oath", "roles"].includes(V.phase)) return topBar(me) + rolePanel(me);
@@ -182,7 +276,7 @@ function quick(me) {
 const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
-  ${rejoinCard()}${takeOverCard()}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
+  ${rejoinCard()}${takeOverCard()}${awayCard(me)}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
   ${holdings(me)}${["lobby", "oath", "roles", "end"].includes(V.phase) ? "" : `<div class="row" style="justify-content:flex-end;margin:-4px 0 10px">${btn("Your role", "myrole1", null, "ghost sm")}</div>`}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
@@ -196,6 +290,15 @@ function holdings(me) {
   if (me.crown && !["talk", "vote"].includes(V.phase)) c.push(["", "crown", "The Crown", "Once, at a Reckoning, lay it down to be safe from that exile."]);
   if (me.confess) c.push(["ghost", "eye", me.confess === "self" ? "The Confessor: nobody else" : "A Forsworn: " + esc(me.confess), me.confess === "self" ? "The Confessor’s prize: no other Forsworn is left at the table. It’s just you." : "The Confessor’s prize: " + esc(me.confess) + " is Forsworn. Only you know."]);
   return c.length ? `<div class="chips">${c.map(([cls, i, t, why]) => `<details class="chip ${cls}"><summary>${ico(i)}<span>${t}</span></summary><p>${why}</p></details>`).join("")}</div>` : "";
+}
+// the host's phone names anyone at the table whose phone has been quiet a minute, before the game deals them in or
+// waits on them: once it's going, every vote, night and question would wait for them to its clock
+function awayCard(me) {
+  if (!me.director || !["lobby", "oath", "roles", "day"].includes(V.phase)) return "";
+  const gone = V.players.filter((p) => away.includes(p.id) && p.alive);
+  if (!gone.length) return "";
+  const lobby = V.phase === "lobby";
+  return `<div class="card hot"><p><b>${esc(andList(gone.map((p) => p.name)))}</b>: ${gone.length > 1 ? "these phones haven’t" : "this phone hasn’t"} been seen for a minute. ${lobby ? "If they’ve gone, take them off the list. They can join again." : "If they’ve gone, take them out, or every vote and night will wait for them."}</p><div class="row">${gone.map((p) => btn((lobby ? "Take off " : "Take out ") + esc(p.name), "tool", "remove", "ghost sm", ` data-who="${p.id}"`)).join("")}</div></div>`;
 }
 const takeOverCard = () => (hostGone ? `<div class="card hot"><p><b>${esc(V.director ? V.director.name : "The host")}</b>’s phone has gone quiet. If they can’t come back, someone can take over as host and move the evening on.</p>${btn("Take over as host", "takeover", null, "sm")}</div>` : "");
 function rejoinCard() {
@@ -234,8 +337,9 @@ function phase(me) {
 }
 function lobby(me) {
   const n = V.players.length, url = SITE + "/join";
-  let h = `<h2>You’re in</h2><p class="sub">Friends join at <b>${esc(url)}</b> with the code <b class="num">${CODE}</b>.</p>${people(V.players)}<p class="small" style="margin-top:10px">${plural(n, "player")} · 8 to 24 can play</p>`;
-  if (!me.director) return h + waitHost();
+  let h = `<h2>You’re in</h2><p class="sub">Friends join at <b>${esc(url)}</b> with the code <b class="num">${CODE}</b>, or scan this.</p>
+  <div class="lobbyqr">${qr()}<div>${btn("Share the link", "share", null, "dark sm")}<p class="small">Send it to anyone still on their way.</p></div></div>${people(V.players)}<p class="small" style="margin-top:10px">${plural(n, "player")} · 8 to 24 can play</p>`;
+  if (!me.director) return h + waitHost() + reportLink();
   const o = V.opts || {};
   if (V.test) h += `<div class="banner">Test game: the bots play themselves, Trials score at random, and every countdown is ten seconds.</div><div class="row" style="margin-bottom:14px">${btn("Add a bot", "bots", String(n + 1), "dark sm")}</div>`;
   const two = (k, a, b) => `<div class="grid2">${[a, b].map(([v, t]) => `<button class="btn ${o[k] === v ? "on" : "dark"} sm" data-a="opt" data-k="${k}" data-v="${v}">${t}</button>`).join("")}</div>`; // v may be true/false
@@ -250,7 +354,7 @@ function lobby(me) {
   <p class="small">${o.twists ? "Once each: the Casting Vote, the Temptation, the Crown, and the Confessor in the final." : "Off: a plainer game, good for a first night."}</p>
   <div style="height:12px"></div>${btn(n < 8 ? `Waiting for ${8 - n} more` : `Start with ${n} players`, "start", null, "big", n < 8 ? " disabled" : "")}
   <p class="small center">For the TV, if you want one, open <b>${esc(SITE)}/t/${CODE}</b> on a laptop and cast it.</p></div>`;
-  return h;
+  return h + reportLink();
 }
 let peek = false;
 function roleCard(me) {
@@ -291,6 +395,7 @@ function toolScreen(me) {
   <div class="stack">${list.join("") || `<p class="small">Nothing to fix at this moment.</p>`}</div>
   <details class="more"><summary>Take someone out of the game</summary><p class="small">If someone is ill or has to go home. They leave for good, and nobody is told their role.</p>${people2("remove")}</details>
   <details class="more"><summary>Make someone else the host</summary><p class="small">Their phone gets these controls, and yours loses them.</p>${people2("host")}</details>
+  <details class="more"><summary>Report a problem</summary><p class="small">Tell us what went wrong. We get a picture of the game’s screen and a record of what happened.</p>${btn("Report a problem", "report1", null, "dark sm")}</details>
   <details class="more"><summary>Music on this phone</summary><p class="small">If there’s no TV, this phone can play the music and sounds.</p>${btn(typeof AC !== "undefined" && AC ? (muted ? "Sound on" : "Sound off") : "Play music here", "sound", null, "dark sm")}</details>
   <div class="card" style="margin-top:18px;border-color:#6a2733"><p class="small"><b style="color:var(--blood2)">The last resort.</b> Only if the game can’t carry on otherwise, say a phone died and nobody remembers who was Forsworn.</p>${btn("Show me the roles…", "peek1", null, "ghost sm")}</div>`;
 }
@@ -303,7 +408,7 @@ function peekScreen() {
 function trial(me) {
   const t = V.trial, it = t.item;
   if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1>${esc(t.title)}</h1><p>${esc(t.rules)}</p>
-    ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer costs the Purse 50, and if you win you take every point it falls short, so sabotage quietly.</div>` : ""}
+    ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer${t.key === "quiz" ? " before the brutal questions" : ""} costs the Purse 50, and if you win you take every point it falls short, so sabotage quietly.</div>` : ""}
     ${t.introEnd ? `<p class="sub">Starts in ${clock(t.introEnd)}</p>` : me.director ? dirCard(`${btn("Start the Trial", "cont", null, "big")}<p class="small center">When everyone has heard the rules.</p>`) : waitHost()}`;
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
@@ -493,8 +598,11 @@ function end(me) {
   ${r.peeked && r.peeked.length ? `<p class="small">The host opened the roles in round ${r.peeked.join(", ")} (Tools, for when something went wrong).</p>` : ""}
   <h2 class="sec">Who was who</h2><ul class="roster">${V.players.slice().sort((a, b) => (a.role === "f" ? 0 : 1) - (b.role === "f" ? 0 : 1)).map((p) => `<li class="${p.role === "f" ? "f" : "l"}">${ART.seal(p)}<span>${esc(p.name)}${p.alive ? "" : ` <i>out</i>`}</span><em>${p.role === "f" ? "Forsworn" : "Loyal"}</em></li>`).join("")}</ul>
   ${r.awards && r.awards.length ? `<h2 class="sec">The awards</h2><ul class="score awards">${r.awards.map((a) => `<li>${seal(a.id)}<div><b>${esc(a.title)}</b><br><span class="small">${esc(a.name)} ${esc(a.why)}</span></div></li>`).join("")}</ul>` : ""}
-  ${dirCard(btn("Play again with the same people", "again", null, "dark"))}`;
+  ${rateCard(me)}${dirCard(btn("Play again with the same people", "again", null, "dark"))}${reportLink()}`;
 }
+// one tap: how the game was (kept in the game's log, for /admin)
+const rateCard = (me) => (me.rated ? `<p class="small center">Thanks for rating it ${me.rated} out of 5.</p>` : `<div class="card"><p>How was the game? One tap helps us make it better.</p><div class="grid5">${[1, 2, 3, 4, 5].map((n) => btn(String(n), "rate", n, "dark")).join("")}</div><p class="small">1 is poor, 5 is brilliant.</p></div>`);
+const reportLink = () => `<div class="row" style="justify-content:center;margin-top:18px">${btn("Report a problem", "report1", null, "ghost sm")}</div>`;
 
 // ---------------------------------------------------------------------------------------------------------------
 // the TV: never a secret
@@ -612,7 +720,12 @@ function tvReveal(x) {
 // taps
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
-  const a = b.dataset.a, v = b.dataset.v;
+  const a = b.dataset.a, v = b.dataset.v; tapAt = now();
+  if (a === "share") { const url = joinURL(); try { if (navigator.share) await navigator.share({ title: "The Betrayal", text: "Join our game of The Betrayal (Table " + CODE + ")", url }); else { await navigator.clipboard.writeText(url); say("Link copied: " + url); } } catch (err) { if (!navigator.share) say(url); } return; }
+  if (a === "report1") { reportSnap = (() => { try { return snapshot(); } catch (err) { return ""; } })(); tools = 0; peekList = null; reporting = 1; toast = ""; crumb("report", "opened the report form"); return draw(); }
+  if (a === "report0") { reporting = 0; toast = ""; return draw(); }
+  if (a === "report2") return sendReport();
+  if (a === "reclaim") return doJoin(true);
   if (a === "peek") { peek = true; return draw(); }
   if (a === "myrole0" || a === "myrole1" || a === "myrole2") { myrole = +a.slice(-1); return draw(); }
   if (a === "chatf") { const x = document.getElementById(v); if (!x || !x.value.trim()) return; const val = x.value.trim(); x.value = ""; return send({ a: "chat", v: val }); }
@@ -629,7 +742,7 @@ document.addEventListener("click", async (e) => {
   }
   if (a === "tool") {
     const who = b.dataset.who, nm = who ? P(who).name : "";
-    const ask = { remove: "Take " + nm + " out of the game? They can’t come back.", host: "Make " + nm + " the host? Your phone loses these controls.", endTrial: "End this Trial now?", end: "End the game now? Everyone’s role is shown, and it’s scored as it stands.", closeVote: "Close the vote now?", dawnNow: "End the night now?", deal: "Deal the roles now?", skipStep: "Skip this step?" }[v];
+    const ask = { remove: V.phase === "lobby" ? "Take " + nm + " off the list? They can join again." : "Take " + nm + " out of the game? They can’t come back.", host: "Make " + nm + " the host? Your phone loses these controls.", endTrial: "End this Trial now?", end: "End the game now? Everyone’s role is shown, and it’s scored as it stands.", closeVote: "Close the vote now?", dawnNow: "End the night now?", deal: "Deal the roles now?", skipStep: "Skip this step?" }[v];
     if (ask && !confirm(ask)) return;
     tools = 0; return send({ a: "tool", v, who });
   }
@@ -663,14 +776,15 @@ document.addEventListener("change", (e) => {
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); keepAwake(); } });
 
-async function doJoin() {
+async function doJoin(mine) {
   const name = ($("#name") || {}).value || "", code = CODE || String(($("#code") || {}).value || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (code.length !== 6) return say("Table codes are six letters and numbers.", true);
   if (!name.trim()) return say("Type your name.", true);
   if (!CODE) { try { sessionStorage.setItem("bt-name", name.trim()); } catch (e) {} location.href = "/m/" + code; return; }
   say("Joining…");
   try {
-    const r = await api("m/join", { name });
+    const r = await api("m/join", mine === true ? { name, reclaim: true } : { name });
+    reclaim = (r.j.error && r.j.reclaim) || "";
     if (r.j.none) { if (r.j.classic) { location.href = "/t/" + CODE; return; } return say("This Table hasn’t been set up yet. The host opens it first.", true); }
     if (r.j.tok) { tok = r.j.tok; store.set(TOKKEY, tok); take(r.j); screen = "play"; toast = ""; draw(); return poll(); }
     if (r.j.req) { store.set(REQKEY, r.j.req); screen = "wait"; toast = ""; draw(); return poll(); }
@@ -697,6 +811,7 @@ function boot() {
   if (screen === "replay") return draw();
   if (screen === "join" && CODE) { try { const n = sessionStorage.getItem("bt-name"); if (n) { sessionStorage.removeItem("bt-name"); draw(); $("#name").value = n; return doJoin(); } } catch (e) {} }
   if (screen === "wait" || (CODE && store.get(REQKEY) && !tok)) screen = "wait";
+  crumb("open", (isTV() ? "TV" : "phone") + " · " + innerWidth + "×" + innerHeight + " @" + (devicePixelRatio || 1) + " · " + navigator.userAgent);
   draw(); poll();
 }
 boot();

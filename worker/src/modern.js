@@ -45,6 +45,8 @@ export const TRIALS = {
 // The iPhone app's free games (opts.content "base", worker/src/tiers.js) play these Trials and the first half of each
 // question bank; everything else (the website's games, and the app's with a pass) plays them all.
 export const BASE_TRIALS = ["likely", "quiz", "estimate", "hilo", "charades", "countdown", "oneleg", "truths"];
+// the knockouts: the last one standing wins, so there's no score for the table as a whole
+const KNOCKOUT = ["rps", "oneleg", "statue"];
 const based = (s) => s.opts.content === "base";
 // a practice game in the app (one person and the bots) leaves out the Trials that need people in the room
 export const SOLO_OFF = ["charades", "hum", "draw", "truths", "oneleg", "statue"];
@@ -66,7 +68,8 @@ const forsworn = (s) => alive(s).filter((p) => p.role === "f");
 // a test game (a master-code room, with bots): every countdown is at most ten seconds
 // a test game's clocks are ten seconds at most; a practice game's (one person and the bots) thirty
 const T = (s, ms) => (s.test ? Math.min(ms, 10000) : s.practice ? Math.min(ms, 30000) : ms);
-const say = (s, line, now) => { s.log = [{ t: now, m: clip(line, 300) }, ...(s.log || [])].slice(0, 300); };
+// (a vote or the night's picks at a big table names everyone, so those lines may run longer)
+const say = (s, line, now, max) => { s.log = [{ t: now, m: clip(line, max || 300) }, ...(s.log || [])].slice(0, 300); };
 // the log is the admin's record of the evening (never sent to a phone), so it names who decided what
 const names = (s, ids) => ids.map((id) => (P(s, id) || {}).name).filter(Boolean).join(", ");
 
@@ -218,7 +221,8 @@ function score(s, t, it, ctx) {
   if (it.k === "text") {
     const right = Object.entries(it.inputs).filter(([id, x]) => (it.ok || []).includes(id) || marks(x.v, it.a)).sort((a, b) => a[1].t - b[1].t);
     right.forEach(([id], i) => add(id, i === 0 ? 2 : 1)); res.right = right.map(([id]) => id); res.first = right[0] ? right[0][0] : null;
-    for (const [id, x] of Object.entries(it.inputs)) if (!res.right.includes(id) && String(x.v).trim()) wrongF(id);
+    // a brutal question beats most of the table, so a Forsworn's wrong answer there proves nothing and costs nothing
+    if (it.part !== "brutal") for (const [id, x] of Object.entries(it.inputs)) if (!res.right.includes(id) && String(x.v).trim()) wrongF(id);
   } else if (it.k === "number") {
     const g = Object.entries(it.inputs).filter(([, x]) => x.v !== "" && !isNaN(+x.v)).map(([id, x]) => [id, Math.abs(+x.v - it.a), +x.v]).sort((a, b) => a[1] - b[1]);
     if (g[0]) g.filter((x) => x[1] === g[0][1]).forEach(([id]) => add(id, 2)); const second = g.find((x) => x[1] > (g[0] || [0, 0])[1]); if (second) g.filter((x) => x[1] === second[1]).forEach(([id]) => add(id, 1));
@@ -341,8 +345,9 @@ function finishTrial(s, now, rnd) {
     say(s, "The Temptation: " + ((t.took || []).length ? names(s, t.took) + " chose SELF" : "nobody chose SELF"), now);
     if (r && r.who) { const p = P(s, r.who); p.shield = { round: s.round, secret: false }; t.winners = [r.who]; }
   } else {
-    // the table's success fills the Purse; each wrong answer from a Forsworn takes 50 back, up to half the Trial's offer
-    t.points = Math.max(0, fifty(t.offer * Math.min(1, tot / Math.max(1, A.length * items * 0.6)))) - Math.min(fifty(t.offer / 2), 50 * (t.wrongF || 0));
+    // the table's success fills the Purse; each wrong answer from a Forsworn takes 50 back, up to half the Trial's offer.
+    // A knockout has one winner and nothing for the table to get right, so it fills half the offer
+    t.points = KNOCKOUT.includes(t.key) ? fifty(t.offer / 2) : Math.max(0, fifty(t.offer * Math.min(1, tot / Math.max(1, A.length * items * 0.6)))) - Math.min(fifty(t.offer / 2), 50 * (t.wrongF || 0));
     const live = Object.keys(t.scores).filter((id) => P(s, id) && P(s, id).alive), best = Math.max(0, ...live.map((id) => t.scores[id])); let w = best > 0 ? live.filter((id) => t.scores[id] === best) : [];
     if (w.length > 1) { w = [pick(w, rnd)]; t.byLot = true; } // one Sanctuary a Trial: a tie is settled by lot
     t.winners = w;
@@ -361,9 +366,11 @@ function finishTrial(s, now, rnd) {
   const before = s.pot; s.pot = Math.max(0, Math.min(s.opts.potCap, s.pot + t.points)); t.points = s.pot - before;
   say(s, t.title + " done: " + (t.winners && t.winners.length ? P(s, t.winners[0]).name + " won" : "no winner") + ", Purse " + (t.points >= 0 ? "+" : "") + t.points, now);
 }
+// thirty seconds of talk a player, but never more than four minutes: at big tables hosts opened the vote early every time
+const TALKMAX = 240000;
 function openReckoning(s, now) {
   s.phase = "talk"; s.trial = null; s.brk = null;
-  const talk = (s.opts.talkEach || 30) * 1000 * alive(s).length;
+  const talk = Math.min(TALKMAX, (s.opts.talkEach || 30) * 1000 * alive(s).length);
   s.vote = { stage: "talk", talkEnd: now + (s.practice ? talk : T(s, talk)), ballots: {}, calls: {}, revote: null, second: !!(s.vote && s.vote.firstDone && s.vote.round === s.round), round: s.round, secret: s.final };
   say(s, "The Reckoning", now);
 }
@@ -374,7 +381,7 @@ function closeVote(s, now, rnd) {
   const ranked = Object.entries(c).sort((a, b) => b[1] - a[1]), top = ranked.length ? ranked[0][1] : 0; let tied = ranked.filter((x) => x[1] === top).map((x) => x[0]);
   v.counts = ranked;
   const silent = alive(s).filter((p) => !(p.id in v.ballots)).map((p) => p.id), calls = Object.entries(v.calls);
-  say(s, "Votes: " + (Object.keys(v.ballots).length ? Object.entries(v.ballots).map(([a, b]) => names(s, [a]) + " → " + names(s, [b])).join(", ") : "none") + (silent.length ? " · no vote: " + names(s, silent) : "") + (calls.length ? " · ghosts: " + calls.map(([a, b]) => names(s, [a]) + " → " + names(s, [b])).join(", ") : ""), now);
+  say(s, "Votes: " + (Object.keys(v.ballots).length ? Object.entries(v.ballots).map(([a, b]) => names(s, [a]) + " → " + names(s, [b])).join(", ") : "none") + (silent.length ? " · no vote: " + names(s, silent) : "") + (calls.length ? " · ghosts: " + calls.map(([a, b]) => names(s, [a]) + " → " + names(s, [b])).join(", ") : ""), now, 2000);
   if (!ranked.length) { v.none = true; tied.length = 0; }
   // the Casting Vote: a tie its holder voted in is settled by their vote (the table sees that it was used, never by whom)
   const cv = s.cast && !s.cast.used && P(s, s.cast.id) && P(s, s.cast.id).alive ? v.ballots[s.cast.id] : null;
@@ -412,7 +419,7 @@ function resolveNight(s, now, rnd) {
   let order = shuffle(Object.entries(c), rnd).sort((a, b) => b[1] - a[1]).map((x) => x[0]); // (a tie, by lot)
   const loyal = alive(s).filter((p) => p.role !== "f").map((p) => p.id);
   while (order.length < n.kills && loyal.length > order.length) { const r = pick(loyal.filter((id) => !order.includes(id)), rnd); order.push(r); } // Forsworn who chose nobody: the house chooses
-  say(s, "Night picks: " + (F.length ? F.map((f) => f.name + " → " + (names(s, [].concat(n.picks[f.id] || [])) || "nobody")).join(", ") : "none"), now);
+  say(s, "Night picks: " + (F.length ? F.map((f) => f.name + " → " + (names(s, [].concat(n.picks[f.id] || [])) || "nobody")).join(", ") : "none"), now, 2000);
   const targets = order.slice(0, n.kills), victims = [], saved = [];
   for (const id of targets) { const p = P(s, id); if (p.shield && p.shield.round === s.round) saved.push(id); else victims.push(id); }
   for (const id of victims) { const p = P(s, id); p.dying = true; if (!s.stats.firstBlood) s.stats.firstBlood = id; }
@@ -540,7 +547,7 @@ export function tick(s, now, ctx) {
   }
   if (s.phase === "trust") {
     const A = alive(s), v = s.trust;
-    if (!v.result && (A.every((p) => v.votes[p.id]) || now >= v.end)) { v.result = A.every((p) => v.votes[p.id] === "trust") ? "trust" : "doubt"; v.count = A.filter((p) => v.votes[p.id] !== "trust").length; v.at = now; say(s, "Trust or doubt: " + A.map((p) => p.name + " " + (v.votes[p.id] || "no answer")).join(", "), now); mark(); }
+    if (!v.result && (A.every((p) => v.votes[p.id]) || now >= v.end)) { v.result = A.every((p) => v.votes[p.id] === "trust") ? "trust" : "doubt"; v.count = A.filter((p) => v.votes[p.id] !== "trust").length; v.at = now; say(s, "Trust or doubt: " + A.map((p) => p.name + " " + (v.votes[p.id] || "no answer")).join(", "), now, 2000); mark(); }
   }
   if (s.phase === "unmask" && now >= s.unmask.next) {
     const u = s.unmask; if (u.shown < u.order.length) { P(s, u.order[u.shown]).revealed = true; u.shown++; u.next = now + 3200; } else finishGame(s, now); mark();
@@ -632,6 +639,12 @@ export function act(s, pid, a, now, ctx) {
     }
     case "trust": { if (s.phase !== "trust" || !me.alive || s.trust.result || !["trust", "doubt"].includes(v)) return need(false); s.trust.votes[pid] = v; return done(); }
     case "honour": { if (s.phase !== "honour" || !me.alive || me.role !== "f" || !["honour", "betray"].includes(v)) return need(false); s.honour.choices[pid] = v; return done(); }
+    // one tap on the end screen, how the game was, kept in the log for /admin; once each
+    case "rate": {
+      if (s.phase !== "end" || ![1, 2, 3, 4, 5].includes(+v)) return need(false);
+      const r = (s.ratings = s.ratings || {}); if (r[pid]) return need(false, "You’ve already rated it. Thank you.");
+      r[pid] = +v; say(s, me.name + " rated the game " + +v + " out of 5", now); return done();
+    }
     case "again": { if (!dir || s.phase !== "end") return need(false); const keep = s.players.filter((p) => !p.left).map((p) => ({ ...p, role: null, alive: true, optIn: null, acked: false, shield: null, revealed: false, exiled: null, died: null, dying: false })); const g = newGame(now, rnd, s.opts); if (s.test) g.test = true; if (s.practice) g.practice = true; g.plan = s.plan; g.players = keep; g.director = s.director; g.ver = s.ver + 1; Object.keys(s).forEach((k) => delete s[k]); Object.assign(s, g); return null; }
   }
   return need(false);
@@ -740,7 +753,7 @@ export function viewFor(s, pid, now) {
     }
     if (s.phase === "night" && me.alive && me.role === "f" && forsworn(s).every((f) => [].concat(s.night.picks[f.id] || []).length >= Math.min(s.night.kills, alive(s).length - forsworn(s).length)) && !agreed(s)) o.me.split = true;
     if (s.trial && s.trial.stage === "done" && s.trial.sanct === pid) o.me.wonSanct = me.role === "f" ? "wasted" : "yes";
-    if (s.phase === "end") o.me.won = s.result.to.includes(pid);
+    if (s.phase === "end") { o.me.won = s.result.to.includes(pid); o.me.rated = (s.ratings || {})[pid] || 0; }
     if (s.cast && s.cast.id === pid && !s.cast.used && me.alive) o.me.cast = true;
     if (s.crown && s.crown.id === pid && !s.crown.used && me.alive) o.me.crown = true;
     if (s.confess && s.confess.id === pid) o.me.confess = s.confess.of ? P(s, s.confess.of).name : "self";
