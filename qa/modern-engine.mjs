@@ -319,7 +319,7 @@ check("every table opens with Most Likely To (8 and 9 players included)", [8, 9,
 }
 {
   const g = begin(10), s = g.s; setStep(g, { k: "trial", key: "rps" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" }); run(g, 1000);
-  const gone = s.trial.item.pairs[0][0]; A(g, g.dir, { a: "tool", v: "remove", who: gone });
+  const gone = s.trial.item.pairs.flat().find((id) => id !== g.dir); A(g, g.dir, { a: "tool", v: "remove", who: gone }); // (the host can't take themselves out)
   check("someone taken out mid-Trial drops out of it, and the Trial still has a winner", !finishCurrentTrial(g) && !(s.trial.results.slice(1).some((r) => JSON.stringify(r).includes(gone))) && (s.trial.winners || []).length === 1 && s.trial.winners[0] !== gone, s.trial.winners);
 }
 {
@@ -555,6 +555,35 @@ for (const key of ["rps", "oneleg"]) {
   check("…one tap each, 1 to 5, kept in the log and shown back to that phone", A(g, g.ids[2], { a: "rate", v: "4" }) === null && !!A(g, g.ids[2], { a: "rate", v: 5 }).error && !!A(g, g.ids[3], { a: "rate", v: 9 }).error
     && s.log[0].m === s.players[2].name + " rated the game 4 out of 5" && viewFor(s, g.ids[2], g.now).me.rated === 4 && viewFor(s, g.ids[3], g.now).me.rated === 0);
   check("…and a new game starts unrated", A(g, g.dir, { a: "again" }) === null && !s.ratings);
+}
+// 13. from the owner: in a game against bots, most votes go one way, so the vote rarely ties
+{
+  let reckonings = 0, ties = 0, herd = 0, likelyItems = 0, likelyTies = 0, leak = false;
+  for (let k = 0; k < 40; k++) {
+    const g = begin(10), s = g.s; s.practice = true; for (const p of s.players.slice(1)) p.bot = true;
+    s.steps = [{ k: "reckon" }]; s.stepAt = 0; A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "tool", v: "voteNow" });
+    if (s.phase !== "vote") continue;
+    run(g, 1000); reckonings++;
+    leak = leak || JSON.stringify(viewFor(s, g.dir, g.now)).includes("lead") || JSON.stringify(viewFor(s, g.dir, g.now)).includes("alt\"");
+    const c = {}; for (const tg of Object.values(s.vote.ballots)) c[tg] = (c[tg] || 0) + 1;
+    if (Math.max(...Object.values(c)) >= 5) herd++;
+    A(g, g.dir, { a: "ballot", v: alive(s).find((q) => q.id !== g.dir).id }); run(g, 1000);
+    if (s.vote.tie || (s.reveal && s.reveal.byLot)) ties++;
+  }
+  check(`against nine bots, most of the votes go to one player (${herd} of ${reckonings} Reckonings)`, reckonings === 40 && herd >= 34, { herd, reckonings });
+  check(`…so a Reckoning rarely ties (${ties} of ${reckonings})`, ties <= 4, { ties });
+  check("…and no phone is told who the bots are leaning towards", !leak);
+  for (let k = 0; k < 20; k++) {
+    const g = begin(10), s = g.s; s.practice = true; for (const p of s.players.slice(1)) p.bot = true;
+    setStep(g, { k: "trial", key: "likely" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+    for (let t = 0; t < 40 && s.phase === "trial" && s.trial.stage !== "done"; t++) {
+      const it = s.trial.item;
+      if (it && it.stage === "open" && !(g.dir in it.inputs)) A(g, g.dir, { a: "ans", v: alive(s).find((q) => q.id !== g.dir).id });
+      if (it && it.stage === "reveal" && it.res && it.res !== it.seen) { it.seen = it.res; likelyItems++; if ((it.res.top || []).length > 1) likelyTies++; }
+      g.now += 1000; tick(s, g.now, ctx);
+    }
+  }
+  check(`Most Likely To against bots: few prompts tie (${likelyTies} of ${likelyItems})`, likelyItems >= 40 && likelyTies <= likelyItems * 0.15, { likelyItems, likelyTies });
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

@@ -102,7 +102,10 @@ export function addBots(s, upto, now, rnd) {
   for (const n of BOTNAMES) { if (s.players.length >= Math.min(MAXP, upto)) break; if (!s.players.some((p) => p.name === n)) join(s, n, now, rnd, true); }
 }
 // The bots of a test game: they swear, look at their role, vote, choose at night and trust, a moment after the phase
-// opens (on the next request). The Forsworn among them vote for the Loyal and choose the Loyal at night.
+// opens (on the next request). The Forsworn among them vote for the Loyal and choose the Loyal at night. They vote
+// together, as a table usually does, so a game against them rarely ties: most for one suspect (the lead, chosen once
+// for each vote and again for a revote), the Forsworn for the lead unless it's one of their own, and then all for the
+// same one of the Loyal (the alt). Neither is in any phone's view.
 function botsMove(s, now, rnd) {
   const B = s.players.filter((p) => p.bot && !p.left); if (!B.length) return false;
   let ch = false; const A = alive(s), mine = (p) => B.includes(p);
@@ -112,10 +115,13 @@ function botsMove(s, now, rnd) {
   const it = s.trial && s.trial.item;
   if (it && it.stage === "open" && it.k === "tempt") for (const p of A.filter(mine)) if (!(p.id in it.inputs)) { it.inputs[p.id] = { v: rnd() < 0.15 ? "self" : "purse", t: now }; ch = true; }
   if (s.phase === "vote") {
-    const v = s.vote;
+    const v = s.vote, open = (q) => !!q && q.alive && q.id !== v.immune && (!v.revote || v.revote.includes(q.id));
+    if (!open(P(s, v.lead))) v.lead = (any(A.filter(open)) || {}).id;
+    if (!open(P(s, v.alt)) || P(s, v.alt).role === "f") v.alt = (any(A.filter((q) => open(q) && q.role !== "f")) || {}).id;
     for (const p of A.filter(mine)) if (!(p.id in v.ballots)) {
-      const c = A.filter((q) => q.id !== p.id && q.id !== v.immune && (!v.revote || v.revote.includes(q.id)));
-      const tg = p.role === "f" ? any(c.filter((q) => q.role !== "f")) || any(c) : any(c);
+      const c = A.filter((q) => q.id !== p.id && open(q)), lead = c.find((q) => q.id === v.lead), alt = c.find((q) => q.id === v.alt);
+      const tg = p.role === "f" ? (lead && lead.role !== "f" && rnd() < 0.85 ? lead : alt || any(c.filter((q) => q.role !== "f")) || any(c))
+        : lead && rnd() < 0.8 ? lead : any(c.filter((q) => q !== lead)) || any(c);
       if (tg) { v.ballots[p.id] = tg.id; ch = true; }
     }
   }
@@ -147,7 +153,11 @@ function botsAnswer(s, now, rnd) {
     if (it.k === "text") v = right(p) ? it.a : "no idea";
     else if (it.k === "number") v = String(Math.round(it.a * (right(p) ? 0.85 + rnd() * 0.3 : 0.4 + rnd() * 1.2)));
     else if (it.k === "hilo") v = right(p) === it.a > it.ref ? "higher" : "lower";
-    else if (it.k === "vote") v = pick(A.filter((q) => q.id !== p.id), rnd).id;
+    else if (it.k === "vote") { // mostly the same person, as a table agrees on who fits (the lead, never in a view)
+      if (!A.some((q) => q.id === it.lead)) it.lead = pick(A, rnd).id;
+      const others = A.filter((q) => q.id !== p.id && q.id !== it.lead);
+      v = it.lead !== p.id && (rnd() < 0.75 || !others.length) ? it.lead : others.length ? pick(others, rnd).id : null;
+    }
     else if (it.k === "word") v = shuffle([...[].concat(it.letters).join("")], rnd).slice(0, 3 + Math.floor(rnd() * 4)).join("");
     else if (it.k === "recall") v = shuffle(it.words || [], rnd).slice(0, 2 + Math.floor(rnd() * 7)).join(", ");
     else if (it.k === "cell") v = String(right(p) && it.changed ? it.changed[0] : Math.floor(rnd() * 12));
