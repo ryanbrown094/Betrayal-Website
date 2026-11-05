@@ -2376,10 +2376,12 @@ function shieldPick(id) {
 const witnessOk = s => !!s && rulesIn(s).witness && !s.witness && aliveOf(s).length === 5 && aliveOf(s).filter(p => p.role === "cloak").length === 1;
 function witnessPick(id) { const pts = ptsInput(); act(s => { const m = s.mission; if (pts !== null) m.points = pts; m.witnessId = m.witnessId === id ? null : id }) }
 /* ---------- Higher or Lower: stand, call it, sit when wrong ---------- */
-// a number to call against: near enough to argue about, never the answer itself; years move by years, not by a factor
+// a number to call against: near enough to argue about, never the answer itself; years move by years, not by a factor,
+// and never past this year
 function hiloRef(ans) {
-  const R = Math.random, yr = Number.isInteger(ans) && ans >= 1000 && ans <= 2100;
+  const R = Math.random, now = new Date().getFullYear(), yr = Number.isInteger(ans) && ans >= 1000 && ans <= 2100;
   let v = yr ? ans + (R() < .5 ? -1 : 1) * (3 + Math.floor(R() * 38)) : ans * (R() < .5 ? .55 + R() * .3 : 1.2 + R() * .6);
+  if (yr && v > now) v = 2 * ans - v;
   if (!yr && v >= 20) { const mag = Math.pow(10, Math.floor(Math.log10(v)) - 1); v = Math.round(v / mag) * mag } else v = Math.round(v);
   if (v === ans) v = ans + (yr || ans < 20 ? 1 : Math.max(1, Math.round(ans * .1)));
   return Math.max(0, v);

@@ -1,6 +1,6 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
-import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys } from "../worker/src/modern.js";
+import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys, hiloRef } from "../worker/src/modern.js";
 import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES } from "../worker/src/content.gen.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -584,6 +584,25 @@ for (const key of ["rps", "oneleg"]) {
     }
   }
   check(`Most Likely To against bots: few prompts tie (${likelyTies} of ${likelyItems})`, likelyItems >= 40 && likelyTies <= likelyItems * 0.15, { likelyItems, likelyTies });
+}
+// 14. from the owner: Higher or Lower's numbers are believable (a factor put the first iPhone in 2443, the BBC in 2744)
+{
+  const now = Date.UTC(2026, 10, 5), year = 2026, bad = [];
+  for (const [q, ans] of ESTIMATE) {
+    const a = +ans, isYear = /^Year\b/i.test(q);
+    for (let k = 0; k < 60; k++) {
+      const r = hiloRef(q, a, now, rnd);
+      if (r === a) bad.push(["the answer itself", q, r]);
+      else if (isYear && (r > year || Math.abs(r - a) > 40 || Math.abs(r - a) < 2)) bad.push(["a year too far, or to come", q, a, r]);
+      else if (!isYear && (Number.isInteger(a) && Math.abs(a) < 10 ? Math.abs(r - a) > Math.max(3, Math.ceil(Math.abs(a) * 0.9)) : r / a < 0.5 || r / a > 1.9)) bad.push(["too far off", q, a, r]);
+      else if (a < 0 && r < -273) bad.push(["below absolute zero", q, a, r]);
+    }
+  }
+  check(`Higher or Lower: every question, sixty draws each, a believable number to call against (${ESTIMATE.length} questions)`, !bad.length, bad.slice(0, 5));
+  const iphone = ESTIMATE.find(([q]) => /first iPhone/.test(q)), bbc = ESTIMATE.find(([q]) => /BBC/.test(q));
+  const refs = (x) => Array.from({ length: 200 }, () => hiloRef(x[0], +x[1], now, rnd));
+  check("…the first iPhone (2007) between 2002 and 2012, the BBC (" + (bbc ? bbc[1] : "?") + ") within 26 years and never to come",
+    !!iphone && refs(iphone).every((r) => r >= 2002 && r <= 2012) && (!bbc || refs(bbc).every((r) => Math.abs(r - bbc[1]) <= 26 && r <= year)));
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);
