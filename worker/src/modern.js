@@ -184,6 +184,27 @@ export function marks(given, answer) {
 const letters12 = (rnd) => { const V = "AAAAEEEEEIIIIOOOUU", C = "BBCCDDDFGGHHJKLLLMMNNNNPPQRRRRRSSSSTTTTVWXYZ", a = []; let vn = 0; while (a.length < 12) { const v = vn < 4 || (a.length > 7 && vn < 5 && rnd() < .4); a.push(pick(v ? V : C, rnd)); if (v) vn++; } return shuffle(a, rnd).join(""); };
 const fits = (w, letters) => { const c = {}; for (const ch of letters.toLowerCase()) c[ch] = (c[ch] || 0) + 1; for (const ch of w) { if (!c[ch]) return false; c[ch]--; } return true; };
 
+// Higher or Lower's number to call against: near enough to argue about, never the answer itself. A year moves by
+// years, not by a factor (a factor put the first iPhone in 2443 and the BBC's founding in 2744): a few for a recent
+// one, up to forty for an old one, and never past this year. Anything else moves by a fifth to four-fifths either
+// way, rounded as a person would say it (two figures; a small one to a whole number, or a tenth if the answer has
+// one), keeping its sign (liquid nitrogen boils at -196 °C, not "higher or lower than 1").
+export function hiloRef(q, a, now, rnd) {
+  const thisYear = new Date(now).getUTCFullYear(), year = /^year\b/i.test(q) && Number.isInteger(a) && a >= 1000 && a <= thisYear;
+  let v;
+  if (year) {
+    const most = Math.max(4, Math.min(40, Math.round((thisYear - a) / 4))), by = 2 + Math.floor(rnd() * (most - 1));
+    v = rnd() < 0.5 || a + by > thisYear ? a - by : a + by;
+  } else {
+    let m = Math.abs(a) * (rnd() < 0.5 ? 0.55 + rnd() * 0.3 : a < 0 ? 1.1 + rnd() * 0.2 : 1.2 + rnd() * 0.6); // (below zero, not past absolute zero)
+    if (m >= 20) { const mag = Math.pow(10, Math.floor(Math.log10(m)) - 1); m = Math.round(m / mag) * mag; }
+    else m = Number.isInteger(a) ? Math.max(1, Math.round(m)) : Math.max(0.1, Math.round(m * 10) / 10);
+    v = a < 0 ? -m : m;
+  }
+  if (v === a) v = year ? a - 1 : a + (Number.isInteger(a) ? Math.max(1, Math.round(Math.abs(a) * 0.1)) : 0.1);
+  return v;
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Items: a Trial is a run of items (a question, a turn, a bout). Each is open (answers come in) until everyone has
 // answered or its clock runs out, then shows its result for a moment, then the next one starts by itself.
@@ -195,7 +216,7 @@ function makeItem(s, t, now, rnd) {
   switch (t.key) {
     case "quiz": { if (n >= 15) return null; const lv = Math.floor(n / 5), q = fresh([QUIZ_E, QUIZ_M, QUIZ_H][lv], ["qe", "qm", "qh"][lv]); return { ...base, k: "text", q: q[0], a: String(q[1]), part: ["easy", "medium", "brutal"][lv], end: now + OPEN.text * 1000 }; }
     case "estimate": { if (n >= 5) return null; const q = fresh(ESTIMATE, "est"); return { ...base, k: "number", q: q[0], a: +q[1], end: now + OPEN.number * 1000 }; }
-    case "hilo": { if (n >= 6) return null; const q = fresh(ESTIMATE, "est"), a = +q[1], ref = Math.max(1, Math.round(a * (0.55 + rnd() * 0.9))); return { ...base, k: "hilo", q: q[0], ref: ref === a ? a + 1 : ref, a, end: now + OPEN.hilo * 1000 }; }
+    case "hilo": { if (n >= 6) return null; const q = fresh(ESTIMATE, "est"), a = +q[1]; return { ...base, k: "hilo", q: q[0], ref: hiloRef(q[0], a, now, rnd), a, end: now + OPEN.hilo * 1000 }; }
     case "likely": { if (n >= 5) return null; return { ...base, k: "vote", q: "Most likely to " + String(fresh(LIKELY, "lk")).replace(/^most likely to /i, ""), end: now + OPEN.vote * 1000 }; }
     case "countdown": { if (n >= 3) return null; return { ...base, k: "word", letters: letters12(rnd), end: now + OPEN.word * 1000 }; }
     case "memory": { if (n >= 2) return null; const set = shuffle(fresh(MEMSETS, "mem"), rnd).slice(0, 12); return { ...base, k: "recall", stage: "study", words: set, end: now + 20000 }; }
