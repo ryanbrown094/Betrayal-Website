@@ -19,7 +19,7 @@ import { pathToFileURL } from "node:url";
 //   maxCpc     the highest keyword bid or Maximise-clicks bid limit a sweep may set
 //   bidStep    the most a bid or bid limit may move in one change (0.2 = 20% up or down)
 //   maxChanges the most changes one run may make
-export const LIMITS = { dailyCap: 4, maxCpc: 2, minCpc: 0.05, minBudget: 0.5, bidStep: 0.2, maxChanges: 30, currency: "GBP" };
+export const LIMITS = { dailyCap: 5, maxCpc: 2, minCpc: 0.05, minBudget: 0.5, bidStep: 0.2, maxChanges: 30, currency: "GBP" };
 export const VERSION = "v26";
 
 const NEED = ["GOOGLE_ADS_CLIENT_ID", "GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_ADS_REFRESH_TOKEN", "GOOGLE_ADS_CUSTOMER_ID"];

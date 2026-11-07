@@ -769,11 +769,17 @@ export class Registry {
     }
     // Google Ads conversions from the server (ads-upload.js): the sales waiting (up:<pass>) and those sent (upd:<pass>), and
     // sending what's waiting, all in one request. A failure keeps them waiting for the next morning, up to the 90 days
-    // Google accepts a click for; validateOnly has Google check them and changes nothing.
+    // Google accepts a click for; validateOnly has Google check them and changes nothing; test checks a made-up one.
     if (url.pathname === "/uploads") return json({ ready: uploadReady(this.env), waiting: [...(await this.storage.list({ prefix: "up:" })).values()].map((j) => ({ ...j, pass: shownPass(j.pass) })),
       sent: (await this.newest("upd:", 200)).map(({ key, ...j }) => ({ ...j, pass: shownPass(j.pass) })) });
     if (url.pathname === "/upload-run") return queued(this.locks, "upload", async () => {
       const t = Date.now(), jobs = [];
+      // { test: true }: a made-up sale, checked by Google and never recorded, to show the sign-in, the account and the action work
+      if (b.test === true) {
+        if (!uploadReady(this.env)) return json({ ok: false, error: "Not set up yet: the Worker needs the GOOGLE_DM_KEY secret and the ADS_CUSTOMER_ID and ADS_UPLOAD_ACTION vars." }, 503);
+        try { const r = await ingest(this.env, [{ click: { gclid: "TEST" + t }, value: 10, at: t, txn: "test-" + t }], true); return json({ ok: true, test: "Google checked a made-up sale and recorded nothing", warnings: r.warnings }); }
+        catch (e) { return json({ ok: false, error: e.message }, 502); }
+      }
       for (const [k, j] of await this.storage.list({ prefix: "up:" })) {
         if (t - j.at > 89 * 86400000) { await this.storage.put("upd:" + j.pass, { ...j, expired: t }); await this.storage.delete(k); logErr(this.env, { src: "ads", where: "Google Ads conversions", msg: "A sale from an advert was never sent to Google Ads in 90 days: " + shownPass(j.pass) }); }
         else jobs.push(j);
