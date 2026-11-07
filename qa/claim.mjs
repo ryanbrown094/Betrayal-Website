@@ -409,6 +409,8 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const kp = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
   const pem = "-----BEGIN PRIVATE KEY-----\n" + Buffer.from(await crypto.subtle.exportKey("pkcs8", kp.privateKey)).toString("base64").replace(/(.{64})/g, "$1\n") + "\n-----END PRIVATE KEY-----\n";
   Object.assign(reg.env, { GOOGLE_DM_KEY: JSON.stringify({ type: "service_account", client_email: "betrayal-ads@example-project.iam.gserviceaccount.com", private_key: pem }), ADS_CUSTOMER_ID: "1578842660", ADS_UPLOAD_ACTION: "7893781389", REGISTRY: base.REGISTRY });
+  [us, uj] = await A("uploads", { test: true });
+  check("the admin's test: a made-up sale, checked by Google and never recorded, with nothing waiting touched", us === 200 && uj.ok === true && calls.at(-1).body.validateOnly === true && /^TEST\d+$/.test(calls.at(-1).body.events[0].adIdentifiers.gclid) && (await reg.storage.list({ prefix: "up:" })).size === 1, uj);
   [us, uj] = await A("uploads", { validateOnly: true });
   check("the admin can have Google check them first, changing nothing", us === 200 && uj.validated === 1 && calls.at(-1).body.validateOnly === true && (await reg.storage.list({ prefix: "up:" })).size === 1, uj);
   const tok = calls.find((c) => c.u.includes("oauth2")), jwt = tok.body.get("assertion").split("."), dec = (x) => JSON.parse(Buffer.from(x, "base64url").toString());

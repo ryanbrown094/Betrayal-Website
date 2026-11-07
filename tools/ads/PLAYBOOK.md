@@ -8,7 +8,7 @@ Work only through `tools/ads/ads.mjs`. Don't edit, commit or push anything in th
 
 The script enforces these, and you never look for a way round them. If one gets in the way, say so in the summary.
 
-- **Budget cap:** enabled campaigns' daily budgets add up to **£4 at most**.
+- **Budget cap:** enabled campaigns' daily budgets add up to **£5 at most**.
 - **Bids:** keyword bids and Maximise-clicks bid limits are **£2 at most**, and move **at most 20% up or down** per change.
 - **Allowed changes:** a sweep may make only these:
   - `add_negative_keyword`
@@ -39,10 +39,10 @@ Run `node tools/ads/ads.mjs check`. If it fails, the whole summary is what faile
 
 ## 3. Decide
 
-At £4 a day there's a handful of clicks a day, so act only on clear evidence. Don't move a bid, bid limit or budget that was changed in the last 3 days (see `changes`), unless an alert says it must be fixed.
+At £5 a day there's a handful of clicks a day, so act only on clear evidence. Don't move a bid, bid limit or budget that was changed in the last 3 days (see `changes`), unless an alert says it must be fixed.
 
 **Fix first**
-- **Over the cap:** if budgets add up to more than £4, cut the largest ones until the total is £4 or less.
+- **Over the cap:** if budgets add up to more than £5, cut the largest ones until the total is £5 or less.
 - **Disapproved ad:**
   - If another ad in its group is still enabled, pause the disapproved ad, and tell the owner which policy it broke so they can rewrite it.
   - If it's the group's only ad, propose a fix instead.
@@ -69,7 +69,7 @@ At £4 a day there's a handful of clicks a day, so act only on clear evidence. D
 - **Raise it 10 to 20%** when the campaign spent less than 70% of its budget and its average cost per click (cost ÷ clicks) is at least 90% of the limit.
 - **Lower it 10 to 20%** when it spent its whole budget with no purchase in 30 days.
 
-**Budgets** (always within £4)
+**Budgets** (always within £5)
 - Move up to £1 a day from one campaign to another when both hold:
   - the receiving campaign is spending its whole budget and getting purchases;
   - the giving campaign has spent £10 or more in 30 days with none.
@@ -112,7 +112,7 @@ If there's nothing to change, skip this step.
 
 Your last message is sent to the owner. Keep it short and in plain English, with no tables and under 15 lines.
 
-1. **Headline:** "Yesterday: £X of £4 spent, N clicks, N sales. Last 7 days: £X, N sales (£X a sale)."
+1. **Headline:** "Yesterday: £X of £5 spent, N clicks, N sales. Last 7 days: £X, N sales (£X a sale)."
 2. **Changes made:** one line each, with why. Or "No changes", with the reason.
 3. **Needs you:** each proposal or alert, one line each.
 4. **Problems:** report parts or changes that failed, only if there were any.
