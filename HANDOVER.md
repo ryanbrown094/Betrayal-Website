@@ -473,7 +473,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
     2. IAM & Admin → Service accounts → Create (for example `betrayal-ads`), with the role **Service Usage Consumer**. Then Keys → Add key → JSON, and download it.
     3. Google Ads → Admin → Access and security → Users → **+**: add the service account's email at **Standard** access.
     4. Cloudflare → Workers & Pages → `cloak-and-candle` → Settings → Variables and Secrets → Add → **Secret** `GOOGLE_DM_KEY`, value the whole JSON file → Deploy.
-    5. Once the first sale is sent, make **Purchase (server)** the primary purchase conversion and the tag's **Purchase** secondary, so a sale isn't counted twice. Until then the tag's action stays primary and the server's stays secondary. The two actions can't share a transaction, so Google can't merge them itself.
+    5. Make **Purchase (server)** the primary purchase conversion and the tag's **Purchase** secondary, so a sale isn't counted twice (the two actions can't share a transaction, so Google can't merge them itself). Done on 7 November 2026, after `POST /api/admin/uploads {"test": true}` passed on the live site.
 - **In Tag Manager** (what the container needs for Google Ads):
   - Data Layer Variables `ecommerce.value`, `ecommerce.transaction_id` and `ecommerce.currency`.
   - A Custom Event trigger on `purchase`.
