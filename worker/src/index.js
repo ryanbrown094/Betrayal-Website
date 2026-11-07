@@ -8,6 +8,7 @@ import * as T from "./tiers.js";
 import { surveyEmail, thanksEmail, apologyEmail, sendFeedbackMail } from "./survey-mail.js";
 import { indexNow } from "./indexnow.js";
 import { emailHash } from "./email-hash.js";
+import { clickOf, uploadReady, ingest } from "./ads-upload.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -529,6 +530,7 @@ export class Registry {
       for (const e of errs) { const m = clip(e.msg || e.where || "?", 120); seen.set(m, (seen.get(m) || 0) + 1); }
       const money = (list, f) => list.reduce((a, v) => a + (+f(v) || 0), 0), tables = sales.filter((v) => v.kind !== "sub").length, subs = sales.length - tables;
       const svs = [...(await this.storage.list({ prefix: "survey:" })).values()], svSent = svs.filter((x) => x.sent > since).length, svIn = svs.filter((x) => x.answered > since);
+      const upWait = [...(await this.storage.list({ prefix: "up:" })).values()], upSent = [...(await this.storage.list({ prefix: "upd:" })).values()].filter((x) => x.sent > since).length;
       const lines = [
         "In the last 24 hours:",
         "Sales: " + (sales.length ? sales.length + " (" + [tables && tables + (tables === 1 ? " Table" : " Tables"), subs && subs + (subs === 1 ? " new Regular" : " new Regulars")].filter(Boolean).join(", ") + "), " + gbp(money(sales, (v) => v.amount)) : "none"),
@@ -538,6 +540,7 @@ export class Registry {
         "Tables opened: " + games + (tests ? " (and " + tests + " test " + (tests === 1 ? "room" : "rooms") + ")" : ""),
         "Problem reports and messages: " + newReps.length + " new, " + open + " open",
         svSent || svIn.length ? "Feedback: " + svSent + (svSent === 1 ? " survey" : " surveys") + " sent, " + svIn.length + " answered" + (svIn.length ? " (" + (svIn.reduce((a, x) => a + x.answers.overall, 0) / svIn.length).toFixed(1) + " out of 5 on average)" : "") : null,
+        upWait.length || upSent ? "Sales sent to Google Ads: " + upSent + (upWait.length ? ", " + upWait.length + " waiting" + (upWait[0].lastErr ? " (" + clip(upWait[0].lastErr, 120) + ")" : "") : "") : null,
         "Errors: " + (errs.length ? errs.length + ". Most common: " + [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([m, n]) => m + (n > 1 ? " (×" + n + ")" : "")).join(" · ") : "none"),
         "", "Regulars now: " + regulars];
       const subject = "The Betrayal, last 24 hours: " + (sales.length ? sales.length + (sales.length === 1 ? " sale" : " sales") + " (" + gbp(money(sales, (v) => v.amount)) + ")" : "no sales") + ", " + games + (games === 1 ? " Table" : " Tables") + ", " + errs.length + (errs.length === 1 ? " error" : " errors");
@@ -739,7 +742,7 @@ export class Registry {
       if (rec.length >= 10) return json({ error: "Too many checkouts from here. Try again in an hour." }, 429);
       await this.storage.put(k, rec.concat([t]));
       let p; do p = newPass(); while (await this.storage.get("pass:" + p));
-      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null, ...(b.noMail === true ? { noMail: true } : {}) });
+      await this.storage.put("pass:" + p, { created: t, note: "", source: "stripe", pending: true, kind: b.kind === "sub" ? "sub" : "one", from: clip(b.from, 160) || "direct", land: clip(b.land, 80) || null, ...(b.noMail === true ? { noMail: true } : {}), ...(clickOf(b.click) ? { click: clickOf(b.click) } : {}) });
       return json({ pass: shownPass(p) });
     }
     if (url.pathname === "/pending-session") { // the checkout session that will pay for a pending pass
@@ -757,12 +760,37 @@ export class Registry {
         ...(v.kind === "sub" ? { subId: b.sub || v.subId || null, customer: b.customer || v.customer || null, subActive: true, subStatus: "active" } : {}) });
       else [p] = await this.mint(1, b.email || "", "stripe:" + b.session);
       if (v && v.noMail && b.email) await this.storage.put("svoff:" + String(b.email).trim().toLowerCase(), { t: Date.now(), pass: p, at: "checkout" });
+      if (v && v.click) await this.storage.put("up:" + p, { pass: p, click: v.click, value: amount !== null ? amount / 100 : null, at: Date.now(), txn: b.session, tries: 0 });
       await this.storage.put(k, p); if (b.pi) await this.storage.put("pi:" + b.pi, p);
       const sub = !!(v && v.kind === "sub");
       await this.notify("Sale: " + (sub ? "a Regular" : "a Table") + (amount !== null ? ", " + gbp(amount) + (sub ? " a month" : "") : ""), [
         "Booking code: " + shownPass(p), "Email: " + (b.email || "none given"), v && v.from ? "Came from: " + v.from : null, b.disc ? "Discount code: " + b.disc : null]);
       return json({ pass: shownPass(p), sub, emailed: await this.mailCode(p) });
     }
+    // Google Ads conversions from the server (ads-upload.js): the sales waiting (up:<pass>) and those sent (upd:<pass>), and
+    // sending what's waiting, all in one request. A failure keeps them waiting for the next morning, up to the 90 days
+    // Google accepts a click for; validateOnly has Google check them and changes nothing.
+    if (url.pathname === "/uploads") return json({ ready: uploadReady(this.env), waiting: [...(await this.storage.list({ prefix: "up:" })).values()].map((j) => ({ ...j, pass: shownPass(j.pass) })),
+      sent: (await this.newest("upd:", 200)).map(({ key, ...j }) => ({ ...j, pass: shownPass(j.pass) })) });
+    if (url.pathname === "/upload-run") return queued(this.locks, "upload", async () => {
+      const t = Date.now(), jobs = [];
+      for (const [k, j] of await this.storage.list({ prefix: "up:" })) {
+        if (t - j.at > 89 * 86400000) { await this.storage.put("upd:" + j.pass, { ...j, expired: t }); await this.storage.delete(k); logErr(this.env, { src: "ads", where: "Google Ads conversions", msg: "A sale from an advert was never sent to Google Ads in 90 days: " + shownPass(j.pass) }); }
+        else jobs.push(j);
+      }
+      if (!jobs.length) return json({ ok: true, sent: 0, waiting: 0 });
+      if (!uploadReady(this.env)) return json({ ok: false, sent: 0, waiting: jobs.length, error: "Not set up yet: the Worker needs the GOOGLE_DM_KEY secret and the ADS_CUSTOMER_ID and ADS_UPLOAD_ACTION vars." }, 503);
+      try {
+        const r = await ingest(this.env, jobs, b.validateOnly === true);
+        if (b.validateOnly === true) return json({ ok: true, validated: jobs.length, warnings: r.warnings });
+        for (const j of jobs) { await this.storage.put("upd:" + j.pass, { ...j, sent: t, requestId: r.requestId, ...(r.warnings.length ? { warnings: r.warnings } : {}) }); await this.storage.delete("up:" + j.pass); }
+        return json({ ok: true, sent: jobs.length, requestId: r.requestId, warnings: r.warnings });
+      } catch (e) {
+        for (const j of jobs) await this.storage.put("up:" + j.pass, { ...j, tries: (j.tries || 0) + 1, lastTry: t, lastErr: clip(e.message, 300) });
+        logErr(this.env, { src: "ads", where: "Google Ads conversions", msg: "Sending " + jobs.length + (jobs.length === 1 ? " sale" : " sales") + " to Google Ads failed: " + clip(e.message, 240) });
+        return json({ ok: false, sent: 0, waiting: jobs.length, error: e.message }, 502);
+      }
+    });
     // a payment that was tried and refused: noted on its pass (a checkout's, or a subscription's renewal)
     if (url.pathname === "/fail") {
       let p = b.pass && isPass(b.pass) && passKey(b.pass);
@@ -795,6 +823,7 @@ export class Registry {
       if (b.pi) await this.storage.put("pi:" + b.pi, p);
       const cancel = v.kind !== "sub" && !v.room && !v.revoked, amt = +b.amount || 0, fresh = !v.refunded || amt > (v.refundedAmount || 0);
       await this.storage.put(k, { ...v, ...(cancel ? { revoked: Date.now() } : {}), refunded: Date.now(), refundedAmount: Math.max(amt, v.refundedAmount || 0) || null });
+      await this.storage.delete("up:" + p);
       if (fresh) await this.notify("Refund: " + (amt ? gbp(amt) + " on " : "") + shownPass(p), [
         (v.kind === "sub" ? "A Regular" : "A Table") + (cancel ? ". It hadn’t been played, so its code is now cancelled." : v.room ? ". It had already opened a Table, which stays open." : "."), "Email: " + (v.note || "unknown")]);
       return json({ ok: true, pass: shownPass(p), cancelled: cancel });
@@ -984,6 +1013,7 @@ const bearer = (req, env) => !!env.ADMIN_TOKEN && same((req.headers.get("Authori
 // The cookie names (cc_admin, cc_gate) and the gate's hash prefix keep their cc_ and cloak-and-candle forms: changing
 // them would sign every admin and every gate visitor out.
 const ADMIN_COOKIE = "cc_admin", ADMIN_HOURS = 12;
+const CLICK_COOKIE = "bt_click"; // an ad click's id, after a yes to advertising cookies (/api/click)
 async function hmacHex(key, msg) {
   const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return [...new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(msg)))].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -1136,10 +1166,10 @@ async function gate(req, env) {
 }
 
 export default {
-  // every morning (wrangler.toml [triggers]): the last 24 hours' sales, Tables, reports and errors, by email to ALERT_TO;
-  // and yesterday's changed pages to IndexNow
+  // every morning (wrangler.toml [triggers]): sales from adverts sent to Google Ads, then the last 24 hours' sales, Tables,
+  // reports and errors, by email to ALERT_TO; and yesterday's changed pages to IndexNow
   async scheduled(event, env, ctx) {
-    ctx.waitUntil((async () => { const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
+    ctx.waitUntil((async () => { await call(env, "/upload-run", {}).catch(() => {}); const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
       .catch((e) => logErr(env, { src: "server", where: "morning summary", msg: clip(e && e.message || e, 300) })));
     ctx.waitUntil(indexNow(env).catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
   },
@@ -1236,7 +1266,9 @@ async function route(req, env) {
       }
       const ip = req.headers.get("CF-Connecting-IP") || "?";
       const from = sourceOf(b.src);
-      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from, ...(b.nomail === true ? { noMail: true } : {}) }) }), pj = await pr.json();
+      let kept = null; try { kept = JSON.parse(decodeURIComponent(cookieOf(req, CLICK_COOKIE) || "null")); } catch (e) {}
+      const click = clickOf(kept) || clickOf(b.click);
+      const pr = await registry(env).fetch("https://registry/pending", { method: "POST", headers: { "CF-Connecting-IP": ip }, body: JSON.stringify({ kind: sub ? "sub" : "one", ...from, ...(b.nomail === true ? { noMail: true } : {}), ...(click ? { click } : {}) }) }), pj = await pr.json();
       if (!pr.ok) return json(pj, pr.status);
       const pass = pj.pass, at = new Date().toISOString();
       try {
@@ -1337,6 +1369,13 @@ async function route(req, env) {
       try { const ps = await stripePost(env, "billing_portal/sessions", { customer: j.customer, return_url: url.origin + "/" }); return json({ url: ps.url }); }
       catch (e) { console.error("Stripe portal refused:", e.message); return json({ error: "We couldn’t open the subscription page. Try again in a moment.", detail: "Stripe said: " + e.message }, 502); }
     }
+    // the cookie banner's yes sends the ad click's id from the address (consent.js); the server keeps it in a first-party,
+    // HttpOnly cookie for the 90 days Google accepts a click for, so a booking days later still counts for the advert,
+    // whatever the browser does to Google's own cookies. A no (or { clear: true }) deletes it.
+    if (p === "/api/click" && req.method === "POST") {
+      const b = await req.json().catch(() => ({})), c = b.clear === true ? null : clickOf(b);
+      return json({ ok: true, kept: !!c }, 200, { "Set-Cookie": c ? `${CLICK_COOKIE}=${encodeURIComponent(JSON.stringify(c))}; Path=/; Max-Age=${90 * 86400}; HttpOnly; Secure; SameSite=Lax` : `${CLICK_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax` });
+    }
     if (p === "/api/claim" && req.method === "GET") {
       const id = url.searchParams.get("session_id") || "";
       if (!env.STRIPE_SECRET_KEY) return json({ error: "Payments aren’t set up yet." }, 503);
@@ -1375,6 +1414,7 @@ async function route(req, env) {
       if (p === "/api/admin/revoke" && req.method === "POST") return call(env, "/revoke", await req.json().catch(() => ({})));
       if (p === "/api/admin/resend" && req.method === "POST") return call(env, "/resend", await req.json().catch(() => ({})));
       if (p === "/api/admin/survey" && req.method === "POST") return call(env, "/survey-send", await req.json().catch(() => ({})));
+      if (p === "/api/admin/uploads") return req.method === "POST" ? call(env, "/upload-run", await req.json().catch(() => ({}))) : call(env, "/uploads");
       if (p === "/api/admin/apology" && req.method === "POST") return call(env, "/apology", await req.json().catch(() => ({})));
       if (p === "/api/admin/surveys") return registry(env).fetch("https://registry/surveys");
       if (p === "/api/admin/extend" && req.method === "POST") return call(env, "/extend", await req.json().catch(() => ({})));

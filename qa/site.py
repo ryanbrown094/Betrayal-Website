@@ -105,6 +105,31 @@ with sync_playwright() as p:
     st, _, h = get("/rules.html"); check("seo: /rules.html redirects to /rules", st == 301 and h.get("Location", "").endswith("/rules"), (st, h.get("Location")))
     st, _, h = get("/seal"); check("seo: /seal is noindex", "noindex" in (h.get("X-Robots-Tag") or ""), h.get("X-Robots-Tag"))
     sp.close()
+    # Google Ads from the server: the banner's yes hands the server the ad click from the address, a no clears it, and the
+    # buy page sends the click Google's tag saved, only after a yes (the requests are answered here, not by the Worker)
+    def ads(path, consent=None, cookie=None, answer=None):
+        c = ctx(viewport={"width": 390, "height": 844}); got = []
+        def keep(r): got.append((r.request.url.split("/api/")[1], r.request.post_data)); r.fulfill(status=200 if "click" in r.request.url else 503, content_type="application/json", body='{"ok":true}' if "click" in r.request.url else '{"error":"closed here"}')
+        c.route("**/api/click", keep); c.route("**/api/checkout", keep)
+        if consent: c.add_init_script("try { localStorage.setItem('bt-consent', '%s') } catch (e) {}" % consent)
+        if cookie: c.add_cookies([{"name": "_gcl_aw", "value": cookie, "url": URL}])
+        pg = c.new_page(); pg.goto(URL + path); pg.wait_for_timeout(400)
+        if answer: pg.click(".bt-consent ." + answer); pg.wait_for_timeout(300)
+        return c, pg, got
+    import json as _j
+    c, pg, got = ads("/?gclid=Cj0KCQ_test_click_123", answer="y")
+    check("ads: a yes hands the server the ad click from the address", [(u, _j.loads(d)) for u, d in got] == [("click", {"gclid": "Cj0KCQ_test_click_123"})], got); c.close()
+    c, pg, got = ads("/rules?gclid=Cj0KCQ_test_click_123", answer="n")
+    check("ads: a no tells the server to delete any it kept, and sends no click", [(u, _j.loads(d)) for u, d in got] == [("click", {"clear": True})], got); c.close()
+    c, pg, got = ads("/party-games-for-large-groups?gbraid=GB_test_click_123", consent="yes")
+    check("ads: someone who said yes before, back from another advert, hands over the new click", [(u, _j.loads(d)) for u, d in got] == [("click", {"gbraid": "GB_test_click_123"})], got); c.close()
+    c, pg, got = ads("/rules", consent="yes")
+    check("ads: no advert in the address, nothing sent", got == [], got); c.close()
+    for consent, want in [("yes", {"gclid": "TagSaved_gclid_123"}), ("no", None)]:
+        c, pg, got = ads("/buy", consent=consent, cookie="GCL.1730000000.TagSaved_gclid_123")
+        pg.check("#c1"); pg.check("#c2"); pg.click("#pay"); pg.wait_for_timeout(500)
+        sent = [_j.loads(d) for u, d in got if u == "checkout"]
+        check(f"ads: the buy page sends the click Google's tag saved only after a yes ({consent})", len(sent) == 1 and sent[0].get("click") == want, sent); c.close()
     b.close()
 print("RESULT: " + ("CLEAN" if not fails else "FAILED " + str(len(fails))))
 sys.exit(1 if fails else 0)
