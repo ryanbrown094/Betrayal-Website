@@ -1,0 +1,38 @@
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "How many people do you need for a traitors party?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "At least 8, and up to 24. The game is at its best with 8 to 16, when everyone gets a say in every vote."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How long does the game take?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Played on phones with The Betrayal, about an hour for 8 to 10 players, about an hour and a half for 12 to 16, and about two hours for 20 to 24. Run by hand, allow 3 hours or more."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Do guests need to download an app?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. With The Betrayal everyone plays in their phone’s browser, with no app to install and no account to make."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Is this the official Traitors game?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. The Betrayal is an original party game, independent of the TV programme, the BBC and its makers."
+   }
+  }
+ ]
+}

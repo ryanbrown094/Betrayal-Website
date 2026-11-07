@@ -5,7 +5,7 @@
 import sys
 from playwright.sync_api import sync_playwright
 URL = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8790/").rstrip("/")
-PAGES = ["/", "/buy", "/rules", "/tour", "/traitors-at-home", "/party-games-for-large-groups", "/contact", "/terms", "/privacy", "/refunds", "/cookies", "/seal"]
+PAGES = ["/", "/buy", "/rules", "/tour", "/traitors-at-home", "/traitors-party-ideas", "/party-games-for-large-groups", "/contact", "/terms", "/privacy", "/refunds", "/cookies", "/seal"]
 INDEXED = [u for u in PAGES if u != "/seal"]
 fails = []
 def check(name, cond, extra=""):
@@ -84,14 +84,15 @@ with sync_playwright() as p:
                     if st["text"] not in m["text"]: missing.append(st["name"])
         check(f"seo {u}: FAQ and HowTo JSON-LD say exactly what the page says", not missing, missing)
         if u == "/": check("seo /: Organization, WebSite, Product with both prices in GBP, FAQPage", {"Organization", "WebSite", "Product", "FAQPage"} <= types and sorted(o["price"] for g in items if g.get("offers") for o in g["offers"]) == ["10.00", "20.00"], types)
+        if u == "/traitors-party-ideas": check("seo /traitors-party-ideas: FAQPage, and it says it isn't affiliated", "FAQPage" in types and "not affiliated with" in m["text"])
         if u == "/traitors-at-home": check("seo /traitors-at-home: HowTo and FAQPage, and it says it isn't affiliated", {"HowTo", "FAQPage"} <= types and "not affiliated with" in m["text"])
-        if u in ("/rules", "/traitors-at-home", "/party-games-for-large-groups"):
+        if u in ("/rules", "/traitors-at-home", "/traitors-party-ideas", "/party-games-for-large-groups"):
             art = next((g for g in items if g["@type"] == "Article"), {})
             shown = sp.get_attribute("p.updated time", "datetime") if sp.locator("p.updated time").count() else None
             check(f"seo {u}: an Article, dated, with the same date shown on the page", art.get("headline") and art.get("datePublished", "9") <= art.get("dateModified", "") and shown == art.get("dateModified"), (art.get("datePublished"), art.get("dateModified"), shown))
     check("seo: every page has its own title and description", len(titles) == len(INDEXED) and len(descs) == len(INDEXED))
     home = sp.goto(URL + "/"); ht = sp.content()
-    check("seo: The Traitors is only a question on the home page, never its title", "Is it like The Traitors?" in ht and "Traitors" not in sp.title())
+    check("seo: the home page says traitors-style, never The Traitors, in its title, and answers \"Is it like The Traitors?\"", "Is it like The Traitors?" in ht and "traitors-style" in sp.title().lower() and "The Traitors" not in sp.title(), sp.title())
     import urllib.request as _u, urllib.error as _ue
     def get(path):
         class NoRedir(_u.HTTPRedirectHandler):

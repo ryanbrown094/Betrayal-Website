@@ -39,7 +39,7 @@ firstmod() { m=$(git log --diff-filter=A --follow --format=%cs -- "$1" 2>/dev/nu
 longdate() { y=${1%%-*}; r=${1#*-}; m=${r%%-*}; d=${r#*-}; set -- January February March April May June July August September October November December; eval "echo ${d#0} \${${m#0}} $y"; }
 # the guides are Articles: dated in their JSON-LD (for search and AI answer engines, which favour current pages) and,
 # visibly, at the foot of the page
-ARTICLES=" rules traitors-at-home party-games-for-large-groups "
+ARTICLES=" rules traitors-at-home traitors-party-ideas party-games-for-large-groups "
 for f in site/pages/*.html; do
   t=$(sed -n '1s/^<!-- title: \(.*\) -->$/\1/p' "$f"); d=$(sed -n 's/^<!-- desc: \(.*\) -->$/\1/p' "$f"); slug=$(basename "$f" .html)
   ft=$(sed -n 's/^<!-- fulltitle: \(.*\) -->$/\1/p' "$f"); [ -n "$ft" ] || ft="$t · The Betrayal"
@@ -72,7 +72,7 @@ done
 # llms-full.txt for AI assistants: worker/public/llms.txt (hand-written) then the plain text of the rules and the guides
 {
   cat worker/public/llms.txt
-  for slug in rules traitors-at-home party-games-for-large-groups; do
+  for slug in rules traitors-at-home traitors-party-ideas party-games-for-large-groups; do
     printf '\n\n---\n\nSource: %s/%s\n\n' "$SITE" "$slug"
     awk '/^<(style|script)>/{skip=1} skip{if(/^<\/(style|script)>/)skip=0; next} /^<!-- /||/class="toc"/{next} {print}' "site/pages/$slug.html" |
       sed -e 's/<h1[^>]*>/# /; s/<h2[^>]*>/\n## /; s/<h3[^>]*>/\n### /; s/<li>/- /g; s/<dt>/- /g; s/<dd>/  /g; s/<\/tr>//g; s/<\/t[dh]>/ | /g' \
