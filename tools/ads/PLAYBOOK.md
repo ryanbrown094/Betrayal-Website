@@ -9,6 +9,7 @@ Work only through `tools/ads/ads.mjs`. Don't edit, commit or push anything in th
 The script enforces these, and you never look for a way round them. If one gets in the way, say so in the summary.
 
 - **Budget cap:** enabled campaigns' daily budgets add up to **£5 at most**.
+- **The account as set on 7 November 2026:** Search only (Performance Max paused: most of its spend went on Display), Maximise clicks with an 80p bid limit (too few sales for Maximise conversions to learn from: about one in 90 clicks), Google Search without search partners, UK, £5 a day. Ad groups: Game at home, Hidden role games, Party games, and **Christmas parties** (eight phrase keywords, landing on `/party-games-for-large-groups`, the page the only advert-led sale came through). **Pause the Christmas parties ad group on 24 December**, and leave Party games' own "christmas party games" and "office party games" paused. Sales are counted by **Purchase (server)** (primary, sent from the Worker); the browser tag's **Purchase** is secondary.
 - **Bids:** keyword bids and Maximise-clicks bid limits are **£2 at most**, and move **at most 20% up or down** per change.
 - **Allowed changes:** a sweep may make only these:
   - `add_negative_keyword`
