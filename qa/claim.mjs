@@ -371,4 +371,71 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const [es, ec] = await claim(eid);
   check("a checkout with no email address claims with no hash", es === 200 && ec.emailHash === null && !!ec.pass, ec);
 }
+// Google Ads from the server: a yes keeps the ad click (bt_click), checkout puts it on the booking, payment queues it,
+// and the morning job sends it through the Data Manager API, signed in as the service account
+{
+  const A = (path, body) => W("/api/admin/" + path, body === undefined ? { headers: { Authorization: "Bearer adm" } } : { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
+  const click = async (body) => { const r = await W("/api/click", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.headers.get("Set-Cookie") || ""; };
+  const GCLID = "Cj0KCQiA_test-gclid_1234567890";
+  let sc = await click({ gclid: GCLID, other: "x" });
+  check("a yes keeps the ad click in a first-party cookie for 90 days, out of scripts' reach", sc.startsWith("bt_click=") && decodeURIComponent(sc.split(";")[0].slice(9)) === JSON.stringify({ gclid: GCLID }) && /Max-Age=7776000/.test(sc) && /HttpOnly/.test(sc) && /Secure/.test(sc) && /SameSite=Lax/.test(sc), sc);
+  check("…a no, or anything that isn't a click id, deletes it", /^bt_click=;.*Max-Age=0/.test(await click({ clear: true })) && /^bt_click=;.*Max-Age=0/.test(await click({ gclid: "bad id!" })) && /^bt_click=;.*Max-Age=0/.test(await click({})));
+  const co = (headers, body, ip) => W("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": ip, ...headers }, body: JSON.stringify({ terms: true, supply: true, ...body }) }, base).then(J);
+  const [k1, j1] = await co({ Cookie: "other=1; " + sc.split(";")[0] }, {}, "192.0.2.210"), id1 = j1.url.split("/").pop(), p1 = sessions[id1].metadata.pass;
+  check("checkout puts the kept ad click on the booking", k1 === 200 && JSON.stringify((await passOf(p1)).click) === JSON.stringify({ gclid: GCLID }), await passOf(p1));
+  const [, j2] = await co({}, { click: { gbraid: "GBRAID_from_tag_1234" } }, "192.0.2.211"), id2 = j2.url.split("/").pop(), p2 = sessions[id2].metadata.pass;
+  check("…or the one Google's tag saved, sent by the buy page", JSON.stringify((await passOf(p2)).click) === JSON.stringify({ gbraid: "GBRAID_from_tag_1234" }));
+  const [, j3] = await co({}, {}, "192.0.2.212"), p3 = sessions[j3.url.split("/").pop()].metadata.pass;
+  check("…and none without one", !(await passOf(p3)).click);
+  for (const id of [id1, id2]) { sessions[id].payment_status = "paid"; sessions[id].amount_total = 1000; }
+  await claim(id1); await claim(id1); await claim(id2);
+  const q1 = await reg.storage.get("up:" + passKey(p1));
+  check("once paid, it waits to go to Google Ads: its click, what was paid, the checkout as the transaction, once however often it's claimed", q1 && q1.value === 10 && q1.txn === id1 && JSON.stringify(q1.click) === JSON.stringify({ gclid: GCLID }) && (await reg.storage.list({ prefix: "up:" })).size === 2, q1);
+  await reg.fetch(new Request("https://registry/refund", { method: "POST", body: JSON.stringify({ pass: p2, amount: 1000 }) }));
+  check("a refund before it's sent: Google never hears of it", !(await reg.storage.get("up:" + passKey(p2))) && (await reg.storage.list({ prefix: "up:" })).size === 1);
+
+  // not set up yet: it waits, and Google is never called
+  const prior = globalThis.fetch, calls = []; let dmStatus = 200;
+  globalThis.fetch = async (u, init) => {
+    u = String(u);
+    if (u === "https://oauth2.googleapis.com/token") { calls.push({ u, body: new URLSearchParams(init.body) }); return new Response(JSON.stringify({ access_token: "ya29.test", expires_in: 3600 })); }
+    if (u === "https://datamanager.googleapis.com/v1/events:ingest") { calls.push({ u, auth: init.headers.Authorization, body: JSON.parse(init.body) }); return dmStatus === 200 ? new Response(JSON.stringify({ requestId: "req-" + calls.length })) : new Response(JSON.stringify({ error: { message: "The caller does not have permission" } }), { status: dmStatus }); }
+    return prior(u, init);
+  };
+  let [us, uj] = await A("uploads", {});
+  check("before the service account's key is set, sales wait and Google isn't called", us === 503 && uj.waiting === 1 && /GOOGLE_DM_KEY/.test(uj.error) && calls.length === 0, uj);
+
+  // set up: a real RSA key, so the signed sign-in can be checked as Google would
+  const kp = await crypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]);
+  const pem = "-----BEGIN PRIVATE KEY-----\n" + Buffer.from(await crypto.subtle.exportKey("pkcs8", kp.privateKey)).toString("base64").replace(/(.{64})/g, "$1\n") + "\n-----END PRIVATE KEY-----\n";
+  Object.assign(reg.env, { GOOGLE_DM_KEY: JSON.stringify({ type: "service_account", client_email: "betrayal-ads@example-project.iam.gserviceaccount.com", private_key: pem }), ADS_CUSTOMER_ID: "1578842660", ADS_UPLOAD_ACTION: "7893781389", REGISTRY: base.REGISTRY });
+  [us, uj] = await A("uploads", { validateOnly: true });
+  check("the admin can have Google check them first, changing nothing", us === 200 && uj.validated === 1 && calls.at(-1).body.validateOnly === true && (await reg.storage.list({ prefix: "up:" })).size === 1, uj);
+  const tok = calls.find((c) => c.u.includes("oauth2")), jwt = tok.body.get("assertion").split("."), dec = (x) => JSON.parse(Buffer.from(x, "base64url").toString());
+  const signed = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", kp.publicKey, Buffer.from(jwt[2], "base64url"), new TextEncoder().encode(jwt[0] + "." + jwt[1]));
+  check("it signs in as the service account, for the Data Manager API only, with a valid signature", tok.body.get("grant_type") === "urn:ietf:params:oauth:grant-type:jwt-bearer" && dec(jwt[0]).alg === "RS256" && dec(jwt[1]).iss === "betrayal-ads@example-project.iam.gserviceaccount.com" && dec(jwt[1]).scope === "https://www.googleapis.com/auth/datamanager" && dec(jwt[1]).aud === "https://oauth2.googleapis.com/token" && dec(jwt[1]).exp - dec(jwt[1]).iat === 3600 && signed, dec(jwt[1]));
+  [us, uj] = await A("uploads", {});
+  const sentBody = calls.at(-1).body, ev = sentBody.events[0], done = await reg.storage.get("upd:" + passKey(p1));
+  check("…and sends the sale to the Purchase (server) action in the Google Ads account", us === 200 && uj.sent === 1 && calls.at(-1).auth === "Bearer ya29.test" && sentBody.destinations[0].operatingAccount.accountId === "1578842660" && sentBody.destinations[0].operatingAccount.accountType === "GOOGLE_ADS" && sentBody.destinations[0].loginAccount.accountId === "1578842660" && sentBody.destinations[0].productDestinationId === "7893781389" && sentBody.validateOnly === false, sentBody.destinations);
+  check("…with its click, £10, the checkout as the transaction id, the time, and consent as given (data yes, personalisation no)", ev.adIdentifiers.gclid === GCLID && ev.conversionValue === 10 && ev.currency === "GBP" && ev.transactionId === id1 && ev.eventSource === "WEB" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(ev.eventTimestamp) && sentBody.consent.adUserData === "CONSENT_GRANTED" && sentBody.consent.adPersonalization === "CONSENT_DENIED" && sentBody.encoding === "HEX", ev);
+  check("…then it's marked sent, with Google's request id, and nothing waits", done && done.sent > 0 && done.requestId === "req-" + calls.length && (await reg.storage.list({ prefix: "up:" })).size === 0, done);
+  const n0 = calls.length; [us, uj] = await A("uploads", {});
+  check("nothing waiting: nothing is sent", us === 200 && uj.sent === 0 && calls.length === n0);
+
+  // Google refuses: it waits for the next morning, and the error log says why
+  const [, j4] = await co({ Cookie: sc.split(";")[0] }, {}, "192.0.2.213"), id4 = j4.url.split("/").pop(), p4 = sessions[id4].metadata.pass;
+  sessions[id4].payment_status = "paid"; sessions[id4].amount_total = 1000; await claim(id4); dmStatus = 403;
+  [us, uj] = await A("uploads", {});
+  const w4 = await reg.storage.get("up:" + passKey(p4)), errs = [...(await reg.storage.list({ prefix: "err:" })).values()];
+  check("if Google refuses, the sale keeps waiting, with the reason, and it's in the error log", us === 502 && w4 && w4.tries === 1 && /does not have permission/.test(w4.lastErr) && errs.some((e) => /to Google Ads failed/.test(e.msg)), w4);
+  const d = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
+  check("the morning summary counts them, and says why one is waiting", /Sales sent to Google Ads: 1, 1 waiting \(Google's Data Manager refused it: The caller does not have permission\)/.test(d.body), d.body);
+  dmStatus = 200; [us, uj] = await A("uploads", {});
+  check("…and the next try sends it", us === 200 && uj.sent === 1 && !(await reg.storage.get("up:" + passKey(p4))));
+  const [ls, lj] = await A("uploads");
+  check("the admin lists what was sent and what waits, codes shown as OATH-", ls === 200 && lj.ready === true && lj.waiting.length === 0 && lj.sent.length === 2 && lj.sent.every((x) => /^OATH-/.test(x.pass)), lj);
+  check("the queue needs the admin", (await W("/api/admin/uploads").then(J))[0] === 401);
+  globalThis.fetch = prior;
+  for (const k of ["GOOGLE_DM_KEY", "ADS_CUSTOMER_ID", "ADS_UPLOAD_ACTION", "REGISTRY"]) delete reg.env[k];
+}
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

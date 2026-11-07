@@ -2,16 +2,21 @@
 // head (site/gtm.html) behind Consent Mode defaults: until the visitor says yes Google sets no cookies and gets only
 // cookieless signals; a yes lets its advertising cookies on, as UK cookie law requires. The choice is remembered
 // ("bt-consent": "yes" or "no"). window.btCookieChoice() reopens the banner (the cookies page links to it).
+// A yes also hands the ad click's id, still in the address (url_passthrough, site/gtm.html), to the site's server, which
+// keeps it in a first-party cookie so a booking days later counts for the advert (/api/click); a no deletes it.
 // build.sh copies this to worker/public/.
 (() => {
   let choice = null, box = null;
   try { choice = localStorage.getItem("bt-consent") } catch (e) {}
+  const tell = (body) => { try { fetch("/api/click", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), keepalive: true }).catch(() => {}) } catch (e) {} };
+  const click = () => { const q = new URLSearchParams(location.search), o = {}; for (const k of ["gclid", "gbraid", "wbraid"]) if (q.get(k)) o[k] = q.get(k); return Object.keys(o).length ? o : null };
   function set(v) {
     choice = v; try { localStorage.setItem("bt-consent", v) } catch (e) {}
     if (box) { box.remove(); box = null; document.body.style.paddingBottom = "" }
     if (window.gtag) gtag("consent", "update", v === "yes" ? { ad_storage: "granted", ad_user_data: "granted" } : { ad_storage: "denied", ad_user_data: "denied" });
     // Tag Manager's Conversion Linker also fires on this, so the ad click is saved the moment they say yes
     if (v === "yes" && window.dataLayer) dataLayer.push({ event: "bt_consent_yes" });
+    if (v === "yes") { if (click()) tell(click()) } else tell({ clear: true });
   }
   function banner() {
     if (box) return;
@@ -26,6 +31,6 @@
     document.body.append(box); document.body.style.paddingBottom = box.offsetHeight + "px";
   }
   window.btCookieChoice = () => { choice = null; try { localStorage.removeItem("bt-consent") } catch (e) {} banner() };
-  const start = () => { if (/^\/(admin|survey)/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner() };
+  const start = () => { if (/^\/(admin|survey)/.test(location.pathname)) return; if (choice !== "yes" && choice !== "no") banner(); else if (choice === "yes" && click()) tell(click()) };
   if (document.body) start(); else addEventListener("DOMContentLoaded", start);
 })();
