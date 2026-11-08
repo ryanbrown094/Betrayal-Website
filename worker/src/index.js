@@ -517,6 +517,8 @@ export class Registry {
       await this.storage.put(tkey("err:"), e); await this.trim("err:", 3000); return json({ ok: true });
     }
     if (url.pathname === "/errs") return json({ errors: await this.newest("err:", 1000) });
+    // the last day whose changed pages IndexNow took (indexnow.js): the next morning sends what came after it
+    if (url.pathname === "/indexnow-day") { if (typeof b.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(b.day)) await this.storage.put("indexnow:day", b.day); return json({ day: (await this.storage.get("indexnow:day")) || null }); }
     // the morning summary (the Worker's daily schedule): the last 24 hours, for the owner's inbox
     if (url.pathname === "/digest") {
       const since = Date.now() - 86400000, sales = [], refunds = [], ended = [], failed = []; let regulars = 0, games = 0, tests = 0;
@@ -1173,11 +1175,11 @@ async function gate(req, env) {
 
 export default {
   // every morning (wrangler.toml [triggers]): sales from adverts sent to Google Ads, then the last 24 hours' sales, Tables,
-  // reports and errors, by email to ALERT_TO; and yesterday's changed pages to IndexNow
+  // reports and errors, by email to ALERT_TO; and the pages changed since IndexNow last took them
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => { await call(env, "/upload-run", {}).catch(() => {}); const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
       .catch((e) => logErr(env, { src: "server", where: "morning summary", msg: clip(e && e.message || e, 300) })));
-    ctx.waitUntil(indexNow(env).catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
+    ctx.waitUntil((async () => { const { day } = await (await call(env, "/indexnow-day")).json(); const r = await indexNow(env, Date.now(), day); await call(env, "/indexnow-day", { day: r.through }); })().catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
   },
   async fetch(req, env) {
     try { return await route(req, env); }

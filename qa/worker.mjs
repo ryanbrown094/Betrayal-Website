@@ -1,7 +1,7 @@
 // The real Worker class (worker/src/index.js), driven directly with an in-memory storage: PIN limits, games kept across deploys,
 // stale-build writes, the settings rule; and the morning's IndexNow call. Usage: node qa/worker.mjs
 import worker, { GameState, Registry } from "../worker/src/index.js";
-import { indexNow, INDEXNOW_KEY } from "../worker/src/indexnow.js";
+import { indexNow, INDEXNOW_KEY, INDEXNOW_AT } from "../worker/src/indexnow.js";
 import { readFileSync, existsSync } from "node:fs";
 import { shownPass } from "../worker/src/codes.js";
 let ok = true;
@@ -100,20 +100,30 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   await nap0();
   check("a room's devices put at most 30 errors an hour in the master log (the rest stay in the room's trail)", logged.length === 30 && mem.get("evN") === 6, { logged: logged.length, batches: mem.get("evN") });
 }
-// IndexNow: yesterday's pages from the sitemap, once, with the key its file holds
+// IndexNow: the pages dated since the last morning that got through, up to yesterday's, with the key its file holds; a
+// refusal tries the next endpoint, and a morning turned away everywhere is made up the next
 {
-  const xml = '<url><loc>https://thebetrayal.co.uk/</loc><lastmod>2026-10-26</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/rules</loc><lastmod>2026-10-27</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/tour</loc><lastmod>2026-10-26</lastmod></url>';
-  const env = { SITE_HOST: "thebetrayal.co.uk", ASSETS: { fetch: async () => new Response(xml) } }, calls = [], real = globalThis.fetch; let reply = 200;
-  globalThis.fetch = async (u, init) => { calls.push({ u: String(u), body: JSON.parse(init.body) }); return new Response("", { status: reply }); };
-  const r = await indexNow(env, Date.parse("2026-10-27T07:00:00Z")), c = calls[0];
-  check("IndexNow: the pages dated yesterday, and only those, sent once", r.sent === 2 && calls.length === 1 && c.u === "https://api.indexnow.org/indexnow" && JSON.stringify(c.body.urlList) === JSON.stringify(["https://thebetrayal.co.uk/", "https://thebetrayal.co.uk/tour"]), calls);
+  const xml = '<url><loc>https://thebetrayal.co.uk/</loc><lastmod>2026-10-26</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/rules</loc><lastmod>2026-10-27</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/tour</loc><lastmod>2026-10-26</lastmod></url>\n<url><loc>https://thebetrayal.co.uk/faq</loc><lastmod>2026-10-01</lastmod></url>';
+  const env = { SITE_HOST: "thebetrayal.co.uk", ASSETS: { fetch: async () => new Response(xml) } }, real = globalThis.fetch; let calls = [], reply = () => 200;
+  globalThis.fetch = async (u, init) => { calls.push({ u: String(u), body: JSON.parse(init.body) }); const s = reply(String(u)); if (s instanceof Error) throw s; return new Response("", { status: s, headers: s === 429 ? { "Retry-After": "3600" } : {} }); };
+  const urls = () => JSON.stringify(calls[0].body.urlList), at = Date.parse("2026-10-27T07:00:00Z");
+  let r = await indexNow(env, at, "2026-10-25"), c = calls[0];
+  check("IndexNow: the pages dated after the last good day up to yesterday, sent once", r.sent === 2 && r.through === "2026-10-26" && calls.length === 1 && c.u === INDEXNOW_AT[0] && urls() === JSON.stringify(["https://thebetrayal.co.uk/", "https://thebetrayal.co.uk/tour"]), calls);
   check("…with the host, the key and where its file is", c.body.host === "thebetrayal.co.uk" && c.body.key === INDEXNOW_KEY && c.body.keyLocation === "https://thebetrayal.co.uk/" + INDEXNOW_KEY + ".txt");
   const file = new URL("../worker/public/" + INDEXNOW_KEY + ".txt", import.meta.url);
   check("…and that file is published, holding the key", existsSync(file) && readFileSync(file, "utf8").trim() === INDEXNOW_KEY);
-  check("a morning with nothing new sends nothing", (await indexNow(env, Date.parse("2026-10-30T07:00:00Z"))).sent === 0 && calls.length === 1);
-  check("another site's address (a staging host) sends nothing", (await indexNow({ ...env, SITE_HOST: "staging.example" }, Date.parse("2026-10-27T07:00:00Z"))).sent === 0 && calls.length === 1);
-  reply = 422; let err = null; try { await indexNow(env, Date.parse("2026-10-27T07:00:00Z")); } catch (e) { err = e.message; }
-  check("a refusal is an error (the morning job logs it)", /422/.test(err || ""), err);
+  calls = []; r = await indexNow(env, Date.parse("2026-10-30T07:00:00Z"), "2026-10-28");
+  check("a morning with nothing new sends nothing, and moves the day on", r.sent === 0 && r.through === "2026-10-29" && calls.length === 0);
+  check("today's pages wait for tomorrow", (await indexNow(env, Date.parse("2026-10-26T07:00:00Z"), "2026-10-24")).sent === 0 && calls.length === 0);
+  calls = []; r = await indexNow(env, Date.parse("2026-10-29T07:00:00Z"), "2026-10-25");
+  check("after a morning turned away, the next sends what it missed as well", r.sent === 3 && JSON.stringify(calls[0].body.urlList) === JSON.stringify(["https://thebetrayal.co.uk/", "https://thebetrayal.co.uk/rules", "https://thebetrayal.co.uk/tour"]), calls);
+  calls = []; r = await indexNow(env, Date.parse("2026-10-27T07:00:00Z"), null);
+  check("with no last good day, it goes back 14 days (not further)", r.sent === 2 && !urls().includes("/faq"), calls);
+  check("another site's address (a staging host) sends nothing", (await indexNow({ ...env, SITE_HOST: "staging.example" }, at, "2026-10-25")).sent === 0);
+  calls = []; reply = (u) => (u === INDEXNOW_AT[0] ? 429 : 200); r = await indexNow(env, at, "2026-10-25");
+  check("a 429 from one endpoint tries the next, which takes them", r.sent === 2 && r.via === "www.bing.com" && calls.length === 2 && calls[1].u === INDEXNOW_AT[1], calls.map((x) => x.u));
+  calls = []; reply = (u) => (u === INDEXNOW_AT[2] ? new Error("network down") : 429); let err = null; try { await indexNow(env, at, "2026-10-25"); } catch (e) { err = e.message; }
+  check("refused everywhere is an error naming each (the morning job logs it and keeps the last good day)", calls.length === 3 && /2 pages: api\.indexnow\.org 429 \(retry after 3600\), www\.bing\.com 429 \(retry after 3600\), yandex\.com network down/.test(err || ""), err);
   globalThis.fetch = real;
 }
 // Modern's lobby: a phone that lost its place (a closed tab, the QR code's own browser) carries on under its own name once

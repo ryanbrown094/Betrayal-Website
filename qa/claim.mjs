@@ -349,9 +349,19 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
   const d = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
   check("the morning summary counts the last 24 hours", /^The Betrayal, last 24 hours: \d+ sales \(£[\d.]+\), \d+ Tables?, \d+ errors?$/.test(d.subject) && /Sales: \d+ \(\d+ Tables, 1 new Regular\)/.test(d.body) && /Refunds: \d+, £/.test(d.body) && /Regulars who cancelled: /.test(d.body) && /Payments refused: /.test(d.body), d);
   const waits = [], n = alerts.length;
-  // (the same morning job tells IndexNow of yesterday's pages: none here, in an empty sitemap)
+  // (the same morning job tells IndexNow of the pages changed since it last got through: none here, in an empty sitemap)
   await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk", ASSETS: { fetch: async () => new Response("") } }, { waitUntil: w => waits.push(w) }); await Promise.all(waits);
   check("…and the daily schedule emails it", alerts.length === n + 1 && read(alerts[n]).subject === d.subject && read(alerts[n]).body.startsWith(d.body), alerts.length - n);
+  const yday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  check("…and notes the day IndexNow is up to", (await reg.storage.get("indexnow:day")) === yday, await reg.storage.get("indexnow:day"));
+  // a morning IndexNow turns away everywhere: logged, and the day stays put, so the next morning sends those pages too
+  await reg.storage.put("indexnow:day", "2026-01-01"); const prior0 = globalThis.fetch, inow = [], w2 = [];
+  globalThis.fetch = async (u, init) => (/indexnow/.test(String(u)) ? (inow.push(String(u)), new Response("", { status: 429 })) : prior0(u, init));
+  const sm = "<url><loc>https://thebetrayal.co.uk/</loc><lastmod>" + yday + "</lastmod></url>";
+  await worker.scheduled({ cron: "0 7 * * *" }, { ...base, MAIL, ALERT_TO: "info@thebetrayal.co.uk", ASSETS: { fetch: async () => new Response(sm) } }, { waitUntil: w => w2.push(w) }); await Promise.all(w2);
+  globalThis.fetch = prior0;
+  const errs = (await (await reg.fetch(new Request("https://registry/errs", { method: "POST", body: "{}" }))).json()).errors;
+  check("…a morning IndexNow turns away is logged, and its day stays put to be made up", inow.length === 3 && (await reg.storage.get("indexnow:day")) === "2026-01-01" && errs.some(e => e.where === "IndexNow" && /1 pages: .*429/.test(e.msg)), [inow, errs.filter(e => e.where === "IndexNow")]);
 }
 // "Don't email me a feedback survey", ticked when booking: kept on the booking and in Stripe's metadata, and once it's
 // paid its address is opted out of feedback emails
