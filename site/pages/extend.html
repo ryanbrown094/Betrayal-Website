@@ -1,0 +1,95 @@
+<!-- title: More time -->
+<!-- desc: Keep your Table of The Betrayal open longer: add 24 hours free, or ask us for more. -->
+<style>
+.box { margin: 22px 0; padding: 18px 18px 20px; border: 1px solid rgba(230,165,140,.45); border-radius: 6px; background: #140c15 }
+.box h2 { margin-top: 0 }
+.fl { display: block; margin: 18px 0 8px; font: 400 20px/1.25 var(--book); color: var(--ivory) } .fl small { display: block; margin-top: 4px; font: 16px/1.4 var(--ui); color: var(--ivory2) }
+#reason, #until { width: 100%; padding: 12px 14px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui); color-scheme: dark }
+#until { max-width: 240px; min-height: 48px } #reason:focus, #until:focus { border-color: var(--rose); outline: none } [aria-invalid] { border-color: #ff9dbf !important }
+.msg { min-height: 1.4em; margin: 12px 0 0 } .msg.err { color: #ff9dbf }
+</style>
+<h1>More time</h1>
+<p id="wait" class="lede">One moment…</p>
+
+<div id="more" hidden>
+<p class="lede" id="when"></p>
+
+<div class="box" id="add">
+<h2>Another 24 hours, free</h2>
+<p id="addtext">One tap keeps your Table open for 24 hours more. You can do this once.</p>
+<button class="btn" id="addbtn">Add 24 hours</button>
+<p class="msg" id="addmsg" role="status"></p>
+</div>
+
+<div class="box" id="ask">
+<h2>Need longer?</h2>
+<form id="askform" novalidate>
+<p>Tell us why, and pick the date you’d like your Table open until. We’ll read it and email you, usually within a day.</p>
+<label class="fl" for="reason">Why do you need longer?<small>For example: half the party couldn’t make it, and we’re finishing the game next weekend.</small></label>
+<textarea id="reason" rows="4" maxlength="1000"></textarea>
+<label class="fl" for="until">Keep it open until</label>
+<input type="date" id="until">
+<div style="margin-top:20px"><button class="btn" id="askbtn">Send my request</button></div>
+<p class="msg" id="askmsg" role="status"></p>
+</form>
+<p id="asked" hidden></p>
+</div>
+</div>
+
+<div id="bad" hidden><p class="lede">That link doesn’t work. If you think it should, write to <a href="mailto:info@thebetrayal.co.uk">info@thebetrayal.co.uk</a> and we’ll sort it out.</p></div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s), t = new URLSearchParams(location.search).get("t") || "";
+  // the token stays in memory: the address bar, and any page reached from here, shows only /extend
+  try { history.replaceState(null, "", "/extend"); } catch (e) {}
+  const show = (id) => { for (const x of ["wait", "more", "bad"]) $("#" + x).hidden = x !== id; };
+  const say = (el, m, err) => { $(el).textContent = m; $(el).className = "msg" + (err ? " err" : ""); };
+  const at = (ms) => { const d = new Date(ms), o = { timeZone: "Europe/London" }; return d.toLocaleTimeString("en-GB", { ...o, hour: "2-digit", minute: "2-digit" }) + " on " + d.toLocaleDateString("en-GB", { ...o, weekday: "long", day: "numeric", month: "long" }); };
+  const day = (ymd) => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const ymd = (ms) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+  const post = (body) => fetch("/api/extend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, ...body }) }).then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }));
+  const offline = "Can’t reach us just now. Check you’re online and try again.";
+  let room = "";
+  const when = (expires) => { $("#when").textContent = "Table " + room + (expires > Date.now() ? " is open until " + at(expires) + "." : " closed at " + at(expires) + "."); };
+  const added = () => { $("#addtext").textContent = "You’ve added your free 24 hours to this Table."; $("#addbtn").hidden = true; };
+  const asked = (u) => { $("#askform").hidden = true; $("#asked").hidden = false; $("#asked").textContent = "Thanks. We’ve got your request to keep it open until " + day(u) + ", and we’ll email you at the address you booked with."; };
+  if (!/^[a-z2-9]{24}$/.test(t)) return show("bad");
+  fetch("/api/extend?t=" + encodeURIComponent(t), { cache: "no-store" }).then(async (r) => {
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return show("bad");
+    room = j.room; when(j.expires);
+    if (!j.open) $("#addtext").textContent = "One tap reopens your Table for 24 hours, straight away. You can do this once.";
+    if (j.added) added();
+    if (j.asked) asked(j.asked.until);
+    const tomorrow = ymd(Date.now() + 86400000), after = ymd(j.expires + 86400000);
+    $("#until").min = after > tomorrow ? after : tomorrow; $("#until").max = ymd(Date.now() + 90 * 86400000);
+    show("more");
+  }, () => { $("#wait").textContent = "Can’t reach us just now. Check you’re online, then open the link again."; });
+  $("#addbtn").onclick = async () => {
+    $("#addbtn").disabled = true; say("#addmsg", "Adding…");
+    try {
+      const r = await post({ add: true });
+      if (r.ok) { when(r.j.expires); added(); say("#addmsg", "Done. Your Table is open until " + at(r.j.expires) + "."); return; }
+      if (r.j.expires) { when(r.j.expires); added(); }
+      say("#addmsg", r.j.error || "That didn’t work. Try again.", true);
+    } catch (e) { say("#addmsg", offline, true); }
+    $("#addbtn").disabled = false;
+  };
+  for (const id of ["#reason", "#until"]) $(id).addEventListener("input", () => { $(id).removeAttribute("aria-invalid"); if ($("#askmsg").classList.contains("err")) say("#askmsg", ""); });
+  $("#askform").onsubmit = async (e) => {
+    e.preventDefault();
+    const reason = $("#reason").value.trim(), until = $("#until").value;
+    if (!reason) { $("#reason").setAttribute("aria-invalid", "true"); $("#reason").focus(); return say("#askmsg", "Tell us why you need longer.", true); }
+    if (!until) { $("#until").setAttribute("aria-invalid", "true"); $("#until").focus(); return say("#askmsg", "Pick the date you’d like it open until.", true); }
+    $("#askbtn").disabled = true; say("#askmsg", "Sending…");
+    try {
+      const r = await post({ reason, until });
+      if (r.ok) { say("#askmsg", ""); return asked(r.j.until); }
+      if (r.j.field) { $("#" + r.j.field).setAttribute("aria-invalid", "true"); $("#" + r.j.field).focus(); }
+      say("#askmsg", r.j.error || "That didn’t work. Try again.", true);
+    } catch (err) { say("#askmsg", offline, true); }
+    $("#askbtn").disabled = false;
+  };
+})();
+</script>

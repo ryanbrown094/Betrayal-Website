@@ -59,9 +59,10 @@ class_name = "Registry"
 name = "MAIL"
 
 # The morning summary to ALERT_TO: the last 24 hours' sales, Tables opened, reports and errors. Cron times are UTC, so
-# this is 7am in winter and 8am in summer. Previews and staging don't run it.
+# this is 7am in winter and 8am in summer. Every hour: the email a day after a Table opens, if its game isn't over
+# (extend.html). Previews and staging don't run them.
 [triggers]
-crons = ["0 7 * * *"]
+crons = ["0 7 * * *", "0 * * * *"]
 
 [observability]
 enabled = true

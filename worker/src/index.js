@@ -5,7 +5,7 @@ import * as M from "./modern.js";
 import { sendBooking } from "./booking-mail.js";
 import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
-import { surveyEmail, thanksEmail, apologyEmail, sendFeedbackMail } from "./survey-mail.js";
+import { surveyEmail, thanksEmail, apologyEmail, reminderEmail, sendFeedbackMail } from "./survey-mail.js";
 import { indexNow } from "./indexnow.js";
 import { emailHash } from "./email-hash.js";
 import { clickOf, uploadReady, ingest } from "./ads-upload.js";
@@ -177,6 +177,8 @@ export class GameState {
 
     // asked by the Registry when a Night Pass's window closes: did a game here reach its first round?
     if (path === "/_played") { const m = await this.storage.get("modern"); return json({ played: !!(m && m.round >= 1) }); }
+    // asked by the Registry before the day-old reminder (extend.html): has a game here reached its end?
+    if (path === "/_done") { const m = await this.storage.get("modern"), st = m ? null : await this.storage.get("state"); return json({ done: m ? m.phase === "end" : !!(st && st.winner) }); }
     if (path === "/_mode") return json({ mode: (await this.storage.get("modern")) ? "modern" : (await this.storage.get("state")) ? "classic" : null });
     if (path.startsWith("/api/m")) return this.modern(req, url, path, meta, room, expired);
 
@@ -478,6 +480,19 @@ export class Registry {
     return { v };
   }
 
+  // a Table stays open h hours longer (counted from now if it has already closed); the admin's Extend and the free 24 hours
+  async extendRoom(code, h) {
+    const r = await this.storage.get("room:" + code);
+    if (!r) return json({ error: "No Table with that code." }, 404);
+    const key = r.pass && r.pass !== "MASTER" ? r.pass : null, v = key && (await this.storage.get("pass:" + key));
+    const expires = Math.max(Date.now(), r.expires || 0) + h * 3600000;
+    const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + code)).fetch("https://game/_extend", { method: "POST", body: JSON.stringify({ expires }) });
+    if (!g.ok) return json({ error: "That Table’s game has been deleted, so it can’t be reopened." }, 410);
+    await this.storage.put("room:" + code, { ...r, expires, extended: (r.extended || 0) + h });
+    if (v && v.room === code) await this.storage.put("pass:" + key, { ...v, expires });
+    return json({ ok: true, room: code, expires });
+  }
+
   async played(env, rooms) {
     for (const r of rooms || []) {
       const g = await env.GAME.get(env.GAME.idFromName("room:" + r)).fetch("https://game/_played").catch(() => null);
@@ -594,20 +609,74 @@ export class Registry {
     if (url.pathname === "/extend") {
       const h = Math.round(+b.hours || 0);
       if (!(h >= 1 && h <= 720)) return json({ error: "Extend by 1 to 720 hours." }, 400);
-      let key = b.pass && isPass(b.pass) ? passKey(b.pass) : null, v = key && (await this.storage.get("pass:" + key));
-      let code = v ? v.room : String(b.room || "").toUpperCase();
+      const key = b.pass && isPass(b.pass) ? passKey(b.pass) : null, v = key && (await this.storage.get("pass:" + key));
+      const code = v ? v.room : String(b.room || "").toUpperCase();
       if (b.pass && !v) return json({ error: "No such pass" }, 404);
       if (!code) return json({ error: "This code hasn’t opened a Table yet. Its 48 hours start when it’s first used." }, 409);
-      const r = await this.storage.get("room:" + code);
-      if (!r) return json({ error: "No Table with that code." }, 404);
-      if (!key && r.pass && r.pass !== "MASTER") { key = r.pass; v = await this.storage.get("pass:" + key); }
-      const expires = Math.max(Date.now(), r.expires || 0) + h * 3600000;
-      const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + code)).fetch("https://game/_extend", { method: "POST", body: JSON.stringify({ expires }) });
-      if (!g.ok) return json({ error: "That Table’s game has been deleted, so it can’t be reopened." }, 410);
-      await this.storage.put("room:" + code, { ...r, expires, extended: (r.extended || 0) + h });
-      if (v && v.room === code) await this.storage.put("pass:" + key, { ...v, expires });
-      return json({ ok: true, room: code, expires });
+      return this.extendRoom(code, h);
     }
+    // More time (extend.html). A day after a Table opens, if its game hasn't ended, the address it was booked with gets
+    // one email (the hourly schedule, /remind-run) with a link holding ext:<token>: it adds 24 hours once, free, or asks
+    // us for longer, with a reason and a date, which comes to us as a report (Reports in /admin) and an email.
+    if (url.pathname === "/remind-run") return queued(this.locks, "remind", async () => {
+      const now = Date.now(), host = this.env.SITE_HOST || "thebetrayal.co.uk", out = { sent: 0, skipped: 0, failed: 0 };
+      for (const [k, r] of await this.storage.list({ prefix: "room:" })) {
+        if (r.reminded || !r.pass || r.pass === "MASTER" || r.practice) continue;
+        if (now - r.created < 86400000 || now - r.created > 7 * 86400000 || r.expires - now < 1800000) continue; // too soon; or closed, or about to
+        const code = k.slice(5), mark = (x) => this.storage.put(k, { ...r, ...x });
+        const v = await this.storage.get("pass:" + r.pass), to = v && !v.revoked ? String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim() : "";
+        if (v && v.room && v.room !== code) { await mark({ reminded: now, remindSkip: "newer Table" }); out.skipped++; continue; } // a Regular who has moved on
+        if (!/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(to)) { await mark({ reminded: now, remindSkip: "no email" }); out.skipped++; continue; }
+        const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + code)).fetch("https://game/_done").then((x) => x.json()).catch(() => null);
+        if (!g) { out.failed++; continue; } // asked again next hour
+        if (g.done) { await mark({ reminded: now, remindSkip: "finished" }); out.skipped++; continue; }
+        const token = newToken();
+        try { await sendFeedbackMail(this.env, to, reminderEmail({ token, host, room: code, expires: r.expires })); }
+        catch (e) {
+          const tries = (r.remindTries || 0) + 1;
+          logErr(this.env, { src: "mail", msg: "The day-old reminder didn’t send: " + clip((e && e.message) || e, 240), room: code, pass: shownPass(r.pass) });
+          await mark(tries >= 3 ? { reminded: now, remindSkip: "mail failed", remindTries: tries } : { remindTries: tries }); out.failed++; continue;
+        }
+        await this.storage.put({ ["ext:" + token]: { token, room: code, pass: r.pass, email: to, sent: now }, [k]: { ...r, reminded: now, remindTok: token } });
+        out.sent++;
+      }
+      return json(out);
+    });
+    if (url.pathname === "/ext-get") {
+      const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
+      if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
+      return json({ room: x.room, expires: r.expires, open: r.expires > Date.now(), added: x.added || null, asked: x.asked ? { until: x.asked.until, t: x.asked.t } : null });
+    }
+    if (url.pathname === "/ext-add") return queued(this.locks, "ext", async () => {
+      const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
+      if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
+      if (x.added) return json({ error: "You’ve already added your free 24 hours to this Table.", expires: r.expires }, 409);
+      const v = await this.storage.get("pass:" + x.pass);
+      if (v && v.room && v.room !== x.room) return json({ error: "Your booking code has opened a newer Table since, so this one can’t be reopened. Ask us below if you need it." }, 409);
+      const res = await this.extendRoom(x.room, 24); if (!res.ok) return res;
+      const t = Date.now(); await this.storage.put("ext:" + x.token, { ...x, added: t });
+      await this.storage.put("room:" + x.room, { ...(await this.storage.get("room:" + x.room)), selfExtended: t });
+      return json({ ok: true, expires: (await res.json()).expires });
+    });
+    if (url.pathname === "/ext-ask") return queued(this.locks, "ext", async () => {
+      const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
+      if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
+      const reason = clip(b.reason, 1000).trim(), until = String(b.until || ""), today = new Date().toISOString().slice(0, 10);
+      if (!reason) return json({ error: "Tell us why you need longer.", field: "reason" }, 400);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || isNaN(Date.parse(until)) || until <= today || until > new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10))
+        return json({ error: "Pick a date from tomorrow to 90 days ahead.", field: "until" }, 400);
+      if ((x.asks || 0) >= 5) return json({ error: "We’ve got your request. If something’s changed, reply to our email instead." }, 429);
+      let id; do id = "R-" + Math.random().toString(36).slice(2, 8).toUpperCase(); while (await this.storage.get("rep:" + id));
+      const when = new Date(until + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+      const what = "More time: open Table " + x.room + " until " + when + ".\n\nTheir reason: " + reason;
+      await this.storage.put("rep:" + id, { id, t: Date.now(), status: "open", kind: "extension", room: x.room, rec: 0, device: "", host: true, build: "", ua: "", url: "/extend", what, expected: "", email: x.email, phase: "", ver: 0, screen: null, crumbs: [], snapParts: 0 });
+      const t = Date.now(); await this.storage.put("ext:" + x.token, { ...x, asked: { t, until, reason, report: id }, asks: (x.asks || 0) + 1 });
+      const site = "https://" + (this.env.SITE_HOST || "thebetrayal.co.uk");
+      await alertMail(this.env, "More time " + id + ": Table " + x.room + " until " + when, ["The host of Table " + x.room + " (booking code " + shownPass(x.pass) + ") asks for it to stay open until " + when + ".",
+        "It closes " + new Date(r.expires).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }) + (x.added ? ", with their free 24 hours added." : "."),
+        "", "Their reason: " + reason, "", "To give it, open the Table in " + site + "/admin (Rooms, " + x.room + ") and use Extend this Table. Reply to this email to answer them (" + x.email + ").", "Reference " + id + "."].join("\n"), x.email);
+      return json({ ok: true, until });
+    });
     if (url.pathname === "/resend") { // the admin's "email it again", to the buyer or to another address
       const key = passKey(b.pass || ""), v = key && (await this.storage.get("pass:" + key));
       if (!v) return json({ error: "No such pass" }, 404);
@@ -1059,6 +1128,7 @@ function surveyAnswers(x) {
   for (const k of ["setup", "length", "again"]) if (!SURVEY[k].includes(x[k])) return { error: "Answer all five questions." };
   return { overall, recommend, setup: x.setup, length: x.length, again: x.again, comment: clip(String(x.comment || "").trim(), 2000), quote: x.quote === true, name: clip(String(x.name || "").trim(), 40) };
 }
+const extOf = (b) => /^[a-z2-9]{24}$/.test(String(b.t || "")) ? "ext:" + b.t : null;
 const surveyOf = (b) => /^[a-z2-9]{24}$/.test(String(b.t || "")) ? "survey:" + b.t : null;
 // A checkout counts as paid when Stripe took the money, or when a discount made it free (no_payment_required)
 const settled = (s) => !!s && (s.payment_status === "paid" || s.payment_status === "no_payment_required");
@@ -1177,6 +1247,8 @@ export default {
   // every morning (wrangler.toml [triggers]): sales from adverts sent to Google Ads, then the last 24 hours' sales, Tables,
   // reports and errors, by email to ALERT_TO; and the pages changed since IndexNow last took them
   async scheduled(event, env, ctx) {
+    // every hour (the second cron): the day-old reminders (/remind-run); the rest is the morning's
+    if (event && event.cron === "0 * * * *") return ctx.waitUntil(call(env, "/remind-run", {}).catch((e) => logErr(env, { src: "server", where: "reminders", msg: clip(e && e.message || e, 300) })));
     ctx.waitUntil((async () => { await call(env, "/upload-run", {}).catch(() => {}); const d = await (await call(env, "/digest")).json(); await alertMail(env, d.subject, d.body + "\n\nhttps://" + (env.SITE_HOST || "thebetrayal.co.uk") + "/admin"); })()
       .catch((e) => logErr(env, { src: "server", where: "morning summary", msg: clip(e && e.message || e, 300) })));
     ctx.waitUntil((async () => { const { day } = await (await call(env, "/indexnow-day")).json(); const r = await indexNow(env, Date.now(), day); await call(env, "/indexnow-day", { day: r.through }); })().catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
@@ -1209,6 +1281,8 @@ async function route(req, env) {
     }
     // the feedback survey's page (/survey?t=…): read its survey, answer it, or stop feedback emails to its address
     if (p === "/api/survey" && req.method === "GET") return call(env, "/survey-get", { t: url.searchParams.get("t") });
+    if (p === "/api/extend" && req.method === "GET") return call(env, "/ext-get", { t: url.searchParams.get("t") });
+    if (p === "/api/extend" && req.method === "POST") { const b = await req.json().catch(() => ({})); return b.add ? call(env, "/ext-add", { t: b.t }) : call(env, "/ext-ask", { t: b.t, reason: b.reason, until: b.until }); }
     if (p === "/api/survey" && req.method === "POST") { const b = await req.json().catch(() => ({})); return call(env, b.stop ? "/survey-stop" : "/survey-answer", { t: b.t, answers: b.answers }); }
     // "Report a problem": the form, a snapshot of the screen, the trail of taps. The room is kept 90 days for its replay.
     if (p === "/api/report" && req.method === "POST") {
@@ -1472,12 +1546,12 @@ async function route(req, env) {
     const dup = p.match(/^\/(index|terms|privacy|app-privacy|cookies|refunds|contact|buy|rules|tour|traitors-at-home|traitors-party-ideas|party-games-for-large-groups)\.html$/);
     if (dup) return Response.redirect(url.origin + (dup[1] === "index" ? "/" : "/" + dup[1]) + url.search, 301);
     // every page in site/pages (build.sh) needs its name here too: html_handling is "none" (wrangler.toml)
-    const page = p.match(/^\/(terms|privacy|app-privacy|cookies|refunds|contact|buy|admin|rules|tour|seal|survey|traitors-at-home|traitors-party-ideas|party-games-for-large-groups)\/?$/);
+    const page = p.match(/^\/(terms|privacy|app-privacy|cookies|refunds|contact|buy|admin|rules|tour|seal|survey|extend|traitors-at-home|traitors-party-ideas|party-games-for-large-groups)\/?$/);
     if (page) {
       const r = await env.ASSETS.fetch(new Request(url.origin + "/" + page[1] + ".html", req));
-      if (page[1] !== "admin" && page[1] !== "seal" && page[1] !== "survey") return r;
+      if (page[1] !== "admin" && page[1] !== "seal" && page[1] !== "survey" && page[1] !== "extend") return r;
       const h = new Headers(r.headers); h.set("X-Robots-Tag", "noindex, nofollow"); h.set("Cache-Control", "no-store"); if (page[1] === "admin") h.set("X-Frame-Options", "DENY");
-      if (page[1] === "survey") h.set("Referrer-Policy", "no-referrer"); // its address carries the survey's token
+      if (page[1] === "survey" || page[1] === "extend") h.set("Referrer-Policy", "no-referrer"); // its address carries a token
       return new Response(r.body, { status: r.status, headers: h });
     }
     // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).

@@ -1,5 +1,6 @@
 // The emails the admin sends a buyer by hand: the feedback survey ("Survey" on their booking code) and the 30% code
-// they get for answering it, and an apology with a free game ("Apologise"). Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
+// they get for answering it, and an apology with a free game ("Apologise"); and the one the hourly schedule sends a
+// day after a Table opens, if its game isn't over (more time, extend.html). Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
 // they reach real inboxes only once the domain is set up for sending (HANDOVER §6.4a).
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -153,7 +154,35 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// All three go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
+// the day-old reminder (Registry /remind-run): a Table opened a day ago whose game hasn't ended, and a link to more time
+const closing = (t) => new Date(t).toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }).replace(/^(\w+ \d+ \w+),? (?:at )?(\d\d:\d\d)$/, "$2 on $1");
+export function reminderEmail({ token, host, room, expires }) {
+  const site = "https://" + host, link = `${site}/extend?t=${token}`, when = closing(expires);
+  const subject = "Your Table closes at " + when;
+  const lead = `You opened Table ${esc(room)} a day ago, and your game isn’t over yet. The Table closes at <strong style="color:#F4C9B7">${esc(when)}</strong>, and after that the game can only be looked at.`;
+  const ask = "Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we’ll get back to you.";
+  const html = frame({
+    site, host, title: subject, preheader: `Table ${room} closes at ${when}. Add 24 hours free, or ask us for longer.`,
+    eyebrow: "Your Table", heading: "Need more time?", body: para(lead) + para(ask), button: ["Get more time", link],
+    foot: `You’re getting this because you booked a Table with this address. It’s the only reminder we send for this Table.<br>Questions? Reply, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `Need more time?
+
+You opened Table ${room} a day ago, and your game isn't over yet. The Table closes at ${when}, and after that the game can only be looked at.
+
+Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we'll get back to you.
+
+Get more time: ${link}
+
+You're getting this because you booked a Table with this address. It's the only reminder we send for this Table.
+Questions? Reply, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// All four go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
 export async function sendFeedbackMail(env, to, m) {
   if (!env || !env.MAIL) throw new Error("no MAIL binding");
   const host = env.SITE_HOST || "thebetrayal.co.uk";

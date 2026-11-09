@@ -107,7 +107,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   </div>
 
   <div id="t-rooms" hidden>
-    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
+    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><label>Show <select id="rshow"><option value="all">All rooms</option><option value="real">Hide test rooms</option></select></label><button class="btn ghost small" id="rreload">Refresh</button></div>
       <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Email</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
     <div id="roomview" hidden></div>
   </div>
@@ -319,12 +319,17 @@ for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => sho
 /* rooms */
 let rooms = [];
 async function loadRooms() { try { rooms = (await api("rooms")).rooms || []; renderRooms() } catch (e) { say($("#rlmsg"), e.message, true) } }
+// a test room has no booking code: opened with the master code, or by nobody's code; "Hide test rooms" is remembered
+const testRoom = r => !r.pass || r.pass === "MASTER";
+try { if (localStorage.getItem("bt-adm-rooms") === "real") $("#rshow").value = "real" } catch (e) {}
 function renderRooms() {
-  const q = $("#rq").value.trim().toLowerCase(), list = rooms.filter(r => !q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q)), tb = $("#rrows"); tb.textContent = "";
+  const q = $("#rq").value.trim().toLowerCase(), real = $("#rshow").value === "real", list = rooms.filter(r => (!real || !testRoom(r)) && (!q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q))), tb = $("#rrows"); tb.textContent = "";
   for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
-  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms");
+  const hidden = real ? rooms.filter(testRoom).length : 0;
+  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms" + (hidden ? " (" + hidden + " test room" + (hidden === 1 ? "" : "s") + " hidden)" : ""));
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
+$("#rshow").onchange = () => { try { localStorage.setItem("bt-adm-rooms", $("#rshow").value) } catch (e) {} renderRooms() };
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 // the public words for the roles and sides the game code names cloak/candle (Classic) and f/l or forsworn/loyal (Modern)
