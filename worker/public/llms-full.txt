@@ -10,7 +10,7 @@
 - What you need: a phone each (any browser; no app to download, no account) and a prize. A TV is optional: a laptop connected or casting to it shows the questions, votes and reveals, with music.
 - Joining: guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the six-character Table code and their name.
 - Prize: set by the host. By default, chocolate coins: one coin for every 100 points the winners take from the Purse.
-- Price: a Table is £10 for one party of 8 to 24, open for 48 hours from the first use of its booking code. A Regular is £20 a month: one booking code that opens a new Table whenever you like, one at a time; cancel any time. Payments by Stripe. Prices include VAT where it applies.
+- Price: a Table is £10 for one party of 8 to 24, open for 48 hours from when its game starts (until then an opened Table waits up to 30 days). A Regular is £20 a month: one booking code that opens a new Table whenever you like, one at a time; cancel any time. Payments by Stripe. Prices include VAT where it applies.
 - How to buy: https://thebetrayal.co.uk/buy. The booking code (OATH-XXXX-XXXX) is shown on screen straight after payment; enter it on the home page to open a Table.
 - Contact: info@thebetrayal.co.uk or https://thebetrayal.co.uk/contact
 
@@ -257,7 +257,7 @@ The Betrayal is a party game that runs all of this for you on everyone’s own p
 - At night everyone taps a name, so nobody can tell who is choosing. The victim learns they were poisoned in secret, then announces it at dawn.
 - The game plans its own rounds for your group size, up to 24 players, and ends with the Unmasking and up to six awards.
 
-It costs £10 for one party (a Table, open for 48 hours from first use) or £20 a month as a Regular. A TV makes it a show but is optional. On the phones, a game takes about an hour for 8 to 10 players. For a longer, more immersive evening, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.
+It costs £10 for one party (a Table, open for 48 hours from when the game starts) or £20 a month as a Regular. A TV makes it a show but is optional. On the phones, a game takes about an hour for 8 to 10 players. For a longer, more immersive evening, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.
 Book a TableRead the rulesSee a game
 Planning the whole evening, from the invitations to the food? See traitors party ideas.
 
@@ -410,6 +410,6 @@ Nobody is murdered, exactly: the Forsworn poison someone each night, and the vic
 - A prize. Chocolate coins, unless you choose something else: one coin for every 100 points the winners take from the Purse.
 - A TV if you have one, with a laptop connected or casting to it. It puts the questions, votes and reveals on the big screen, with music, but it’s optional.
 
-A Table costs £10 for one party of 8 to 24 players, and stays open for 48 hours from when you first use it. A Regular pays £20 a month and can start a new Table whenever they like. For a longer, more immersive evening, every Table can also be played Classic, with a Keeper, blindfolds and chalkboards.
+A Table costs £10 for one party of 8 to 24 players, and stays open for 48 hours from when the game starts. A Regular pays £20 a month and can start a new Table whenever they like. For a longer, more immersive evening, every Table can also be played Classic, with a Keeper, blindfolds and chalkboards.
 Book a TableHow to playSee a game
 Want to run a hidden-traitor game without an app? Read how to host a traitors-style game night at home.

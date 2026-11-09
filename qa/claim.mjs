@@ -241,10 +241,19 @@ check("a one-off pass still opens only its one game", (await redeem(pass1, true)
 // the admin's "extend": a Table stays open longer, on its booking code, in the Registry's list and in the Table itself
 {
   const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
-  const before = await passOf(pass1), room = before.room, t0 = Date.now();
+  const room = (await passOf(pass1)).room, r0 = await reg.storage.get("room:" + room);
+  // a Table still waiting for its game: the game gets the hours once it starts
+  check("a booking code's Table waits for its game: 30 days, with 48 hours to come once it starts", r0.startHours === 48 && Math.abs(r0.expires - (r0.created + 30 * 86400000)) < 2000, r0);
+  const [ws, wj] = await A("extend", { pass: pass1, hours: 24 }), r1 = await reg.storage.get("room:" + room);
+  check("extend: a waiting Table's game gets 24 more hours when it starts, its waiting time unchanged", ws === 200 && wj.waiting === true && wj.hours === 72 && r1.startHours === 72 && r1.expires === r0.expires && (await passOf(pass1)).expires === r0.expires, [ws, wj]);
+  // its game starts (the GameState tells the Registry): it now closes 72 hours on, and its booking code follows
+  const st = Date.now(); await reg.fetch(new Request("https://registry/room-started", { method: "POST", body: JSON.stringify({ room, started: st, expires: st + 72 * 3600000 }) }));
+  const r2 = await reg.storage.get("room:" + room);
+  check("…the game starts: the Table closes then, no longer waiting, on its booking code too", r2.started === st && r2.expires === st + 72 * 3600000 && !r2.startHours && (await passOf(pass1)).expires === r2.expires, r2);
+  const before = await passOf(pass1), t0 = Date.now();
   const [es, ej] = await A("extend", { pass: pass1, hours: 24 }), after = await passOf(pass1), rr = await reg.storage.get("room:" + room);
   const want = Math.max(t0, before.expires) + 24 * 3600000;
-  check("extend: a code's Table gets 24 more hours, on the code, in the list of Tables and in the Table itself", es === 200 && ej.room === room && Math.abs(after.expires - want) < 2000 && rr.expires === after.expires && rr.extended === 24 && extended.some(([id, e]) => id === "room:" + room && e === after.expires), [es, ej]);
+  check("extend: a code's Table gets 24 more hours, on the code, in the list of Tables and in the Table itself", es === 200 && ej.room === room && Math.abs(after.expires - want) < 2000 && rr.expires === after.expires && rr.extended === 48 && extended.some(([id, e]) => id === "room:" + room && e === after.expires), [es, ej]);
   const [rs2, rj2] = await A("extend", { room, hours: 2 });
   check("extend: by the Table's own code too, and its booking code follows", rs2 === 200 && (await passOf(pass1)).expires === rj2.expires && rj2.expires - after.expires === 2 * 3600000, [rs2, rj2]);
   const [, cz] = await checkout({ terms: true, supply: true }, base, "192.0.2.77"), idz = Object.keys(sessions).pop(); sessions[idz].payment_status = "paid"; await claim(idz);

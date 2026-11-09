@@ -128,7 +128,7 @@ export function apologyEmail({ code, host }) {
   const site = "https://" + host, open = `${site}/?code=${encodeURIComponent(code)}#start`, c = esc(code);
   const subject = "We’re sorry: a free game of The Betrayal";
   const lead = "We’re sorry your game of The Betrayal wasn’t the night we meant it to be.";
-  const offer = "We’d love you to give it another go, on us. Here’s a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.";
+  const offer = "We’d love you to give it another go, on us. Here’s a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when the game starts.";
   const how = "Use it whenever you like. On the night, tap the button below on the phone you’ll play on, or go to " + host + " and enter the code. We hope you enjoy it this time.";
   const html = frame({
     site, host, title: subject, preheader: `Your free booking code: ${code}. One Table, whenever you’re ready.`,
@@ -140,7 +140,7 @@ export function apologyEmail({ code, host }) {
 
 We're sorry your game of The Betrayal wasn't the night we meant it to be.
 
-We'd love you to give it another go, on us. Here's a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.
+We'd love you to give it another go, on us. Here's a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when the game starts.
 
 Your code: ${code}
 
@@ -154,12 +154,12 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// the day-old reminder (Registry /remind-run): a Table opened a day ago whose game hasn't ended, and a link to more time
+// the day-old reminder (Registry /remind-run): a Table whose 48 hours began a day ago and whose game hasn't ended, and a link to more time
 const closing = (t) => new Date(t).toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }).replace(/^(\w+ \d+ \w+),? (?:at )?(\d\d:\d\d)$/, "$2 on $1");
 export function reminderEmail({ token, host, room, expires }) {
   const site = "https://" + host, link = `${site}/extend?t=${token}`, when = closing(expires);
   const subject = "Your Table closes at " + when;
-  const lead = `You opened Table ${esc(room)} a day ago, and your game isn’t over yet. The Table closes at <strong style="color:#F4C9B7">${esc(when)}</strong>, and after that the game can only be looked at.`;
+  const lead = `Your game at Table ${esc(room)} isn’t over yet, and the Table closes at <strong style="color:#F4C9B7">${esc(when)}</strong>. After that, the game can only be looked at.`;
   const ask = "Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we’ll get back to you.";
   const html = frame({
     site, host, title: subject, preheader: `Table ${room} closes at ${when}. Add 24 hours free, or ask us for longer.`,
@@ -168,7 +168,7 @@ export function reminderEmail({ token, host, room, expires }) {
   });
   const text = `Need more time?
 
-You opened Table ${room} a day ago, and your game isn't over yet. The Table closes at ${when}, and after that the game can only be looked at.
+Your game at Table ${room} isn't over yet, and the Table closes at ${when}. After that, the game can only be looked at.
 
 Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we'll get back to you.
 
@@ -182,7 +182,32 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// All four go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
+// more time given (the admin's Give it on their request): when the Table now closes
+export function givenEmail({ host, room, expires, hours }) {
+  const site = "https://" + host, when = expires ? closing(expires) : null;
+  const subject = when ? "More time: your Table is open until " + when : "More time for your Table";
+  const lead = when ? `Good news: Table ${esc(room)} is now open until <strong style="color:#F4C9B7">${esc(when)}</strong>. Pick up the game whenever you’re ready.`
+    : `Good news: when your game at Table ${esc(room)} starts, it will now have ${esc(hours)} hours.`;
+  const html = frame({
+    site, host, title: subject, preheader: when ? `Table ${room} is open until ${when}.` : `More time for Table ${room}.`,
+    eyebrow: "Your Table", heading: "More time", body: para(lead) + para("Open it the way you did before: go to " + esc(host) + " and enter your booking code."), button: ["Go to The Betrayal", site + "/#start"],
+    foot: `Questions? Reply, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `More time
+
+${when ? `Good news: Table ${room} is now open until ${when}. Pick up the game whenever you're ready.` : `Good news: when your game at Table ${room} starts, it will now have ${hours} hours.`}
+
+Open it the way you did before: go to ${host} and enter your booking code.
+${site}/#start
+
+Questions? Reply, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// All five go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
 export async function sendFeedbackMail(env, to, m) {
   if (!env || !env.MAIL) throw new Error("no MAIL binding");
   const host = env.SITE_HOST || "thebetrayal.co.uk";

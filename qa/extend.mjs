@@ -14,10 +14,11 @@ const store = () => { const m = new Map(); return { get: async (k) => m.get(k), 
 const sent = [], alerts = []; let mailFail = false;
 const MAIL = { send: async (m) => { if (mailFail) throw new Error("refused"); (m.raw ? alerts : sent).push(m); return { messageId: "m" + (sent.length + alerts.length) }; } };
 // each room's game: whether it has ended, and the closing times the Registry gives it
-const done = new Set(), gone = new Set(), extended = [];
+const done = new Set(), gone = new Set(), extended = [], sums = {};
 const GAME = { idFromName: (n) => n, get: (n) => ({ fetch: async (u, i) => {
   const code = String(n).slice(5), p = new URL(u).pathname;
   if (p === "/_done") return new Response(JSON.stringify({ done: done.has(code) }));
+  if (p === "/_admin/summary") return new Response(JSON.stringify(sums[code] || {}));
   if (p === "/_extend") { if (gone.has(code)) return new Response("{}", { status: 404 }); extended.push({ code, expires: JSON.parse(i.body).expires }); return new Response(JSON.stringify({ ok: true })); }
   return new Response("{}");
 } }) };
@@ -45,16 +46,20 @@ const K5 = await pass("OATH-DEFG-HJKM", { room: "EEEEEE" }); await room("EEEEEE"
 const K6 = await pass("OATH-EFGH-JKMN", { email: "regular@example.com", kind: "sub", room: "GGGGGG" }); await room("FFFFFF", { pass: K6 }); await room("GGGGGG", { pass: K6, created: now - 2 * H, expires: now + 46 * H });
 const K7 = await pass("OATH-FGHJ-KMNP", { email: "late@example.com", room: "HHHHHH" }); await room("HHHHHH", { pass: K7, created: now - 47.8 * H, expires: now + 0.2 * H });
 const K8 = await pass("OATH-GHJK-MNPQ", { email: "gone@example.com", room: "JJJJJJ" }); await room("JJJJJJ", { pass: K8, created: now - 60 * H, expires: now - 12 * H });
+// a website Table: waiting for its game for days (none), and one whose game started 25 hours ago, opened a week before
+const KW = await pass("OATH-WXYZ-2345", { email: "waiting@example.com", room: "WWWWWW" }); await room("WWWWWW", { pass: KW, created: now - 3 * 24 * H, expires: now + 27 * 24 * H, startHours: 48 });
+const KS = await pass("OATH-XYZ2-3456", { email: "started@example.com", room: "SSSSSS" }); await room("SSSSSS", { pass: KS, created: now - 6 * 24 * H, started: now - 25 * H, expires: now + 23 * H });
 
 let r = await run();
-check("the hourly run: one email, to the buyer whose Table opened a day ago with its game going on", r.sent === 1 && sent.length === 1 && sent[0].to === "buyer@example.com", [r, sent.map((m) => m.to)]);
+check("the hourly run: an email to each buyer whose 48 hours began a day ago with the game going on (from opening, for an older Table; from the game's start, for a newer one)", r.sent === 2 && sent.length === 2 && sent[0].to === "buyer@example.com" && sent[1].to === "started@example.com", [r, sent.map((m) => m.to)]);
+check("…none for a Table still waiting for its game", !sent.some((m) => m.to === "waiting@example.com"));
 check("…none for a Table under a day old, a test Table, a finished game, a booking with no address, a Regular's older Table, one about to close or one closed",
   !sent.some((m) => /young|won|regular|late|gone/.test(m.to)) && r.skipped === 3, r);
 const m1 = sent[0], t1 = tokenOf(m1);
 check("…it says when the Table closes and links to /extend with a token", /^Your Table closes at \d\d:\d\d on \w+day \d+ \w+$/.test(m1.subject) && !!t1 && m1.html.includes("/extend?t=" + t1) && m1.html.includes("AAAAAA") && /isn't over yet/.test(m1.text), [m1.subject, m1.text.slice(0, 200)]);
 check("…from the bookings address, replies to us", m1.from.email === "bookings@thebetrayal.co.uk" && m1.replyTo === "info@thebetrayal.co.uk");
 r = await run();
-check("…and the next hour sends nothing again", r.sent === 0 && sent.length === 1, r);
+check("…and the next hour sends nothing again", r.sent === 0 && sent.length === 2, r);
 check("…the finished game and the address-less booking are noted, so they aren't asked about every hour", (await reg.storage.get("room:DDDDDD")).remindSkip === "finished" && (await reg.storage.get("room:EEEEEE")).remindSkip === "no email" && (await reg.storage.get("room:FFFFFF")).remindSkip === "newer Table");
 
 // a refused email: logged, tried the next hour, given up after three
@@ -116,11 +121,53 @@ for (let i = 0; i < 4; i++) await post({ t: t1, until: in10, reason: "again " + 
 [s, j] = await post({ t: t1, until: in10, reason: "and again" });
 check("…five times at most", s === 429, [s, j]);
 
+// the admin's Give it on the request: open to the end of that day, UK time; they're emailed; the report is resolved
+const reqRep = (await (await reg.fetch(new Request("https://registry/reports", { method: "POST", body: "{}" }))).json()).reports.find((x) => x.kind === "extension" && x.status === "open");
+const sentBefore = sent.length;
+[s, j] = await A("ext-give", { id: reqRep.id });
+const endOfDay = (() => { const off = +new Date(in10 + "T12:00:00Z").toLocaleString("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }) - 12; return Date.parse(in10 + "T23:59:00Z") - off * 3600000; })();
+const given = sent[sentBefore], rgv = await reg.storage.get("room:AAAAAA"), repAfter = await reg.storage.get("rep:" + reqRep.id);
+check("Give it: the Table is open until 23:59 UK time on the day they asked for, in the game too", s === 200 && Math.abs(j.expires - endOfDay) < 1000 && rgv.expires === j.expires && extended.at(-1).expires === j.expires && (await reg.storage.get("pass:" + K1)).expires === j.expires, [s, j, endOfDay]);
+check("…they're emailed when it now closes", j.mailed === true && given && given.to === "buyer@example.com" && /^More time: your Table is open until 23:59 on \w+day \d+ \w+$/.test(given.subject) && given.text.includes("AAAAAA"), given && given.subject);
+check("…and the report is resolved, with a note; the room page shows it given", repAfter.status === "resolved" && /Given .* open until the end of/.test(repAfter.adminNote) && (await (await W("/api/admin/roominfo?room=AAAAAA", { headers: { Authorization: "Bearer adm" } })).json()).ext.asked.given > 0, repAfter);
+[s, j] = await A("ext-give", { id: reqRep.id });
+check("…a second Give it is refused: it's already open until then", s === 409 && /already open/.test(j.error), [s, j]);
+check("…and Give it on an ordinary problem report is refused", (await A("ext-give", { id: "R-NOPE00" }))[0] === 404);
+
 // the admin's Extend, by booking code or by the Table's code, after the change
 [s, j] = await A("extend", { pass: "OATH-BCDE-FGHJ", hours: 5 });
 check("the admin's Extend still works by booking code", s === 200 && j.room === "BBBBBB" && j.expires === now + 30 * H && (await reg.storage.get("pass:" + K2)).expires === j.expires, [s, j]);
 [s, j] = await A("extend", { room: "CCCCCC", hours: 1 });
 check("…and by the Table's code (a test Table)", s === 200 && j.expires === now + 24 * H, [s, j]);
+
+// the admin's room page: the Registry's side of a Table, and what's kept once its game is deleted
+const info = async (room) => W("/api/admin/roominfo?room=" + room, { headers: { Authorization: "Bearer adm" } }).then(J);
+[s, j] = await info("AAAAAA");
+check("room info: the buyer's address, the reminder, the free 24 hours and the request, no token", s === 200 && j.email === "buyer@example.com" && j.room.reminded > 0 && j.ext.added > 0 && j.ext.asked.until === in10 && j.ext.asked.report && !JSON.stringify(j).includes(t1) && j.room.pass === "OATH-ABCD-EFGH", [s, j]);
+await reg.fetch(new Request("https://registry/room-summary", { method: "POST", body: JSON.stringify({ room: "AAAAAA", summary: { mode: "modern", players: 9, rounds: 4, done: true, winner: "loyal", joinOnly: 2, devices: 12 } }) }));
+[s, j] = await info("AAAAAA");
+check("…and once its game is deleted, its summary and when", j.room.summary.players === 9 && j.room.summary.winner === "loyal" && j.room.deleted > 0, j.room);
+check("…for the admin only, and only for a real Table", (await W("/api/admin/roominfo?room=AAAAAA")).status === 401 && (await info("ZZZZZZ"))[0] === 404);
+
+// the morning summary: Tables opened in the last two days still waiting for their game, and phones that left the join page
+await room("QQQQQQ", { pass: K1, created: now - 3 * H, expires: now + 29 * 24 * H, startHours: 48 }); sums.QQQQQQ = { players: 2, joinOnly: 2, devices: 4 };
+await room("RRRRRR", { pass: K1, created: now - 1 * H, expires: now + 30 * 24 * H, startHours: 48 }); sums.RRRRRR = { players: 1, joinOnly: 1 };
+await room("TTTTTT", { pass: "MASTER", created: now - 5 * H, expires: now + 43 * H }); sums.TTTTTT = { joinOnly: 5 };
+const dg = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
+const waitLine = (dg.body.match(/^Opened but not started yet: .*$/m) || [""])[0];
+check("morning summary: a Table opened over two hours ago and still waiting for its game, with its lobby and join-page leavers", /QQQQQQ \(opened \w+ \d\d:\d\d, 2 in the lobby, 2 left the join page without joining\)/.test(waitLine) && !/RRRRRR|TTTTTT/.test(waitLine), waitLine);
+check("…and phones that left the join page across new Tables (not test rooms)", /Join page, never joined: 3 phones, at Tables opened in the last two days/.test(dg.body), dg.body);
+
+// errors: the admin mutes a kind of error (numbers aside); it's left out of the morning count, and can be unmuted
+const logE = (msg) => reg.fetch(new Request("https://registry/err", { method: "POST", body: JSON.stringify({ src: "server", where: "IndexNow", msg }) }));
+await logE("IndexNow refused 6 pages: 429"); await logE("IndexNow refused 1 pages: 429"); await logE("Something else broke");
+let ej2 = await (await W("/api/admin/errors", { headers: { Authorization: "Bearer adm" } })).json();
+check("errors: the list says which kinds are muted (none yet)", Array.isArray(ej2.muted) && ej2.muted.length === 0);
+[s, j] = await A("err-mute", { key: "IndexNow refused # pages: #" });
+const dg2 = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
+check("…muting one kind leaves every error like it out of the morning count and its most common", s === 200 && j.muted.includes("IndexNow refused # pages: #") && /muted\)/.test(dg2.body) && !/IndexNow refused/.test(dg2.body) && /Something else broke/.test(dg2.body), dg2.body.split("\n").find((l) => l.startsWith("Errors")));
+[s, j] = await A("err-mute", { key: "IndexNow refused # pages: #", on: false });
+check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNow refused/.test((await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json()).body));
 
 // the email's closing time, in UK time
 const e = reminderEmail({ token: "abcdefghjkmnpqrstuvwxyz2", host: "thebetrayal.co.uk", room: "33M56V", expires: Date.parse("2026-07-10T09:05:00Z") });

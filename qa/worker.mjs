@@ -3,7 +3,7 @@
 import worker, { GameState, Registry } from "../worker/src/index.js";
 import { indexNow, INDEXNOW_KEY, INDEXNOW_AT } from "../worker/src/indexnow.js";
 import { readFileSync, existsSync } from "node:fs";
-import { shownPass } from "../worker/src/codes.js";
+import { shownPass, passKey } from "../worker/src/codes.js";
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra))); ok = ok && !!cond };
 // in-memory storage with what the room uses; a Table exists only once the Registry has opened it (/_init), so each
@@ -125,6 +125,83 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   calls = []; reply = (u) => (u === INDEXNOW_AT[2] ? new Error("network down") : 429); let err = null; try { await indexNow(env, at, "2026-10-25"); } catch (e) { err = e.message; }
   check("refused everywhere is an error naming each (the morning job logs it and keeps the last good day)", calls.length === 3 && /2 pages: api\.indexnow\.org 429 \(retry after 3600\), www\.bing\.com 429 \(retry after 3600\), yandex\.com network down/.test(err || ""), err);
   globalThis.fetch = real;
+}
+// a website Table waits for its game; its 48 hours start when the host starts it (Modern) or the game leaves the lobby
+// (Classic), and the Registry hears when, once; extra hours given while it waits go to the game
+{
+  const told = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { told.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response("{}"); } }) };
+  const open = async () => { const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1", REGISTRY: REG }), until = Date.now() + 30 * 86400e3;
+    await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "WAITRM", expires: until, startHours: 48 }) })); return { mem, DO, until }; };
+  let { mem, DO, until } = await open();
+  const ann = await (await req(DO, "POST", "/api/m/create", {}, { name: "Ann" })).json();
+  for (const n of ["Ben", "Cat", "Dan", "Eve", "Fay", "Gus", "Hal"]) await req(DO, "POST", "/api/m/join", {}, { name: n });
+  const v0 = await (await req(DO, "GET", "/api/m", { "X-Tok": ann.tok })).json();
+  check("a waiting Modern Table: open for 30 days, its phones told it's waiting, with 48 hours to come", mem.get("meta").expires === until && v0.room.waiting === true && v0.room.hours === 48 && !told.length, v0.room);
+  const go = await (await req(DO, "POST", "/api/m/act", { "X-Tok": ann.tok }, { a: "start" })).json();
+  const t0 = Date.now(); await req(DO, "GET", "/api/m", { "X-Tok": ann.tok }); await req(DO, "GET", "/api/m", { "X-Tok": ann.tok });
+  const m1 = mem.get("meta"), v1 = await (await req(DO, "GET", "/api/m", { "X-Tok": ann.tok })).json();
+  check("…the host starts it: it closes 48 hours from then, and the Registry is told once", m1.started >= t0 - 2000 && m1.expires === m1.started + 48 * 3600e3 && !m1.startHours && !v1.room.waiting && told.filter(([p]) => p === "/room-started").length === 1 && told[0][1].expires === m1.expires, [m1, told, go.error]);
+  ({ mem, DO } = await open()); told.length = 0;
+  await req(DO, "POST", "/_extend", {}, { addHours: 24 });
+  check("extra hours given while a Table waits go to its game", mem.get("meta").startHours === 72 && mem.get("meta").expires > Date.now() + 29 * 86400e3);
+  await req(DO, "PUT", "/api/state", { "X-Build": "1" }, { state: game });
+  check("a Classic game set up in its lobby doesn't start the clock", !mem.get("meta").started && !told.length);
+  await req(DO, "PUT", "/api/state", { "X-Build": "1", "X-Pin": PIN }, { state: { ...game, ver: 2, phase: "day" } });
+  const m2 = mem.get("meta");
+  check("…its first save past the lobby does, with the extra hours", m2.started > 0 && m2.expires === m2.started + 72 * 3600e3 && told.length === 1, [m2, told]);
+  const { mem: m3, DO: old } = await mk("1"); await req(old, "PUT", "/api/state", { "X-Build": "1" }, { state: { ...game, phase: "day" } });
+  check("an older Table (48 hours from opening) is left as it was", !m3.get("meta").started && !m3.get("meta").startHours);
+}
+// a room deleted after it closed leaves the Registry a summary of its game, with no names; phones that opened the join
+// page and never joined are counted
+{
+  const told = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { told.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response("{}"); } }) };
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1", REGISTRY: REG });
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "SUMMRY", expires: Date.now() + 48 * 3600e3 }) }));
+  const ann = await (await req(DO, "POST", "/api/m/create", {}, { name: "Annabel" })).json();
+  for (const n of ["Benedict", "Cat"]) await req(DO, "POST", "/api/m/join", {}, { name: n });
+  const ev = (device, list, host) => req(DO, "POST", "/api/events", {}, { device, host: !!host, events: list.map(([k, m]) => ({ t: Date.now(), k, m })) });
+  await ev("hostphone", [["view", "create"], ["who", "host p1 · Annabel"]], true);
+  await ev("joiner", [["view", "join"], ["who", "player p2 · Benedict"]]);
+  await ev("bouncer", [["open", "phone"], ["view", "join"], ["vis", "hidden"]]);
+  await ev("tv", [["view", "tv lobby"]]);
+  const live = await (await req(DO, "GET", "/_admin/summary")).json();
+  check("a room's summary: Modern, 3 players, still in the lobby, 1 of 4 screens opened the join page and never joined", live.mode === "modern" && live.players === 3 && live.phase === "lobby" && live.joinOnly === 1 && live.devices === 4 && !live.done, live);
+  await DO.alarm();
+  const sent = told.find(([p]) => p === "/room-summary");
+  check("…sent to the Registry when the room is deleted, with nobody's name in it", sent && sent[1].room === "SUMMRY" && sent[1].summary.players === 3 && !/Annabel|Benedict|Cat"/.test(JSON.stringify(sent[1])) && mem.size === 0, sent);
+}
+// the app's prompts (a name to type; what the server just told that phone) stay in the room's trail, out of the error log
+{
+  const logged = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { if (new URL(u).pathname === "/err") logged.push(JSON.parse(i.body)); return new Response("{}"); } }) };
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1", REGISTRY: REG });
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "PROMPT", expires: Date.now() + 48 * 3600e3 }) }));
+  await req(DO, "POST", "/api/m/create", {}, { name: "Ann" });
+  const told = await (await req(DO, "POST", "/api/m/act", { "X-Tok": "nobody" }, { a: "start" })).json();
+  const ev = (app, list) => req(DO, "POST", "/api/events", {}, { device: app ? "appphone" : "web", app, role: "player", events: list.map(([k, m, stack]) => ({ t: Date.now(), k, m, ...(stack ? { stack } : {}) })) });
+  await ev(true, [["error", "Type your name."], ["error", "Type an answer first."], ["error", told.error], ["error", "Couldn’t reach the server"], ["crash", "crash · exception 10"], ["error", "Type your name.", "at x (y:1)"]]);
+  await ev(false, [["error", "Type your name."]]);
+  const msgs = logged.map((e) => e.src + ": " + e.msg);
+  check("app prompts (a Type… prompt, what the server just told it) stay out of the error log; real errors, crashes, stacks and browsers' don't", logged.length === 4 && msgs.includes("app: Couldn’t reach the server") && msgs.includes("app crash: crash · exception 10") && msgs.filter((m) => m === "app: Type your name.").length === 1 && msgs.includes("browser: Type your name.") && !msgs.some((m) => m.includes(told.error)), [told.error, msgs]);
+  const batches = [...mem].filter(([k]) => k.startsWith("ev:")).flatMap(([, v]) => v.list.map((x) => x.m));
+  check("…but they're all still in the room's own trail", batches.includes("Type an answer first.") && batches.includes(told.error));
+}
+// the host on another browser (the Google app's, then Safari's): their booking code puts them back in as host, once the
+// old phone has gone quiet; while it's still open they're told to close it; someone without the code can't
+{
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1" }), PASS = "OATH-HJKM-NPQR", real = Date.now; let skew = 0; Date.now = () => real() + skew;
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "HOSTRM", expires: Date.now() + 48 * 3600e3, pass: passKey(PASS) }) }));
+  const first = await (await req(DO, "POST", "/api/m/create", {}, { name: "Jo", pass: PASS })).json();
+  await req(DO, "POST", "/api/m/join", {}, { name: "Jen" });
+  const [b1, j1] = await req(DO, "POST", "/api/m/create", {}, { name: "Jo", pass: PASS }).then(async (r) => [r.status, await r.json()]);
+  check("the host's code on a second browser while the first is still open: told to close it there", b1 === 409 && j1.busy === true && /still open on another phone/.test(j1.error), [b1, j1]);
+  skew = 25000;
+  const [n1] = await req(DO, "POST", "/api/m/create", {}, { name: "Jo", pass: "OATH-ZZZZ-ZZZZ" }).then(async (r) => [r.status]);
+  const [b2, j2] = await req(DO, "POST", "/api/m/create", {}, { name: "Whoever", pass: PASS }).then(async (r) => [r.status, await r.json()]);
+  const old = await (await req(DO, "GET", "/api/m", { "X-Tok": first.tok })).json(), now2 = await (await req(DO, "GET", "/api/m", { "X-Tok": j2.tok })).json();
+  check("…once it's quiet, the booking code puts them back in as the host, as Jo, on the new browser; the old one has lost its place", b2 === 200 && j2.back === true && now2.view.me && now2.view.me.director === true && now2.view.me.name === "Jo" && !(old.view && old.view.me) && n1 === 403, [b2, j2.error, old.view && old.view.me, n1]);
+  check("…one host, still two players", mem.get("modern").players.length === 2 && mem.get("modern").log[0].m === "Jo (the host) came back on a new phone");
+  Date.now = real;
 }
 // Modern's lobby: a phone that lost its place (a closed tab, the QR code's own browser) carries on under its own name once
 // the old phone has been quiet 20 seconds and it says it's them; otherwise the name stays taken

@@ -86,7 +86,7 @@ __GTM__
     {
      "@type": "Offer",
      "name": "A Table",
-     "description": "One party of 8 to 24 players. The Table stays open for 48 hours from the first use of its booking code.",
+     "description": "One party of 8 to 24 players. The Table is open for 48 hours from when its game starts.",
      "price": "10.00",
      "priceCurrency": "GBP",
      "availability": "https://schema.org/InStock",
@@ -144,7 +144,7 @@ __GTM__
      "name": "What does booking a Table get me?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours."
+      "text": "One Table for one party (£10). It stays open for 48 hours from when the game starts, so you can open it early, invite everyone and set up at your own pace, then play into the small hours."
      }
     },
     {
@@ -387,7 +387,7 @@ __GTM_BODY__
   <section>
     <h2>One code. The whole evening.</h2>
     <ul class="bill">
-      <li><span class="item">A Table</span><span class="cost">£10</span><span class="what">One party of 8 to 24. It opens for 48 hours from the moment you start it, so buy it now and play whenever you like.</span><a class="btn" href="/buy">Book a Table</a></li>
+      <li><span class="item">A Table</span><span class="cost">£10</span><span class="what">One party of 8 to 24. It’s open for 48 hours from the moment you start the game, so buy it now and play whenever you like.</span><a class="btn" href="/buy">Book a Table</a></li>
       <li><span class="item">A Regular</span><span class="cost">£20 <small>a month</small></span><span class="what">One booking code that opens a new Table whenever you like, one game at a time. Cancel any time.</span><a class="btn ghost" href="/buy">Become a Regular</a></li>
     </ul>
     <p class="fine">Both include all fifteen Trials, thousands of questions and prompts, the TV show, and Classic, the longer way to play with a Keeper. Payments by Stripe.</p>
@@ -397,7 +397,7 @@ __GTM_BODY__
     <h2>Before you ask</h2>
     <details><summary>What is The Betrayal?</summary><p>The Betrayal is a party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone in the browser. A few players are secretly the Forsworn; the rest, the Loyal, have one evening to find them. Trials (quizzes and party games on the phones) fill a shared Purse, a secret vote exiles someone each day, and each night the Forsworn poison someone. A game takes about an hour for 8 to 10 players, and up to about two hours for 24. It costs £10 for one party, or £20 a month as a Regular.</p></details>
     <details><summary>Does everyone need a phone?</summary><p>Yes: everyone plays on their own, in the browser, with nothing to install. For a longer, more immersive evening with phones away, play Classic: a Keeper runs it from one phone, guests wear blindfolds at night and chalk their votes, and it takes about three hours. You choose when you open your Table.</p></details>
-    <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when you first open it, so you can set up in the afternoon and play into the small hours.</p></details>
+    <details><summary>What does booking a Table get me?</summary><p>One Table for one party (£10). It stays open for 48 hours from when the game starts, so you can open it early, invite everyone and set up at your own pace, then play into the small hours.</p></details>
     <details><summary>What’s a Regular?</summary><p>A Regular pays £20 a month and gets one booking code that starts a new game whenever you like, one game at a time, each open for 48 hours. It renews monthly until you cancel, which you can do any time with “Manage subscription”.</p></details>
     <details><summary>Does the host get to play?</summary><p>Yes. The host’s phone also says when to begin the next part and when to take a break, but it never shows anyone’s role. In Classic, the game’s <b>Keeper</b> runs it like a presenter, and knows who the Forsworn are from the start, so the Keeper doesn’t play. The host can still play: ask a friend to keep. You plan the game on your phone, then hand it over before anyone sits down, and your friend presses Start, so you never see the roles.</p></details>
     <details><summary>How long does it take?</summary><p>About an hour for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24. Classic, the longer way to play, takes about 3 to 3½ hours for 8 to 12 players, with dinner in courses between its rounds if you’re eating; the Keeper’s setup shows an estimate for your table.</p></details>
@@ -452,7 +452,8 @@ async function go(pass, room, test) {
   let mode = null;
   try { const j = await (await fetch("/api/g/" + room + "/m", { cache: "no-store" })).json(); mode = j.none ? (j.classic ? "classic" : null) : "modern" } catch (e) {}
   if (mode === "classic") { location.href = "/t/" + room + "#keeper"; return }
-  if (mode === "modern") { location.href = "/m/" + room; return }
+  // a Modern game already set up: the booking code goes along (this tab only), so the host gets back in as the host
+  if (mode === "modern") { try { if (pass) sessionStorage.setItem("bt-pass-" + room, pass) } catch (e) {} location.href = "/m/" + room; return }
   const m = $("#passmsg"); m.className = "msg"; m.textContent = "";
   m.append("Your Table is open. How will you play?");
   const row = document.createElement("div"); row.className = "modes";
