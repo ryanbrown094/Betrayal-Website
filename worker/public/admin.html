@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261107180546">
+<meta name="build" content="20261109165007">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -193,7 +193,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   </div>
 
   <div id="t-rooms" hidden>
-    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><button class="btn ghost small" id="rreload">Refresh</button></div>
+    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><label>Show <select id="rshow"><option value="all">All rooms</option><option value="real">Hide test rooms</option></select></label><button class="btn ghost small" id="rreload">Refresh</button></div>
       <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Email</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
     <div id="roomview" hidden></div>
   </div>
@@ -210,7 +210,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
     <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Booking</th><th>Answers</th><th>Anything else</th><th>Their code</th></tr></thead><tbody id="fbrows"></tbody></table></div><p class="msg" id="fbmsg"></p>
   </div>
   <div id="t-errors" hidden>
-    <div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="eq" placeholder="Message, room, source" style="width:100%"></label><label>Source <select id="ef"><option value="all">All</option><option value="browser">Players’ browsers</option><option value="server">Server</option><option value="stripe">Stripe</option><option value="report">Issue reports</option></select></label><button class="btn ghost small" id="ereload">Refresh</button></div>
+    <div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="eq" placeholder="Message, room, source" style="width:100%"></label><label>Source <select id="ef"><option value="all">All</option><option value="browser">Players’ browsers</option><option value="server">Server</option><option value="stripe">Stripe</option><option value="report">Issue reports</option></select></label><label>Show <select id="eview"><option value="each">Each one</option><option value="group">Grouped</option></select></label><label>Muted <select id="emuted"><option value="hide">Hidden</option><option value="show">Shown</option></select></label><button class="btn ghost small" id="ereload">Refresh</button></div>
     <p class="note">Every error from a player’s browser, every server exception, every Stripe webhook that failed or couldn’t be matched, and every issue report. Newest first; the last 3,000 are kept. Tap a row for the detail.</p>
     <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Source</th><th>Room</th><th>Message</th></tr></thead><tbody id="erows"></tbody></table></div><p class="msg" id="emsg"></p>
   </div>
@@ -287,7 +287,7 @@ async function extend(target, until, done) {
   if (ans === null) return;
   const hrs = Math.round(+ans);
   if (!(hrs >= 1 && hrs <= 720)) return alert("Enter a number of hours from 1 to 720.");
-  try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + " now stays open until " + when(j.expires) + ".") } } catch (e) { alert(e.message) }
+  try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + (j.waiting ? " is waiting for its game, which will now have " + j.hours + " hours once it starts." : " now stays open until " + when(j.expires) + ".")) } } catch (e) { alert(e.message) }
 }
 const emailOf = p => p.email || (/@/.test(p.note || "") ? String(p.note).trim() : "");
 async function setEmail(p) {
@@ -404,13 +404,48 @@ for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => sho
 
 /* rooms */
 let rooms = [];
+// the Registry's side of a Table: its clock, the day-old reminder, more time; and phones that opened the join page but never joined
+const day = ymd => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
+function tableInfo(info, sum) {
+  if (!info || !info.room) return null;
+  const r = info.room, x = info.ext;
+  return [h("h3", {}, "The Table"), kv([
+    ["Its 48 hours", r.startHours ? "waiting for its game" : r.started ? "began when its game started, " + secs(r.started) : "began when it was opened"],
+    ["Buyer’s email", info.email],
+    sum && ["Join page, never joined", sum.joinOnly + " of " + sum.devices + " phones and screens"],
+    ["Day-old reminder", r.reminded ? (r.remindSkip ? "not sent: " + r.remindSkip : "sent " + secs(r.reminded)) : r.remindTries ? "didn’t send (" + r.remindTries + " tries); trying again hourly" : r.pass === "MASTER" ? "not for test rooms" : "not yet"],
+    x && x.added && ["Free 24 hours", "added by them, " + secs(x.added)],
+    x && x.asked && ["Asked for longer", "until " + day(x.asked.until) + ", " + secs(x.asked.t) + (x.asked.given ? " · given " + secs(x.asked.given) : "") + " (report " + x.asked.report + ")"]])];
+}
+// a Table whose game has been deleted (KEEP_DAYS after it closed): what the Registry kept of it, no names
+function keptRoom(v, code, info) {
+  const r = info.room, k = r.summary || {};
+  v.textContent = "";
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false } }, "← All rooms"), h("h2", {}, "Room " + code),
+    h("p.note", {}, r.deleted ? "This Table’s game was deleted on " + secs(r.deleted) + ", after it closed. What’s kept of it:" : "This Table’s game has been deleted. Nothing else was kept of it (it was deleted before summaries were kept)."),
+    kv([["Opened", secs(r.created)], ["Closed", secs(r.expires)], ["Booking code", r.pass === "MASTER" ? "test room" : r.pass || "—"],
+      r.summary && ["Mode", k.mode ? (k.mode === "modern" ? "Modern" : "Classic") : "no game was set up"],
+      r.summary && ["Game started", k.started ? secs(k.started) : "never"],
+      r.summary && k.mode && ["Players", (k.players || 0) + (k.bots ? " (and " + k.bots + " bots)" : "")],
+      r.summary && k.mode && ["Got to", (k.phase || "?") + " · round " + (k.rounds || 0)],
+      r.summary && k.mode && ["Winner", k.winner ? SIDE[k.winner] || k.winner : "—"],
+      r.summary && k.minutes != null && ["Played for", k.minutes + " minutes"],
+      r.summary && k.rated ? ["Rated", k.rating + " out of 5, by " + k.rated] : null,
+      r.summary && ["Join page, never joined", (k.joinOnly || 0) + " of " + (k.devices || 0) + " phones and screens"]]),
+    tableInfo({ ...info, room: { ...r } }, null).slice(1));
+}
 async function loadRooms() { try { rooms = (await api("rooms")).rooms || []; renderRooms() } catch (e) { say($("#rlmsg"), e.message, true) } }
+// a test room has no booking code: opened with the master code, or by nobody's code; "Hide test rooms" is remembered
+const testRoom = r => !r.pass || r.pass === "MASTER";
+try { if (localStorage.getItem("bt-adm-rooms") === "real") $("#rshow").value = "real" } catch (e) {}
 function renderRooms() {
-  const q = $("#rq").value.trim().toLowerCase(), list = rooms.filter(r => !q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q)), tb = $("#rrows"); tb.textContent = "";
-  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
-  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms");
+  const q = $("#rq").value.trim().toLowerCase(), real = $("#rshow").value === "real", list = rooms.filter(r => (!real || !testRoom(r)) && (!q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q))), tb = $("#rrows"); tb.textContent = "";
+  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), r.startHours ? "waiting for its game" : (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
+  const hidden = real ? rooms.filter(testRoom).length : 0;
+  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms" + (hidden ? " (" + hidden + " test room" + (hidden === 1 ? "" : "s") + " hidden)" : ""));
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
+$("#rshow").onchange = () => { try { localStorage.setItem("bt-adm-rooms", $("#rshow").value) } catch (e) {} renderRooms() };
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 // the public words for the roles and sides the game code names cloak/candle (Classic) and f/l or forsworn/loyal (Modern)
@@ -418,15 +453,17 @@ const ROLE = { cloak: "Forsworn", candle: "Loyal", f: "Forsworn", l: "Loyal" }, 
 let replay = null;
 async function openRoom(code, at) {
   const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
-  let d, recs, evs;
-  try { [d, recs, evs] = await Promise.all([api("room/" + code + "/room"), api("room/" + code + "/recs"), api("room/" + code + "/events")]) } catch (e) { v.textContent = e.message; return }
+  let d, recs, evs, sum; const info = await api("roominfo?room=" + code).catch(() => null);
+  try { [d, recs, evs, sum] = await Promise.all([api("room/" + code + "/room"), api("room/" + code + "/recs"), api("room/" + code + "/events"), api("room/" + code + "/summary").catch(() => null)]) }
+  catch (e) { if (info && info.room) return keptRoom(v, code, info); v.textContent = e.message; return }
   const s = d.state, m = d.meta || {}; recs = recs.recs || []; evs = evs.events || [];
   v.textContent = "";
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; if (replay) replay.stop() } }, "← All rooms"),
     h("h2", {}, "Room " + code),
     h("p", {}, h("button.btn.ghost.small", { onclick: () => extend({ room: code }, m.expires, () => openRoom(code)) }, "Extend this Table")),
-    kv([["Opened", secs(m.created)], ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Booking code", m.pass ? m.pass.replace(/^CNDL-/, "OATH-") : "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
-      ["Links", h("span", {}, h("a", { href: "/t/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/t/" + code + "#keeper", target: "_blank" }, "Keeper phone"))]]));
+    kv([["Opened", secs(m.created)], m.startHours ? ["Open until", "waiting for its game (until " + secs(m.expires) + "); then " + m.startHours + " hours from when it starts"] : ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Booking code", m.pass ? m.pass.replace(/^CNDL-/, "OATH-") : "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
+      ["Links", h("span", {}, h("a", { href: "/t/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/t/" + code + "#keeper", target: "_blank" }, "Keeper phone"))]]),
+    tableInfo(info, sum));
   const md = d.modern;
   if (md) {
     // a Modern game: the server ran it, so the whole state is here (the admin sees every role)
@@ -547,6 +584,16 @@ async function unzip(b64) {
   const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
   const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(u); w.close(); return new Response(ds.readable).text();
 }
+// a More time request (extend.html): Give it keeps the Table open to the end of that day and emails them
+function giveBox(r) {
+  const msg = h("p.msg", {});
+  const go = async () => {
+    if (!confirm("Keep Table " + r.room + " open until the end of " + day(r.until) + ", and email them to say so?")) return;
+    try { const j = await api("ext-give", { id: r.id }); say(msg, "Done: Table " + j.room + " is open until " + when(j.expires) + (j.mailed ? ", and " + j.to + " has been emailed." : ". The email didn’t send (see Errors), so tell them yourself.")); loadReports() }
+    catch (e) { say(msg, e.message, true) }
+  };
+  return h("div", {}, r.status === "open" && r.until ? h("p", {}, h("button.btn.small", { onclick: go }, "Give it: open until " + day(r.until))) : null, msg);
+}
 async function openReport(id) {
   const v = $("#repview"); $("#replist").hidden = true; v.hidden = false; v.textContent = "Loading " + id + "…";
   let r; try { r = await api("report?id=" + encodeURIComponent(id)) } catch (e) { v.textContent = e.message; return }
@@ -556,7 +603,8 @@ async function openReport(id) {
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
     h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
     kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.url === "/contact" ? "the contact form" : r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
-    h("h3", {}, "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
+    r.kind === "extension" ? giveBox(r) : null,
+    h("h3", {}, r.kind === "extension" ? "Their request" : "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
     r.room && r.rec ? h("p", {}, h("button.btn.small", { onclick: () => openRoom(r.room, r.rec) }, "Replay the game at this moment")) : null);
   if (r.snap) {
     const box = h("div.snapbox", {}), f = h("iframe", { sandbox: "allow-same-origin", title: "Snapshot of the screen" }); box.append(f);
@@ -594,20 +642,34 @@ function renderFeedback() {
   say($("#fbmsg"), "");
 }
 $("#fbreload").onclick = loadFeedback;
-async function loadErrors() { try { errors = (await api("errors")).errors || []; renderErrors() } catch (e) { say($("#emsg"), e.message, true) } }
+// an error's kind (as the server's errKey): its message, numbers taken out. Muted kinds are hidden here and left out of the
+// morning count; Grouped shows each kind once, with how many and when last
+let muted = new Set();
+const errKey = e => String(e.msg || e.where || "?").replace(/\d+/g, "#").slice(0, 120);
+async function mute(key, on) { try { muted = new Set((await api("err-mute", { key, on })).muted || []); renderErrors() } catch (e) { alert(e.message) } }
+const muteBtn = key => h("button.btn.ghost.small", { onclick: ev => { ev.stopPropagation(); mute(key, !muted.has(key)) } }, muted.has(key) ? "Unmute" : "Mute");
+async function loadErrors() { try { const j = await api("errors"); errors = j.errors || []; muted = new Set(j.muted || []); renderErrors() } catch (e) { say($("#emsg"), e.message, true) } }
 function renderErrors() {
-  const q = $("#eq").value.trim().toLowerCase(), f = $("#ef").value, tb = $("#erows"); tb.textContent = "";
-  const list = errors.filter(e => (f === "all" || e.src === f) && (!q || JSON.stringify(e).toLowerCase().includes(q)));
+  const q = $("#eq").value.trim().toLowerCase(), f = $("#ef").value, tb = $("#erows"), showMuted = $("#emuted").value === "show"; tb.textContent = "";
+  const list = errors.filter(e => (f === "all" || e.src === f) && (showMuted || !muted.has(errKey(e))) && (!q || JSON.stringify(e).toLowerCase().includes(q)));
+  if ($("#eview").value === "group") {
+    const groups = new Map(); for (const e of list) { const k = errKey(e), g = groups.get(k) || { k, n: 0, last: e, first: e, rooms: new Set() }; g.n++; if (e.t > g.last.t) g.last = e; if (e.t < g.first.t) g.first = e; if (e.room) g.rooms.add(e.room); groups.set(k, g) }
+    for (const g of [...groups.values()].sort((a, b) => b.last.t - a.last.t))
+      tb.append(row([secs(g.last.t) + (g.n > 1 ? " (first " + when(g.first.t) + ")" : ""), g.last.src + (g.last.where ? " · " + g.last.where : ""), g.rooms.size ? g.rooms.size + (g.rooms.size === 1 ? " room" : " rooms") : "—", h("div.msgcol", {}, (g.n > 1 ? "×" + g.n + " " : "") + (g.last.msg || ""), " ", muteBtn(g.k))]));
+    $("#errcnt").textContent = errors.filter(e => e.t > Date.now() - 86400000 && !muted.has(errKey(e))).length || "";
+    return say($("#emsg"), groups.size + " kinds, " + list.length + " of " + errors.length + " errors" + (muted.size && !showMuted ? " (muted ones hidden)" : ""));
+  }
   for (const e of list) {
-    const detail = h("tr", { hidden: true }, h("td", { colspan: 4 }, h("div.mono", {}, Object.entries(e).filter(([k]) => k !== "key").map(([k, x]) => k + ": " + x).join("\n"))));
+    const detail = h("tr", { hidden: true }, h("td", { colspan: 4 }, h("div.mono", {}, Object.entries(e).filter(([k]) => k !== "key").map(([k, x]) => k + ": " + x).join("\n")), h("p", {}, muteBtn(errKey(e)), " ", h("span.note", {}, "Mute hides every error like this one here and in the morning email."))));
     const r = row([secs(e.t), e.src + (e.where ? " · " + e.where : ""), e.room ? h("a", { href: "#", onclick: ev => { ev.preventDefault(); ev.stopPropagation(); openRoom(e.room) } }, e.room) : "—", h("div.msgcol", {}, e.msg || "")], () => { detail.hidden = !detail.hidden });
     if (e.report) r.lastChild.append(" ", h("a", { href: "#", onclick: ev => { ev.preventDefault(); ev.stopPropagation(); showTab("reports"); openReport(e.report) } }, "open " + e.report));
     tb.append(r, detail);
   }
-  $("#errcnt").textContent = errors.filter(e => e.t > Date.now() - 86400000).length || "";
-  say($("#emsg"), list.length + " of " + errors.length);
+  $("#errcnt").textContent = errors.filter(e => e.t > Date.now() - 86400000 && !muted.has(errKey(e))).length || "";
+  say($("#emsg"), list.length + " of " + errors.length + (muted.size && !showMuted ? " (muted ones hidden)" : ""));
 }
 $("#eq").oninput = renderErrors; $("#ef").onchange = renderErrors; $("#ereload").onclick = loadErrors;
+for (const [id, k] of [["#eview", "bt-adm-eview"], ["#emuted", "bt-adm-emuted"]]) { try { const x = localStorage.getItem(k); if (x) $(id).value = x } catch (e) {} $(id).onchange = () => { try { localStorage.setItem(k, $(id).value) } catch (e) {} renderErrors() } }
 
 /* Stripe */
 async function loadHooks() {

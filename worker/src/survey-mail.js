@@ -1,5 +1,6 @@
 // The emails the admin sends a buyer by hand: the feedback survey ("Survey" on their booking code) and the 30% code
-// they get for answering it, and an apology with a free game ("Apologise"). Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
+// they get for answering it, and an apology with a free game ("Apologise"); and the one the hourly schedule sends a
+// day after a Table opens, if its game isn't over (more time, extend.html). Same look as the booking email (booking-mail.js); HTML with a plain-text twin. Like it,
 // they reach real inboxes only once the domain is set up for sending (HANDOVER §6.4a).
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -127,7 +128,7 @@ export function apologyEmail({ code, host }) {
   const site = "https://" + host, open = `${site}/?code=${encodeURIComponent(code)}#start`, c = esc(code);
   const subject = "We’re sorry: a free game of The Betrayal";
   const lead = "We’re sorry your game of The Betrayal wasn’t the night we meant it to be.";
-  const offer = "We’d love you to give it another go, on us. Here’s a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.";
+  const offer = "We’d love you to give it another go, on us. Here’s a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when the game starts.";
   const how = "Use it whenever you like. On the night, tap the button below on the phone you’ll play on, or go to " + host + " and enter the code. We hope you enjoy it this time.";
   const html = frame({
     site, host, title: subject, preheader: `Your free booking code: ${code}. One Table, whenever you’re ready.`,
@@ -139,7 +140,7 @@ export function apologyEmail({ code, host }) {
 
 We're sorry your game of The Betrayal wasn't the night we meant it to be.
 
-We'd love you to give it another go, on us. Here's a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when you first use it.
+We'd love you to give it another go, on us. Here's a booking code for a free game: one Table for a party of 8 to 24 players, open for 48 hours from when the game starts.
 
 Your code: ${code}
 
@@ -153,7 +154,60 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// All three go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
+// the day-old reminder (Registry /remind-run): a Table whose 48 hours began a day ago and whose game hasn't ended, and a link to more time
+const closing = (t) => new Date(t).toLocaleString("en-GB", { hour: "2-digit", minute: "2-digit", weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }).replace(/^(\w+ \d+ \w+),? (?:at )?(\d\d:\d\d)$/, "$2 on $1");
+export function reminderEmail({ token, host, room, expires }) {
+  const site = "https://" + host, link = `${site}/extend?t=${token}`, when = closing(expires);
+  const subject = "Your Table closes at " + when;
+  const lead = `Your game at Table ${esc(room)} isn’t over yet, and the Table closes at <strong style="color:#F4C9B7">${esc(when)}</strong>. After that, the game can only be looked at.`;
+  const ask = "Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we’ll get back to you.";
+  const html = frame({
+    site, host, title: subject, preheader: `Table ${room} closes at ${when}. Add 24 hours free, or ask us for longer.`,
+    eyebrow: "Your Table", heading: "Need more time?", body: para(lead) + para(ask), button: ["Get more time", link],
+    foot: `You’re getting this because you booked a Table with this address. It’s the only reminder we send for this Table.<br>Questions? Reply, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `Need more time?
+
+Your game at Table ${room} isn't over yet, and the Table closes at ${when}. After that, the game can only be looked at.
+
+Add 24 hours with one tap, free. Or, if you need longer, tell us why and pick a date, and we'll get back to you.
+
+Get more time: ${link}
+
+You're getting this because you booked a Table with this address. It's the only reminder we send for this Table.
+Questions? Reply, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// more time given (the admin's Give it on their request): when the Table now closes
+export function givenEmail({ host, room, expires, hours }) {
+  const site = "https://" + host, when = expires ? closing(expires) : null;
+  const subject = when ? "More time: your Table is open until " + when : "More time for your Table";
+  const lead = when ? `Good news: Table ${esc(room)} is now open until <strong style="color:#F4C9B7">${esc(when)}</strong>. Pick up the game whenever you’re ready.`
+    : `Good news: when your game at Table ${esc(room)} starts, it will now have ${esc(hours)} hours.`;
+  const html = frame({
+    site, host, title: subject, preheader: when ? `Table ${room} is open until ${when}.` : `More time for Table ${room}.`,
+    eyebrow: "Your Table", heading: "More time", body: para(lead) + para("Open it the way you did before: go to " + esc(host) + " and enter your booking code."), button: ["Go to The Betrayal", site + "/#start"],
+    foot: `Questions? Reply, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `More time
+
+${when ? `Good news: Table ${room} is now open until ${when}. Pick up the game whenever you're ready.` : `Good news: when your game at Table ${room} starts, it will now have ${hours} hours.`}
+
+Open it the way you did before: go to ${host} and enter your booking code.
+${site}/#start
+
+Questions? Reply, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// All five go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
 export async function sendFeedbackMail(env, to, m) {
   if (!env || !env.MAIL) throw new Error("no MAIL binding");
   const host = env.SITE_HOST || "thebetrayal.co.uk";

@@ -10,7 +10,7 @@
 - What you need: a phone each (any browser; no app to download, no account) and a prize. A TV is optional: a laptop connected or casting to it shows the questions, votes and reveals, with music.
 - Joining: guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the six-character Table code and their name.
 - Prize: set by the host. By default, chocolate coins: one coin for every 100 points the winners take from the Purse.
-- Price: a Table is £10 for one party of 8 to 24, open for 48 hours from the first use of its booking code. A Regular is £20 a month: one booking code that opens a new Table whenever you like, one at a time; cancel any time. Payments by Stripe. Prices include VAT where it applies.
+- Price: a Table is £10 for one party of 8 to 24, open for 48 hours from when its game starts (until then an opened Table waits up to 30 days). A Regular is £20 a month: one booking code that opens a new Table whenever you like, one at a time; cancel any time. Payments by Stripe. Prices include VAT where it applies.
 - How to buy: https://thebetrayal.co.uk/buy. The booking code (OATH-XXXX-XXXX) is shown on screen straight after payment; enter it on the home page to open a Table.
 - Contact: info@thebetrayal.co.uk or https://thebetrayal.co.uk/contact
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261107180546">
+<meta name="build" content="20261109165007">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -1521,6 +1521,13 @@ async function doJoin(mine) {
   if (!name.trim()) return say("Type your name.", true);
   if (!CODE) { try { sessionStorage.setItem("bt-name", name.trim()); } catch (e) {} location.href = "/m/" + code; return; }
   say("Joining…");
+  // this tab entered the Table's booking code (the home page): the host, back on another phone or browser, carries on as host
+  let pass = ""; try { pass = sessionStorage.getItem("bt-pass-" + CODE) || ""; } catch (e) {}
+  if (pass) try {
+    const h = await api("m/create", { name, pass });
+    if (h.j.tok) { tok = h.j.tok; store.set(TOKKEY, tok); take(h.j); screen = "play"; toast = ""; draw(); return poll(); }
+    if (h.j.busy) return hostBusy(h.j.error, () => doJoin(mine));
+  } catch (e) {}
   try {
     const r = await api("m/join", mine === true ? { name, reclaim: true } : { name });
     reclaim = (r.j.error && r.j.reclaim) || "";
@@ -1530,6 +1537,14 @@ async function doJoin(mine) {
     say(r.status === 404 ? "There’s no Table with that code." : r.j.error || "That didn’t work.", true);
   } catch (e) { say("Can’t reach the game. Check you’re online.", true); }
 }
+// the host's game is still open on another phone (or the room has only just woken, so it can't tell yet): say so, and try
+// again every four seconds for two and a half minutes while this phone is still waiting to get in (often enough to keep the
+// room awake, so it can tell once the old phone has been quiet 20 seconds)
+let busyT = 0, busyN = 0;
+function hostBusy(err, again) {
+  say(busyN < 38 ? err : "Your game is still open on another phone or browser. Close it there, then tap Join again.", true); clearTimeout(busyT); // (said again each time, so it stays up)
+  if (busyN++ < 38) busyT = setTimeout(() => { if (!tok && (screen === "join" || screen === "create")) again(); }, 4000);
+}
 async function doCreate() {
   const name = ($("#name") || {}).value || ""; if (!name.trim()) return say("Type your name.", true);
   let pass = ""; try { pass = sessionStorage.getItem("bt-pass-" + CODE) || ""; } catch (e) {}
@@ -1537,6 +1552,7 @@ async function doCreate() {
   try {
     const r = await api("m/create", TESTGAME ? { name, pass, test: true, bots: +(($("#nbots") || {}).value || 8) } : { name, pass });
     if (r.j.tok) { tok = r.j.tok; store.set(TOKKEY, tok); take(r.j); screen = "play"; toast = ""; history.replaceState(null, "", "/m/" + CODE); draw(); return poll(); }
+    if (r.j.busy) return hostBusy(r.j.error, doCreate); // the host's game is still open elsewhere: tried again here in a moment
     if (r.j.mode === "modern") { history.replaceState(null, "", "/m/" + CODE); screen = tok ? "play" : "join"; draw(); return tok ? poll() : say(r.j.error, true); }
     say(r.j.error || "That didn’t work.", true);
   } catch (e) { say("Can’t reach the server. Check you’re online.", true); }

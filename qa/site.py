@@ -105,6 +105,7 @@ with sync_playwright() as p:
     st, body, _ = get("/sitemap.xml"); check("seo: the sitemap lists every indexable page with a date, and not /seal", st == 200 and all(f"<loc>https://thebetrayal.co.uk{u}</loc><lastmod>" in body for u in INDEXED) and "/seal" not in body, st)
     st, _, h = get("/rules.html"); check("seo: /rules.html redirects to /rules", st == 301 and h.get("Location", "").endswith("/rules"), (st, h.get("Location")))
     st, _, h = get("/seal"); check("seo: /seal is noindex", "noindex" in (h.get("X-Robots-Tag") or ""), h.get("X-Robots-Tag"))
+    st, body, h = get("/extend"); check("/extend (its link carries a token): served, noindex, no referrer, no Tag Manager, not in the sitemap", st == 200 and "noindex" in (h.get("X-Robots-Tag") or "") and h.get("Referrer-Policy") == "no-referrer" and "googletagmanager" not in body and "/extend" not in get("/sitemap.xml")[1], (st, dict(h)))
     sp.close()
     # Google Ads from the server: the banner's yes hands the server the ad click from the address, a no clears it, and the
     # buy page sends the click Google's tag saved, only after a yes (the requests are answered here, not by the Worker)

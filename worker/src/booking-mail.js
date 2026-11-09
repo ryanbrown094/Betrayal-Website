@@ -12,7 +12,7 @@ export function bookingEmail({ code, sub, host }) {
     ? "Thank you for becoming a Regular. Here is your booking code. It opens a new Table whenever you like, one game at a time, for as long as you’re subscribed."
     : "Thank you for booking a Table. Here is your booking code: it’s all you need on the night, so keep this email somewhere you’ll find it.";
   const steps = [
-    ["On the night", `Open <a href="${site}" style="color:#E6A58C">${esc(host)}</a> on the phone you’ll play on and enter your code. Your Table opens for 48 hours from that moment${sub ? ", and each new game gets its own 48 hours" : ", so you can set up in the afternoon and play in the evening"}.`],
+    ["On the night", `Open <a href="${site}" style="color:#E6A58C">${esc(host)}</a> on the phone you’ll play on and enter your code. Your Table opens then, and its 48 hours start when you start the game${sub ? ", and each new game gets its own 48 hours" : ", so you can open it early and set up at your own pace"}.`],
     ["Your guests join", `They scan the QR code on the TV, or go to <a href="${site}/join" style="color:#E6A58C">${esc(host)}/join</a> and type the Table code. Everyone plays on their own phone, with nothing to install.`],
     ["Have a prize ready", "Chocolate coins unless you choose your own: every 100 points in the Purse is one coin. The game does the rest."],
   ];
@@ -99,7 +99,7 @@ Your booking code: ${code}
 Open your Table: ${open}
 
 How the night works
-1. On the night: open ${site} on the phone you’ll play on and enter your code. Your Table opens for 48 hours from that moment.
+1. On the night: open ${site} on the phone you’ll play on and enter your code. Your Table opens then, and its 48 hours start when you start the game.
 2. Your guests join: they scan the QR code on the TV, or go to ${site}/join and type the Table code. Everyone plays on their own phone.
 3. Have a prize ready: chocolate coins unless you choose your own. Every 100 points in the Purse is one coin.
 
