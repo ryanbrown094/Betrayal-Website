@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261110212823">
+<meta name="build" content="20261110214547">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1596,7 +1596,9 @@ function flushSaves() {
             if (inc) { lastJson = j; lastTag = ""; state = inc; saveQ.length = 0; hist = [] }
             syncErr = false; toast("Another phone moved first, so your screen has been refreshed."); done = true; break;
           }
-          if (r.ok) { lastJson = await r.text(); syncErr = false; done = true; break }
+          // the reply names the version just saved, so the next poll is "same" instead of this game coming back; and it says
+          // what the server holds now, as that poll did (a save made before a wipe on this phone doesn't count)
+          if (r.ok) { lastJson = await r.text(); try { lastTag = JSON.parse(lastJson).tag || "" } catch (e) { lastTag = "" } serverHasGame = !!s && !!state; syncErr = false; done = true; break }
         } catch (e) {}
         if (i < 2) await new Promise(z => setTimeout(z, 600));
       }
