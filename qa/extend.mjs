@@ -45,7 +45,7 @@ const K4 = await pass("OATH-CDEF-GHJK", { email: "won@example.com", room: "DDDDD
 const K5 = await pass("OATH-DEFG-HJKM", { room: "EEEEEE" }); await room("EEEEEE", { pass: K5 });
 const K6 = await pass("OATH-EFGH-JKMN", { email: "regular@example.com", kind: "sub", room: "GGGGGG" }); await room("FFFFFF", { pass: K6 }); await room("GGGGGG", { pass: K6, created: now - 2 * H, expires: now + 46 * H });
 const K7 = await pass("OATH-FGHJ-KMNP", { email: "late@example.com", room: "HHHHHH" }); await room("HHHHHH", { pass: K7, created: now - 47.8 * H, expires: now + 0.2 * H });
-const K8 = await pass("OATH-GHJK-MNPQ", { email: "gone@example.com", room: "JJJJJJ" }); await room("JJJJJJ", { pass: K8, created: now - 60 * H, expires: now - 12 * H });
+const K8 = await pass("OATH-GHJK-MNPQ", { email: "gone@example.com", room: "JJJJJJ" }); await room("JJJJJJ", { pass: K8, created: now - 60 * H, expires: now - 12 * H }); sums.JJJJJJ = { mode: "modern", started: now - 59 * H, phase: "end" };
 // a website Table: waiting for its game for days (none), and one whose game started 25 hours ago, opened a week before
 const KW = await pass("OATH-WXYZ-2345", { email: "waiting@example.com", room: "WWWWWW" }); await room("WWWWWW", { pass: KW, created: now - 3 * 24 * H, expires: now + 27 * 24 * H, startHours: 48 });
 const KS = await pass("OATH-XYZ2-3456", { email: "started@example.com", room: "SSSSSS" }); await room("SSSSSS", { pass: KS, created: now - 6 * 24 * H, started: now - 25 * H, expires: now + 23 * H });
@@ -188,6 +188,46 @@ check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNo
   check("…the morning summary counts spam apart", /\(and 3 spam caught: Reports, Show Spam\)/.test(dg3.body), dg3.body.split("\n").find((l) => l.startsWith("Problem")));
   await A("report", { id: j4.id, status: "spam" }); const sp = (await repOf(j4.id)).status; await A("report", { id: j4.id, status: "open" });
   check("…and the admin can mark a message spam, or not spam", sp === "spam" && (await repOf(j4.id)).status === "open");
+}
+
+// a Table that closed before its game was played: once, an apology with a link to ask for a reset (a day to play, a reason
+// optional); Give it reopens it to the end of that day and emails them. Not for a played game, an older closing, or twice
+{
+  const KC = await pass("OATH-KMNP-RSTV", { email: "closed@example.com", room: "CQCQCQ" }); await room("CQCQCQ", { pass: KC, created: now - 50 * H, expires: now - 2 * H }); sums.CQCQCQ = { mode: "modern", phase: "lobby", players: 2 };
+  const KP = await pass("OATH-MNPQ-STVW", { email: "played@example.com", room: "PPQQPP" }); await room("PPQQPP", { pass: KP, created: now - 50 * H, expires: now - 2 * H }); sums.PPQQPP = { mode: "modern", started: now - 40 * H, phase: "day" };
+  const KO = await pass("OATH-NPQR-TVWX", { email: "old@example.com", room: "XXYYXX" }); await room("XXYYXX", { pass: KO, created: now - 100 * H, expires: now - 30 * H }); sums.XXYYXX = { mode: null };
+  const KW2 = await pass("OATH-PQRS-VWXY", { email: "waited@example.com", room: "WWQQWW" }); await room("WWQQWW", { pass: KW2, created: now - 31 * 24 * H, expires: now - 3 * H, startHours: 48 }); sums.WWQQWW = { mode: null };
+  const before = sent.length, r1 = await run(), mine = sent.slice(before);
+  const cm = mine.find((m) => m.to === "closed@example.com"), tc = cm && tokenOf(cm);
+  check("closed unplayed: one email each, to the Tables that closed in the last day with no game played (a waiting Table too)", r1.closed === 2 && mine.length === 2 && cm && mine.some((m) => m.to === "waited@example.com") && !mine.some((m) => /played@|old@/.test(m.to)), [r1, mine.map((m) => m.to)]);
+  check("…it says sorry, when it closed, and links to ask for a reset", cm.subject === "Your Table has closed: we can reset it for you" && /closed at \d\d:\d\d on \w+day \d+ \w+, before your game got going/.test(cm.text) && /Ask us to reset it: https:\/\/thebetrayal\.co\.uk\/extend\?t=/.test(cm.text), cm.text);
+  check("…and the next hour sends nothing again; the played game is noted", (await run()).closed === 0 && sent.length === before + 2 && (await reg.storage.get("room:PPQQPP")).closedSkip === "played");
+  let [s1, j1] = await get(tc);
+  check("the reset link: it says it's a reset, the Table closed", s1 === 200 && j1.kind === "expired" && j1.open === false && j1.room === "CQCQCQ", j1);
+  [s1, j1] = await post({ t: tc, add: true });
+  check("…no free 24 hours from it: they ask us", s1 === 409 && /Ask us below/.test(j1.error));
+  const today = new Date().toISOString().slice(0, 10), a1 = alerts.length;
+  [s1, j1] = await post({ t: tc, until: today, reason: "" });
+  const rr = (await (await reg.fetch(new Request("https://registry/reports", { method: "POST", body: "{}" }))).json()).reports.find((x) => x.room === "CQCQCQ");
+  check("…a day from today on, no reason needed: it comes to us as a reset request", s1 === 200 && rr && rr.kind === "extension" && /^Reset: Table CQCQCQ closed before their game was played/.test(rr.what) && alerts.length === a1 + 1 && /Subject: =\?UTF-8\?B\?|Subject: Reset R-/.test(alerts[a1].raw), [s1, j1, rr && rr.what]);
+  check("…but not a day already gone", (await post({ t: tc, until: ymd(Date.now() - 86400000), reason: "" }))[0] === 400);
+  const s2 = sent.length; [s1, j1] = await A("ext-give", { id: rr.id });
+  check("Give it on a reset: open again to the end of today (UK time), and they're emailed", s1 === 200 && j1.expires > Date.now() && (await reg.storage.get("room:CQCQCQ")).expires === j1.expires && sent.length === s2 + 1 && /^More time: your Table is open until 23:59/.test(sent[s2].subject), [s1, j1, sent[s2] && sent[s2].subject]);
+  const tw = tokenOf(mine.find((m) => m.to === "waited@example.com"));
+  await post({ t: tw, until: ymd(Date.now() + 3 * 86400000), reason: "We'll play on Friday" });
+  const rw = (await (await reg.fetch(new Request("https://registry/reports", { method: "POST", body: "{}" }))).json()).reports.find((x) => x.room === "WWQQWW");
+  [s1, j1] = await A("ext-give", { id: rw.id }); const rww = await reg.storage.get("room:WWQQWW");
+  check("…a Table that waited for its game and closed waits again, to the end of that day, its 48 hours still to come", s1 === 200 && rww.expires === j1.expires && j1.expires > Date.now() + 2 * 86400000 && rww.startHours === 48 && extended.at(-1).code === "WWQQWW" && extended.at(-1).expires === j1.expires, [s1, j1, rww]);
+  const inf = (await (await W("/api/admin/roominfo?room=CQCQCQ", { headers: { Authorization: "Bearer adm" } })).json());
+  check("…the room page shows the closed email and the reset, no token", inf.room.closedMailed > 0 && inf.closed.asked.given > 0 && !JSON.stringify(inf).includes(tc), inf.closed);
+}
+
+// the admin's Emails: every customer email, in the order they'd get them, with made-up details
+{
+  const [s1, j1] = await W("/api/admin/emails", { headers: { Authorization: "Bearer adm" } }).then(J);
+  const names = (j1.emails || []).map((m) => m.name);
+  check("emails: every customer email in order, each with a subject, HTML and text", s1 === 200 && names.join(" | ") === "Booking confirmation: one party | Booking confirmation: Regular | Need more time? | More time given | Your Table has closed | Feedback survey | Their 30% off code | Apology with a free game" && j1.emails.every((m) => m.subject && /<html/.test(m.html) && m.text && m.when && m.from), names);
+  check("…made-up details only, for the admin only", j1.emails[0].html.includes("OATH-K7QM-3XRP") && (await W("/api/admin/emails")).status === 401);
 }
 
 // the email's closing time, in UK time

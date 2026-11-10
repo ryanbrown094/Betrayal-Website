@@ -1,5 +1,5 @@
 <!-- title: More time -->
-<!-- desc: Keep your Table of The Betrayal open longer: add 24 hours free, or ask us for more. -->
+<!-- desc: Keep your Table of The Betrayal open longer, or have it reset: add 24 hours free, or ask us. -->
 <style>
 .box { margin: 22px 0; padding: 18px 18px 20px; border: 1px solid rgba(230,165,140,.45); border-radius: 6px; background: #140c15 }
 .box h2 { margin-top: 0 }
@@ -22,12 +22,12 @@
 </div>
 
 <div class="box" id="ask">
-<h2>Need longer?</h2>
+<h2 id="askhead">Need longer?</h2>
 <form id="askform" novalidate>
-<p>Tell us why, and pick the date you’d like your Table open until. We’ll read it and email you, usually within a day.</p>
-<label class="fl" for="reason">Why do you need longer?<small>For example: half the party couldn’t make it, and we’re finishing the game next weekend.</small></label>
+<p id="askintro">Tell us why, and pick the date you’d like your Table open until. We’ll read it and email you, usually within a day.</p>
+<label class="fl" for="reason"><span id="reasonlabel">Why do you need longer?</span><small id="reasonhint">For example: half the party couldn’t make it, and we’re finishing the game next weekend.</small></label>
 <textarea id="reason" rows="4" maxlength="1000"></textarea>
-<label class="fl" for="until">Keep it open until</label>
+<label class="fl" for="until"><span id="untillabel">Keep it open until</span><small id="untilhint" hidden>We’ll keep it open until the end of that day.</small></label>
 <input type="date" id="until">
 <div style="margin-top:20px"><button class="btn" id="askbtn">Send my request</button></div>
 <p class="msg" id="askmsg" role="status"></p>
@@ -50,20 +50,28 @@
   const ymd = (ms) => new Date(ms).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
   const post = (body) => fetch("/api/extend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ t, ...body }) }).then(async (r) => ({ ok: r.ok, j: await r.json().catch(() => ({})) }));
   const offline = "Can’t reach us just now. Check you’re online and try again.";
-  let room = "";
+  let room = "", reset = false; // reset: the Table closed before its game was played (the email after it closed)
   const when = (expires) => { $("#when").textContent = "Table " + room + (expires > Date.now() ? " is open until " + at(expires) + "." : " closed at " + at(expires) + "."); };
   const added = () => { $("#addtext").textContent = "You’ve added your free 24 hours to this Table."; $("#addbtn").hidden = true; };
-  const asked = (u) => { $("#askform").hidden = true; $("#asked").hidden = false; $("#asked").textContent = "Thanks. We’ve got your request to keep it open until " + day(u) + ", and we’ll email you at the address you booked with."; };
+  const asked = (u) => { $("#askform").hidden = true; $("#asked").hidden = false; $("#asked").textContent = "Thanks. We’ve got your request to " + (reset ? "reopen it for " : "keep it open until ") + day(u) + ", and we’ll email you at the address you booked with."; };
+  // the Table closed before its game was played: no free 24 hours here, just a request to reset it for the day they'll play
+  const resetMode = () => {
+    reset = true; document.querySelector("h1").textContent = "Reset your Table"; document.title = "Reset your Table · The Betrayal"; $("#add").hidden = true;
+    $("#when").textContent = "We’re sorry: Table " + room + " closed before your game got going. Nothing’s lost: tell us when you’d like to play, and we’ll reset it for you.";
+    $("#askhead").textContent = "Ask us to reset it"; $("#askintro").textContent = "Pick the day you’d like to play. We’ll reopen your Table, free, and email you, usually within a day.";
+    $("#reasonlabel").textContent = "Anything we should know?"; $("#reasonhint").textContent = "Optional."; $("#untillabel").textContent = "The day you’d like to play"; $("#untilhint").hidden = false;
+    $("#askbtn").textContent = "Ask us to reset it";
+  };
   if (!/^[a-z2-9]{24}$/.test(t)) return show("bad");
   fetch("/api/extend?t=" + encodeURIComponent(t), { cache: "no-store" }).then(async (r) => {
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return show("bad");
-    room = j.room; when(j.expires);
+    room = j.room; when(j.expires); if (j.kind === "expired") resetMode();
     if (!j.open) $("#addtext").textContent = "One tap reopens your Table for 24 hours, straight away. You can do this once.";
     if (j.added) added();
     if (j.asked) asked(j.asked.until);
     const tomorrow = ymd(Date.now() + 86400000), after = ymd(j.expires + 86400000);
-    $("#until").min = after > tomorrow ? after : tomorrow; $("#until").max = ymd(Date.now() + 90 * 86400000);
+    $("#until").min = reset ? ymd(Date.now()) : after > tomorrow ? after : tomorrow; $("#until").max = ymd(Date.now() + 90 * 86400000);
     show("more");
   }, () => { $("#wait").textContent = "Can’t reach us just now. Check you’re online, then open the link again."; });
   $("#addbtn").onclick = async () => {
@@ -80,8 +88,8 @@
   $("#askform").onsubmit = async (e) => {
     e.preventDefault();
     const reason = $("#reason").value.trim(), until = $("#until").value;
-    if (!reason) { $("#reason").setAttribute("aria-invalid", "true"); $("#reason").focus(); return say("#askmsg", "Tell us why you need longer.", true); }
-    if (!until) { $("#until").setAttribute("aria-invalid", "true"); $("#until").focus(); return say("#askmsg", "Pick the date you’d like it open until.", true); }
+    if (!reason && !reset) { $("#reason").setAttribute("aria-invalid", "true"); $("#reason").focus(); return say("#askmsg", "Tell us why you need longer.", true); }
+    if (!until) { $("#until").setAttribute("aria-invalid", "true"); $("#until").focus(); return say("#askmsg", reset ? "Pick the day you’d like to play." : "Pick the date you’d like it open until.", true); }
     $("#askbtn").disabled = true; say("#askmsg", "Sending…");
     try {
       const r = await post({ reason, until });
