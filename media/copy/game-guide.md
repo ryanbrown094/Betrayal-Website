@@ -35,7 +35,7 @@ Any laptop cast to the TV, at `thebetrayal.co.uk/t/CODE`. It shows the QR code a
 | role | who | knows | wins when |
 |---|---|---|---|
 | **Loyal** | most guests | only their own role | every Forsworn is gone at the end |
-| **Forsworn** | about one in four or five, dealt by the game with the Oath answers in mind (2 for 8–10 players, 3 for 11–15, 4 for 16–22, 5 for 23–24) | each other | at least one Forsworn is still at the table at the end |
+| **Forsworn** | about one in four or five, dealt by the game with the Oath answers in mind (2 for 8–10 players, 3 for 11–16, 4 for 17–22, 5 for 23–24) | each other | at least one Forsworn is still at the table at the end |
 | **Ghost** | anyone exiled or killed | what they see; they don’t vote or play Trials | they win or lose with their side; they still call it at each Reckoning and haunt the living in the Statue, and the Ghost who calls the most exiles can win an award |
 | **the host** | whoever opened the Table | only their own role | plays like everyone else; their phone also moves the evening on |
 

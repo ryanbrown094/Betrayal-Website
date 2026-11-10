@@ -17,7 +17,7 @@
 ## How a game works (Modern, everyone on their own phone)
 
 1. The host opens the Table with their booking code and name; guests join on their phones.
-2. The Oath: each phone privately asks its player whether they would like to be Forsworn, then deals the roles. The Forsworn (about one player in four or five: 2 for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, 5 for 23 or 24) see each other; nobody else sees anything.
+2. The Oath: each phone privately asks its player whether they would like to be Forsworn, then deals the roles. The Forsworn (about one player in four or five: 2 for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, 5 for 23 or 24) see each other; nobody else sees anything.
 3. Trials: party games played on the phones (quizzes, word games, guessing games, charades where only the actor sees the word, rock-paper-scissors and more; 15 in all, drawing on thousands of questions and prompts). They fill a shared Purse and win Sanctuary, protection from that night.
 4. The Reckoning: a few minutes of debate on a timer, then a secret vote on every phone. The player with the most votes is exiled and their role is revealed.
 5. Night: the Forsworn choose someone to poison. Everyone else taps a name too, so nobody can tell who is choosing. At dawn the victim, told first in secret on their phone, announces it and gets thirty seconds of last words.
@@ -35,7 +35,7 @@ Classic is the other way to play every Table, for a longer, more immersive eveni
 ## Playing a traitors-style game at home: quick answers
 
 - How do you play The Traitors at home? A few players are secretly traitors; everyone else tries to find them. Each round there's a challenge, a debate and a secret vote to banish someone, and each night the traitors pick a victim. The loyal players win by banishing every traitor. The Betrayal runs all of this on everyone's phones (an independent, original game, not the official one); https://thebetrayal.co.uk/traitors-at-home explains how to run it by hand too.
-- How many traitors for my group? About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, 5 for 23 or 24.
+- How many traitors for my group? About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, 5 for 23 or 24.
 - Is there a traitors game you can play on your phones? Yes: The Betrayal, for 8 to 24 players in one room, in the phone's browser with no app, £10 a party.
 - How long does it take? On phones with The Betrayal, about an hour for 8 to 10 players and up to about two hours for 24. Run by hand, 3 hours or more.
 - Ideas for a traitors-themed party: https://thebetrayal.co.uk/traitors-party-ideas
@@ -192,8 +192,8 @@ About one player in four or five should be a traitor. Too few and they’re caug
 Players | Traitors
 
 8 to 10 | 2
-11 to 15 | 3
-16 to 22 | 4
+11 to 16 | 3
+17 to 22 | 4
 23 or 24 | 5
 
 Don’t tell the players how many traitors there are. Not knowing is half the fun: every exile raises the question of whether that was the last one.
@@ -264,7 +264,7 @@ Planning the whole evening, from the invitations to the food? See traitors party
 ## Questions
 
 ### How many traitors should there be?
-About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, and 5 for 23 or 24.
+About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, and 5 for 23 or 24.
 
 ### Can the host play too?
 Not if you run the game by hand, because whoever runs the night knows who the traitors are. If the game runs on phones, as The Betrayal does, the host plays like everyone else and never sees a role.
@@ -316,7 +316,7 @@ Dark colours, capes and cloaks, tweed and tartan, long coats, gloves and the odd
 Go for a banquet: sharing boards, pies, a big stew or a roast, and bread to tear. Keep it easy to eat while talking, because there will be a lot of talking. A dark “poisoned” cocktail is a good welcome drink (blackberry and gin, or a blackcurrant mocktail), and something warm works in winter. Plan the game for after the main course, or play between courses with the plates cleared for each vote.
 
 ## The game
-About one guest in four or five is secretly a traitor: 2 for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22 and 5 for 23 or 24. The traitors know each other. Each round there’s a challenge, then everyone debates and votes someone out, then at night the traitors choose a victim. The loyal players win if they vote out every traitor; the traitors win if even one survives to the end.
+About one guest in four or five is secretly a traitor: 2 for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22 and 5 for 23 or 24. The traitors know each other. Each round there’s a challenge, then everyone debates and votes someone out, then at night the traitors choose a victim. The loyal players win if they vote out every traitor; the traitors win if even one survives to the end.
 You can run it by hand with role cards and a host who doesn’t play: our guide to hosting a traitors-style game at home has the rules, the numbers and a timetable. By hand, plan on about 3 to 3½ hours for 8 to 12 players.
 Or let the phones run it. The Betrayal is a traitors-style party game played on everyone’s own phone, so the host plays too. The phones deal the secret roles, run the challenges, take the secret votes and handle the night, for 8 to 24 players, with no app to install. A game takes about an hour for 8 to 10 players and up to about two hours for 24. It’s £10 for the whole party.
 For a dinner party with phones away, every Table can also be played Classic: a host reads the script from one phone, guests wear blindfolds at night, and dinner is served in courses between the rounds.

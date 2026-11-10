@@ -20,7 +20,7 @@ Every Table can be played two ways, and the host chooses when they open it. **Mo
 | Better prizes for a fuller Purse | optional: one at a half-full Purse, one at a full Purse | if the Forsworn win it works the other way: half empty wins them the better prize, empty the best. Nobody sees these until the end |
 | Twists | On / Off | on. On: once each, the Casting Vote, the Temptation, the Crown, and the Confessor in the final. Off: none of them |
 
-The Purse target is 2,000 points. Everything else the game plans for itself: how many Forsworn (2 for 8–10 players, 3 for 11–15, 4 for 16–22, 5 for 23–24, dealt with the Oath answers in mind), how many rounds, which Trials and when, and how many leave each round so the final starts with five. There’s no dinner setting: a game takes an hour or two, so play it before or after you eat, and the host can call a short break whenever they like.
+The Purse target is 2,000 points. Everything else the game plans for itself: how many Forsworn (2 for 8–10 players, 3 for 11–16, 4 for 17–22, 5 for 23–24, dealt with the Oath answers in mind), how many rounds, which Trials and when, and how many leave each round so the final starts with five. There’s no dinner setting: a game takes an hour or two, so play it before or after you eat, and the host can call a short break whenever they like.
 
 ### During the game
 

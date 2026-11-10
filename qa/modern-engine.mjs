@@ -182,7 +182,7 @@ check("dinner is optional: courses are off unless the host switches them on", ne
   check("end a Trial early", A(g, g.dir, { a: "tool", v: "endTrial" }) === null && g.s.trial.stage === "done");
 }
 // 6. whole games: until someone wins
-for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1]]) {
+for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1], [16, 1]]) {
   const g = setup(n, { courses: n % 2 === 1 }); A(g, g.dir, { a: "start" }); for (const id of g.ids) A(g, id, { a: "optin", v: "any" }); for (const id of g.ids) A(g, id, { a: "ack" }); tick(g.s, g.now, ctx);
   let guard = 0, sawNight = false, sawTrust = false; const target = (p) => alive(g.s).find((q) => q.id !== p.id && q.role === (fw ? "l" : "f")) || alive(g.s).find((q) => q.id !== p.id);
   while (g.s.phase !== "end" && guard++ < 200) {
@@ -603,6 +603,11 @@ for (const key of ["rps", "oneleg"]) {
   const refs = (x) => Array.from({ length: 200 }, () => hiloRef(x[0], +x[1], now, rnd));
   check("…the first iPhone (2007) between 2002 and 2012, the BBC (" + (bbc ? bbc[1] : "?") + ") within 26 years and never to come",
     !!iphone && refs(iphone).every((r) => r >= 2002 && r <= 2012) && (!bbc || refs(bbc).every((r) => Math.abs(r - bbc[1]) <= 26 && r <= year)));
+}
+// 15. from simulating thousands of games (qa/modern-sim.mjs, November 2026): sixteen players get three Forsworn
+{
+  check("sixteen players: three Forsworn, as fifteen; seventeen to twenty-two: four", [15, 16, 17, 22, 23].map(forswornFor).join() === "3,3,4,4,5");
+  const g = begin(16); check("…and a game of sixteen deals three", g.s.players.filter((p) => p.role === "f").length === 3 && g.s.phase === "day");
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

@@ -18,7 +18,9 @@ const pick = (a, rnd) => a[Math.floor(rnd() * a.length)];
 const shuffle = (a, rnd) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const fifty = (n) => Math.round(n / 50) * 50;
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
-export const forswornFor = (n) => (n <= 7 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 22 ? 4 : 5);
+// (sixteen get three: with four, and one exile a Reckoning until seventeen, the Forsworn won 38% of simulated games
+// at 16, against 12% at 15 and 24% at 17; with three, 15%. qa/modern-sim.mjs)
+export const forswornFor = (n) => (n <= 7 ? 1 : n <= 10 ? 2 : n <= 16 ? 3 : n <= 22 ? 4 : 5);
 const exilesAt = (a) => (a > 16 ? 2 : 1);
 const killsAt = (a) => Math.max(0, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
 export function roundsFor(n) { let a = n, r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++; } return r; }
