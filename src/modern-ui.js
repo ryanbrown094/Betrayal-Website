@@ -647,7 +647,9 @@ function tvBody(url) {
 }
 let QRTO = ""; // a replay may point the QR code elsewhere: the marketing pictures' leads to the broken seal (/seal)
 const joinURL = () => QRTO || (SITE === location.host ? location.origin : "https://" + SITE) + "/m/" + CODE;
-function qr() { try { return `<div class="qrbox">${QR.svg(joinURL(), "#150b17", "#efe0d4")}</div>`; } catch (e) { return ""; } }
+// encoded once per link: the lobby is drawn after every poll, and encoding costs a cheap phone several milliseconds
+let qrFor = "", qrSvg = "";
+function qr() { try { const u = joinURL(); if (u !== qrFor) { qrSvg = QR.svg(u, "#150b17", "#efe0d4"); qrFor = u; } return `<div class="qrbox">${qrSvg}</div>`; } catch (e) { return ""; } }
 // the narrator: the TV reads each new screen's heading aloud (the browser's own voice; the button is the tap it needs)
 function speak() {
   const m = document.querySelector("#tvapp .tvmain"); if (!m || !("speechSynthesis" in window)) return;

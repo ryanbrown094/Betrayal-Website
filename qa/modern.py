@@ -67,6 +67,7 @@ with sync_playwright() as p:
     check("the host lands in the lobby as host", until(lambda: "You’re in" in host.inner_text("#app") and "host" in host.inner_text(".top").lower()))
     tv = page(1280, 720); tv.goto(URL + "/t/" + code)
     check("the TV at /t/CODE shows the code and a QR code", until(lambda: code in tv.inner_text("#tvapp") and tv.locator(".qrbox svg path").count() == 1))
+    tv.evaluate("() => { window.__qrs = 0; const f = QR.svg; QR.svg = function () { window.__qrs++; return f.apply(this, arguments); }; }")  # encodings from here on
     # what the TV's polls say they have (?t=), and the replies that say "nothing new" though the game moved on ({same, ver})
     tvpoll = {"t": 0, "samever": 0}
     def tvresp(r):
@@ -83,6 +84,7 @@ with sync_playwright() as p:
         phones.append(pg)
     check("seven friends join at /join", until(lambda: all("You’re in" in q.inner_text("#app") for q in phones[1:]), 25))
     check("the TV lists all eight", until(lambda: all(n in tv.inner_text("#tvapp") for n in NAMES)))
+    check("…redrawn as each joined, its QR code encoded once (the lobby is drawn after every poll)", tv.evaluate("() => window.__qrs") == 0 and tv.locator(".qrbox svg path").count() == 1, tv.evaluate("() => window.__qrs"))
     check("no kill choice in the lobby (poison is the only kill), and the default prize explains its chocolate coins", host.locator("[data-a=opt][data-k=kill]").count() == 0 and host.input_value("#prize") == "chocolate coins" and "Every 100 points in the Purse is one chocolate coin" in host.inner_text("#app"))
     host.click("summary:has-text('Better prizes')"); host.fill("#tier1", "champagne"); host.locator("#tier1").dispatch_event("change")
     check("the host's settings: a better prize for a half-full Purse (saved, so the next tap isn't lost to the redraw)", until(lambda: host.evaluate("()=>!!(V&&V.opts&&(V.opts.prizes||[]).some(x=>x.what==='champagne'))")))
