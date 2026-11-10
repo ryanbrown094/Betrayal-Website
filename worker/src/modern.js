@@ -18,7 +18,9 @@ const pick = (a, rnd) => a[Math.floor(rnd() * a.length)];
 const shuffle = (a, rnd) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const fifty = (n) => Math.round(n / 50) * 50;
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
-export const forswornFor = (n) => (n <= 7 ? 1 : n <= 10 ? 2 : n <= 15 ? 3 : n <= 22 ? 4 : 5);
+// (sixteen get three: with four, and one exile a Reckoning until seventeen, the Forsworn won 38% of simulated games
+// at 16, against 12% at 15 and 24% at 17; with three, 15%. qa/modern-sim.mjs)
+export const forswornFor = (n) => (n <= 7 ? 1 : n <= 10 ? 2 : n <= 16 ? 3 : n <= 22 ? 4 : 5);
 const exilesAt = (a) => (a > 16 ? 2 : 1);
 const killsAt = (a) => Math.max(0, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
 export function roundsFor(n) { let a = n, r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++; } return r; }
@@ -306,7 +308,9 @@ function score(s, t, it, ctx) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // The flow. tick() moves every clock on; act() takes one player's input. Both return true when something changed.
-function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); const roundsLeft = Math.max(1, roundsFor(alive(s).length) - (s.final ? 0 : 0)); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
+// A Trial offers a share of what the Purse still lacks; the final's offers all of it, so a perfect final fills the
+// Purse (as in Classic). Before, it offered five-sixths, and no simulated game ever reached a full Purse's prize.
+function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); if (s.final) return left; const roundsLeft = Math.max(1, roundsFor(alive(s).length)); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
 // The evening plans itself: each day is a short list of steps (a course, a Trial or two, the Reckoning) and the host's
 // phone only says "next". The twists come once a game each, on rounds picked from the table's size: the Casting Vote
 // about halfway (its Trial gives the Casting Vote instead of Sanctuary, and the Temptation follows it), the Crown on the
@@ -417,7 +421,7 @@ function closeVote(s, now, rnd) {
   // the Casting Vote: a tie its holder voted in is settled by their vote (the table sees that it was used, never by whom)
   const cv = s.cast && !s.cast.used && P(s, s.cast.id) && P(s, s.cast.id).alive ? v.ballots[s.cast.id] : null;
   if (tied.length > 1 && cv && tied.includes(cv)) { s.cast.used = true; tied = [cv]; v.cast = true; say(s, "The Casting Vote settled the tie", now); }
-  if (tied.length > 1 && !v.revote) { v.revote = tied; v.ballots = {}; v.stage = "vote"; v.voteEnd = now + T(s, 90000); v.tie = true; say(s, "A tie: a revote between " + tied.map((id) => P(s, id).name).join(" and "), now); return; }
+  if (tied.length > 1 && !v.revote) { v.revote = tied; v.ballots = {}; v.stage = "vote"; v.voteEnd = now + T(s, 90000); v.lastCall = false; v.tie = true; say(s, "A tie: a revote between " + tied.map((id) => P(s, id).name).join(" and "), now); return; }
   const rv = (v.revote || []).filter((id) => P(s, id) && P(s, id).alive), pool = (rv.length ? rv : alive(s).map((p) => p.id)).filter((id) => id !== v.immune);
   if (!tied.length && !pool.length) { v.stage = "done"; return startUnmask(s, now); }
   const out = tied.length ? (tied.length > 1 ? pick(tied, rnd) : tied[0]) : pick(pool, rnd); // a second tie, or no votes at all, is settled by lot
@@ -538,6 +542,22 @@ function afterLeaving(s, now, rnd, id) {
   if (s.phase === "oath" && s.players.every((p) => p.left || p.optIn)) return deal(s, now, rnd);
 }
 
+// The last call: once everyone but one has voted at the Reckoning or in Trust or Doubt, or at night everyone but one
+// of the Loyal has tapped and the Forsworn agree, whoever is left has thirty seconds, not the rest of a two-minute
+// clock (their phone buzzes ten seconds before it closes). Once a vote or a night, so the host's "a minute more" holds.
+const LASTCALL = 30000;
+function lastCalls(s, now) {
+  const A = alive(s), cut = (o, key, left) => { if (left !== 1 || o.lastCall) return false; o.lastCall = true; o[key] = Math.min(o[key], now + T(s, LASTCALL)); return true; };
+  if (s.phase === "vote" && s.vote) return cut(s.vote, "voteEnd", A.filter((p) => !(p.id in s.vote.ballots)).length);
+  if (s.phase === "trust" && s.trust && !s.trust.result) return cut(s.trust, "end", A.filter((p) => !s.trust.votes[p.id]).length);
+  if (s.phase === "night" && s.night) {
+    const n = s.night, F = forsworn(s);
+    if (!F.every((f) => [].concat(n.picks[f.id] || []).length >= Math.min(n.kills, A.length - F.length)) || !agreed(s)) return false;
+    return cut(n, "end", A.filter((p) => p.role !== "f" && !n.slept[p.id]).length);
+  }
+  return false;
+}
+
 export function tick(s, now, ctx) {
   if (s.paused) return false;
   const rnd = ctx.rnd; let ch = false; const mark = () => { ch = true; };
@@ -584,6 +604,7 @@ export function tick(s, now, ctx) {
     const u = s.unmask; if (u.shown < u.order.length) { P(s, u.order[u.shown]).revealed = true; u.shown++; u.next = now + 3200; } else finishGame(s, now); mark();
   }
   if (s.phase === "honour") { const F = forsworn(s), h = s.honour; if (F.every((p) => h.choices[p.id]) || now >= h.end) { for (const p of F) h.choices[p.id] = h.choices[p.id] || "honour"; finishGame(s, now); mark(); } }
+  if (lastCalls(s, now)) mark();
   if (ch) s.ver++;
   return ch;
 }
@@ -662,7 +683,8 @@ export function act(s, pid, a, now, ctx) {
     case "sleep": { if (s.phase !== "night" || !me.alive) return need(false); s.night.slept[pid] = true; return done(); }
     case "crown": {
       if (!["talk", "vote"].includes(s.phase) || !s.crown || s.crown.used || s.crown.id !== pid || !me.alive || s.vote.immune) return need(false);
-      s.crown.used = true; s.vote.immune = pid; for (const [k, tg] of Object.entries(s.vote.ballots)) if (tg === pid) delete s.vote.ballots[k];
+      s.crown.used = true; s.vote.immune = pid; let undone = 0; for (const [k, tg] of Object.entries(s.vote.ballots)) if (tg === pid) { delete s.vote.ballots[k]; undone++; }
+      if (undone) { s.vote.lastCall = false; s.vote.voteEnd = Math.max(s.vote.voteEnd, now + T(s, LASTCALL)); } // (those who voted for them vote again, in time)
       if (s.vote.revote) s.vote.revote = s.vote.revote.filter((id) => id !== pid);
       say(s, me.name + " laid down the Crown", now);
       if (s.phase === "vote" && s.vote.revote && s.vote.revote.length <= 1) closeVote(s, now, rnd);
