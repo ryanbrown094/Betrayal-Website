@@ -274,4 +274,15 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   check("Snap: between symbols, 'nothing new'; at the next symbol, the view with it", it.k === "snap" && a.view.trial.item.seq.length === 1 && b.same === true && !!c.view && c.view.trial.item.seq.length === 2, [it.k, a.view && a.view.trial.item.seq.length, b, c.view && c.view.trial.item.seq.length]);
   Date.now = real;
 }
+// Classic: a save's reply names the version it made (its poll tag), so the Keeper's next poll is "same" instead of the
+// whole game it just sent; the game isn't echoed back
+{
+  const { DO } = await mk("1"), H = { "X-Build": "1", "X-Pin": PIN };
+  const r1 = await (await req(DO, "PUT", "/api/state", H, { state: { ...game, gid: "T", ver: 1, vid: "a" } })).json();
+  const same = await (await req(DO, "GET", "/api/state", { "X-Pin": PIN, "X-Have": r1.tag })).json();
+  check("Classic: a save's reply carries the poll tag of what was saved, not the game, and the next poll with it is 'same'", r1.auth === true && typeof r1.tag === "string" && !("state" in r1) && same.same === true, [r1, same]);
+  await req(DO, "PUT", "/api/state", H, { state: { ...game, gid: "T", ver: 2, vid: "b", pvid: "a" } }); // another Keeper phone moves on
+  const full = await (await req(DO, "GET", "/api/state", { "X-Pin": PIN, "X-Have": r1.tag })).json();
+  check("…and once another phone has saved, that tag brings the newer game", full.state && full.state.vid === "b" && full.auth === true, full);
+}
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);

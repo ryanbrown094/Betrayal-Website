@@ -289,7 +289,8 @@ export class GameState {
       if (no) return no.body ? json(no.body, no.status) : text(no.text, no.status);
       await this.storage.put("state", body.state); await this.record(body.state, current ? "save" : "start");
       if (meta.startHours && body.state.phase && body.state.phase !== "lobby") await this.clockStart(meta);
-      return json({ state: body.state, auth: true });
+      // the poll tag of what was saved, so the Keeper's next poll is "same" rather than the game it just sent (not echoed back)
+      return json({ auth: true, tag: tagOf(body.state, true) });
     }
     return text("Method not allowed", 405);
   }
