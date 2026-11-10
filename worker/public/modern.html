@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261110212613">
+<meta name="build" content="20261110212614">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -766,7 +766,8 @@ const btn = (label, a, v, cls, extra) => `<button class="btn ${cls || ""}" data-
 
 // ---------------------------------------------------------------------------------------------------------------
 // what this phone or TV saw, for /admin: each screen, what was tapped (button labels, never anything typed), connection
-// trouble and errors, sent to the Table's log every 15 seconds (an error at once); and Report a problem
+// trouble and errors, sent to the Table's log every 30 seconds (an error at once; and when the page is hidden or closed),
+// since a room keeps EVMAX batches and a 24-player evening sent every 15 seconds used most of them; and Report a problem
 const DEVICE = (() => { const d = store.get("bt-device") || Math.random().toString(36).slice(2, 10); store.set("bt-device", d); return d; })();
 const BUILDV = (document.querySelector('meta[name="build"]') || {}).content || "";
 const crumbs = [], evQ = []; let evT = 0, whoSent = "", reporting = 0, reportSnap = "", reportId = "", gameHtml = "", tapAt = 0;
@@ -775,7 +776,7 @@ function crumb(k, m, extra) {
   const e = { t: Date.now(), k, m: String(m == null ? "" : m).slice(0, 400), ...(extra || {}) };
   crumbs.push(e); if (crumbs.length > 300) crumbs.shift();
   evQ.push(e); if (evQ.length > 500) evQ.shift();
-  if (k === "error") flushEv(); else if (!evT) evT = setTimeout(flushEv, 15000);
+  if (k === "error") flushEv(); else if (!evT) evT = setTimeout(flushEv, 30000);
 }
 function flushEv(beacon) {
   clearTimeout(evT); evT = 0;
