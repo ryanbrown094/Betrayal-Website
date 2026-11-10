@@ -105,13 +105,13 @@ Each comes once in the evening, and the phones explain it when it happens. The h
 - The Confessor, in the final: the winner of its Trial is told, privately, the name of a Forsworn still at the table.
 
 ## The Purse
-Every Trial adds to a shared Purse, up to its target: the better the table plays, the more goes in. A knockout (Rock Paper Scissors Royale, One Leg, The Statue) has a winner but no score for the table, so it adds half its share. The winners take it at the end: the Loyal take what they built, but the Forsworn take what it fell short of the target, so every point they quietly sabotage is theirs. Each wrong answer from a Forsworn costs the Purse (except on the Rapid Quiz’s brutal questions, which beat most of the table), and the table hears how many there were, never whose. A Loyal player can guess freely, so a shrinking Purse is a clue.
+Every Trial adds to a shared Purse, up to its target: the better the table plays, the more goes in. The final’s Trial plays for everything the Purse still lacks, so a perfect final fills it. A knockout (Rock Paper Scissors Royale, One Leg, The Statue) has a winner but no score for the table, so it adds half its share. The winners take it at the end: the Loyal take what they built, but the Forsworn take what it fell short of the target, so every point they quietly sabotage is theirs. Each wrong answer from a Forsworn costs the Purse (except on the Rapid Quiz’s brutal questions, which beat most of the table), and the table hears how many there were, never whose. A Loyal player can guess freely, so a shrinking Purse is a clue.
 There is also a prize, chosen by the host: something worth lying to your friends for. If they don’t choose one, it’s chocolate coins, one for every 100 points the winners take from the Purse. The host can set better prizes for a fuller Purse, or, if the Forsworn win, an emptier one; the table knows the Purse decides the prize, but not what it is.
 
 ## The end game
 The last round is the final, with five or fewer at the table.
 
-- A last Trial, for the Purse and perhaps something more. There’s no Sanctuary in the final, because there is no night left to survive.
+- A last Trial, for everything the Purse still lacks, and perhaps something more. There’s no Sanctuary in the final, because there is no night left to survive.
 - The Reckoning, without reveals. The table votes a player out, but this time their role is not shown.
 - Trust or Doubt. With four or fewer left, each survivor chooses on their phone, in secret: TRUST if they believe every Forsworn is gone, DOUBT if not. Once all but one have chosen, the last has thirty seconds; no answer counts as a doubt. Only a unanimous TRUST ends the game. Otherwise, it’s back to the Reckoning for another exile, and another vote.
 - The Unmasking. One by one, the last players’ roles are turned over. If only Loyal are left, the Loyal win and share the Purse. If a Forsworn is still at the table, the Forsworn win, and take what the Purse fell short.

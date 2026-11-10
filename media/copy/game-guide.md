@@ -49,6 +49,7 @@ Nobody is told how many Forsworn there are.
 - **Points** go into the Purse. The Loyal, if they win, take the Purse they built; the Forsworn, if they win, take what it **fell short** of its target, so every point they sabotage is theirs. The prize tiers follow the same amount.
 - **Wrong answers** by a Forsworn cost the Purse 50 each (every Forsworn’s phone reminds them), up to half the Trial’s share, except on the Rapid Quiz’s five brutal questions. The room sees the total the Forsworn gave away, never whose.
 - **Knockouts** (Rock Paper Scissors Royale, One Leg, The Statue) have a winner but no score for the table, so each adds half its share to the Purse.
+- **The final’s Trial** plays for everything the Purse still lacks, so a perfect final fills it.
 - The winner takes the round’s prize (Sanctuary, or on the right round the Casting Vote or the Crown). Most Likely To carries no prize: just a reputation.
 
 ### 4.2 Prizes: Sanctuary (every round)

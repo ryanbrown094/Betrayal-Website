@@ -605,7 +605,7 @@ for (const key of ["rps", "oneleg"]) {
     !!iphone && refs(iphone).every((r) => r >= 2002 && r <= 2012) && (!bbc || refs(bbc).every((r) => Math.abs(r - bbc[1]) <= 26 && r <= year)));
 }
 // 15. from simulating thousands of games (qa/modern-sim.mjs, November 2026): sixteen players get three Forsworn; the
-// last call on a vote, Trust or Doubt and the night
+// last call on a vote, Trust or Doubt and the night; the final's Trial offers everything the Purse still lacks
 {
   check("sixteen players: three Forsworn, as fifteen; seventeen to twenty-two: four", [15, 16, 17, 22, 23].map(forswornFor).join() === "3,3,4,4,5");
   const g = begin(16); check("…and a game of sixteen deals three", g.s.players.filter((p) => p.role === "f").length === 3 && g.s.phase === "day");
@@ -673,6 +673,18 @@ for (const key of ["rps", "oneleg"]) {
   const G = alive(t).filter((p) => p.role === "f"), Lh = alive(t).filter((p) => p.role !== "f");
   for (const p of Lh) A(h, p.id, { a: "sleep" }); A(h, G[0].id, { a: "pick", v: Lh[0].id }); run(h, 500);
   check("…but the Forsworn are never hurried: one has chosen, the other hasn't, and the clock runs on", t.phase === "night" && t.night.end - h.now > 100000);
+}
+{ // the Purse: before the final a Trial offers a share of what's left; the final's offers it all, and a perfect final fills it
+  const g = begin(8), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" }); s.pot = 1300;
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); const before = s.trial.offer;
+  A(g, g.dir, { a: "tool", v: "endTrial" }); A(g, g.dir, { a: "cont" });
+  check(`before the final, a Trial offers a share of the 700 still to win (${before})`, before > 0 && before < 700);
+  for (const p of s.players.slice(5)) p.alive = false; s.final = true; s.pot = 1300;
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" });
+  check(`the final's Trial offers all 700 (${s.trial.offer})`, s.trial.offer === 700 && viewFor(s, null, g.now).trial.offer === 700);
+  A(g, g.dir, { a: "cont" }); let guard = 0;
+  while (s.trial.stage !== "done" && guard++ < 500) { const it = s.trial.item; if (it && it.stage === "open") for (const p of alive(s)) A(g, p.id, { a: "ans", v: it.a }); g.now += 1000; tick(s, g.now, ctx); }
+  check(`…and a perfect final fills the Purse (${s.pot} of 2000)`, s.trial.stage === "done" && s.trial.points === 700 && s.pot === 2000);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

@@ -308,7 +308,9 @@ function score(s, t, it, ctx) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // The flow. tick() moves every clock on; act() takes one player's input. Both return true when something changed.
-function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); const roundsLeft = Math.max(1, roundsFor(alive(s).length) - (s.final ? 0 : 0)); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
+// A Trial offers a share of what the Purse still lacks; the final's offers all of it, so a perfect final fills the
+// Purse (as in Classic). Before, it offered five-sixths, and no simulated game ever reached a full Purse's prize.
+function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); if (s.final) return left; const roundsLeft = Math.max(1, roundsFor(alive(s).length)); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
 // The evening plans itself: each day is a short list of steps (a course, a Trial or two, the Reckoning) and the host's
 // phone only says "next". The twists come once a game each, on rounds picked from the table's size: the Casting Vote
 // about halfway (its Trial gives the Casting Vote instead of Sanctuary, and the Temptation follows it), the Crown on the
