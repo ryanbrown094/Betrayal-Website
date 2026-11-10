@@ -1,5 +1,5 @@
 # Web-sized copies of the media screenshots for the site's tour page: the TV at 1280x720, the phone at 780 wide (2x),
-# as JPEGs in media/web/ (build.sh copies them to worker/public/media/). Run after qa/media.py.
+# as JPEGs in media/web/ (build.sh copies them to worker/public/media/). Run after qa/media.py, then tools/tour-webp.py.
 # python3 tools/webshots.py
 import os
 from PIL import Image

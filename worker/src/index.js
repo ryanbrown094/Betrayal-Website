@@ -9,6 +9,7 @@ import { surveyEmail, thanksEmail, apologyEmail, reminderEmail, givenEmail, clos
 import { indexNow } from "./indexnow.js";
 import { emailHash } from "./email-hash.js";
 import { clickOf, uploadReady, ingest } from "./ads-upload.js";
+import { MEDIA } from "./media.gen.js";
 
 // The Betrayal's server. Every party is its own room (a Table, to players): a Durable Object (GameState) keyed by a six-character room code,
 // holding that party's one game. Rooms are made by redeeming a booking code ("pass" in the code and in storage), which
@@ -1753,8 +1754,15 @@ async function route(req, env) {
       if (page[1] === "survey" || page[1] === "extend") h.set("Referrer-Policy", "no-referrer"); // its address carries a token
       return new Response(r.body, { status: r.status, headers: h });
     }
-    // Only reached for paths that are not static assets (Cloudflare serves those first; see public/_headers).
+    // every other static file (run_worker_first: the Worker sees them all), with public/_headers' cache policy, except an
+    // image asked for by this build's fingerprint (/media/NAME?v=HASH, build.sh): that address only ever means these
+    // bytes, so browsers keep it a year. Another build's fingerprint (a deploy still spreading) keeps the week.
     const r = await env.ASSETS.fetch(req);
+    const media = r.ok && p.match(/^\/media\/([\w.-]+)$/);
+    if (media && Object.hasOwn(MEDIA, media[1]) && url.searchParams.get("v") === MEDIA[media[1]]) {
+      const h = new Headers(r.headers); h.set("Cache-Control", "public, max-age=31536000, immutable");
+      return new Response(r.body, { status: r.status, headers: h });
+    }
     if (r.status !== 404 || (req.method !== "GET" && req.method !== "HEAD")) return r;
     const nf = await env.ASSETS.fetch(new Request(url.origin + "/404.html"));
     return new Response(req.method === "HEAD" ? null : nf.body, { status: 404, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" } });

@@ -20,7 +20,14 @@ __HEAD__
 <link rel="apple-touch-icon" href="/icon-180.png"><link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
 <style>
 /*__FONTS__*/
-:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "Book Figures", "IM Fell DW Pica", Georgia, serif; --ui: "Alegreya Sans", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans", system-ui, sans-serif }
+/* Until the web fonts arrive (a first visit), Arial and Georgia stand in, scaled to their widths and heights as measured on
+   the site's own text, so lines break in the same places and nothing jumps when the fonts swap in */
+@font-face{font-family:"Alegreya Sans fallback";font-weight:400;src:local("Arial"),local("ArialMT"),local("Arimo"),local("Liberation Sans");size-adjust:85.3%;ascent-override:93.8%;descent-override:23.4%;line-gap-override:0%}
+@font-face{font-family:"Alegreya Sans fallback";font-weight:700;src:local("Arial Bold"),local("Arial-BoldMT"),local("Arimo Bold"),local("Liberation Sans Bold");size-adjust:81.4%;ascent-override:98.3%;descent-override:24.6%;line-gap-override:0%}
+@font-face{font-family:"Alegreya Sans SC fallback";font-weight:500;src:local("Arial"),local("ArialMT"),local("Arimo"),local("Liberation Sans");size-adjust:93%;ascent-override:86%;descent-override:21.5%;line-gap-override:0%}
+@font-face{font-family:"Alegreya Sans SC fallback";font-weight:700;src:local("Arial Bold"),local("Arial-BoldMT"),local("Arimo Bold"),local("Liberation Sans Bold");size-adjust:87.8%;ascent-override:91.1%;descent-override:22.8%;line-gap-override:0%}
+@font-face{font-family:"IM Fell fallback";src:local("Georgia"),local("Gelasio");size-adjust:89.6%;ascent-override:101.6%;descent-override:37.9%;line-gap-override:0%}
+:root { --ink: #09070a; --plum: #130d14; --ivory: #e8d0c8; --ivory2: #afa198; --rose: #e6a58c; --copper: #ae6249; --disp: "Grenze Gotisch", Georgia, serif; --book: "Book Figures", "IM Fell DW Pica", "IM Fell fallback", Georgia, serif; --ui: "Alegreya Sans", "Alegreya Sans fallback", system-ui, sans-serif; --sc: "Alegreya Sans SC", "Alegreya Sans SC fallback", "Alegreya Sans", system-ui, sans-serif }
 * { box-sizing: border-box }
 html { color-scheme: dark; -webkit-text-size-adjust: 100% }
 body { margin: 0; background: var(--ink); color: var(--ivory); font: 18px/1.6 var(--ui); font-variant-numeric: lining-nums }
