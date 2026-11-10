@@ -67,6 +67,15 @@ with sync_playwright() as p:
     check("the host lands in the lobby as host", until(lambda: "You’re in" in host.inner_text("#app") and "host" in host.inner_text(".top").lower()))
     tv = page(1280, 720); tv.goto(URL + "/t/" + code)
     check("the TV at /t/CODE shows the code and a QR code", until(lambda: code in tv.inner_text("#tvapp") and tv.locator(".qrbox svg path").count() == 1))
+    # what the TV's polls say they have (?t=), and the replies that say "nothing new" though the game moved on ({same, ver})
+    tvpoll = {"t": 0, "samever": 0}
+    def tvresp(r):
+        if "/m?" not in r.url: return
+        tvpoll["t"] += "&t=" in r.url
+        try: body = r.body()
+        except Exception: return
+        tvpoll["samever"] += body.startswith(b'{"same":true') and b'"ver":' in body
+    tv.on("response", tvresp)
     phones = [host]
     for i, n in enumerate(NAMES[1:]):
         pg = page(320 if i == 0 else 390)
@@ -156,8 +165,9 @@ with sync_playwright() as p:
     # the night
     check("night: the Forsworn choose on their phones", until(lambda: "Choose who is poisoned tonight" in phones[F[0]].inner_text("#app")))
     check("…the host has no dawn button (it's in Tools)", host.locator("[data-a=dawnNow]").count() == 0)
-    phones[F[0]].click("details.whisp summary"); phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
+    phones[F[0]].click("details.whisp summary"); tv.wait_for_timeout(1500); tvpoll["samever"] = 0; phones[F[0]].click("[data-a=whisper]:has-text('Vote with me tomorrow')")
     check("…and whisper to each other, which nobody else sees", until(lambda: "Vote with me tomorrow" in phones[F[1]].inner_text("#app")) and "Vote with me" not in phones[L[0]].inner_text("#app") and "Vote with me" not in tv.inner_text("#tvapp"))
+    check("…the TV's polls say what it has, and a move it can't see (the whisper) is answered 'nothing new', not its whole screen again", until(lambda: tvpoll["samever"] > 0, 5) and tvpoll["t"] > 0, tvpoll)
     vi = L[0]; victim = NAMES[vi]
     for f in F: until(lambda: phones[f].locator(f"[data-a=pick]:has-text('{victim}')").count(), 10); phones[f].click(f"[data-a=pick]:has-text('{victim}')")
     for i, q in enumerate(phones):

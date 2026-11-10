@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261110171551">
+<meta name="build" content="20261110212544">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -745,7 +745,7 @@ function toggleMute() { MUSIC.mute(!muted); if (typeof tvRefresh === "function")
 let PATH = location.pathname, CODE = ((PATH.match(/^\/[mt]\/([A-Za-z0-9]{6})/) || [])[1] || "").toUpperCase();
 const TOKKEY = "bt-m-" + CODE, REQKEY = "bt-mreq-" + CODE;
 const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v) } catch (e) {} } };
-let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, away = [], myrole = 0, online = true, pollT = 0;
+let SITE = location.host, tools = 0, peekList = null, narr = false, saidKey = "", saidBits = [], replaying = false, lastKey = "", tok = CODE ? store.get(TOKKEY) : null, V = null, off = 0, last = "", busy = false, toast = "", toastT = 0, rejoin = [], hostGone = false, away = [], myrole = 0, online = true, pollT = 0, vtag = "";
 const TESTGAME = location.hash === "#create-bots" || (() => { try { return sessionStorage.getItem("bt-test-" + CODE) === "1"; } catch (e) { return false; } })();
 let screen = /^#replay-/.test(location.hash) ? "replay" : !CODE ? "join" : /^#create/.test(location.hash) ? "create" : location.hash === "#tv" || (PATH.startsWith("/t/") && !tok && innerWidth >= 700) ? "tv" : PATH.startsWith("/t/") && !tok ? "choose" : tok ? "play" : "join";
 const isTV = () => screen === "tv" || (screen === "replay" && location.hash === "#replay-tv");
@@ -836,7 +836,9 @@ async function api(path, body) {
 }
 function take(j) {
   if (j.now) off = j.now - Date.now();
-  if (j.view) { V = j.view; off = V.now - Date.now(); }
+  // the reply's tag names exactly this view (none: send no tag); "nothing new" at a newer version moves V on to it
+  if (j.view) { V = j.view; off = V.now - Date.now(); vtag = j.tag || ""; }
+  else if (j.same && j.ver && V) V.ver = j.ver;
   if (j.rejoin) rejoin = j.rejoin; else if (j.view) rejoin = [];
   // the host's phone quiet two minutes (anyone may take over), and for the host, whose phones are quiet: both come with
   // every reply, "nothing new" included, since a game stalled on a dead phone changes nothing
@@ -854,7 +856,7 @@ async function poll() {
         if (r.j.tok) { tok = r.j.tok; store.set(TOKKEY, tok); store.set(REQKEY, null); screen = "play"; }
         else if (r.j.gone) { store.set(REQKEY, null); screen = "join"; say(r.j.error, true); }
       } else {
-        const r = await api("m?v=" + (V ? V.ver : "") + "&me=" + (V && V.me ? V.me.id : ""));
+        const r = await api("m?v=" + (V ? V.ver : "") + "&me=" + (V && V.me ? V.me.id : "") + (V && vtag ? "&t=" + vtag : ""));
         if (r.j.none) { if (r.j.classic) return (location.href = "/t/" + CODE); V = null; screen = screen === "tv" ? "tv" : "nogame"; }
         else take(r.j);
       }

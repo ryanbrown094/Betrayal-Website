@@ -232,4 +232,46 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   check("…but not from a room that has just woken", !(await get(woke, host.tok)).away);
   Date.now = real;
 }
+// "nothing new" by what a phone sees: a phone that sends back its reply's tag (?t=) is told so when the game moved on
+// without changing its screen (the host's own settings), and gets the view when its screen changed; a phone that sends
+// no tag (the iPhone app) is answered as before
+{
+  const { DO } = await mk("1"), real = Date.now; let skew = 0; Date.now = () => real() + skew;
+  const post = async (path, body, tok) => (await req(DO, "POST", "/api/m/" + path, tok ? { "X-Tok": tok } : null, body)).json();
+  const get = async (tok, q) => (await req(DO, "GET", "/api/m" + (q || ""), tok ? { "X-Tok": tok } : null)).json();
+  const host = await post("create", { name: "Ann" }), bo = await post("join", { name: "Bo" });
+  const v1 = await get(bo.tok); skew += 1500; const v1b = await get(bo.tok), tv1 = await get(null);
+  check("Modern: a whole reply carries a tag of what it shows, unchanged as the clock moves on", typeof v1.tag === "string" && v1.tag.length > 4 && v1b.tag === v1.tag && v1b.view.now > v1.view.now && tv1.tag && tv1.tag !== v1.tag, [v1.tag, v1b.tag, tv1.tag]);
+  await post("act", { a: "opts", opts: { prize: "A big cake" } }, host.tok); // only the host's phone shows the prize
+  const at = (ver, t) => "?v=" + ver + "&me=" + v1.view.me.id + (t ? "&t=" + t : "");
+  const s1 = await get(bo.tok, at(v1.view.ver, v1.tag)), tvs = await get(null, "?v=" + tv1.view.ver + "&me=&t=" + tv1.tag);
+  check("…the game moved on but Bo's screen and the TV's didn't: 'nothing new', with the new version", s1.same === true && !s1.view && s1.ver === v1.view.ver + 1 && tvs.same === true && tvs.ver === s1.ver, [s1, tvs]);
+  const s2 = await get(bo.tok, at(s1.ver, v1.tag));
+  check("…and at that version, 'nothing new' as before", s2.same === true && !s2.view, s2);
+  const app = await get(bo.tok, at(v1.view.ver));
+  check("…a phone that sends no tag (the iPhone app) gets the whole view, as before", !!app.view && app.view.ver === v1.view.ver + 1, app);
+  await post("act", { a: "opts", opts: { title: "Party Night" } }, host.tok);
+  const f1 = await get(bo.tok, at(s1.ver, v1.tag));
+  check("…a change Bo can see: the whole view, with a new tag", !!f1.view && f1.view.title === "Party Night" && !!f1.tag && f1.tag !== v1.tag, f1);
+  const act = await post("act", { a: "opts", opts: { twists: false } }, host.tok), hs = await get(host.tok, "?v=" + (act.view.ver - 1) + "&me=" + act.view.me.id + "&t=" + act.tag);
+  check("…an action's reply carries its view's tag too, so the next poll with it is 'nothing new'", !!act.tag && hs.same === true, [act.tag, hs]);
+  Date.now = real;
+}
+// Snap's symbols move on with the clock, not the game's version: between symbols a phone with its tag is told "nothing
+// new" (it polls three times a second), and gets the view as the next symbol shows
+{
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, {}), real = Date.now; let skew = 0; Date.now = () => real() + skew;
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "SNAPRM", expires: Date.now() + 3600000, pass: "MASTER" }) }));
+  const post = async (path, body, tok) => (await req(DO, "POST", "/api/m/" + path, tok ? { "X-Tok": tok } : null, body)).json();
+  const get = async (tok, q) => (await req(DO, "GET", "/api/m" + (q || ""), tok ? { "X-Tok": tok } : null)).json();
+  const host = await post("create", { name: "Ann", plan: ["snap"] }), bo = await post("join", { name: "Bo" });
+  for (const n of ["Cy", "Di", "Ed", "Flo", "Gus", "Hal"]) await post("join", { name: n });
+  for (const a of [{ a: "start" }, { a: "tool", v: "deal" }, { a: "tool", v: "begin" }]) await post("act", a, host.tok);
+  await get(host.tok); await post("act", { a: "tool", v: "skipStep" }, host.tok); await post("act", { a: "next" }, host.tok); // past Most Likely To, to Snap
+  const go = await post("act", { a: "cont" }, host.tok), it = go.view.trial && go.view.trial.item;
+  skew = it.start - real() + 500; const a = await get(bo.tok), q = (v) => "?v=" + v.view.ver + "&me=" + v.view.me.id + "&t=" + v.tag;
+  skew += 1500; const b = await get(bo.tok, q(a)); skew += 1500; const c = await get(bo.tok, q(a));
+  check("Snap: between symbols, 'nothing new'; at the next symbol, the view with it", it.k === "snap" && a.view.trial.item.seq.length === 1 && b.same === true && !!c.view && c.view.trial.item.seq.length === 2, [it.k, a.view && a.view.trial.item.seq.length, b, c.view && c.view.trial.item.seq.length]);
+  Date.now = real;
+}
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);
