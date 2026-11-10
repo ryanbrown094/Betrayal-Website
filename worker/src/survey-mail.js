@@ -207,7 +207,35 @@ The Betrayal · ${host}
   return { subject, html, text };
 }
 
-// All five go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
+// the Table closed before its game was played (Registry /remind-run, once, within a day): sorry, and a link to ask for it
+// to be reset for the day they'd like to play (extend.html, reset mode)
+export function closedEmail({ token, host, room, expires }) {
+  const site = "https://" + host, link = `${site}/extend?t=${token}`, when = closing(expires);
+  const subject = "Your Table has closed: we can reset it for you";
+  const lead = `Table ${esc(room)} closed at <strong style="color:#F4C9B7">${esc(when)}</strong>, before your game got going. We’re sorry it didn’t happen this time.`;
+  const ask = "Nothing’s lost. Tell us the day you’d like to play, and we’ll reset your Table for you, free.";
+  const html = frame({
+    site, host, title: subject, preheader: `Table ${room} closed before your game. Tell us when you’d like to play, and we’ll reset it.`,
+    eyebrow: "Your Table", heading: "Your Table has closed", body: para(lead) + para(ask), button: ["Ask us to reset it", link],
+    foot: `You’re getting this because you booked a Table with this address.<br>Questions? Reply, or write to <a href="mailto:info@thebetrayal.co.uk" style="color:#E6A58C">info@thebetrayal.co.uk</a>.<br>`,
+  });
+  const text = `Your Table has closed
+
+Table ${room} closed at ${when}, before your game got going. We're sorry it didn't happen this time.
+
+Nothing's lost. Tell us the day you'd like to play, and we'll reset your Table for you, free.
+
+Ask us to reset it: ${link}
+
+You're getting this because you booked a Table with this address.
+Questions? Reply, or write to info@thebetrayal.co.uk.
+
+The Betrayal · ${host}
+`;
+  return { subject, html, text };
+}
+
+// All six go through the MAIL send_email binding, from the bookings address; replies come to us. Throws if it refuses.
 export async function sendFeedbackMail(env, to, m) {
   if (!env || !env.MAIL) throw new Error("no MAIL binding");
   const host = env.SITE_HOST || "thebetrayal.co.uk";

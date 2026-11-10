@@ -2,10 +2,10 @@ import { publicView } from "./public-view.js";
 import { writeVerdict, tagOf, addWiped } from "./rules.js";
 import { newRoom, newPass, isRoom, isPass, passKey, shownPass, newToken, newThanks } from "./codes.js";
 import * as M from "./modern.js";
-import { sendBooking } from "./booking-mail.js";
+import { sendBooking, bookingEmail } from "./booking-mail.js";
 import * as AS from "./appstore.js";
 import * as T from "./tiers.js";
-import { surveyEmail, thanksEmail, apologyEmail, reminderEmail, givenEmail, sendFeedbackMail } from "./survey-mail.js";
+import { surveyEmail, thanksEmail, apologyEmail, reminderEmail, givenEmail, closedEmail, sendFeedbackMail } from "./survey-mail.js";
 import { indexNow } from "./indexnow.js";
 import { emailHash } from "./email-hash.js";
 import { clickOf, uploadReady, ingest } from "./ads-upload.js";
@@ -711,9 +711,11 @@ export class Registry {
       const code = String(b.room || "").toUpperCase(), r = isRoom(code) && (await this.storage.get("room:" + code));
       if (!r) return json({ error: "No Table with that code." }, 404);
       const x = r.remindTok ? await this.storage.get("ext:" + r.remindTok) : null, v = r.pass && r.pass !== "MASTER" ? await this.storage.get("pass:" + r.pass) : null;
-      const { remindTok, ...rest } = r;
+      const c = r.closedTok ? await this.storage.get("ext:" + r.closedTok) : null;
+      const { remindTok, closedTok, ...rest } = r;
       return json({ room: { ...rest, pass: r.pass && r.pass !== "MASTER" ? shownPass(r.pass) : r.pass }, email: v ? v.email || (/@/.test(v.note || "") ? String(v.note).trim() : "") : "",
-        ext: x ? { sent: x.sent, added: x.added || null, asked: x.asked ? { t: x.asked.t, until: x.asked.until, report: x.asked.report, given: x.asked.given || null } : null } : null });
+        ext: x ? { sent: x.sent, added: x.added || null, asked: x.asked ? { t: x.asked.t, until: x.asked.until, report: x.asked.report, given: x.asked.given || null } : null } : null,
+        closed: c ? { sent: c.sent, asked: c.asked ? { t: c.asked.t, until: c.asked.until, report: c.asked.report, given: c.asked.given || null } : null } : null });
     }
     // a room deleted KEEP_DAYS after it closed (GameState alarm): its summary stays with it here, for the admin
     if (url.pathname === "/room-summary") {
@@ -744,16 +746,39 @@ export class Registry {
         await this.storage.put({ ["ext:" + token]: { token, room: code, pass: r.pass, email: to, sent: now }, [k]: { ...r, reminded: now, remindTok: token } });
         out.sent++;
       }
+      // a Table that closed in the last day before its game was played (never started: Modern's Start not tapped, Classic
+      // still in its lobby, or no game set up): once, sorry, and a link to ask us to reset it (ext:<token> of kind expired)
+      out.closed = 0;
+      for (const [k, r] of await this.storage.list({ prefix: "room:" })) {
+        if (r.closedMailed || r.closedSkip || !r.pass || r.pass === "MASTER" || r.practice || r.expires > now || now - r.expires > 86400000) continue;
+        const code = k.slice(5), mark = (x) => this.storage.put(k, { ...r, ...x });
+        const v = await this.storage.get("pass:" + r.pass), to = v && !v.revoked ? String(v.email || (/@/.test(String(v.note || "")) ? v.note : "")).trim() : "";
+        if (v && v.room && v.room !== code) { await mark({ closedSkip: "newer Table" }); continue; }
+        if (!/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(to)) { await mark({ closedSkip: "no email" }); continue; }
+        const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + code)).fetch("https://game/_admin/summary").then((x) => (x.ok ? x.json() : null)).catch(() => null);
+        if (!g) { out.failed++; continue; }
+        if (g.mode === "modern" ? !!g.started : g.mode === "classic" ? g.phase !== "lobby" : false) { await mark({ closedSkip: "played" }); continue; }
+        const token = newToken();
+        try { await sendFeedbackMail(this.env, to, closedEmail({ token, host, room: code, expires: r.expires })); }
+        catch (e) {
+          const tries = (r.closedTries || 0) + 1;
+          logErr(this.env, { src: "mail", msg: "The Table-closed email didn’t send: " + clip((e && e.message) || e, 240), room: code, pass: shownPass(r.pass) });
+          await mark(tries >= 3 ? { closedSkip: "mail failed", closedTries: tries } : { closedTries: tries }); out.failed++; continue;
+        }
+        await this.storage.put({ ["ext:" + token]: { token, room: code, pass: r.pass, email: to, sent: now, kind: "expired" }, [k]: { ...r, closedMailed: now, closedTok: token } });
+        out.closed++;
+      }
       return json(out);
     });
     if (url.pathname === "/ext-get") {
       const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
       if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
-      return json({ room: x.room, expires: r.expires, open: r.expires > Date.now(), added: x.added || null, asked: x.asked ? { until: x.asked.until, t: x.asked.t } : null });
+      return json({ room: x.room, expires: r.expires, open: r.expires > Date.now(), kind: x.kind || "reminder", added: x.added || null, asked: x.asked ? { until: x.asked.until, t: x.asked.t } : null });
     }
     if (url.pathname === "/ext-add") return queued(this.locks, "ext", async () => {
       const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
       if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
+      if (x.kind === "expired") return json({ error: "Ask us below, and we’ll reset it for the day you’d like to play." }, 409);
       if (x.added) return json({ error: "You’ve already added your free 24 hours to this Table.", expires: r.expires }, 409);
       const v = await this.storage.get("pass:" + x.pass);
       if (v && v.room && v.room !== x.room) return json({ error: "Your booking code has opened a newer Table since, so this one can’t be reopened. Ask us below if you need it." }, 409);
@@ -766,19 +791,21 @@ export class Registry {
       const x = extOf(b) && (await this.storage.get(extOf(b))), r = x && (await this.storage.get("room:" + x.room));
       if (!x || !r) return json({ error: "That link isn’t valid." }, 404);
       const reason = clip(b.reason, 1000).trim(), until = String(b.until || ""), today = new Date().toISOString().slice(0, 10);
-      if (!reason) return json({ error: "Tell us why you need longer.", field: "reason" }, 400);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || isNaN(Date.parse(until)) || until <= today || until > new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10))
-        return json({ error: "Pick a date from tomorrow to 90 days ahead.", field: "until" }, 400);
+      const reset = x.kind === "expired"; // the Table closed before its game: a day to play (today on), any reason optional
+      if (!reason && !reset) return json({ error: "Tell us why you need longer.", field: "reason" }, 400);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || isNaN(Date.parse(until)) || (reset ? until < today : until <= today) || until > new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10))
+        return json({ error: reset ? "Pick a day from today to 90 days ahead." : "Pick a date from tomorrow to 90 days ahead.", field: "until" }, 400);
       if ((x.asks || 0) >= 5) return json({ error: "We’ve got your request. If something’s changed, reply to our email instead." }, 429);
       let id; do id = "R-" + Math.random().toString(36).slice(2, 8).toUpperCase(); while (await this.storage.get("rep:" + id));
       const when = new Date(until + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-      const what = "More time: open Table " + x.room + " until " + when + ".\n\nTheir reason: " + reason;
+      const what = reset ? "Reset: Table " + x.room + " closed before their game was played. Reopen it until the end of " + when + "." + (reason ? "\n\nThey say: " + reason : "")
+        : "More time: open Table " + x.room + " until " + when + ".\n\nTheir reason: " + reason;
       await this.storage.put("rep:" + id, { id, t: Date.now(), status: "open", kind: "extension", until, room: x.room, rec: 0, device: "", host: true, build: "", ua: "", url: "/extend", what, expected: "", email: x.email, phase: "", ver: 0, screen: null, crumbs: [], snapParts: 0 });
       const t = Date.now(); await this.storage.put("ext:" + x.token, { ...x, asked: { t, until, reason, report: id }, asks: (x.asks || 0) + 1 });
       const site = "https://" + (this.env.SITE_HOST || "thebetrayal.co.uk");
-      await alertMail(this.env, "More time " + id + ": Table " + x.room + " until " + when, ["The host of Table " + x.room + " (booking code " + shownPass(x.pass) + ") asks for it to stay open until " + when + ".",
+      await alertMail(this.env, (reset ? "Reset " : "More time ") + id + ": Table " + x.room + " until " + when, [reset ? "Table " + x.room + " (booking code " + shownPass(x.pass) + ") closed before its game was played. They'd like to play on " + when + "." : "The host of Table " + x.room + " (booking code " + shownPass(x.pass) + ") asks for it to stay open until " + when + ".",
         "It closes " + new Date(r.expires).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }) + (x.added ? ", with their free 24 hours added." : "."),
-        "", "Their reason: " + reason, "", "To give it, open the report in " + site + "/admin (Reports, " + id + ") and use Give it, which also emails them (or open the Table in Rooms and use Extend this Table). Reply to this email to answer them (" + x.email + ").", "Reference " + id + "."].join("\n"), x.email);
+        "", reset ? "They say: " + (reason || "(nothing)") : "Their reason: " + reason, "", "To give it, open the report in " + site + "/admin (Reports, " + id + ") and use Give it, which also emails them (or open the Table in Rooms and use Extend this Table). Reply to this email to answer them (" + x.email + ").", "Reference " + id + "."].join("\n"), x.email);
       return json({ ok: true, until });
     });
     // the admin's "Give it" on a More time report: the Table stays open to the end of the day they asked for (UK time),
@@ -791,12 +818,21 @@ export class Registry {
       if (!x || !r) return json({ error: "That Table has gone." }, 404);
       const until = rp.until || x.asked.until, noon = new Date(until + "T12:00:00Z"), off = +noon.toLocaleString("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }) - 12;
       const target = Date.parse(until + "T23:59:00Z") - off * 3600000;
-      if (r.startHours) return json({ error: "Its game hasn’t started, so its 48 hours haven’t begun. Use Extend this Table on the Table instead." }, 409);
       if (target <= Date.now()) return json({ error: "The day they asked for has passed. Use Extend this Table on the Table instead." }, 409);
       if (target <= r.expires) return json({ error: "It’s already open until " + new Date(r.expires).toLocaleString("en-GB", { timeZone: "Europe/London" }) + "." }, 409);
-      const res = await this.extendRoom(x.room, (target - Math.max(Date.now(), r.expires)) / 3600000);
-      if (!res.ok) return res;
-      const out = await res.json(), t = Date.now(), host = this.env.SITE_HOST || "thebetrayal.co.uk";
+      let out;
+      if (r.startHours) { // still waiting for its game (and closed, or about to): it waits again, to the end of that day
+        const g = await this.env.GAME.get(this.env.GAME.idFromName("room:" + x.room)).fetch("https://game/_extend", { method: "POST", body: JSON.stringify({ expires: target }) });
+        if (!g.ok) return json({ error: "That Table’s game has been deleted, so it can’t be reopened." }, 410);
+        await this.storage.put("room:" + x.room, { ...r, expires: target });
+        const v = await this.storage.get("pass:" + x.pass); if (v && v.room === x.room) await this.storage.put("pass:" + x.pass, { ...v, expires: target });
+        out = { expires: target };
+      } else {
+        const res = await this.extendRoom(x.room, (target - Math.max(Date.now(), r.expires)) / 3600000);
+        if (!res.ok) return res;
+        out = await res.json();
+      }
+      const t = Date.now(), host = this.env.SITE_HOST || "thebetrayal.co.uk";
       let mailed = true;
       try { await sendFeedbackMail(this.env, x.email, givenEmail({ host, room: x.room, expires: out.waiting ? null : out.expires, hours: out.hours })); }
       catch (e) { mailed = false; logErr(this.env, { src: "mail", msg: "The more-time email didn’t send: " + clip((e && e.message) || e, 240), room: x.room }); }
@@ -1254,6 +1290,23 @@ function surveyAnswers(x) {
   for (const k of ["setup", "length", "again"]) if (!SURVEY[k].includes(x[k])) return { error: "Answer all five questions." };
   return { overall, recommend, setup: x.setup, length: x.length, again: x.again, comment: clip(String(x.comment || "").trim(), 2000), quote: x.quote === true, name: clip(String(x.name || "").trim(), 40) };
 }
+// Every email a customer can get from us, in the order they'd get them, filled in with made-up details (the admin's Emails
+// tab, which shows them and prints them to a PDF). Stripe's own receipt isn't ours, so isn't here.
+function sampleEmails(env) {
+  const host = env.SITE_HOST || "thebetrayal.co.uk", from = (env.BOOKING_FROM || "bookings@" + host) + ", replies to " + (env.REPLY_TO || "info@" + host);
+  const token = "abcdefghjkmnpqrstuvwxyz2", room = "QW7RTZ", code = "OATH-K7QM-3XRP", now = Date.now(), at = (days, h, m) => { const d = new Date(now + days * 86400000); d.setUTCHours(h, m, 0, 0); return +d; };
+  const one = (name, when, auto, m) => ({ name, when, auto, from, ...m });
+  return [
+    one("Booking confirmation: one party", "As soon as they pay for a Table", true, bookingEmail({ code, sub: false, host })),
+    one("Booking confirmation: Regular", "As soon as they subscribe as a Regular", true, bookingEmail({ code, sub: true, host })),
+    one("Need more time?", "A day after their game starts, if it isn’t over (once per Table)", true, reminderEmail({ token, host, room, expires: at(1, 20, 30) })),
+    one("More time given", "When you tap Give it on their request (More time, or a reset)", false, givenEmail({ host, room, expires: at(5, 23, 59) })),
+    one("Your Table has closed", "Within an hour of a Table closing, if its game never started (once per Table)", true, closedEmail({ token, host, room, expires: at(-1, 19, 45) })),
+    one("Feedback survey", "When you tap Survey on their booking code, after their game", false, surveyEmail({ token, host })),
+    one("Their 30% off code", "As soon as they answer the survey", true, thanksEmail({ code: "THANKS-7KQ2MX", until: at(180, 12, 0), host })),
+    one("Apology with a free game", "When you tap Apologise on their booking code", false, apologyEmail({ code: "OATH-PZ4D-9NWE", host })),
+  ];
+}
 // Contact-form spam: a hidden field only a robot fills in, a message sent within three seconds of the page opening, or a
 // sales pitch (SEO, links, marketing, "reply with your phone number"). Returns why, or null. Kept in Reports, not emailed.
 const PITCH = /\b(seo|search engine optimi[sz]ation|back ?links?|link building|guest post(?:ing)?|digital marketing|marketing agency|lead generation|first page (?:of|on) google|page one of google|rank(?:ing)? higher|google ranking|visibility on (?:google|bing)|web ?(?:site)? (?:design|development|redesign) services|reply with your (?:phone|mobile|whatsapp)(?: number)?)\b/i;
@@ -1669,6 +1722,7 @@ async function route(req, env) {
       if (p === "/api/admin/report" && req.method === "GET") return call(env, "/report-get", { id: url.searchParams.get("id") });
       if (p === "/api/admin/report" && req.method === "POST") return call(env, "/report-status", await req.json().catch(() => ({})));
       if (p === "/api/admin/roominfo") return call(env, "/room-info", { room: url.searchParams.get("room") });
+      if (p === "/api/admin/emails") return json({ emails: sampleEmails(env) });
       if (p === "/api/admin/ext-give" && req.method === "POST") return call(env, "/ext-give", await req.json().catch(() => ({})));
       const ar = p.match(/^\/api\/admin\/room\/([A-Za-z0-9]{6})\/(room|recs|rec|events|summary)$/);
       if (ar) { const inner = new URL("https://game/_admin/" + ar[2]); inner.search = url.search; return env.GAME.get(env.GAME.idFromName("room:" + ar[1].toUpperCase())).fetch(inner); }

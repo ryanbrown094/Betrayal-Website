@@ -52,7 +52,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
 
 <div id="dash" hidden>
   <div class="adm-row" style="justify-content:space-between"><p class="updated" id="who"></p><button class="btn ghost small" id="out">Sign out</button></div>
-  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="discounts">Discount codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="feedback">Feedback<span class="cnt" id="fbcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button></div>
+  <div class="tabs" role="tablist"><button role="tab" data-t="passes" aria-selected="true">Booking codes</button><button role="tab" data-t="discounts">Discount codes</button><button role="tab" data-t="rooms">Rooms</button><button role="tab" data-t="reports">Reports<span class="cnt" id="repcnt"></span></button><button role="tab" data-t="feedback">Feedback<span class="cnt" id="fbcnt"></span></button><button role="tab" data-t="errors">Errors<span class="cnt" id="errcnt"></span></button><button role="tab" data-t="stripe">Stripe events</button><button role="tab" data-t="emails">Emails</button></div>
   <div id="t-passes">
   <div class="stats" id="stats"></div>
 
@@ -129,6 +129,11 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
     <div class="table-scroll"><table class="list"><thead><tr><th>When</th><th>Source</th><th>Room</th><th>Message</th></tr></thead><tbody id="erows"></tbody></table></div><p class="msg" id="emsg"></p>
   </div>
 
+  <div id="t-emails" hidden>
+    <p class="note">Every email a customer can get from us, in the order they’d get them, filled in with made-up names and codes. Stripe also emails a receipt when they pay (not ours, so not here). Tap one to see it.</p>
+    <div class="adm-row" style="margin:14px 0 10px"><button class="btn small" id="epdf">Download PDF</button><button class="btn ghost small" id="eall">Show all</button></div>
+    <div id="elist"></div><p class="msg" id="elmsg"></p>
+  </div>
   <div id="t-stripe" hidden>
     <div class="adm-row" style="margin:14px 0 10px"><button class="btn ghost small" id="hreload">Refresh</button></div>
     <p class="note">Every webhook Stripe sent, and what it did. If a payment or refund doesn’t show on a booking code, look for it here. Nothing here at all means Stripe isn’t reaching us: check the endpoint and its signing secret in Stripe’s dashboard.</p>
@@ -309,13 +314,42 @@ const row = (cells, onclick, cls) => h("tr" + (onclick ? ".click" : "") + (cls ?
 let tab = "passes";
 function showTab(t) {
   tab = t; for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", b.dataset.t === t);
-  for (const x of ["passes", "discounts", "rooms", "reports", "feedback", "errors", "stripe"]) $("#t-" + x).hidden = x !== t;
+  for (const x of ["passes", "discounts", "rooms", "reports", "feedback", "errors", "stripe", "emails"]) $("#t-" + x).hidden = x !== t;
   if (t === "rooms") { $("#roomlist").hidden = false; $("#roomview").hidden = true; if (replay) replay.stop() } if (t === "reports") { $("#replist").hidden = false; $("#repview").hidden = true }
-  if (t === "discounts") loadDiscounts(); if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "feedback") loadFeedback(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks();
+  if (t === "discounts") loadDiscounts(); if (t === "rooms") loadRooms(); if (t === "reports") loadReports(); if (t === "feedback") loadFeedback(); if (t === "errors") loadErrors(); if (t === "stripe") loadHooks(); if (t === "emails") loadEmails();
   try { history.replaceState(null, "", "#" + t) } catch (e) {}
 }
 for (const b of document.querySelectorAll(".tabs button")) b.onclick = () => showTab(b.dataset.t);
 
+/* the customer emails, in journey order (GET /api/admin/emails: each one rendered from its real template with sample
+   details): each shown on tap in a frame; Download PDF opens them all, one to a page, for the browser's Save as PDF */
+let emails = [];
+const mailFrame = (html, w) => { const f = h("iframe", { title: "Email preview", sandbox: "allow-same-origin", style: "width:100%;max-width:" + (w || 640) + "px;height:420px;border:1px solid #3d2733;border-radius:6px;background:#09070A" }); f.srcdoc = html; f.onload = () => { try { f.style.height = f.contentDocument.documentElement.scrollHeight + 4 + "px" } catch (e) {} }; return f };
+async function loadEmails() {
+  const box = $("#elist"); box.textContent = "Loading…";
+  try { emails = (await api("emails")).emails || [] } catch (e) { box.textContent = ""; return say($("#elmsg"), e.message, true) }
+  box.textContent = "";
+  emails.forEach((m, i) => {
+    const body = h("div", { hidden: true, style: "margin:10px 0 18px" }, h("p.note", {}, "Subject: " + m.subject), h("p.note", {}, "Sent from " + m.from), mailFrame(m.html), h("details", {}, h("summary", {}, "The plain-text version"), h("div.mono", {}, m.text)));
+    ap(box, h("div.panel", { style: "margin:0 0 12px;cursor:pointer" }, h("h3", { style: "margin:0", onclick: () => { body.hidden = !body.hidden } }, (i + 1) + ". " + m.name), h("p.note", { style: "margin:6px 0 0", onclick: () => { body.hidden = !body.hidden } }, m.when + (m.auto ? " · sent automatically" : " · you send it from /admin")), body));
+  });
+  say($("#elmsg"), emails.length + " emails");
+}
+$("#eall").onclick = () => { for (const d of $("#elist").querySelectorAll("div[hidden]")) d.hidden = false };
+$("#epdf").onclick = () => {
+  if (!emails.length) return;
+  const w = window.open("", "_blank"); if (!w) return alert("Allow pop-ups for this page to download the PDF.");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  // each email's own body, inline (a frame can't run over a page), its dark background kept in print
+  const body = html => new DOMParser().parseFromString(html, "text/html").body.innerHTML;
+  w.document.write('<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><title>The Betrayal: customer emails (samples)</title><style>body{margin:0;font:14px/1.5 Helvetica,Arial,sans-serif;color:#222;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:8px 0}.page+.page{break-before:page}h1{font:600 22px Georgia,serif;margin:0 0 4px}h2{font:600 18px Georgia,serif;margin:0 0 4px;break-after:avoid}p.m{margin:0 0 6px;color:#555;break-after:avoid}.mail{background:#09070A;margin-top:10px;max-width:640px}.mail a{color:#E6A58C}@page{margin:12mm}</style></head><body>'
+    + '<div class="page"><h1>The Betrayal: customer emails</h1><p class="m">Every email a customer can get from us, in the order they’d get them, with made-up names and codes. Stripe also sends its own receipt when they pay.</p><ol>' + emails.map(m => "<li>" + esc(m.name) + ": " + esc(m.when) + "</li>").join("") + "</ol></div>"
+    + emails.map((m, i) => '<div class="page"><h2>' + (i + 1) + ". " + esc(m.name) + '</h2><p class="m">' + esc(m.when) + (m.auto ? " · sent automatically" : " · sent by you from /admin") + '</p><p class="m"><b>Subject:</b> ' + esc(m.subject) + '</p><div class="mail">' + body(m.html) + "</div></div>").join("") + "</body></html>");
+  w.document.close();
+  const imgs = [...w.document.images]; let left = imgs.filter(i => !i.complete).length;
+  const go = () => setTimeout(() => w.print(), 300);
+  if (!left) go(); else for (const i of imgs) if (!i.complete) i.onload = i.onerror = () => { if (--left === 0) go() };
+};
 /* rooms */
 let rooms = [];
 // the Registry's side of a Table: its clock, the day-old reminder, more time; and phones that opened the join page but never joined
@@ -329,7 +363,9 @@ function tableInfo(info, sum) {
     sum && ["Join page, never joined", sum.joinOnly + " of " + sum.devices + " phones and screens"],
     ["Day-old reminder", r.reminded ? (r.remindSkip ? "not sent: " + r.remindSkip : "sent " + secs(r.reminded)) : r.remindTries ? "didn’t send (" + r.remindTries + " tries); trying again hourly" : r.pass === "MASTER" ? "not for test rooms" : "not yet"],
     x && x.added && ["Free 24 hours", "added by them, " + secs(x.added)],
-    x && x.asked && ["Asked for longer", "until " + day(x.asked.until) + ", " + secs(x.asked.t) + (x.asked.given ? " · given " + secs(x.asked.given) : "") + " (report " + x.asked.report + ")"]])];
+    x && x.asked && ["Asked for longer", "until " + day(x.asked.until) + ", " + secs(x.asked.t) + (x.asked.given ? " · given " + secs(x.asked.given) : "") + " (report " + x.asked.report + ")"],
+    (r.closedMailed || r.closedSkip) && ["Closed-unplayed email", r.closedMailed ? "sent " + secs(r.closedMailed) : "not sent: " + r.closedSkip],
+    info.closed && info.closed.asked && ["Asked for a reset", "for " + day(info.closed.asked.until) + ", " + secs(info.closed.asked.t) + (info.closed.asked.given ? " · given " + secs(info.closed.asked.given) : "") + " (report " + info.closed.asked.report + ")"]])];
 }
 // a Table whose game has been deleted (KEEP_DAYS after it closed): what the Registry kept of it, no names
 function keptRoom(v, code, info) {
