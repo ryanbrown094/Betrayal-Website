@@ -1,7 +1,8 @@
 // The real Worker class (worker/src/index.js), driven directly with an in-memory storage: PIN limits, games kept across deploys,
-// stale-build writes, the settings rule; and the morning's IndexNow call. Usage: node qa/worker.mjs
+// stale-build writes, the settings rule; the morning's IndexNow call; and how long browsers keep images. Usage: node qa/worker.mjs
 import worker, { GameState, Registry } from "../worker/src/index.js";
 import { indexNow, INDEXNOW_KEY, INDEXNOW_AT } from "../worker/src/indexnow.js";
+import { MEDIA } from "../worker/src/media.gen.js";
 import { readFileSync, existsSync } from "node:fs";
 import { shownPass, passKey } from "../worker/src/codes.js";
 let ok = true;
@@ -231,5 +232,16 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   const { DO: woke } = await mk("1", mem);
   check("…but not from a room that has just woken", !(await get(woke, host.tok)).away);
   Date.now = real;
+}
+// an image a page asks for by this build's fingerprint (/media/NAME?v=HASH, build.sh) is kept a year, immutable; with
+// another build's fingerprint or none it keeps public/_headers' week, and pages keep no-cache
+{
+  const [name, v] = Object.entries(MEDIA).find(([n]) => n.endsWith(".webp")), week = "public, max-age=604800";
+  const ASSETS = { fetch: async (r) => { const p = new URL(r.url).pathname; return new Response("x", { status: p === "/media/nope.jpg" ? 404 : 200, headers: { "Cache-Control": p.startsWith("/media/") ? week : "no-cache, must-revalidate" } }); } };
+  const cc = async (path) => { const r = await worker.fetch(new Request("https://thebetrayal.co.uk" + path), { SITE_HOST: "thebetrayal.co.uk", ASSETS }); return r.status + " " + r.headers.get("Cache-Control"); };
+  const got = { now: await cc(`/media/${name}?v=${v}`), old: await cc(`/media/${name}?v=0000beef`), none: await cc(`/media/${name}`), other: await cc(`/media/nope.jpg?v=${v}`), page: await cc("/tour"), home: await cc("/") };
+  check("a fingerprinted image is kept a year, immutable", got.now === "200 public, max-age=31536000, immutable", got);
+  check("…not with another build's fingerprint, none, or another file's", got.old === "200 " + week && got.none === "200 " + week && !/immutable/.test(got.other), got);
+  check("…and pages stay no-cache", got.page === "200 no-cache, must-revalidate" && got.home === "200 no-cache, must-revalidate", got);
 }
 console.log("RESULT:", ok ? "CLEAN" : "PROBLEMS"); process.exit(ok ? 0 : 1);
