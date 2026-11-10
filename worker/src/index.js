@@ -613,7 +613,7 @@ export class Registry {
         if (v.paid > since) sales.push(v); if (v.refunded > since) refunds.push(v); if (v.subEnded > since) ended.push([k, v]); if (v.failed > since) failed.push([k, v]);
       }
       for (const [, v] of await this.storage.list({ prefix: "room:" })) if (v.created > since) { if (v.pass === "MASTER") tests++; else games++; }
-      const reps = [...(await this.storage.list({ prefix: "rep:" })).values()], open = reps.filter((r) => r.status === "open").length, newReps = reps.filter((r) => r.t > since);
+      const reps = [...(await this.storage.list({ prefix: "rep:" })).values()], open = reps.filter((r) => r.status === "open").length, newReps = reps.filter((r) => r.t > since && r.status !== "spam" && !r.spam), newSpam = reps.filter((r) => r.t > since && r.spam).length;
       const mutes = new Set((await this.storage.get("errmute")) || []), all = [...(await this.storage.list({ prefix: "err:", start: "err:" + String(since).padStart(15, "0") })).values()].filter((e) => e.src !== "report");
       const errs = all.filter((e) => !mutes.has(errKey(e))), muted = all.length - errs.length, seen = new Map();
       for (const e of errs) { const m = clip(e.msg || e.where || "?", 120); seen.set(m, (seen.get(m) || 0) + 1); }
@@ -635,7 +635,7 @@ export class Registry {
         "Tables opened: " + games + (tests ? " (and " + tests + " test " + (tests === 1 ? "room" : "rooms") + ")" : ""),
         waiting.length ? "Opened but not started yet: " + waiting.map((x) => x.code + " (opened " + at(x.r.created) + ", " + (+x.s.players || 0) + " in the lobby" + (x.s.joinOnly ? ", " + x.s.joinOnly + " left the join page without joining" : "") + ")").join(" · ") : null,
         bounced ? "Join page, never joined: " + bounced + (bounced === 1 ? " phone" : " phones") + ", at Tables opened in the last two days" : null,
-        "Problem reports and messages: " + newReps.length + " new, " + open + " open",
+        "Problem reports and messages: " + newReps.length + " new, " + open + " open" + (newSpam ? " (and " + newSpam + " spam caught: Reports, Show Spam)" : ""),
         svSent || svIn.length ? "Feedback: " + svSent + (svSent === 1 ? " survey" : " surveys") + " sent, " + svIn.length + " answered" + (svIn.length ? " (" + (svIn.reduce((a, x) => a + x.answers.overall, 0) / svIn.length).toFixed(1) + " out of 5 on average)" : "") : null,
         upWait.length || upSent ? "Sales sent to Google Ads: " + upSent + (upWait.length ? ", " + upWait.length + " waiting" + (upWait[0].lastErr ? " (" + clip(upWait[0].lastErr, 120) + ")" : "") : "") : null,
         "Errors: " + (errs.length ? errs.length + (muted ? " (and " + muted + " muted)" : "") + ". Most common: " + [...seen].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([m, n]) => m + (n > 1 ? " (×" + n + ")" : "")).join(" · ") : "none" + (muted ? " (and " + muted + " muted)" : "")),
@@ -653,7 +653,7 @@ export class Registry {
       const snap = typeof b.snap === "string" && b.snap.length <= 4000000 ? b.snap : "", parts = Math.ceil(snap.length / 100000);
       for (let i = 0; i < parts; i++) await this.storage.put("repx:" + id + ":" + i, snap.slice(i * 100000, (i + 1) * 100000));
       const f = (k, n) => clip(b[k], n);
-      await this.storage.put("rep:" + id, { id, t: Date.now(), status: "open", room: f("room", 6) || null, rec: +b.rec || 0, device: f("device", 16), host: !!b.host, build: f("build", 20), ua: f("ua", 300), url: f("url", 200),
+      await this.storage.put("rep:" + id, { id, t: Date.now(), status: b.spam ? "spam" : "open", ...(b.spam ? { spam: f("spam", 200) } : {}), room: f("room", 6) || null, rec: +b.rec || 0, device: f("device", 16), host: !!b.host, build: f("build", 20), ua: f("ua", 300), url: f("url", 200),
         what: f("what", 4000), expected: f("expected", 2000), email: f("email", 200), phase: f("phase", 80), ver: +b.ver || 0, screen: b.screen && typeof b.screen === "object" ? { w: +b.screen.w || 0, h: +b.screen.h || 0, dpr: +b.screen.dpr || 1 } : null,
         crumbs: Array.isArray(b.crumbs) ? b.crumbs.slice(-200).map((c) => ({ t: +c.t || 0, k: clip(c.k, 12), m: clip(c.m, 400) })) : [], snapParts: parts });
       return json({ id });
@@ -666,7 +666,7 @@ export class Registry {
     }
     if (url.pathname === "/report-status") {
       const r = await this.storage.get("rep:" + clip(b.id, 12)); if (!r) return json({ error: "No such report" }, 404);
-      await this.storage.put("rep:" + r.id, { ...r, status: b.status === "resolved" ? "resolved" : "open", adminNote: clip(b.note ?? r.adminNote, 2000) }); return json({ ok: true });
+      await this.storage.put("rep:" + r.id, { ...r, status: ["resolved", "spam"].includes(b.status) ? b.status : "open", adminNote: clip(b.note ?? r.adminNote, 2000) }); return json({ ok: true });
     }
     // every room ever opened, with the pass that opened it
     if (url.pathname === "/rooms") {
@@ -1254,6 +1254,14 @@ function surveyAnswers(x) {
   for (const k of ["setup", "length", "again"]) if (!SURVEY[k].includes(x[k])) return { error: "Answer all five questions." };
   return { overall, recommend, setup: x.setup, length: x.length, again: x.again, comment: clip(String(x.comment || "").trim(), 2000), quote: x.quote === true, name: clip(String(x.name || "").trim(), 40) };
 }
+// Contact-form spam: a hidden field only a robot fills in, a message sent within three seconds of the page opening, or a
+// sales pitch (SEO, links, marketing, "reply with your phone number"). Returns why, or null. Kept in Reports, not emailed.
+const PITCH = /\b(seo|search engine optimi[sz]ation|back ?links?|link building|guest post(?:ing)?|digital marketing|marketing agency|lead generation|first page (?:of|on) google|page one of google|rank(?:ing)? higher|google ranking|visibility on (?:google|bing)|web ?(?:site)? (?:design|development|redesign) services|reply with your (?:phone|mobile|whatsapp)(?: number)?)\b/i;
+function spamWhy(b) {
+  if (clip(b.hp, 200).trim()) return "a hidden field only robots see was filled in";
+  if (typeof b.filled === "number" && b.filled >= 0 && b.filled < 3000) return "sent " + (b.filled / 1000).toFixed(1) + " seconds after the page opened";
+  const m = clip(b.what, 4000).match(PITCH); return m ? "a sales pitch (“" + m[0] + "”)" : null;
+}
 // an error's kind, for grouping and muting: its message (or where), with the numbers in it taken out
 const errKey = (e) => clip(String(e.msg || e.where || "?").replace(/\d+/g, "#"), 120);
 const extOf = (b) => /^[a-z2-9]{24}$/.test(String(b.t || "")) ? "ext:" + b.t : null;
@@ -1418,6 +1426,12 @@ async function route(req, env) {
       let b; try { b = JSON.parse(raw); } catch { return json({ error: "Bad JSON" }, 400); }
       if (!clip(b.what, 4000).trim()) return json({ error: "Tell us what went wrong." }, 400);
       const code = isRoom(String(b.room || "").toUpperCase()) ? String(b.room).toUpperCase() : null;
+      // a contact-form message that looks like spam is kept (Reports, Spam) but not emailed; the sender is told it went
+      const spam = clip(b.url, 200) === "/contact" ? spamWhy(b) : null;
+      if (spam) {
+        const rr = await registry(env).fetch("https://registry/report", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ ...b, snap: "", crumbs: [], room: code, rec: 0, spam }) });
+        const r = await rr.json(); return json(rr.ok ? { id: r.id } : r, rr.status);
+      }
       let rec = 0; const id0 = Math.random().toString(36).slice(2, 8);
       if (code) { const k = await env.GAME.get(env.GAME.idFromName("room:" + code)).fetch("https://game/_keep", { method: "POST", body: JSON.stringify({ id: id0, until: Date.now() + 90 * 86400000 }) }); if (k.ok) rec = (await k.json()).rec || 0; }
       const rr = await registry(env).fetch("https://registry/report", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ ...b, room: code, rec }) });

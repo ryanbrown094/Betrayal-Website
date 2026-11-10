@@ -113,7 +113,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   </div>
 
   <div id="t-reports" hidden>
-    <div id="replist"><div class="adm-row" style="margin:14px 0 10px"><label>Show <select id="rf"><option value="open">Open</option><option value="resolved">Resolved</option><option value="all">All</option></select></label><button class="btn ghost small" id="repreload">Refresh</button></div>
+    <div id="replist"><div class="adm-row" style="margin:14px 0 10px"><label>Show <select id="rf"><option value="open">Open</option><option value="resolved">Resolved</option><option value="spam">Spam</option><option value="all">All</option></select></label><button class="btn ghost small" id="repreload">Refresh</button></div>
       <div class="table-scroll"><table class="list"><thead><tr><th>Ref</th><th>When</th><th>Room</th><th>From</th><th>What happened</th><th>Status</th></tr></thead><tbody id="reprows"></tbody></table></div><p class="msg" id="repmsg"></p></div>
     <div id="repview" hidden></div>
   </div>
@@ -488,10 +488,11 @@ async function openRoom(code, at) {
 let reports = [];
 async function loadReports() { try { reports = (await api("reports")).reports || []; renderReports() } catch (e) { say($("#repmsg"), e.message, true) } }
 function renderReports() {
-  const f = $("#rf").value, list = reports.filter(r => f === "all" || r.status === f), tb = $("#reprows"); tb.textContent = "";
+  const f = $("#rf").value, list = reports.filter(r => (f === "all" && r.status !== "spam") || r.status === f), tb = $("#reprows"); tb.textContent = "";
   for (const r of list) tb.append(row([h("code", {}, r.id), when(r.t), r.room || "—", r.url === "/contact" ? "contact form" : r.host ? "Keeper phone" : "TV", r.what.slice(0, 120), h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)], () => openReport(r.id)));
   $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "";
-  say($("#repmsg"), list.length ? list.length + " reports" : "No reports here.");
+  const sp = reports.filter(r => r.status === "spam").length;
+  say($("#repmsg"), (list.length ? list.length + " reports" : "No reports here.") + (sp && f !== "spam" ? " (" + sp + " spam kept apart: Show Spam)" : ""));
 }
 $("#rf").onchange = renderReports; $("#repreload").onclick = loadReports;
 async function unzip(b64) {
@@ -516,6 +517,7 @@ async function openReport(id) {
   const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { alert(e.message) } };
   ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
     h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
+    r.spam ? h("p.note", {}, "Kept as spam, and not emailed to you: " + r.spam + ". If it’s real, tap Not spam and reply to them.") : null,
     kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.url === "/contact" ? "the contact form" : r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
     r.kind === "extension" ? giveBox(r) : null,
     h("h3", {}, r.kind === "extension" ? "Their request" : "What happened"), h("div.mono", {}, r.what), r.expected ? h("h3", {}, "What they expected") : null, r.expected ? h("div.mono", {}, r.expected) : null,
@@ -532,7 +534,7 @@ async function openReport(id) {
   } else ap(v, h("p.note", {}, "No snapshot (they unticked it, or their browser couldn’t make one)."));
   ap(v, h("h3", {}, "What happened on their device before they reported it"),
     h("div.table-scroll", {}, h("table.list", {}, h("tbody", {}, (r.crumbs || []).slice().reverse().map(c => row([secs(c.t), c.k, c.m], null, "ev-" + c.k))))),
-    h("h3", {}, "Notes"), note, h("div.adm-row", { style: "margin-top:10px" }, r.status === "open" ? h("button.btn.small", { onclick: () => setStatus("resolved") }, "Mark resolved") : h("button.btn.ghost.small", { onclick: () => setStatus("open") }, "Reopen"), h("button.btn.ghost.small", { onclick: () => setStatus(r.status) }, "Save notes")));
+    h("h3", {}, "Notes"), note, h("div.adm-row", { style: "margin-top:10px" }, r.status === "open" ? h("button.btn.small", { onclick: () => setStatus("resolved") }, "Mark resolved") : h("button.btn.ghost.small", { onclick: () => setStatus("open") }, r.status === "spam" ? "Not spam" : "Reopen"), r.status === "open" ? h("button.btn.ghost.small", { onclick: () => setStatus("spam") }, "Spam") : null, h("button.btn.ghost.small", { onclick: () => setStatus(r.status) }, "Save notes")));
 }
 
 /* the error log */

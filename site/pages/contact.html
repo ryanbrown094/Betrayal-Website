@@ -8,6 +8,7 @@
 <label class="fl" for="cf-mail">Your email (so we can reply)</label><input id="cf-mail" name="email" type="email" autocomplete="email" spellcheck="false" required>
 <label class="fl" for="cf-code">Booking code or Table code <small>(if you have one)</small></label><input id="cf-code" name="code" autocomplete="off" autocapitalize="characters" spellcheck="false">
 <label class="fl" for="cf-msg">Your message</label><textarea id="cf-msg" name="message" rows="6" required></textarea>
+<div class="hp" aria-hidden="true"><label for="cf-web">Leave this empty</label><input id="cf-web" name="website" tabindex="-1" autocomplete="off"></div>
 <p style="margin:10px 0 0;font-size:15px">Never send us your Keeper PIN.</p>
 <div style="margin-top:14px"><button class="btn" id="cf-send">Send message</button></div>
 <p class="cf-msg" id="cf-out" role="status"></p>
@@ -15,14 +16,17 @@
 </div>
 <style>.fl { display: block; margin: 14px 0 6px; font-weight: 700; color: var(--ivory) } .fl small { font-weight: 400; color: var(--ivory2) }
 #cf input, #cf textarea { width: 100%; padding: 12px 14px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui); transition: border-color .15s ease } #cf input:focus, #cf textarea:focus { border-color: var(--rose) }
-.cf-msg { min-height: 1.4em; margin: 12px 0 0 } .cf-msg.err { color: #ff9dbf }</style>
+.cf-msg { min-height: 1.4em; margin: 12px 0 0 } .cf-msg.err { color: #ff9dbf }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden }</style>
 <script>
+// a field only robots fill in, and how long the form was open before sending: both help keep spam out of our inbox
+const cfOpened = Date.now();
 document.getElementById("cf").onsubmit = async e => {
   e.preventDefault(); const out = document.getElementById("cf-out"), b = document.getElementById("cf-send"), v = id => document.getElementById(id).value.trim();
   const code = v("cf-code").toUpperCase(), room = /^[A-Z0-9]{6}$/.test(code) ? code : null;
   b.disabled = true; out.className = "cf-msg"; out.textContent = "Sending…";
   try {
-    const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: v("cf-msg") + (code && !room ? "\n\nCode: " + code : ""), email: v("cf-mail"), room, url: "/contact", device: "contact form", ua: navigator.userAgent }) });
+    const r = await fetch("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: v("cf-msg") + (code && !room ? "\n\nCode: " + code : ""), email: v("cf-mail"), room, url: "/contact", device: "contact form", ua: navigator.userAgent, hp: document.getElementById("cf-web").value, filled: Date.now() - cfOpened }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || "It didn’t send");
     e.target.reset(); out.textContent = "Thank you. Your message is in (reference " + j.id + "), and we’ll reply to your email within 24 hours.";
