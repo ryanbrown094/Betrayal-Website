@@ -71,6 +71,18 @@ with sync_playwright() as p:
     check("TV follows the host within a poll", "A new day at the house" in tv.inner_text("#stage"))
     check("second phone follows too", "swap it" in h2.inner_text("body").lower()
 )
+    # the host's own saves don't come back to it: each save's reply names the version it made, so its next poll is "same"
+    hp = {"polls": 0, "full": 0}
+    def hpoll(r):
+        if r.request.method != "GET" or not r.url.endswith("/state"): return
+        try: body = r.body()
+        except Exception: return
+        hp["polls"] += 1; hp["full"] += not body.startswith(b'{"same":true')
+    host.on("response", hpoll)
+    for _ in range(4): host.evaluate("()=>act(s=>{})"); sync(tv, h2); host.wait_for_timeout(1300)
+    host.remove_listener("response", hpoll)
+    check("…and the host's own saves aren't sent back to it: its polls after each save are 'same'", hp["polls"] >= 3 and hp["full"] <= 1 and tv.evaluate("()=>state.ver") == host.evaluate("()=>state.ver"), hp)
+    check("…while it still knows the server holds its game, and its setup draft is gone", host.evaluate("()=>serverHasGame === true && setupDraft === null"), host.evaluate("()=>[serverHasGame, !!setupDraft]"))
     # the Witness: offered, won, met straight away in the ceremony; the TV never learns who; then a night
     host.evaluate("()=>{pickMission('rps');act(s=>{s.mission.witnessOffer=true});startMission();startMission();act(s=>{finishPlay(s)});witnessPick(state.players[0].id);endMission()}"); sync(tv, h2)
     check("the Witness meets the Cloak at once, in the ceremony", host.evaluate("()=>state.witness.used===true && !!state.witness.metId && state.shieldCard.mode==='witness'"))

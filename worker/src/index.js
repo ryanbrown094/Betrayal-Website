@@ -36,6 +36,14 @@ async function queued(locks, key, fn) {
   try { return await run; } finally { if (locks.get(key) === tail) locks.delete(key); }
 }
 const tkey = (pre) => pre + String(Date.now()).padStart(15, "0") + Math.random().toString(36).slice(2, 6);
+// a 53-bit fingerprint of a string (cyrb53), synchronous so a request never yields to another mid-answer
+function fingerprint(str) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
 async function gzip(str) { const cs = new CompressionStream("gzip"), w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
 async function gunzip(bytes) { const ds = new DecompressionStream("gzip"), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Response(ds.readable).text(); }
 // the master error log (in the Registry): server exceptions, errors from players' browsers, refused webhooks, issue reports
@@ -282,7 +290,8 @@ export class GameState {
       if (no) return no.body ? json(no.body, no.status) : text(no.text, no.status);
       await this.storage.put("state", body.state); await this.record(body.state, current ? "save" : "start");
       if (meta.startHours && body.state.phase && body.state.phase !== "lobby") await this.clockStart(meta);
-      return json({ state: body.state, auth: true });
+      // the poll tag of what was saved, so the Keeper's next poll is "same" rather than the game it just sent (not echoed back)
+      return json({ auth: true, tag: tagOf(body.state, true) });
     }
     return text("Method not allowed", 405);
   }
@@ -328,8 +337,12 @@ export class GameState {
       const q = away();
       return { ...(l.length ? { rejoin: l.map((x) => ({ id: x.id, name: (s.players.find((p) => p.id === x.pid) || {}).name })) } : {}), ...(me && !me.left && s && s.director !== me.id && hostGone() ? { hostGone: true } : {}), ...(q.length ? { away: q } : {}) };
     };
-    const view = (extra) => json({ view: viewOf(s, me, now), room, ...pending(), ...(extra || {}) });
+    const view = (extra) => { const v = viewOf(s, me, now), p = pending(); return json({ view: v, room, tag: mtag(v, p), ...p, ...(extra || {}) }); };
     const viewOf = (st, p, t) => M.viewFor(st, p ? p.id : null, t);
+    // what a reply would tell this phone, apart from the time and the game's version number: a phone that sends it back
+    // (?t=) is told "nothing new" while it's unchanged, though the game has moved on (another phone's answer, a Loyal
+    // player asleep, Snap between symbols)
+    const mtag = (v, p) => fingerprint(JSON.stringify({ ...v, now: 0, ver: 0 }) + JSON.stringify(room) + JSON.stringify(p));
 
     if (path === "/api/m/create" && req.method === "POST") return queued(this.locks, "create", async () => {
         s = this.mstate || (this.mstate = (await this.storage.get("modern")) ?? null); // one set-up at a time, each on the game as the last left it
@@ -438,7 +451,9 @@ export class GameState {
     if (path === "/api/m" && req.method === "GET") {
       const it = s.trial && s.trial.item, live = it && it.k === "snap" && it.stage === "open";
       if (!live && url.searchParams.get("v") === String(s.ver) && url.searchParams.get("me") === (me ? me.id : "")) return json({ same: true, now, ...pending() });
-      return view();
+      const v = viewOf(s, me, now), p = pending(), tag = mtag(v, p);
+      if (tag === url.searchParams.get("t")) return json({ same: true, now, ver: s.ver, ...p });
+      return json({ view: v, room, tag, ...p });
     }
     return text("Not found", 404);
   }
