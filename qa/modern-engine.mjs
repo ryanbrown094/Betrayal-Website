@@ -604,10 +604,75 @@ for (const key of ["rps", "oneleg"]) {
   check("…the first iPhone (2007) between 2002 and 2012, the BBC (" + (bbc ? bbc[1] : "?") + ") within 26 years and never to come",
     !!iphone && refs(iphone).every((r) => r >= 2002 && r <= 2012) && (!bbc || refs(bbc).every((r) => Math.abs(r - bbc[1]) <= 26 && r <= year)));
 }
-// 15. from simulating thousands of games (qa/modern-sim.mjs, November 2026): sixteen players get three Forsworn
+// 15. from simulating thousands of games (qa/modern-sim.mjs, November 2026): sixteen players get three Forsworn; the
+// last call on a vote, Trust or Doubt and the night
 {
   check("sixteen players: three Forsworn, as fifteen; seventeen to twenty-two: four", [15, 16, 17, 22, 23].map(forswornFor).join() === "3,3,4,4,5");
   const g = begin(16); check("…and a game of sixteen deals three", g.s.players.filter((p) => p.role === "f").length === 3 && g.s.phase === "day");
+}
+{ // the Reckoning: two still to vote, the clock runs on; one, thirty seconds; the host's minute more holds; the vote counts
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "tool", v: "voteNow" });
+  const L = alive(s), X = L[6], last = L[9];
+  for (const p of L.slice(0, 8)) A(g, p.id, { a: "ballot", v: (p === X ? L[0] : X).id }); tick(s, g.now, ctx);
+  check("the vote: two still to vote, and the two minutes run on", s.phase === "vote" && s.vote.voteEnd - g.now === 120000);
+  A(g, L[8].id, { a: "ballot", v: X.id }); run(g, 500);
+  const left = s.vote.voteEnd - g.now;
+  check(`…one left: the last call, thirty seconds (${left / 1000}s), on every phone's clock`, s.phase === "vote" && left === 30000 && viewFor(s, last.id, g.now).vote.voteEnd === s.vote.voteEnd && viewFor(s, null, g.now).vote.voteEnd === s.vote.voteEnd);
+  A(g, g.dir, { a: "tool", v: "more" }); run(g, 2000);
+  check("…the host's minute more still holds after it", s.phase === "vote" && s.vote.voteEnd - g.now === 88000);
+  A(g, last.id, { a: "ballot", v: X.id }); run(g, 500);
+  check("…and the last vote counts", s.phase === "reveal" && s.reveal.id === X.id && s.stats.votes[s.stats.votes.length - 1].ballots[last.id] === X.id);
+}
+{ // a slow last voter: the vote closes thirty seconds after the last but one, without them
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "tool", v: "voteNow" });
+  const L = alive(s), X = L[6]; run(g, 20000);
+  for (const p of L.slice(0, 9)) A(g, p.id, { a: "ballot", v: (p === X ? L[0] : X).id }); run(g, 29500);
+  check("a slow last voter: still open at twenty-nine and a half seconds", s.phase === "vote");
+  run(g, 1000);
+  check("…closed at thirty, a minute and a half before the old clock, without them", s.phase === "reveal" && s.reveal.id === X.id && !(L[9].id in s.stats.votes[s.stats.votes.length - 1].ballots));
+}
+{ // a tie's revote has its own last call; the Crown laid down during one gives its voters time to vote again
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  setStep(g, { k: "reckon" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "tool", v: "voteNow" });
+  const L = alive(s), x = L[5], y = L[6];
+  for (const p of L) A(g, p.id, { a: "ballot", v: (L.indexOf(p) % 2 ? y : x).id }); run(g, 500);
+  check("a five-five tie: a revote of ninety seconds", s.phase === "vote" && s.vote.revote && s.vote.revote.length === 2 && s.vote.voteEnd - g.now === 90000 && !s.vote.lastCall);
+  for (const p of L.slice(0, 9)) A(g, p.id, { a: "ballot", v: (p === x ? y : x).id }); run(g, 500);
+  check("…its own last call", s.phase === "vote" && s.vote.voteEnd - g.now === 30000);
+  const h = begin(10), t = h.s; roles(h, [3, 4]); A(h, h.dir, { a: "cont" });
+  const M = alive(t), Z = M[2], W = M[7]; t.crown = { id: Z.id, used: false, round: t.round };
+  setStep(h, { k: "reckon" }); A(h, h.dir, { a: "next" }); A(h, h.dir, { a: "tool", v: "voteNow" });
+  for (const p of M.slice(0, 9)) A(h, p.id, { a: "ballot", v: (p === Z ? W : Z).id }); run(h, 25000);
+  check("the Crown's holder, most voted for, with five seconds of the last call left", t.phase === "vote" && t.vote.voteEnd - h.now === 5500);
+  A(h, Z.id, { a: "crown" });
+  check("…lays it down: their voters have thirty seconds again", t.phase === "vote" && t.vote.immune === Z.id && t.vote.voteEnd - h.now === 30000 && !t.vote.lastCall && Object.keys(t.vote.ballots).length === 1);
+  for (const p of M.filter((q) => q !== Z && q !== W)) A(h, p.id, { a: "ballot", v: W.id }); run(h, 500); // (all but W)
+  check("…and when one is left again, the last call again", t.phase === "vote" && t.vote.voteEnd - h.now <= 30000 && t.vote.lastCall);
+}
+{ // Trust or Doubt: three of four in, the last has thirty seconds
+  const g = begin(8), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" });
+  for (const p of s.players.slice(4)) p.alive = false; s.final = true; s.phase = "trust"; s.trust = { votes: {}, end: g.now + 120000 };
+  for (const p of alive(s).slice(0, 3)) A(g, p.id, { a: "trust", v: "trust" }); run(g, 500);
+  check("Trust or Doubt: three of four chosen, the last call", s.phase === "trust" && !s.trust.result && s.trust.end - g.now === 30000 && viewFor(s, null, g.now).trust.end === s.trust.end);
+  run(g, 30000);
+  check("…then it's settled without them (no answer is a doubt)", s.trust.result === "doubt" && s.trust.count === 1);
+}
+{ // the night: while the Forsworn disagree the clock runs on; once they agree, the last of the Loyal to tap has thirty seconds
+  const g = begin(10), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" }); exile(g, 6); run(g, 6000); A(g, g.dir, { a: "cont" });
+  const F = alive(s).filter((p) => p.role === "f"), Lo = alive(s).filter((p) => p.role !== "f");
+  for (const p of Lo.slice(0, -1)) A(g, p.id, { a: "sleep" });
+  A(g, F[0].id, { a: "pick", v: Lo[0].id }); A(g, F[1].id, { a: "pick", v: Lo[1].id }); run(g, 500);
+  check("the night: the Forsworn split, one of the Loyal still to tap: the two minutes run on", s.phase === "night" && s.night.end - g.now > 100000 && !s.night.lastCall);
+  A(g, F[1].id, { a: "pick", v: Lo[0].id }); run(g, 500);
+  check("…they agree: the last of the Loyal has thirty seconds (a buzz at ten, on their phone)", s.phase === "night" && s.night.end - g.now === 30000);
+  run(g, 30500);
+  check("…then dawn, with the Forsworn's choice", s.phase === "dawn" && s.dawn.victims.join() === Lo[0].id);
+  const h = begin(10), t = h.s; roles(h, [3, 4]); A(h, h.dir, { a: "cont" }); exile(h, 6); run(h, 6000); A(h, h.dir, { a: "cont" });
+  const G = alive(t).filter((p) => p.role === "f"), Lh = alive(t).filter((p) => p.role !== "f");
+  for (const p of Lh) A(h, p.id, { a: "sleep" }); A(h, G[0].id, { a: "pick", v: Lh[0].id }); run(h, 500);
+  check("…but the Forsworn are never hurried: one has chosen, the other hasn't, and the clock runs on", t.phase === "night" && t.night.end - h.now > 100000);
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

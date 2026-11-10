@@ -62,14 +62,14 @@ Nobody is told how many Forsworn there are.
 
 ### 4.4 The Reckoning
 - **Talk. Accuse. Defend.** Thirty seconds of open debate for each player still in, four minutes at most, with a clock on every phone and the TV.
-- Then everyone votes **on their phone**, for anyone still alive. The counts are shown when the vote closes.
+- Then everyone votes **on their phone**, for anyone still alive. The vote closes when everyone’s in; once all but one have voted, the last has thirty seconds (the **last call**). The counts are shown when it closes.
 - Most votes is **exiled**. A tie goes to a revote between the tied players, unless the Casting Vote breaks it (section 5); a tie that won’t break is settled by lot.
 - **Ghosts’ call:** the Ghosts vote too, on who they think will go. It doesn’t count, but it’s remembered, and the best Ghost can win an award.
 - **More than sixteen at the table:** two exiles.
 - **Reveal:** the exiled player’s role is shown, Forsworn or Loyal, and they can type one last line for the TV (not in the final).
 
 ### 4.5 The night
-- **Heads down.** Every living player taps a name on their phone, so nobody can tell who is really choosing. Only the Forsworn’s choices count.
+- **Heads down.** Every living player taps a name on their phone, so nobody can tell who is really choosing. Only the Forsworn’s choices count. Once the Forsworn agree, the last player still to tap has thirty seconds.
 - **Forsworn whispers:** at night the Forsworn can send each other set phrases (“Vote with me tomorrow”). Not the Classic twist called the Whisper.
 - **Victims per night** grow with the table so the final still starts with five: 1 below 12 alive, up to 2 from 12, up to 3 from 20.
 - **The victim learns in secret, on their phone.** They were **poisoned**: “Say nothing yet”; when the host reveals the night, they get thirty seconds of spoken **last words**.
@@ -95,7 +95,7 @@ The Whisper, the Last Offer and Errands are Classic only (section 10).
 
 - **The final always aims to start with five.** The game sizes every earlier round to land there.
 - **With five or fewer**, exiles aren’t revealed.
-- **Trust or Doubt:** each player votes on their phone, in secret: TRUST (every Forsworn is gone) or DOUBT (one’s still here). Unanimous TRUST ends the game. Anything else: back to the Reckoning for another unrevealed exile, then vote again.
+- **Trust or Doubt:** each player votes on their phone, in secret: TRUST (every Forsworn is gone) or DOUBT (one’s still here). Once all but one have chosen, the last has thirty seconds; no answer counts as a doubt. Unanimous TRUST ends the game. Anything else: back to the Reckoning for another unrevealed exile, then vote again.
 - **The prize:** the host sets it before the game (the default is **chocolate coins**: every 100 points in the Purse is one coin, so the end screens say, for example, “15 chocolate coins” for a Purse of 1,500; for the Forsworn, what the Purse fell short, converted the same way). Optionally, **better prizes for a fuller Purse**: one at a half-full Purse, one at a full Purse. If the Forsworn win it works the other way round: half empty wins them the better prize, empty the best. Nobody sees them until the end.
 - **The Unmasking:** seals turn one by one.
   - **Only Loyal left:** the Loyal win and share the Purse they built.
