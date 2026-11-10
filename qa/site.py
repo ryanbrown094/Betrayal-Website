@@ -1,5 +1,6 @@
 # The public site on the real Worker: every page at four widths without sideways scrolling or console errors, the nav,
-# the home page's code boxes on a phone, the buy page's consent and Pay button, and the rules page read once.
+# the home page's code boxes on a phone, the buy page's consent and Pay button, the rules page read once, and the contact
+# form's spam check.
 #   npx wrangler dev --port 8790 --var ADMIN_TOKEN:dev --var ADMIN_PASSWORD:testpw --var SITE_PASSWORD: [--var STRIPE_EGG_PROMO:promo_x] &
 #   python3 qa/site.py http://127.0.0.1:8790/
 import sys
@@ -132,6 +133,20 @@ with sync_playwright() as p:
         pg.check("#c1"); pg.check("#c2"); pg.click("#pay"); pg.wait_for_timeout(500)
         sent = [_j.loads(d) for u, d in got if u == "checkout"]
         check(f"ads: the buy page sends the click Google's tag saved only after a yes ({consent})", len(sent) == 1 and sent[0].get("click") == want, sent); c.close()
+    # the contact form: the field only robots see is off screen; a message sent a second after the page opened is thanked
+    # like any other but kept as spam; one written at a person's pace is a real report (the admin's list says which)
+    import os, json as _json
+    def contact(msg, wait):
+        c = ctx(viewport={"width": 390, "height": 844}); pg = c.new_page(); pg.goto(URL + "/contact"); pg.wait_for_timeout(wait)
+        hidden = pg.evaluate("(() => { const r = document.querySelector('#cf-web').getBoundingClientRect(); return r.right < 0 || r.bottom < 0 })()")
+        pg.fill("#cf-mail", "someone@example.com"); pg.fill("#cf-msg", msg); pg.click("#cf-send")
+        pg.wait_for_function("document.querySelector('#cf-out').textContent.includes('reference')", timeout=10000)
+        ref = pg.inner_text("#cf-out").split("reference ")[1].split(")")[0]; c.close(); return ref, hidden
+    fast, hid = contact("Do you do group discounts?", 0); slow, _ = contact("Do you do group discounts for 20 people?", 3500)
+    reps = {r["id"]: r for r in _json.loads(p.request.new_context().get(URL + "/api/admin/reports", headers={"Authorization": "Bearer " + os.environ.get("ADMIN_TOKEN", "dev")}).text())["reports"]}
+    check("contact: the robots-only field is off screen", hid)
+    check("contact: a message sent at once is thanked, and kept as spam", reps.get(fast, {}).get("status") == "spam", reps.get(fast))
+    check("contact: one written at a person's pace is a real message", reps.get(slow, {}).get("status") == "open", reps.get(slow))
     b.close()
 print("RESULT: " + ("CLEAN" if not fails else "FAILED " + str(len(fails))))
 sys.exit(1 if fails else 0)

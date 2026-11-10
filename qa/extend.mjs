@@ -24,7 +24,7 @@ const GAME = { idFromName: (n) => n, get: (n) => ({ fetch: async (u, i) => {
 } }) };
 const REGISTRY = { idFromName: () => 1, get: () => ({ fetch: (u, i) => reg.fetch(new Request(u, i)) }) };
 const reg = new Registry({ storage: store() }, { GAME, MAIL, REGISTRY, SITE_HOST: "thebetrayal.co.uk", ALERT_TO: "info@thebetrayal.co.uk" });
-const env = { ADMIN_TOKEN: "adm", GAME, REGISTRY, MAIL };
+const env = { ADMIN_TOKEN: "adm", GAME, REGISTRY, MAIL, ALERT_TO: "info@thebetrayal.co.uk" };
 const W = (path, init) => worker.fetch(new Request("https://thebetrayal.co.uk" + path, init), env);
 const J = async (r) => [r.status, await r.json().catch(() => ({}))];
 const A = (path, body) => W("/api/admin/" + path, { method: "POST", headers: { Authorization: "Bearer adm", "Content-Type": "application/json" }, body: JSON.stringify(body) }).then(J);
@@ -168,6 +168,27 @@ const dg2 = await (await reg.fetch(new Request("https://registry/digest", { meth
 check("…muting one kind leaves every error like it out of the morning count and its most common", s === 200 && j.muted.includes("IndexNow refused # pages: #") && /muted\)/.test(dg2.body) && !/IndexNow refused/.test(dg2.body) && /Something else broke/.test(dg2.body), dg2.body.split("\n").find((l) => l.startsWith("Errors")));
 [s, j] = await A("err-mute", { key: "IndexNow refused # pages: #", on: false });
 check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNow refused/.test((await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json()).body));
+
+// contact-form spam: kept in Reports as spam, never emailed; real messages (and in-game reports) still come through
+{
+  const send = (b) => W("/api/report", { method: "POST", headers: { "Content-Type": "application/json", "CF-Connecting-IP": "198.51.100." + Math.floor(Math.random() * 250) }, body: JSON.stringify({ url: "/contact", device: "contact form", email: "someone@example.com", ...b }) }).then(J);
+  const repOf = async (id) => reg.storage.get("rep:" + id), a0 = alerts.length;
+  const pitch = "Hi,\n\nWe checked your website and noticed that its visibility on Google and Bing appears to be lower than it should be. It looks like some important SEO (Search Engine Optimization) steps may still be incomplete.\n\nIf you'd like, I can quickly explain what we found and how it can be fixed. Just reply with your phone number and a convenient time to call.";
+  const [s1, j1] = await send({ what: pitch, filled: 45000 }), r1 = await repOf(j1.id);
+  check("spam: the SEO pitch is kept as spam, not emailed, and the sender still gets a reference", s1 === 200 && /^R-/.test(j1.id) && r1.status === "spam" && /sales pitch/.test(r1.spam) && alerts.length === a0, [s1, j1, r1 && r1.spam]);
+  const [, j2] = await send({ what: "Do you do group discounts?", hp: "http://spam.example", filled: 40000 });
+  const [, j3] = await send({ what: "Do you do group discounts?", filled: 1200 });
+  check("…as is a message with the hidden field filled in, or sent a second after the page opened", (await repOf(j2.id)).status === "spam" && /hidden field/.test((await repOf(j2.id)).spam) && (await repOf(j3.id)).status === "spam" && /1\.2 seconds/.test((await repOf(j3.id)).spam) && alerts.length === a0);
+  const [, j4] = await send({ what: "I found you on Google and booked for Saturday, but I've lost my code. Can you resend it?", filled: 60000 });
+  const [, j5] = await send({ what: "Your website design is lovely. Does it work for 30 people?" });
+  check("…a real message still comes through and is emailed (Google mentioned, a compliment on the site, or from a page from before the check)", (await repOf(j4.id)).status === "open" && (await repOf(j5.id)).status === "open" && alerts.length === a0 + 2, [alerts.length - a0]);
+  const [, j6] = await W("/api/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ what: "The SEO question in the quiz had the wrong answer", device: "abc", host: true }) }).then(J);
+  check("…an in-game problem report is never checked for spam", (await repOf(j6.id)).status === "open");
+  const dg3 = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
+  check("…the morning summary counts spam apart", /\(and 3 spam caught: Reports, Show Spam\)/.test(dg3.body), dg3.body.split("\n").find((l) => l.startsWith("Problem")));
+  await A("report", { id: j4.id, status: "spam" }); const sp = (await repOf(j4.id)).status; await A("report", { id: j4.id, status: "open" });
+  check("…and the admin can mark a message spam, or not spam", sp === "spam" && (await repOf(j4.id)).status === "open");
+}
 
 // the email's closing time, in UK time
 const e = reminderEmail({ token: "abcdefghjkmnpqrstuvwxyz2", host: "thebetrayal.co.uk", room: "33M56V", expires: Date.parse("2026-07-10T09:05:00Z") });
