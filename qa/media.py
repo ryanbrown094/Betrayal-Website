@@ -52,3 +52,5 @@ with sync_playwright() as p:
     shot("14-awards", "()=>act(s=>{s.finalStep=1;s.awardShown=(s.awards||[]).length})", 5000)
     b.close()
 print("media in", OUT, "errors:", errs)
+print("RESULT: " + ("CLEAN" if not errs else "FAILED " + str(len(errs))))
+sys.exit(1 if errs else 0)

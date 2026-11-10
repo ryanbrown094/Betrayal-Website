@@ -6,7 +6,7 @@
 
 - What it is: a hidden-role (social deduction) party game for adults, "the party game of loyalty and lies". Always written "The Betrayal", with "The".
 - Players: 8 to 24 in one room, best with 8 to 16. Nobody sits out, and the host never sees anyone else's role.
-- Length: about an hour for 8 to 10 players; about an hour and a half for 12 to 16; about two hours for 20 to 24. Classic takes longer: about 3 to 3½ hours for 8 to 12 players.
+- Length: about 45 minutes for 8 to 10 players; an hour to an hour and a quarter for 12 to 16; an hour and a half to two hours for 20 to 24. Classic takes longer: about 3 to 3½ hours for 8 to 12 players.
 - What you need: a phone each (any browser; no app to download, no account) and a prize. A TV is optional: a laptop connected or casting to it shows the questions, votes and reveals, with music.
 - Joining: guests scan the QR code on the TV, or go to thebetrayal.co.uk/join and type the six-character Table code and their name.
 - Prize: set by the host. By default, chocolate coins: one coin for every 100 points the winners take from the Purse.
@@ -17,7 +17,7 @@
 ## How a game works (Modern, everyone on their own phone)
 
 1. The host opens the Table with their booking code and name; guests join on their phones.
-2. The Oath: each phone privately asks its player whether they would like to be Forsworn, then deals the roles. The Forsworn (about one player in four or five: 2 for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, 5 for 23 or 24) see each other; nobody else sees anything.
+2. The Oath: each phone privately asks its player whether they would like to be Forsworn, then deals the roles. The Forsworn (about one player in four or five: 2 for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, 5 for 23 or 24) see each other; nobody else sees anything.
 3. Trials: party games played on the phones (quizzes, word games, guessing games, charades where only the actor sees the word, rock-paper-scissors and more; 15 in all, drawing on thousands of questions and prompts). They fill a shared Purse and win Sanctuary, protection from that night.
 4. The Reckoning: a few minutes of debate on a timer, then a secret vote on every phone. The player with the most votes is exiled and their role is revealed.
 5. Night: the Forsworn choose someone to poison. Everyone else taps a name too, so nobody can tell who is choosing. At dawn the victim, told first in secret on their phone, announces it and gets thirty seconds of last words.
@@ -35,9 +35,9 @@ Classic is the other way to play every Table, for a longer, more immersive eveni
 ## Playing a traitors-style game at home: quick answers
 
 - How do you play The Traitors at home? A few players are secretly traitors; everyone else tries to find them. Each round there's a challenge, a debate and a secret vote to banish someone, and each night the traitors pick a victim. The loyal players win by banishing every traitor. The Betrayal runs all of this on everyone's phones (an independent, original game, not the official one); https://thebetrayal.co.uk/traitors-at-home explains how to run it by hand too.
-- How many traitors for my group? About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, 5 for 23 or 24.
+- How many traitors for my group? About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, 5 for 23 or 24.
 - Is there a traitors game you can play on your phones? Yes: The Betrayal, for 8 to 24 players in one room, in the phone's browser with no app, £10 a party.
-- How long does it take? On phones with The Betrayal, about an hour for 8 to 10 players and up to about two hours for 24. Run by hand, 3 hours or more.
+- How long does it take? On phones with The Betrayal, about 45 minutes for 8 to 10 players and up to about two hours for 24. Run by hand, 3 hours or more.
 - Ideas for a traitors-themed party: https://thebetrayal.co.uk/traitors-party-ideas
 
 ## Pages
@@ -83,9 +83,9 @@ Nobody is told how many Forsworn there are. Players only find out as Forsworn ar
 The game is played in rounds, planned from the size of the table so that the final starts with five or fewer. Each round goes like this:
 
 - A Trial. A party game played on the phones: a quiz, a guessing game, charades and so on (all of them are listed below). Each question closes by itself when everyone has answered or the clock runs out. Trials add to the Purse, and most give Sanctuary to the winner. The evening opens with Most Likely To, as the icebreaker.
-- The Reckoning. Thirty seconds of open debate for each player still in, four minutes at most, on a timer, then everyone votes on their phone, in secret. The vote closes when everyone’s in. The player with the most votes is exiled. A tie goes to a revote between the tied players; a second tie is settled by lot. At a table bigger than sixteen, there are two exiles.
+- The Reckoning. Thirty seconds of open debate for each player still in, four minutes at most, on a timer, then everyone votes on their phone, in secret. The vote closes when everyone’s in. Once all but one have voted, the last has thirty seconds. The player with the most votes is exiled. A tie goes to a revote between the tied players; a second tie is settled by lot. At a table bigger than sixteen, there are two exiles.
 - The reveal. The exiled player’s role is shown: Forsworn or Loyal. They can type one last line for the TV on the way out.
-- The night. Heads down. The Forsworn choose a victim on their phones (two while twelve or more are left at the table, three while twenty or more are). They must all choose the same: the night waits until they agree (if its clock runs out first, the most chosen goes). Everyone else taps someone too, so nobody at the table can tell who is choosing. The Forsworn also have a chat of their own, under Your role on every phone, to talk in secret at any point. A player holding Sanctuary can’t be poisoned.
+- The night. Heads down. The Forsworn choose a victim on their phones (two while twelve or more are left at the table, three while twenty or more are). They must all choose the same: the night waits until they agree (if its clock runs out first, the most chosen goes). Everyone else taps someone too, so nobody at the table can tell who is choosing. Once the Forsworn agree, the last player still to tap has thirty seconds. The Forsworn also have a chat of their own, under Your role on every phone, to talk in secret at any point. A player holding Sanctuary can’t be poisoned.
 - Dawn. The victim learns first, in secret on their phone. Then the host reveals the night to everyone. The victim was poisoned: they stand, announce it and get thirty seconds of last words, then leave the table. If the table voted them most likely to something, the TV remembers that too.
 
 The host can call a short break whenever they like, or pause the game, which stops every clock, for the doorbell or a top-up. If someone is taken ill, the host can take them out of the game without anyone learning their role.
@@ -105,15 +105,15 @@ Each comes once in the evening, and the phones explain it when it happens. The h
 - The Confessor, in the final: the winner of its Trial is told, privately, the name of a Forsworn still at the table.
 
 ## The Purse
-Every Trial adds to a shared Purse, up to its target: the better the table plays, the more goes in. A knockout (Rock Paper Scissors Royale, One Leg, The Statue) has a winner but no score for the table, so it adds half its share. The winners take it at the end: the Loyal take what they built, but the Forsworn take what it fell short of the target, so every point they quietly sabotage is theirs. Each wrong answer from a Forsworn costs the Purse (except on the Rapid Quiz’s brutal questions, which beat most of the table), and the table hears how many there were, never whose. A Loyal player can guess freely, so a shrinking Purse is a clue.
+Every Trial adds to a shared Purse, up to its target: the better the table plays, the more goes in. The final’s Trial plays for everything the Purse still lacks, so a perfect final fills it. A knockout (Rock Paper Scissors Royale, One Leg, The Statue) has a winner but no score for the table, so it adds half its share. The winners take it at the end: the Loyal take what they built, but the Forsworn take what it fell short of the target, so every point they quietly sabotage is theirs. Each wrong answer from a Forsworn costs the Purse (except on the Rapid Quiz’s brutal questions, which beat most of the table), and the table hears how many there were, never whose. A Loyal player can guess freely, so a shrinking Purse is a clue.
 There is also a prize, chosen by the host: something worth lying to your friends for. If they don’t choose one, it’s chocolate coins, one for every 100 points the winners take from the Purse. The host can set better prizes for a fuller Purse, or, if the Forsworn win, an emptier one; the table knows the Purse decides the prize, but not what it is.
 
 ## The end game
 The last round is the final, with five or fewer at the table.
 
-- A last Trial, for the Purse and perhaps something more. There’s no Sanctuary in the final, because there is no night left to survive.
+- A last Trial, for everything the Purse still lacks, and perhaps something more. There’s no Sanctuary in the final, because there is no night left to survive.
 - The Reckoning, without reveals. The table votes a player out, but this time their role is not shown.
-- Trust or Doubt. With four or fewer left, each survivor chooses on their phone, in secret: TRUST if they believe every Forsworn is gone, DOUBT if not. Only a unanimous TRUST ends the game. Otherwise, it’s back to the Reckoning for another exile, and another vote.
+- Trust or Doubt. With four or fewer left, each survivor chooses on their phone, in secret: TRUST if they believe every Forsworn is gone, DOUBT if not. Once all but one have chosen, the last has thirty seconds; no answer counts as a doubt. Only a unanimous TRUST ends the game. Otherwise, it’s back to the Reckoning for another exile, and another vote.
 - The Unmasking. One by one, the last players’ roles are turned over. If only Loyal are left, the Loyal win and share the Purse. If a Forsworn is still at the table, the Forsworn win, and take what the Purse fell short.
 - The last betrayal. If two or more Forsworn survive, each chooses in secret: HONOUR or BETRAY. If they all honour the pact, they share the winnings. If one betrays, they take everything. If two or more betray, nobody does.
 - The awards. Everyone’s role, then up to six awards for the night: The Grand Deceiver, The Sharpest Eye, Barking Up the Wrong Tree, The Ghost Who Saw and more.
@@ -153,12 +153,12 @@ Every Table can also be played Classic; you choose when you open it. It’s the 
 ## What you need
 
 - 8 to 24 players. 8 to 16 is the sweet spot.
-- An hour or two: about an hour for 8 to 10 players, an hour and a half for 12 to 16, and about two hours for 20 to 24. Classic takes longer, about 3 to 3½ hours for 8 to 12, and the Keeper’s setup gives an estimate for your group.
+- 45 minutes to two hours: about 45 minutes for 8 to 10 players, an hour to an hour and a quarter for 12 to 16, and an hour and a half to two hours for 20 to 24. Classic takes longer, about 3 to 3½ hours for 8 to 12, and the Keeper’s setup gives an estimate for your group.
 - A prize.
 - A phone each. A TV, with a laptop connected or casting to it, makes it a show, but it’s optional.
 - For Classic: a TV with a laptop connected or casting to it, a phone for the Keeper, a blindfold for every guest (sleep masks work well), and a small chalkboard and chalk, or a whiteboard and pen, for every guest.
 
-In short: The Betrayal is a hidden-role party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone with no app to install. A game takes about an hour for 8 to 10 players, and up to about two hours for 24. A Table costs £10 for one party, or £20 a month as a Regular.
+In short: The Betrayal is a hidden-role party game for 8 to 24 players in one room, best with 8 to 16, played on everyone’s own phone with no app to install. A game takes about 45 minutes for 8 to 10 players, and up to about two hours for 24. A Table costs £10 for one party, or £20 a month as a Regular.
 Hosting a big group, an office party or a birthday? Read party games for large groups. Curious how hidden-traitor games work without an app? Read how to host a traitors-style game night at home.
 Book a TableSee what a game looks like
 
@@ -184,7 +184,7 @@ What makes it work at a party is that nobody can prove anything. There is only w
 - A way to hide the night. Everyone closes their eyes; sleep masks stop peeking.
 - A few party games for the day: a quiz, charades, a guessing game.
 - A prize. Chocolate coins are traditional: they can be counted, shared out and fought over.
-- Time. By hand, allow about 3 to 3½ hours for 8 to 12 players. On phones, where the games are timed and scored for you, it’s nearer an hour.
+- Time. By hand, allow about 3 to 3½ hours for 8 to 12 players. On phones, where the games are timed and scored for you, it’s 45 minutes to an hour and a quarter.
 
 ## How many traitors?
 About one player in four or five should be a traitor. Too few and they’re caught by the second vote; too many and the loyal players never stand a chance. These are the numbers The Betrayal deals:
@@ -192,8 +192,8 @@ About one player in four or five should be a traitor. Too few and they’re caug
 Players | Traitors
 
 8 to 10 | 2
-11 to 15 | 3
-16 to 22 | 4
+11 to 16 | 3
+17 to 22 | 4
 23 or 24 | 5
 
 Don’t tell the players how many traitors there are. Not knowing is half the fun: every exile raises the question of whether that was the last one.
@@ -257,14 +257,14 @@ The Betrayal is a party game that runs all of this for you on everyone’s own p
 - At night everyone taps a name, so nobody can tell who is choosing. The victim learns they were poisoned in secret, then announces it at dawn.
 - The game plans its own rounds for your group size, up to 24 players, and ends with the Unmasking and up to six awards.
 
-It costs £10 for one party (a Table, open for 48 hours from when the game starts) or £20 a month as a Regular. A TV makes it a show but is optional. On the phones, a game takes about an hour for 8 to 10 players. For a longer, more immersive evening, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.
+It costs £10 for one party (a Table, open for 48 hours from when the game starts) or £20 a month as a Regular. A TV makes it a show but is optional. On the phones, a game takes about 45 minutes for 8 to 10 players. For a longer, more immersive evening, every Table can also be played Classic, with blindfolds, chalkboards and a Keeper who reads the script.
 Book a TableRead the rulesSee a game
 Planning the whole evening, from the invitations to the food? See traitors party ideas.
 
 ## Questions
 
 ### How many traitors should there be?
-About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22, and 5 for 23 or 24.
+About one player in four or five: 2 traitors for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22, and 5 for 23 or 24.
 
 ### Can the host play too?
 Not if you run the game by hand, because whoever runs the night knows who the traitors are. If the game runs on phones, as The Betrayal does, the host plays like everyone else and never sees a role.
@@ -316,9 +316,9 @@ Dark colours, capes and cloaks, tweed and tartan, long coats, gloves and the odd
 Go for a banquet: sharing boards, pies, a big stew or a roast, and bread to tear. Keep it easy to eat while talking, because there will be a lot of talking. A dark “poisoned” cocktail is a good welcome drink (blackberry and gin, or a blackcurrant mocktail), and something warm works in winter. Plan the game for after the main course, or play between courses with the plates cleared for each vote.
 
 ## The game
-About one guest in four or five is secretly a traitor: 2 for 8 to 10 players, 3 for 11 to 15, 4 for 16 to 22 and 5 for 23 or 24. The traitors know each other. Each round there’s a challenge, then everyone debates and votes someone out, then at night the traitors choose a victim. The loyal players win if they vote out every traitor; the traitors win if even one survives to the end.
+About one guest in four or five is secretly a traitor: 2 for 8 to 10 players, 3 for 11 to 16, 4 for 17 to 22 and 5 for 23 or 24. The traitors know each other. Each round there’s a challenge, then everyone debates and votes someone out, then at night the traitors choose a victim. The loyal players win if they vote out every traitor; the traitors win if even one survives to the end.
 You can run it by hand with role cards and a host who doesn’t play: our guide to hosting a traitors-style game at home has the rules, the numbers and a timetable. By hand, plan on about 3 to 3½ hours for 8 to 12 players.
-Or let the phones run it. The Betrayal is a traitors-style party game played on everyone’s own phone, so the host plays too. The phones deal the secret roles, run the challenges, take the secret votes and handle the night, for 8 to 24 players, with no app to install. A game takes about an hour for 8 to 10 players and up to about two hours for 24. It’s £10 for the whole party.
+Or let the phones run it. The Betrayal is a traitors-style party game played on everyone’s own phone, so the host plays too. The phones deal the secret roles, run the challenges, take the secret votes and handle the night, for 8 to 24 players, with no app to install. A game takes about 45 minutes for 8 to 10 players and up to about two hours for 24. It’s £10 for the whole party.
 For a dinner party with phones away, every Table can also be played Classic: a host reads the script from one phone, guests wear blindfolds at night, and dinner is served in courses between the rounds.
 
 ## Prizes
@@ -335,7 +335,7 @@ Book a TableHow to host by handSee a game
 At least 8, and up to 24. The game is at its best with 8 to 16, when everyone gets a say in every vote.
 
 ### How long does the game take?
-Played on phones with The Betrayal, about an hour for 8 to 10 players, about an hour and a half for 12 to 16, and about two hours for 20 to 24. Run by hand, allow 3 hours or more.
+Played on phones with The Betrayal, about 45 minutes for 8 to 10 players, an hour to an hour and a quarter for 12 to 16, and an hour and a half to two hours for 20 to 24. Run by hand, allow 3 hours or more.
 
 ### Do guests need to download an app?
 No. With The Betrayal everyone plays in their phone’s browser, with no app to install and no account to make.
@@ -368,10 +368,10 @@ The Betrayal takes 8 to 24 players and is at its best with 8 to 16. It plans its
 
 Players | Forsworn | Poisoned each night, at first | About how long
 
-8 to 10 | 2 | one | about an hour
-11 or 12 | 3 | one | about 1¼ hours
-13 to 16 | 3 (4 with 16) | two | about 1½ hours
-17 to 24 | 4 (5 with 23 or 24) | two (three with 22 or more), and two exiles at each vote while more than 16 remain | 1¾ to 2¼ hours
+8 to 10 | 2 | one | about 45 minutes
+11 or 12 | 3 | one | about an hour
+13 to 16 | 3 | two | 1 to 1½ hours
+17 to 24 | 4 (5 with 23 or 24) | two (three with 22 or more), and two exiles at each vote while more than 16 remain | 1½ to 2 hours
 
 Classic, the longer way to play with a Keeper, takes about 3 to 3½ hours for 8 to 12 players.
 
@@ -390,7 +390,7 @@ A hen or stag do mixes friends from different parts of someone’s life. A game 
 If your games night has outgrown the board games on the shelf, The Betrayal is the one to bring out when twelve people turn up. Everyone plays in their browser, so there’s nothing to set up beyond sharing the code.
 
 ### Dinner parties
-Play it before or after you eat: on the phones, a game for ten takes about an hour. For a slower evening built around the meal, play Classic, where a Keeper runs the game and dinner in courses is served between the rounds.
+Play it before or after you eat: on the phones, a game for ten takes about 45 minutes. For a slower evening built around the meal, play Classic, where a Keeper runs the game and dinner in courses is served between the rounds.
 
 ## An alternative to a murder mystery party
 A murder mystery party is a lot of work for the host: characters to cast weeks ahead, costumes, booklets to read, a script to follow, and a solution that one person already knows. The Betrayal gives you the same suspicion and the same body count at the table, with none of the homework:
@@ -405,7 +405,7 @@ Nobody is murdered, exactly: the Forsworn poison someone each night, and the vic
 
 ## What you need
 
-- 8 to 24 people, and an hour or two: about an hour for 8 to 10, up to about two hours for 24.
+- 8 to 24 people, and 45 minutes to two hours: about 45 minutes for 8 to 10, up to about two hours for 24.
 - A phone each, with a browser. There’s no app to download and no account to make.
 - A prize. Chocolate coins, unless you choose something else: one coin for every 100 points the winners take from the Purse.
 - A TV if you have one, with a laptop connected or casting to it. It puts the questions, votes and reveals on the big screen, with music, but it’s optional.

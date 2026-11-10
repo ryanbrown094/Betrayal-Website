@@ -1,7 +1,7 @@
 # Screenshots of Modern for the site's tour page (and the home page): a phone at 780 wide (390 at 2x) and the TV at
 # 1280x720, as JPEGs in media/web/ (build.sh copies them to worker/public/media/). Rendered through the page's replay
 # mode from a whole evening played by the rules engine (tools/modern-shots.mjs). Needs the built page: ./build.sh first.
-#   python3 tools/modern-shots.py        then python3 tools/hero-modern.py for the home page's picture
+#   python3 tools/modern-shots.py        then python3 tools/hero-modern.py for the home page's picture, and python3 tools/tour-webp.py for the tour's WebP copies
 import os, json, subprocess, sys, time, io
 from PIL import Image
 from playwright.sync_api import sync_playwright

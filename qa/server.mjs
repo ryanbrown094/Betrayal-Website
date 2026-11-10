@@ -35,7 +35,7 @@ http.createServer(async (req, res) => {
       let b = ""; for await (const c of req) b += c; let body; try { body = JSON.parse(b) } catch (e) { res.writeHead(400); return res.end("Bad JSON") }
       const no = writeVerdict(room.current, body && body.state, room.wiped);
       if (no) { res.writeHead(no.status, { "Content-Type": no.body ? "application/json" : "text/plain" }); return res.end(no.body ? JSON.stringify(no.body) : no.text) }
-      room.current = body.state; return json({ state: room.current, auth: true });
+      room.current = body.state; return json({ auth: true, tag: tagOf(room.current, true) });
     }
     res.writeHead(405); return res.end();
   }
