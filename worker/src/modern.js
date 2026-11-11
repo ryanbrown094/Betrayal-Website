@@ -22,8 +22,13 @@ const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
 // at 16, against 12% at 15 and 24% at 17; with three, 15%. qa/modern-sim.mjs)
 export const forswornFor = (n) => (n <= 7 ? 1 : n <= 10 ? 2 : n <= 16 ? 3 : n <= 22 ? 4 : 5);
 const exilesAt = (a) => (a > 16 ? 2 : 1);
-const killsAt = (a) => Math.max(0, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - 5));
-export function roundsFor(n) { let a = n, r = 1; while (a > 5) { a -= Math.min(exilesAt(a), a - 5); if (a > 5) a -= killsAt(a); r++; } return r; }
+// The final begins with five or fewer at the table; at 8 players, four or fewer, so the game has a second night (8 → 7
+// → 6 → 5 → 4, where five would leave one poisoning a game). Set when the roles are dealt (s.finalAt); a game dealt
+// before keeps five. roundsFor and killsAt take it, so nobody is poisoned below it.
+export const finalFor = (n) => (n === 8 ? 4 : 5);
+const finalAt = (s) => s.finalAt || 5;
+const killsAt = (a, fin = 5) => Math.max(0, Math.min(a >= 20 ? 3 : a >= 12 ? 2 : 1, a - fin));
+export function roundsFor(n, fin = finalFor(n)) { let a = n, r = 1; while (a > fin) { a -= Math.min(exilesAt(a), a - fin); if (a > fin) a -= killsAt(a, fin); r++; } return r; }
 
 // ---------------------------------------------------------------------------------------------------------------
 // The Trials, as they are played on phones. kind: how the phones take part. prize: whether the winner takes Sanctuary.
@@ -306,15 +311,42 @@ function score(s, t, it, ctx) {
   res.pts = pts; return res;
 }
 
+// The Ghosts' Trials: a Ghost answers along with the living for the Ghosts' own score (and an award at the end), never
+// the Purse, the Trial's winner or Sanctuary. Their answers are kept apart (it.ghost, it.gtaps), so nothing the living
+// do is touched, and the living never wait for them. Scored among the Ghosts by the living's rules. The Trials a Ghost
+// can answer on a phone (not Most Likely To, the knockouts, the Statue they haunt, or the acting ones):
+export const GHOSTK = ["text", "number", "hilo", "word", "recall", "cell", "snap", "truths"];
+function ghostScore(s, t, it, ctx) {
+  if (!GHOSTK.includes(it.k)) return null;
+  const G = Object.entries(it.ghost || {}), pts = {}, add = (id, n) => { pts[id] = (pts[id] || 0) + n; };
+  if (it.k === "text") G.filter(([, x]) => marks(x.v, it.a)).sort((a, b) => a[1].t - b[1].t).forEach(([id], i) => add(id, i === 0 ? 2 : 1));
+  else if (it.k === "number") {
+    const g = G.filter(([, x]) => x.v !== "" && !isNaN(+x.v)).map(([id, x]) => [id, Math.abs(+x.v - it.a)]).sort((a, b) => a[1] - b[1]);
+    if (g[0]) { g.filter((x) => x[1] === g[0][1]).forEach(([id]) => add(id, 2)); const second = g.find((x) => x[1] > g[0][1]); if (second) g.filter((x) => x[1] === second[1]).forEach(([id]) => add(id, 1)); }
+  } else if (it.k === "hilo") { const truth = it.a > it.ref ? "higher" : "lower"; G.filter(([, x]) => x.v === truth).forEach(([id]) => add(id, 1)); }
+  else if (it.k === "word") {
+    const ok = G.map(([id, x]) => [id, String(x.v || "").toLowerCase().replace(/[^a-z]/g, "")]).filter(([, w]) => w.length >= 3 && fits(w, it.letters) && (!ctx.dict || ctx.dict.has(w)));
+    const best = Math.max(0, ...ok.map(([, w]) => w.length)); ok.forEach(([id, w]) => add(id, w.length === best ? 2 : w.length >= 6 ? 1 : 0));
+  } else if (it.k === "recall") { const W = it.words.map((w) => norm(w)); for (const [id, x] of G) add(id, new Set(String(x.v || "").split(/[\n,;]+/).map(norm).filter((g) => W.some((w) => marks(g, w))).map((g) => W.find((w) => marks(g, w)))).size); }
+  else if (it.k === "cell") G.filter(([, x]) => (it.changed || []).includes(+x.v)).sort((a, b) => a[1].t - b[1].t).forEach(([id], i) => add(id, i === 0 ? 2 : 1));
+  else if (it.k === "snap") {
+    const hits = {};
+    for (const tp of (it.gtaps || []).slice().sort((a, b) => a.t - b.t)) { const i = Math.floor((tp.t - it.start) / it.step), ok = i > 0 && i < it.seq.length && it.seq[i] === it.seq[i - 1]; if (ok && !(i in hits)) { hits[i] = tp.id; add(tp.id, 1); } else if (!ok) add(tp.id, -1); }
+  } else if (it.k === "truths") G.filter(([, x]) => +x.v === it.lie).forEach(([id]) => add(id, 1));
+  const tg = (t.gscores = t.gscores || {}), all = (s.stats.ghostPts = s.stats.ghostPts || {});
+  for (const [id, n] of Object.entries(pts)) { tg[id] = Math.max(0, (tg[id] || 0) + n); all[id] = Math.max(0, (all[id] || 0) + n); }
+  return pts;
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // The flow. tick() moves every clock on; act() takes one player's input. Both return true when something changed.
 // A Trial offers a share of what the Purse still lacks; the final's offers all of it, so a perfect final fills the
 // Purse (as in Classic). Before, it offered five-sixths, and no simulated game ever reached a full Purse's prize.
-function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); if (s.final) return left; const roundsLeft = Math.max(1, roundsFor(alive(s).length)); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
+function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); if (s.final) return left; const roundsLeft = Math.max(1, roundsFor(alive(s).length, finalAt(s))); return Math.min(left, Math.max(50, fifty(left / (roundsLeft * 1.2)))); }
 // The evening plans itself: each day is a short list of steps (a course, a Trial or two, the Reckoning) and the host's
 // phone only says "next". The twists come once a game each, on rounds picked from the table's size: the Casting Vote
 // about halfway (its Trial gives the Casting Vote instead of Sanctuary, and the Temptation follows it), the Crown on the
-// last round before the final, and the Confessor in the final when five remain with one Forsworn among them.
+// last round before the final, and the Confessor in the final's Trial at its full size (five, or four at 8 players).
 const BREAKS = { interval: [10, "The Interval"], starter: [15, "The Starter"], main: [25, "The Main Course"], dessert: [15, "Dessert"] };
 const SPECIAL = {
   cast: "The winner takes the Casting Vote instead of Sanctuary: if a Reckoning ties, their vote decides it. Once.",
@@ -331,7 +363,7 @@ function planDay(s) {
   }
   if (r === 1 && !s.final && !s.done.likely) steps.push({ k: "trial", key: "likely", once: "likely" });
   if (s.final) {
-    if (!s.done.finalTrial) steps.push({ k: "trial", special: tw && alive(s).length === 5 && forsworn(s).length && !s.confess ? "confess" : null, once: "finalTrial" });
+    if (!s.done.finalTrial) steps.push({ k: "trial", special: tw && alive(s).length === finalAt(s) && forsworn(s).length && !s.confess ? "confess" : null, once: "finalTrial" });
   } else if (r === castR && !s.done.tempt) {
     steps.push({ k: "trial", special: tw && !s.cast ? "cast" : null }, ...(tw ? [{ k: "tempt" }] : []));
   } else {
@@ -397,6 +429,8 @@ function finishTrial(s, now, rnd) {
       if (holders < Math.max(1, Math.floor(A.length / 4))) { const p = P(s, w[0]); if (p.role !== "f" || s.opts.shield === "public") p.shield = { round: s.round, secret: s.opts.shield !== "public" }; t.sanct = w[0]; }
     }
     for (const id of w) s.stats.wins[id] = (s.stats.wins[id] || 0) + 1;
+    const gb = Object.entries(t.gscores || {}).filter(([id, n]) => n > 0 && P(s, id)).sort((a, b) => b[1] - a[1]);
+    t.ghostBest = gb.length ? { ids: gb.filter((x) => x[1] === gb[0][1]).map((x) => x[0]), pts: gb[0][1] } : null; // the Ghosts' own result
   }
   const before = s.pot; s.pot = Math.max(0, Math.min(s.opts.potCap, s.pot + t.points)); t.points = s.pot - before;
   say(s, t.title + " done: " + (t.winners && t.winners.length ? P(s, t.winners[0]).name + " won" : "no winner") + ", Purse " + (t.points >= 0 ? "+" : "") + t.points, now);
@@ -436,14 +470,14 @@ function closeVote(s, now, rnd) {
 function afterReveal(s, now) {
   const A = alive(s);
   if (s.final) { if (A.length <= 2) return startUnmask(s, now); if (A.length <= 4) return startTrust(s, now); return openReckoning(s, now); }
-  if (s.vote && !s.vote.second && A.length + 1 > 16 && exilesAt(A.length + 1) === 2 && A.length > 5) { openReckoning(s, now); s.vote.second = true; return; }
-  if (A.length <= 5) return goFinal(s, now);
+  if (s.vote && !s.vote.second && A.length + 1 > 16 && exilesAt(A.length + 1) === 2 && A.length > finalAt(s)) { openReckoning(s, now); s.vote.second = true; return; }
+  if (A.length <= finalAt(s)) return goFinal(s, now);
   startNight(s, now);
 }
 function goFinal(s, now) { s.trial = null; s.brk = null; s.vote = null; s.final = true; s.round++; s.phase = "day"; s.roundTrials = 0; s.night = null; s.dawn = null; s.reveal = null; for (const p of s.players) p.shield = null; planDay(s); say(s, "The final", now); }
 function startNight(s, now) {
   s.phase = "night"; s.reveal = null; const a = alive(s).length;
-  s.night = { picks: {}, slept: {}, kills: killsAt(a), end: now + T(s, 120000) };
+  s.night = { picks: {}, slept: {}, kills: killsAt(a, finalAt(s)), end: now + T(s, 120000) };
   say(s, "Night falls", now);
 }
 // the Forsworn have all chosen the same: the night waits for that, so a split vote is chosen again, not settled by lot
@@ -468,7 +502,7 @@ function revealDawn(s, now) {
 function nextRound(s, now) {
   s.round++; s.phase = "day"; s.roundTrials = 0; s.dawn = null; s.night = null; s.reveal = null; s.vote = null;
   for (const p of s.players) if (p.shield && p.shield.round < s.round) p.shield = null;
-  if (alive(s).length <= 5) { s.final = true; say(s, "The final", now); }
+  if (alive(s).length <= finalAt(s)) { s.final = true; say(s, "The final", now); }
   planDay(s);
 }
 function startTrust(s, now) { s.phase = "trust"; s.trust = { votes: {}, end: now + T(s, 120000) }; }
@@ -499,6 +533,7 @@ function awardsOf(s) {
   b = best(s.stats.wins); if (b) give("Trial Machine", b[0], "won " + b[1] + (b[1] === 1 ? " Trial" : " Trials"));
   b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "drew " + b[1] + (b[1] === 1 ? " vote" : " votes"));
   if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to be poisoned");
+  b = best(s.stats.ghostPts || {}); if (b && b[1] > 0) give("The Restless Ghost", b[0], "scored " + b[1] + (b[1] === 1 ? " point" : " points") + " in the Ghosts’ Trials");
   b = best(s.stats.calls); if (b) give("The Ghost Who Saw", b[0], "called " + b[1] + (b[1] === 1 ? " exile" : " exiles") + " from beyond the table");
   b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "voted for the Loyal " + b[1] + (b[1] === 1 ? " time" : " times"));
   return out.slice(0, 6);
@@ -509,7 +544,7 @@ function shiftClocks(s, d) {
   const mv = (o, ...ks) => { if (o) for (const k of ks) if (typeof o[k] === "number") o[k] += d; };
   const t = s.trial, it = t && t.item;
   mv(t, "introEnd"); mv(it, "end", "from", "revealEnd", "start", "opened");
-  if (it) { for (const x of Object.values(it.inputs || {})) mv(x, "t"); for (const x of it.taps || []) mv(x, "t"); }
+  if (it) { for (const x of Object.values(it.inputs || {})) mv(x, "t"); for (const x of it.taps || []) mv(x, "t"); for (const x of Object.values(it.ghost || {})) mv(x, "t"); for (const x of it.gtaps || []) mv(x, "t"); }
   mv(s.brk, "end"); mv(s.vote, "talkEnd", "voteEnd"); mv(s.reveal, "roleAt", "at"); mv(s.night, "end"); mv(s.dawn, "lastEnd", "at");
   mv(s.trust, "end", "at"); mv(s.unmask, "next"); mv(s.honour, "end");
 }
@@ -582,7 +617,7 @@ export function tick(s, now, ctx) {
         const g = it.grid.slice(); if (t.i % 2 === 0) { const i = Math.floor(rnd() * 12), spare = CHSYM.filter((x) => !g.includes(x)); g[i] = pick(spare, rnd); it.changed = [i]; } else { const i = Math.floor(rnd() * 12); let j; do j = Math.floor(rnd() * 12); while (j === i); [g[i], g[j]] = [g[j], g[i]]; it.changed = [i, j]; }
         it.before = it.grid; it.grid = g; it.stage = "open"; it.from = now; it.end = now + T(s, OPEN.cell * 1000); mark();
       } else if (it.stage === "open" && (now >= it.end || (!["actor", "survive", "snap"].includes(it.k) && !owed(s, it).length && Object.keys(it.inputs).length) || (it.k === "survive" && alive(s).filter((p) => !it.out.includes(p.id)).length <= 1))) {
-        it.res = score(s, t, it, ctx); it.stage = "reveal"; it.revealEnd = now + (it.k === "actor" ? 4000 : it.k === "survive" ? 6000 : 5000); t.results.push(it.res); t.i++; mark();
+        it.res = score(s, t, it, ctx); it.gres = ghostScore(s, t, it, ctx); it.stage = "reveal"; it.revealEnd = now + (it.k === "actor" ? 4000 : it.k === "survive" ? 6000 : 5000); t.results.push(it.res); t.i++; mark();
       } else if (it.stage === "reveal" && now >= it.revealEnd) { nextItem(s, now, rnd); mark(); }
       if (it.k === "truths" && it.stage === "prep" && now >= it.end) { it.lie = it.lie || 1 + Math.floor(rnd() * 3); it.stage = "open"; it.from = now; it.end = now + T(s, OPEN.truths * 1000); mark(); }
     }
@@ -653,6 +688,13 @@ export function act(s, pid, a, now, ctx) {
     case "out": { if (!it || it.k !== "survive" || it.stage !== "open") return need(false); const who = dir && a.who && P(s, a.who) ? a.who : pid; if (P(s, who) && P(s, who).alive && !it.out.includes(who)) it.out.push(who); return done(); }
     // --- answers
     case "ans": {
+      if (it && it.stage === "open" && !me.alive && !me.left && GHOSTK.includes(it.k)) { // a Ghost, for the Ghosts' score
+        const G = (it.ghost = it.ghost || {});
+        if (it.k === "snap") { if (now < it.start) return need(false); const gt = (it.gtaps = it.gtaps || []); if (gt.filter((x) => x.id === pid && now - x.t < 600).length) return null; gt.push({ id: pid, t: now }); return done(); }
+        if (it.k === "truths") { if (pid in G || ![1, 2, 3].includes(+v)) return need(false); G[pid] = { v: +v, t: now }; return done(); }
+        if (pid in G && it.k !== "recall" && it.k !== "word") return need(false, "You’ve already answered.");
+        G[pid] = { v: clip(v, it.k === "recall" ? 600 : 80), t: now }; return done();
+      }
       if (!it || it.stage !== "open" || !me.alive) return need(false, "Too late. That one has closed.");
       if (["text", "number", "hilo", "vote", "word", "recall", "cell", "tempt"].includes(it.k)) { if (pid in it.inputs && it.k !== "recall" && it.k !== "word") return need(false, "You’ve already answered."); it.inputs[pid] = { v: clip(v, it.k === "recall" ? 600 : 80), t: now }; return done(); }
       if (it.k === "rps") { if (!it.pairs.flat().includes(pid) || pid in it.inputs || !["rock", "paper", "scissors"].includes(v)) return need(false); it.inputs[pid] = { v, t: now }; return done(); }
@@ -738,7 +780,7 @@ function deal(s, now, rnd) {
   const yes = shuffle(live.filter((p) => p.optIn === "yes"), rnd), any = shuffle(live.filter((p) => !p.optIn || p.optIn === "any"), rnd), no = shuffle(live.filter((p) => p.optIn === "no"), rnd);
   const chosen = [...yes, ...any, ...no].slice(0, k).map((p) => p.id);
   for (const p of s.players) { p.role = !p.left && chosen.includes(p.id) ? "f" : "l"; p.acked = false; }
-  s.phase = "roles"; s.total = roundsFor(n); say(s, "Roles dealt: " + k + " Forsworn (" + names(s, chosen) + ")", now);
+  s.phase = "roles"; s.finalAt = finalFor(n); s.total = roundsFor(n, s.finalAt); say(s, "Roles dealt: " + k + " Forsworn (" + names(s, chosen) + ")", now);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -757,7 +799,7 @@ export function viewFor(s, pid, now) {
   if (based(s)) o.locked = Object.keys(TRIALS).filter((k) => !BASE_TRIALS.includes(k)).map((k) => TRIALS[k].title); // what a pass would add
   if (s.trial) {
     const t = s.trial, it = t.item;
-    o.trial = { key: t.key, title: t.title, rules: t.rules, stage: t.stage, introEnd: t.introEnd, i: t.i, prize: t.prize && !s.final, offer: t.offer, scores: t.stage === "done" && t.special !== "cast" ? t.scores : undefined, winners: t.stage === "done" && t.special !== "cast" ? t.winners : undefined, points: t.stage === "done" ? t.points : undefined, sanctPublic: t.stage === "done" && t.sanct && s.opts.shield === "public" ? t.sanct : undefined, wrongF: t.stage === "done" ? t.wrongF || 0 : undefined, special: t.special === "confess" ? "secret" : t.special, byLot: t.stage === "done" ? !!t.byLot : undefined, gave: t.stage === "done" && t.gave === "crown" ? t.winners[0] : undefined };
+    o.trial = { key: t.key, title: t.title, rules: t.rules, stage: t.stage, ghostBest: t.stage === "done" && t.ghostBest ? t.ghostBest : undefined, introEnd: t.introEnd, i: t.i, prize: t.prize && !s.final, offer: t.offer, scores: t.stage === "done" && t.special !== "cast" ? t.scores : undefined, winners: t.stage === "done" && t.special !== "cast" ? t.winners : undefined, points: t.stage === "done" ? t.points : undefined, sanctPublic: t.stage === "done" && t.sanct && s.opts.shield === "public" ? t.sanct : undefined, wrongF: t.stage === "done" ? t.wrongF || 0 : undefined, special: t.special === "confess" ? "secret" : t.special, byLot: t.stage === "done" ? !!t.byLot : undefined, gave: t.stage === "done" && t.gave === "crown" ? t.winners[0] : undefined };
     if (it) {
       const x = { k: it.k, stage: it.stage, end: it.end, from: it.from || it.opened, who: Object.keys(it.inputs), revealEnd: it.revealEnd, q: it.q, part: it.part, ref: it.ref, letters: it.letters, answered: Object.keys(it.inputs).length, of: owedCount(s, it) };
       if (it.k === "recall" && it.stage === "study") x.words = it.words;
@@ -770,6 +812,11 @@ export function viewFor(s, pid, now) {
       if (it.stage === "reveal") { x.a = it.a; x.res = it.res; if (it.k === "recall") x.words = it.words; }
       if (me && pid in it.inputs) x.mine = it.inputs[pid].v;
       if (me && it.k === "snap") x.myTaps = it.taps.filter((q) => q.id === pid).length;
+      if (me && !me.alive && !me.left && GHOSTK.includes(it.k)) { // a Ghost plays for the Ghosts' score: their own answer, taps and points
+        const G = it.ghost || {}; x.ghostPlay = true; if (pid in G) x.mine = G[pid].v;
+        if (it.k === "snap") x.myTaps = (it.gtaps || []).filter((q) => q.id === pid).length;
+        if (it.stage === "reveal") x.gpts = (it.gres || {})[pid] || 0;
+      }
       if (me && it.k === "actor" && it.actor === pid) x.word = it.word, x.skips = it.skips;
       if (me && it.k === "truths" && it.teller === pid) x.lie = it.lie;
       if (me && it.k === "rps") { const pr = it.pairs.find((q) => q.includes(pid)); x.vs = pr ? pr.find((id) => id !== pid) : null; }
@@ -792,7 +839,7 @@ export function viewFor(s, pid, now) {
   if (s.honour && s.phase === "honour") o.honour = { end: s.honour.end, made: Object.keys(s.honour.choices).length, of: forsworn(s).length, mine: me ? s.honour.choices[pid] || null : null };
   if (over) o.result = { ...s.result, to: s.result.to.map((id) => P(s, id).name), honour: s.honour ? Object.entries(s.honour.choices).map(([id, c]) => [P(s, id).name, c]) : null };
   if (me) {
-    o.me = { id: me.id, name: me.name, left: me.left || undefined, alive: me.alive && !me.dying, director: s.director === pid, role: s.phase === "lobby" || s.phase === "oath" ? null : me.role, optIn: me.optIn, acked: me.acked, shield: me.shield && me.shield.round === s.round && me.role !== "f" ? true : false };
+    o.me = { id: me.id, name: me.name, left: me.left || undefined, alive: me.alive && !me.dying, director: s.director === pid, role: s.phase === "lobby" || s.phase === "oath" ? null : me.role, optIn: me.optIn, acked: me.acked, shield: me.shield && me.shield.round === s.round && me.role !== "f" ? true : false, ghostPts: !me.alive && !me.left ? (s.stats.ghostPts || {})[pid] || 0 : undefined };
     if (me.role === "f" && !["lobby", "oath"].includes(s.phase)) o.me.allies = s.players.filter((p) => p.role === "f" && p.id !== pid).map((p) => ({ name: p.name, alive: p.alive }));
     if (s.phase === "night" && me.alive) {
       if (me.role === "f") { o.me.targets = alive(s).filter((p) => p.role !== "f").map((p) => p.id); o.me.picks = Object.fromEntries(forsworn(s).map((f) => [f.name, [].concat(s.night.picks[f.id] || []).map((id) => P(s, id).name)])); o.me.mine = [].concat(s.night.picks[pid] || []); o.me.sanct = alive(s).filter((p) => p.shield && !p.shield.secret && p.shield.round === s.round).map((p) => p.name); }

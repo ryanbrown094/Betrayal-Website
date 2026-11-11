@@ -21,8 +21,8 @@
 3. Trials: party games played on the phones (quizzes, word games, guessing games, charades where only the actor sees the word, rock-paper-scissors and more; 15 in all, drawing on thousands of questions and prompts). They fill a shared Purse and win Sanctuary, protection from that night.
 4. The Reckoning: a few minutes of debate on a timer, then a secret vote on every phone. The player with the most votes is exiled and their role is revealed.
 5. Night: the Forsworn choose someone to poison. Everyone else taps a name too, so nobody can tell who is choosing. At dawn the victim, told first in secret on their phone, announces it and gets thirty seconds of last words.
-6. Players who are out become Ghosts: they stay at the party and still call each vote.
-7. The final starts with five or fewer players. The survivors decide in secret whether they trust everyone left (one doubt means another vote, without a reveal); then the Unmasking reveals every role. The Loyal win if every Forsworn is gone and take the Purse they built; the Forsworn win if one survives and take what the Purse fell short of its target. The game ends with up to six awards.
+6. Players who are out become Ghosts: they stay at the party, still call each vote, and play most Trials for a Ghosts' score that never touches the Purse.
+7. The final starts with five or fewer players (four or fewer with 8, so 8 players get a second night). The survivors decide in secret whether they trust everyone left (one doubt means another vote, without a reveal); then the Unmasking reveals every role. The Loyal win if every Forsworn is gone and take the Purse they built; the Forsworn win if one survives and take what the Purse fell short of its target. The game ends with up to six awards.
 
 Classic is the other way to play every Table, for a longer, more immersive evening of about three hours: a TV with a laptop, one phone for a Keeper who reads the script and doesn't play, blindfolds at night and votes chalked on small boards. Classic also has a Short game of about 2 to 2½ hours for 8 to 10 players.
 
@@ -80,7 +80,7 @@ The night begins with the Oath. Every phone asks its player, privately: would yo
 Nobody is told how many Forsworn there are. Players only find out as Forsworn are exiled and revealed.
 
 ## A round
-The game is played in rounds, planned from the size of the table so that the final starts with five or fewer. Each round goes like this:
+The game is played in rounds, planned from the size of the table so that the final starts with five or fewer (four or fewer with 8 players, which gives them a second night). Each round goes like this:
 
 - A Trial. A party game played on the phones: a quiz, a guessing game, charades and so on (all of them are listed below). Each question closes by itself when everyone has answered or the clock runs out. Trials add to the Purse, and most give Sanctuary to the winner. The evening opens with Most Likely To, as the icebreaker.
 - The Reckoning. Thirty seconds of open debate for each player still in, four minutes at most, on a timer, then everyone votes on their phone, in secret. The vote closes when everyone’s in. Once all but one have voted, the last has thirty seconds. The player with the most votes is exiled. A tie goes to a revote between the tied players; a second tie is settled by lot. At a table bigger than sixteen, there are two exiles.
@@ -91,7 +91,7 @@ The game is played in rounds, planned from the size of the table so that the fin
 The host can call a short break whenever they like, or pause the game, which stops every clock, for the doorbell or a top-up. If someone is taken ill, the host can take them out of the game without anyone learning their role.
 
 ## The dead
-Nobody goes home when they’re out. Exiled and poisoned players become Ghosts: they stay at the party and watch the game on their phones. They can’t vote, but at every Reckoning they can call who they think goes, and the table is told which Ghosts called it. In The Statue, the Ghosts do their worst to make the living laugh.
+Nobody goes home when they’re out. Exiled and poisoned players become Ghosts: they stay at the party and watch the game on their phones. They can’t vote, but at every Reckoning they can call who they think goes, and the table is told which Ghosts called it. In most Trials they play on, for the Ghosts’ own score: it never touches the Purse, the Trial’s winner or Sanctuary, and the best Ghost of the night can take an award. In The Statue, the Ghosts do their worst to make the living laugh.
 
 ## Sanctuary
 Sanctuary protects its holder from that night’s poison. It’s the prize in most Trials, and it lasts one night. At most a quarter of the table can hold one at the same time. The host chooses at the start whether Sanctuary is won in public, named for everyone, or in secret, so only the winner knows they’re safe. A Forsworn who wins a secret Sanctuary gets nothing, and is the only one who knows.
@@ -109,7 +109,7 @@ Every Trial adds to a shared Purse, up to its target: the better the table plays
 There is also a prize, chosen by the host: something worth lying to your friends for. If they don’t choose one, it’s chocolate coins, one for every 100 points the winners take from the Purse. The host can set better prizes for a fuller Purse, or, if the Forsworn win, an emptier one; the table knows the Purse decides the prize, but not what it is.
 
 ## The end game
-The last round is the final, with five or fewer at the table.
+The last round is the final, with five or fewer at the table (four or fewer with 8 players).
 
 - A last Trial, for everything the Purse still lacks, and perhaps something more. There’s no Sanctuary in the final, because there is no night left to survive.
 - The Reckoning, without reveals. The table votes a player out, but this time their role is not shown.
@@ -364,7 +364,7 @@ At the start, every phone asks its player a private question: would you like to 
 Each round the group plays a Trial, a party game on the phones: a quiz, charades where only the actor sees the word, a word game, a guessing game, rock-paper-scissors. Trials fill a shared Purse and win Sanctuary from the night. Then comes the Reckoning: a few minutes of argument, a secret vote on every phone, and someone is exiled. At night the Forsworn poison someone, while everyone else taps their phone too so nobody can tell who is choosing. It ends with the Unmasking, the prize and up to six awards. The rules have the whole game, and the tour shows it screen by screen.
 
 ## How the size of the group changes the game
-The Betrayal takes 8 to 24 players and is at its best with 8 to 16. It plans its own rounds for your group, so the final starts with five or fewer players left. Bigger groups get more Forsworn, more exiles and more poisonings, and a longer game. The numbers drop as the table shrinks:
+The Betrayal takes 8 to 24 players and is at its best with 8 to 16. It plans its own rounds for your group, so the final starts with five or fewer players left (four with 8). Bigger groups get more Forsworn, more exiles and more poisonings, and a longer game. The numbers drop as the table shrinks:
 
 Players | Forsworn | Poisoned each night, at first | About how long
 
@@ -378,7 +378,7 @@ Classic, the longer way to play with a Keeper, takes about 3 to 3½ hours for 8 
 ## Which parties it suits
 
 ### Christmas parties and office dos
-An office Christmas party game has to work for people who don’t all know each other, in a room that’s often too big for a board game. The Betrayal needs only a phone each, and a big screen or projector if the venue has one. Colleagues discover a talent for lying that nobody suspected. Keep it friendly by choosing a prize everyone would like to win, and let the people who are out keep calling the votes as Ghosts.
+An office Christmas party game has to work for people who don’t all know each other, in a room that’s often too big for a board game. The Betrayal needs only a phone each, and a big screen or projector if the venue has one. Colleagues discover a talent for lying that nobody suspected. Keep it friendly by choosing a prize everyone would like to win, and let the people who are out keep calling the votes, and playing the Trials, as Ghosts.
 
 ### Birthday parties for adults
 For a birthday with a houseful of friends, it gives the evening a shape: drinks, the Oath, a few rounds and a reveal to finish. Make the birthday guest the host: they open the Table on their phone and still get a secret role like everyone else.
