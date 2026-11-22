@@ -220,7 +220,10 @@ export class GameState {
       // the app logs what a player was told (a name to type, an answer first) as an error: a prompt it showed is kept in the
       // room's trail, not the master log (no stack, and something this room was told lately, or a "Type…" prompt)
       const prompt = (x) => who.app && x.k === "error" && !x.stack && (Date.now() - (this.told.get(x.m) || 0) < 600000 || /^(Type|Choose|Pick|Enter) [^.\n]{1,80}\.$/.test(x.m));
-      const errs = list.filter((x) => (x.k === "error" || x.k === "crash") && !prompt(x)).slice(0, 10), hr = Math.floor(Date.now() / 3600000);
+      // nor does what the browser itself put on the page (Brave's and extensions' scripts): an error at line 1 of the page,
+      // which is the doctype, so never our code; an opaque "Script error."; or a global only they define
+      const foreign = (x) => !who.app && x.k === "error" && (/^Script error\.?$/.test(x.m) || /__firefox__|\bethereum\b|DarkReader|__gCrWeb|webkit\.messageHandlers/.test(x.m) || /\/[gtm]\/[A-Za-z0-9]{6}\/?(?:[?#][^:]*)?:1:\d+$/.test(x.src || ""));
+      const errs = list.filter((x) => (x.k === "error" || x.k === "crash") && !prompt(x) && !foreign(x)).slice(0, 10), hr = Math.floor(Date.now() / 3600000);
       if (errs.length) { // to the master log at most 30 an hour a room, so nobody with a room code can flood it
         const c = (await this.storage.get("errc")) || {}, used = c.h === hr ? c.n : 0, send = errs.slice(0, Math.max(0, 30 - used));
         if (send.length) await this.storage.put("errc", { h: hr, n: used + send.length });
@@ -446,7 +449,12 @@ export class GameState {
       }
       const r = M.act(s, me.id, body, now, ctx);
       if (r && r.error) return json({ ...r, view: viewOf(s, me, now) }, 409);
-      M.tick(s, now, ctx); await save(); return view(r && r.peek ? { peek: r.peek } : null);
+      M.tick(s, now, ctx); await save();
+      if (body.a === "rate" && this.env.REGISTRY) { // the end screen's 1 to 5, to the Registry for the admin's rooms list and the morning email
+        const rs = Object.values(s.ratings || {}).filter((x) => x > 0);
+        if (rs.length) await registry(this.env).fetch("https://registry/room-rated", { method: "POST", body: JSON.stringify({ room: meta.room, rated: rs.length, rating: Math.round((rs.reduce((a, x) => a + x, 0) / rs.length) * 10) / 10 }) }).catch(() => null);
+      }
+      return view(r && r.peek ? { peek: r.peek } : null);
     }
     if (path === "/api/m" && req.method === "GET") {
       const it = s.trial && s.trial.item, live = it && it.k === "snap" && it.stage === "open";
@@ -611,7 +619,11 @@ export class Registry {
       const e = { t: Date.now() }; for (const [k, v] of Object.entries(b || {})) if (typeof v !== "object" || v === null) e[clip(k, 20)] = typeof v === "string" ? clip(v, k === "stack" ? 1500 : 400) : v;
       await this.storage.put(tkey("err:"), e); await this.trim("err:", 3000); return json({ ok: true });
     }
-    if (url.pathname === "/errs") return json({ errors: await this.newest("err:", 1000), muted: (await this.storage.get("errmute")) || [] });
+    if (url.pathname === "/errs") { // a message marked spam (or caught as spam) leaves the error log with it
+      const errors = await this.newest("err:", 1000), ids = [...new Set(errors.filter((e) => e.src === "report" && e.report).map((e) => "rep:" + e.report))], spam = new Set();
+      await Promise.all(ids.map(async (k) => { const r = await this.storage.get(k); if (r && r.status === "spam") spam.add(k.slice(4)); }));
+      return json({ errors: errors.filter((e) => !(e.src === "report" && spam.has(e.report))), muted: (await this.storage.get("errmute")) || [] });
+    }
     // the admin's Mute on an error: that message (numbers aside, errKey) is hidden in Errors and left out of the morning count
     if (url.pathname === "/err-mute") {
       const k = clip(b.key, 120), m = new Set((await this.storage.get("errmute")) || []);
@@ -623,12 +635,26 @@ export class Registry {
     if (url.pathname === "/indexnow-day") { if (typeof b.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(b.day)) await this.storage.put("indexnow:day", b.day); return json({ day: (await this.storage.get("indexnow:day")) || null }); }
     // the morning summary (the Worker's daily schedule): the last 24 hours, for the owner's inbox
     if (url.pathname === "/digest") {
-      const since = Date.now() - 86400000, sales = [], refunds = [], ended = [], failed = []; let regulars = 0, games = 0, tests = 0;
+      const since = Date.now() - 86400000, sales = [], refunds = [], ended = [], failed = [], pk = new Map(); let regulars = 0, games = 0, tests = 0;
       for (const [k, v] of await this.storage.list({ prefix: "pass:" })) {
+        pk.set(k.slice(5), v);
         if (v.kind === "sub" && v.subActive) regulars++;
         if (v.paid > since) sales.push(v); if (v.refunded > since) refunds.push(v); if (v.subEnded > since) ended.push([k, v]); if (v.failed > since) failed.push([k, v]);
       }
-      for (const [, v] of await this.storage.list({ prefix: "room:" })) if (v.created > since) { if (v.pass === "MASTER") tests++; else games++; }
+      // the rooms opened, by how they were paid for (as the admin's Rooms tab sorts them); and the end screen's ratings
+      const kinds = { web: 0, app: 0, codes: 0, free: 0, practice: 0 }, rated = [];
+      for (const [k, v] of await this.storage.list({ prefix: "room:" })) {
+        if (v.ratedAt > since) rated.push([k.slice(5), v]);
+        if (!(v.created > since)) continue;
+        const p = v.pass && pk.get(v.pass), src = p ? String(p.source || "admin") : "";
+        if (v.pass === "MASTER" || (!v.pass && !v.tier) || (p && p.apple && p.apple.env && p.apple.env !== "Production")) tests++;
+        else if (v.practice) kinds.practice++;
+        else if (!v.pass) kinds.free++;
+        else if (src === "appstore") kinds.app++;
+        else if (src.startsWith("stripe") && p.amount !== 0) kinds.web++;
+        else kinds.codes++;
+      }
+      games = kinds.web + kinds.app + kinds.codes + kinds.free;
       const reps = [...(await this.storage.list({ prefix: "rep:" })).values()], open = reps.filter((r) => r.status === "open").length, newReps = reps.filter((r) => r.t > since && r.status !== "spam" && !r.spam), newSpam = reps.filter((r) => r.t > since && r.spam).length;
       const mutes = new Set((await this.storage.get("errmute")) || []), all = [...(await this.storage.list({ prefix: "err:", start: "err:" + String(since).padStart(15, "0") })).values()].filter((e) => e.src !== "report");
       const errs = all.filter((e) => !mutes.has(errKey(e))), muted = all.length - errs.length, seen = new Map();
@@ -648,7 +674,8 @@ export class Registry {
         refunds.length ? "Refunds: " + refunds.length + ", " + gbp(money(refunds, (v) => v.refundedAmount)) : null,
         ended.length ? "Regulars who cancelled: " + ended.map(([k]) => shownPass(k.slice(5))).join(", ") : null,
         failed.length ? "Payments refused: " + failed.length + " (" + failed.map(([k, v]) => shownPass(k.slice(5)) + ": " + (v.failWhy || "refused")).join("; ") + ")" : null,
-        "Tables opened: " + games + (tests ? " (and " + tests + " test " + (tests === 1 ? "room" : "rooms") + ")" : ""),
+        "Tables opened: " + games + (games ? " (" + [kinds.web && kinds.web + " paid on the website", kinds.app && kinds.app + " with an App Store pass", kinds.codes && kinds.codes + " with a free code", kinds.free && kinds.free + " free in the app"].filter(Boolean).join(", ") + ")" : "") + (kinds.practice || tests ? "; and " + [kinds.practice && kinds.practice + " practice " + (kinds.practice === 1 ? "game" : "games") + " in the app", tests && tests + " test " + (tests === 1 ? "room" : "rooms")].filter(Boolean).join(", ") : ""),
+        rated.length ? "Rated at the end of the game: " + rated.map(([code, v]) => code + " " + v.rating + " out of 5 (" + v.rated + (v.rated === 1 ? " player" : " players") + ")").join(" · ") : null,
         waiting.length ? "Opened but not started yet: " + waiting.map((x) => x.code + " (opened " + at(x.r.created) + ", " + (+x.s.players || 0) + " in the lobby" + (x.s.joinOnly ? ", " + x.s.joinOnly + " left the join page without joining" : "") + ")").join(" · ") : null,
         bounced ? "Join page, never joined: " + bounced + (bounced === 1 ? " phone" : " phones") + ", at Tables opened in the last two days" : null,
         "Problem reports and messages: " + newReps.length + " new, " + open + " open" + (newSpam ? " (and " + newSpam + " spam caught: Reports, Show Spam)" : ""),
@@ -687,7 +714,8 @@ export class Registry {
     // every room ever opened, with the pass that opened it
     if (url.pathname === "/rooms") {
       const passes = new Map(); for (const [k, v] of await this.storage.list({ prefix: "pass:" })) passes.set(k.slice(5), v);
-      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, pass: v.pass && v.pass !== "MASTER" ? shownPass(v.pass) : v.pass, note: pv ? pv.note || "" : "", email: pv ? pv.email || (/@/.test(pv.note || "") ? String(pv.note).trim() : "") : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "" }); }
+      const rows = []; for (const [k, v] of await this.storage.list({ prefix: "room:" })) { const pv = v.pass && passes.get(v.pass); rows.push({ room: k.slice(5), ...v, pass: v.pass && v.pass !== "MASTER" ? shownPass(v.pass) : v.pass, note: pv ? pv.note || "" : "", email: pv ? pv.email || (/@/.test(pv.note || "") ? String(pv.note).trim() : "") : "", kind: pv ? pv.kind || "one" : v.pass === "MASTER" ? "master" : "",
+        ...(pv ? { source: String(pv.source || "admin").replace(/:.*/, ""), amount: typeof pv.amount === "number" ? pv.amount : null, disc: pv.disc || null, price: pv.apple ? pv.apple.price || null : null, sandbox: !!(pv.apple && pv.apple.env && pv.apple.env !== "Production"), refunded: !!pv.refunded } : {}) }); }
       return json({ rooms: rows.sort((a, c) => (c.expires || 0) - (a.expires || 0)) });
     }
     // a checkout nobody paid for or tried to pay for isn't a pass yet: it's left out (and cleared after two days)
@@ -732,6 +760,12 @@ export class Registry {
       return json({ room: { ...rest, pass: r.pass && r.pass !== "MASTER" ? shownPass(r.pass) : r.pass }, email: v ? v.email || (/@/.test(v.note || "") ? String(v.note).trim() : "") : "",
         ext: x ? { sent: x.sent, added: x.added || null, asked: x.asked ? { t: x.asked.t, until: x.asked.until, report: x.asked.report, given: x.asked.given || null } : null } : null,
         closed: c ? { sent: c.sent, asked: c.asked ? { t: c.asked.t, until: c.asked.until, report: c.asked.report, given: c.asked.given || null } : null } : null });
+    }
+    // the players' ratings on the end screen (GameState, after each): how many and the average, for the admin and the digest
+    if (url.pathname === "/room-rated") {
+      const code = String(b.room || ""), r = await this.storage.get("room:" + code);
+      if (r && +b.rated > 0) await this.storage.put("room:" + code, { ...r, rated: Math.round(+b.rated), rating: Math.round(+b.rating * 10) / 10, ratedAt: Date.now() });
+      return json({ ok: true });
     }
     // a room deleted KEEP_DAYS after it closed (GameState alarm): its summary stays with it here, for the admin
     if (url.pathname === "/room-summary") {
@@ -1325,9 +1359,10 @@ function sampleEmails(env) {
 }
 // Contact-form spam: a hidden field only a robot fills in, a message sent within three seconds of the page opening, or a
 // sales pitch (SEO, links, marketing, "reply with your phone number"). Returns why, or null. Kept in Reports, not emailed.
-const PITCH = /\b(seo|search engine optimi[sz]ation|back ?links?|link building|guest post(?:ing)?|digital marketing|marketing agency|lead generation|first page (?:of|on) google|page one of google|rank(?:ing)? higher|google ranking|visibility on (?:google|bing)|web ?(?:site)? (?:design|development|redesign) services|reply with your (?:phone|mobile|whatsapp)(?: number)?)\b/i;
+const PITCH = /\b(seo|search engine optimi[sz]ation|back ?links?|link building|guest post(?:ing)?|digital marketing|marketing agency|lead generation|first page (?:of|on) google|page one of google|rank(?:ing)? higher|google ranking|visibility on (?:google|bing)|web ?(?:site)? (?:design|development|redesign) services|reply with your (?:phone|mobile|whatsapp)(?: number)?|reddit (?:posts?|threads?|discussions?)|rank(?:s)? for your brand(?: name)?|branded (?:google |search )?results|send you (?:a few |some )?case studies|(?:premium )?marketing (?:software|tools)|discounts? of up to \d+ ?%)\b/i;
 function spamWhy(b) {
   if (clip(b.hp, 200).trim()) return "a hidden field only robots see was filled in";
+  if (/:\/\//.test(clip(b.url, 200))) return "sent from outside the site (its page was " + clip(b.url, 80) + ")"; // our pages send a path, the app "app"
   if (typeof b.filled === "number" && b.filled >= 0 && b.filled < 3000) return "sent " + (b.filled / 1000).toFixed(1) + " seconds after the page opened";
   const m = clip(b.what, 4000).match(PITCH); return m ? "a sales pitch (“" + m[0] + "”)" : null;
 }
@@ -1496,7 +1531,8 @@ async function route(req, env) {
       if (!clip(b.what, 4000).trim()) return json({ error: "Tell us what went wrong." }, 400);
       const code = isRoom(String(b.room || "").toUpperCase()) ? String(b.room).toUpperCase() : null;
       // a contact-form message that looks like spam is kept (Reports, Spam) but not emailed; the sender is told it went
-      const spam = clip(b.url, 200) === "/contact" ? spamWhy(b) : null;
+      // (the contact form says so as its device and page; a robot posting here may change the page to its own site)
+      const spam = clip(b.device, 16) === "contact form" || clip(b.url, 200) === "/contact" || /:\/\//.test(clip(b.url, 200)) ? spamWhy(b) : null;
       if (spam) {
         const rr = await registry(env).fetch("https://registry/report", { method: "POST", headers: { "CF-Connecting-IP": req.headers.get("CF-Connecting-IP") || "?" }, body: JSON.stringify({ ...b, snap: "", crumbs: [], room: code, rec: 0, spam }) });
         const r = await rr.json(); return json(rr.ok ? { id: r.id } : r, rr.status);

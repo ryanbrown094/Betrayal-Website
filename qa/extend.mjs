@@ -186,8 +186,20 @@ check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNo
   check("…an in-game problem report is never checked for spam", (await repOf(j6.id)).status === "open");
   const dg3 = await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json();
   check("…the morning summary counts spam apart", /\(and 3 spam caught: Reports, Show Spam\)/.test(dg3.body), dg3.body.split("\n").find((l) => l.startsWith("Problem")));
-  await A("report", { id: j4.id, status: "spam" }); const sp = (await repOf(j4.id)).status; await A("report", { id: j4.id, status: "open" });
+  const inErrs = async (id) => (await (await W("/api/admin/errors", { headers: { Authorization: "Bearer adm" } })).json()).errors.some((e) => e.report === id);
+  const wasIn = await inErrs(j4.id);
+  await A("report", { id: j4.id, status: "spam" }); const sp = (await repOf(j4.id)).status, spamIn = await inErrs(j4.id); await A("report", { id: j4.id, status: "open" });
   check("…and the admin can mark a message spam, or not spam", sp === "spam" && (await repOf(j4.id)).status === "open");
+  check("…a message marked spam leaves the error log, and comes back if it's unmarked", wasIn && !spamIn && (await inErrs(j4.id)));
+  // the three that got through in November 2026: a robot that sent its own site as the page, and two Reddit-ranking pitches
+  const a1 = alerts.length;
+  const [, k1] = await send({ url: "https://bundlepalace.com", what: "Hey,\n\nHere's something worth knowing: you don't always have to pay full price to access premium marketing software.\n\nAt bundlepalace.com, we offer discounted access to tools like Ahrefs, Claude, and Ubersuggest.\n\nWe're talking discounts of up to 90%.\n\nThought you might find this useful." });
+  const [, k2] = await send({ what: "Hey mate,\n\nNot saying your business is bad, but your branded Google results could be doing a lot more for you.\n\nImagine having a positive Reddit discussion ranking alongside your website and reviews.\n\nThat's what I help businesses achieve.\n\nWant me to send you a few case studies?", filled: 50000 });
+  const [, k3] = await send({ what: "Hey, I saw that you have some good reviews online but none of them are being shown on google. I can create reddit posts for you that rank for your brand name on google, users trust reddit more than anything. Whenever someone searches for your brand name, they will see the positive reddit thread there. Let me know if you'd be interested", filled: 50000 });
+  const r1b = await repOf(k1.id), r2b = await repOf(k2.id), r3b = await repOf(k3.id);
+  check("spam: November's three are caught (another site as the page; branded results and Reddit posts that rank)", r1b.status === "spam" && /outside the site/.test(r1b.spam) && r2b.status === "spam" && r3b.status === "spam" && alerts.length === a1, [r1b.spam, r2b.spam, r3b.spam]);
+  const [, k4] = await send({ what: "We're 14 for a hen do next month. Is there a discount for big groups? I saw you on Reddit.", filled: 50000 });
+  check("…while a real question that mentions Reddit, or a discount, still comes through", (await repOf(k4.id)).status === "open" && alerts.length === a1 + 1);
 }
 
 // a Table that closed before its game was played: once, an apology with a link to ask for a reset (a day to play, a reason
@@ -228,6 +240,27 @@ check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNo
   const names = (j1.emails || []).map((m) => m.name);
   check("emails: every customer email in order, each with a subject, HTML and text", s1 === 200 && names.join(" | ") === "Booking confirmation: one party | Booking confirmation: Regular | Need more time? | More time given | Your Table has closed | Feedback survey | Their 30% off code | Apology with a free game" && j1.emails.every((m) => m.subject && /<html/.test(m.html) && m.text && m.when && m.from), names);
   check("…made-up details only, for the admin only", j1.emails[0].html.includes("OATH-K7QM-3XRP") && (await W("/api/admin/emails")).status === 401);
+}
+
+// the admin's rooms list and the morning summary sort the rooms by how they were paid for: the website, an App Store pass,
+// a free code, the app's free games (with ads), its practice games, and tests (the master code, an App Store sandbox purchase)
+{
+  const opened = async () => { const l = ((await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json()).body.match(/^Tables opened: .*$/m) || [""])[0];
+    const n = (re) => +((l.match(re) || [])[1] || 0); return { l, all: n(/^Tables opened: (\d+)/), web: n(/(\d+) paid on the website/), app: n(/(\d+) with an App Store pass/), codes: n(/(\d+) with a free code/), free: n(/(\d+) free in the app/), practice: n(/(\d+) practice games? in the app/), tests: n(/(\d+) test rooms?/) }; };
+  const b0 = await opened(), H1 = { created: now - 1 * H, expires: now + 47 * H };
+  const pw = await pass("OATH-WXYZ-2345", { amount: 2500, room: "KW0001" }), pa = await pass("OATH-WXYZ-2346", { source: "appstore", pool: "app", kind: "night", apple: { env: "Production", price: "4.99 GBP" } });
+  const ps = await pass("OATH-WXYZ-2347", { source: "appstore", pool: "app", kind: "night", apple: { env: "Sandbox", price: "4.99 GBP" } }), pc = await pass("OATH-WXYZ-2348", { source: "admin", paid: undefined }), pz = await pass("OATH-WXYZ-2349", { amount: 0, disc: "TESTFREE" });
+  await room("KW0001", { ...H1, pass: pw }); await room("KA0001", { ...H1, pass: pa, tier: "night" }); await room("KS0001", { ...H1, pass: ps, tier: "night" }); await room("KC0001", { ...H1, pass: pc }); await room("KZ0001", { ...H1, pass: pz });
+  await room("KF0001", { ...H1, tier: "free" }); await room("KP0001", { ...H1, tier: "free", practice: true }); await room("KM0001", { ...H1, pass: "MASTER" });
+  const b1 = await opened();
+  check("morning summary: Tables opened, by how they were paid for, with practice games and tests apart", b1.web - b0.web === 1 && b1.app - b0.app === 1 && b1.codes - b0.codes === 2 && b1.free - b0.free === 1 && b1.practice - b0.practice === 1 && b1.tests - b0.tests === 2 && b1.all - b0.all === 5, [b0.l, b1.l]);
+  const rows = (await (await W("/api/admin/rooms", { headers: { Authorization: "Bearer adm" } })).json()).rooms, R = (c) => rows.find((r) => r.room === c) || {};
+  check("…and the admin's rooms list carries what the page needs to tell them apart", R("KW0001").source === "stripe" && R("KW0001").amount === 2500 && R("KA0001").source === "appstore" && R("KA0001").price === "4.99 GBP" && !R("KA0001").sandbox && R("KS0001").sandbox === true && R("KC0001").source === "admin" && R("KZ0001").amount === 0 && R("KF0001").tier === "free" && !R("KF0001").source && R("KP0001").practice === true, [R("KW0001"), R("KA0001"), R("KS0001")]);
+  // the end screen's ratings: kept on the room, shown in the list and the morning summary
+  await reg.fetch(new Request("https://registry/room-rated", { method: "POST", body: JSON.stringify({ room: "KW0001", rated: 3, rating: 4.666 }) }));
+  const r2 = (await (await W("/api/admin/rooms", { headers: { Authorization: "Bearer adm" } })).json()).rooms.find((r) => r.room === "KW0001");
+  const d3 = (await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json()).body;
+  check("ratings: kept on the room for the admin's list, and in the morning summary", r2.rated === 3 && r2.rating === 4.7 && /^Rated at the end of the game: KW0001 4\.7 out of 5 \(3 players\)$/m.test(d3), [r2.rated, r2.rating, d3.split("\n").find((l) => l.startsWith("Rated"))]);
 }
 
 // the email's closing time, in UK time

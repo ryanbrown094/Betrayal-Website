@@ -72,7 +72,7 @@ with sync_playwright() as p:
     a = b.new_context(viewport={"width": 1280, "height": 900}).new_page(); a.on("pageerror", lambda e: errs.append("admin: " + str(e)))
     a.goto(URL + "/admin"); a.wait_for_timeout(800); a.fill("#lu", "ryanab94.admin"); a.fill("#lp", "testpw"); a.click("#lf button"); a.wait_for_timeout(1200)
     check("admin: the open reports are counted on the tab", a.inner_text("#repcnt").strip() not in ("", "0"))
-    a.click(".tabs [data-t=rooms]"); a.wait_for_timeout(800); a.click(f"#rrows tr:has-text('{code}')"); a.wait_for_timeout(3500)
+    a.click(".tabs [data-t=rooms]"); a.wait_for_timeout(800); a.fill("#rq", code); a.click(f"#rrows tr:has-text('{code}')"); a.wait_for_timeout(3500)
     a.click("details.devs > summary"); a.wait_for_timeout(300); body = a.inner_text("#roomview")
     check("admin room: config, players with roles, what happened, replay and device events (folded until opened)", all(x in body for x in ("Game plan (setup)", "Annie", "Forsworn", "What happened", "Replay", "What the devices saw", "tv test boom")), body[:200])
     check("admin room: roles in public words, never the code's cloak and candle", "cloak" not in body.lower() and "candle" not in body.lower(), [w for w in ("cloak", "candle") if w in body.lower()])

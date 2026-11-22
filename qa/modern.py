@@ -214,7 +214,7 @@ with sync_playwright() as p:
 
     # /admin: the Modern room, every role, the log, and the replay on a TV and the host's phone
     ad = b.new_context(viewport={"width": 1280, "height": 900}).new_page(); ad.on("pageerror", lambda e: errs.append("admin: " + str(e))); ad.goto(URL + "/admin"); ad.wait_for_timeout(800); ad.fill("#lu", "ryanab94.admin"); ad.fill("#lp", "testpw"); ad.click("#lf button"); ad.wait_for_timeout(1200)
-    ad.click(".tabs [data-t=rooms]"); ad.wait_for_timeout(800); ad.click(f"#rrows tr:has-text('{code}')"); ad.wait_for_timeout(3500)
+    ad.click(".tabs [data-t=rooms]"); ad.wait_for_timeout(800); ad.fill("#rq", code); ad.click(f"#rrows tr:has-text('{code}')"); ad.wait_for_timeout(3500)
     body = ad.inner_text("#roomview")
     check("admin: the Modern room, its Forsworn, the host's look at the roles, and the log", all(x in body for x in ("The game (Modern)", "Forsworn", "yes, round 2", "left the party", "Casting Vote to Ryan")), body[:300])
     rtv = ad.frame_locator(".tvbox iframe").locator("#tvapp").inner_text(); rph = ad.frame_locator(".phbox iframe").locator("#app").inner_text()
