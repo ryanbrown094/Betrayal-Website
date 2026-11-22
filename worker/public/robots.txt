@@ -9,6 +9,10 @@ Disallow: /t/
 Disallow: /m/
 Disallow: /g/
 
+# Google's app-ads.txt crawler, which AdMob uses to verify the app: named with nothing disallowed, as AdMob asks
+User-agent: Google-adstxt
+Disallow:
+
 # AI crawlers and assistants: allowed, with the same private paths kept out (named so no default blocks them)
 User-agent: GPTBot
 User-agent: OAI-SearchBot
