@@ -760,5 +760,18 @@ for (const key of ["rps", "oneleg"]) {
   while (s.trial.stage !== "done" && guard++ < 500) { const it = s.trial.item; if (it && it.stage === "open") for (const p of alive(s)) A(g, p.id, { a: "ans", v: it.a }); g.now += 1000; tick(s, g.now, ctx); }
   check(`…and a perfect final fills the Purse (${s.pot} of 2000)`, s.trial.stage === "done" && s.trial.points === 700 && s.pot === 2000);
 }
+{
+  // Longest Word: a word can be changed until time's up, so everyone having sent one doesn't end it early
+  const g = begin(10), s = g.s;
+  setStep(g, { k: "trial", key: "countdown" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  const it = s.trial.item, L = [].concat(it.letters).join("");
+  for (const p of alive(s)) A(g, p.id, { a: "ans", v: L.slice(0, 3) });
+  run(g, 3000);
+  check("Longest Word: everyone has sent a word, and it's still open", s.trial.item === it && it.stage === "open", it.stage);
+  const p = alive(s)[1];
+  check("…a word can still be changed", A(g, p.id, { a: "ans", v: L.slice(0, 5) }) === null && it.inputs[p.id].v === L.slice(0, 5));
+  run(g, it.end - g.now + 1000);
+  check("…and it ends when time's up", it.stage === "reveal" || s.trial.item !== it, it.stage);
+}
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

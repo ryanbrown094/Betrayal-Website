@@ -15,7 +15,7 @@ export const higher = (a, b) => ((RANK[b] ?? 0) > (RANK[a] ?? 0) ? b : a);
 // "0" (a var) turns them off. Interstitials only at natural breaks: as each day starts from round 2, and the
 // results, one a break; no time apart and no cap beyond that (30 is more breaks than any game has); a banner only in
 // the lobby.
-export const adsConfig = (env) => ({ enabled: !env || env.ADS_ENABLED !== "0", interstitialMinGapSec: 0, interstitialMaxPerRoom: 30, firstInterstitialAfterRound: 1, bannerEnabled: true });
+export const adsConfig = (env) => ({ enabled: !env || env.ADS_ENABLED !== "0", interstitialMinGapSec: 0, interstitialMaxPerRoom: 30, firstInterstitialAfterRound: 0, bannerEnabled: true });
 // what the phones and the TV read with every poll
 export const tierView = (tier, env) => ({ tier, adFree: tier !== "free", content: tier === "free" ? "base" : "all", ...(tier === "free" ? { ads: adsConfig(env) } : {}) });
 
