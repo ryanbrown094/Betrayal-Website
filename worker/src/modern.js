@@ -209,7 +209,8 @@ export function hiloRef(q, a, now, rnd) {
 
 // ---------------------------------------------------------------------------------------------------------------
 // Items: a Trial is a run of items (a question, a turn, a bout). Each is open (answers come in) until everyone has
-// answered or its clock runs out, then shows its result for a moment, then the next one starts by itself.
+// answered or its clock runs out (Longest Word, whose word can be changed until time's up, always to its clock), then
+// shows its result for a moment, then the next one starts by itself.
 const OPEN = { text: 20, number: 25, hilo: 15, vote: 25, word: 45, recall: 45, cell: 20, rps: 15, tempt: 30, truths: 25 };
 function makeItem(s, t, now, rnd) {
   const n = t.i, A = alive(s), used = (s.used = s.used || {});
@@ -581,7 +582,7 @@ export function tick(s, now, ctx) {
       } else if (it.stage === "blank" && now >= it.end) {
         const g = it.grid.slice(); if (t.i % 2 === 0) { const i = Math.floor(rnd() * 12), spare = CHSYM.filter((x) => !g.includes(x)); g[i] = pick(spare, rnd); it.changed = [i]; } else { const i = Math.floor(rnd() * 12); let j; do j = Math.floor(rnd() * 12); while (j === i); [g[i], g[j]] = [g[j], g[i]]; it.changed = [i, j]; }
         it.before = it.grid; it.grid = g; it.stage = "open"; it.from = now; it.end = now + T(s, OPEN.cell * 1000); mark();
-      } else if (it.stage === "open" && (now >= it.end || (!["actor", "survive", "snap"].includes(it.k) && !owed(s, it).length && Object.keys(it.inputs).length) || (it.k === "survive" && alive(s).filter((p) => !it.out.includes(p.id)).length <= 1))) {
+      } else if (it.stage === "open" && (now >= it.end || (!["actor", "survive", "snap", "word"].includes(it.k) && !owed(s, it).length && Object.keys(it.inputs).length) || (it.k === "survive" && alive(s).filter((p) => !it.out.includes(p.id)).length <= 1))) {
         it.res = score(s, t, it, ctx); it.stage = "reveal"; it.revealEnd = now + (it.k === "actor" ? 4000 : it.k === "survive" ? 6000 : 5000); t.results.push(it.res); t.i++; mark();
       } else if (it.stage === "reveal" && now >= it.revealEnd) { nextItem(s, now, rnd); mark(); }
       if (it.k === "truths" && it.stage === "prep" && now >= it.end) { it.lie = it.lie || 1 + Math.floor(rnd() * 3); it.stage = "open"; it.from = now; it.end = now + T(s, OPEN.truths * 1000); mark(); }
