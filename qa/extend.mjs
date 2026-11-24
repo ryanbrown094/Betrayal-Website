@@ -10,7 +10,7 @@ register("data:text/javascript," + encodeURIComponent('export async function res
 let ok = true;
 const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (cond || extra === undefined ? "" : "  -> " + JSON.stringify(extra).slice(0, 400))); ok = ok && !!cond; };
 const store = () => { const m = new Map(); return { get: async (k) => m.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a, b] of Object.entries(k)) m.set(a, b); else m.set(k, v); }, delete: async (k) => { for (const x of [].concat(k)) m.delete(x); },
-  list: async ({ prefix, reverse, limit, start }) => { let e = [...m].filter(([k]) => k.startsWith(prefix) && (!start || k >= start)).sort((a, b) => (a[0] < b[0] ? -1 : 1)); if (reverse) e.reverse(); if (limit) e = e.slice(0, limit); return new Map(e); } }; };
+  list: async ({ prefix = "", reverse, limit, start, startAfter } = {}) => { let e = [...m].filter(([k]) => k.startsWith(prefix) && (!start || k >= start) && (!startAfter || k > startAfter)).sort((a, b) => (a[0] < b[0] ? -1 : 1)); if (reverse) e.reverse(); if (limit) e = e.slice(0, limit); return new Map(e); } }; };
 const sent = [], alerts = []; let mailFail = false;
 const MAIL = { send: async (m) => { if (mailFail) throw new Error("refused"); (m.raw ? alerts : sent).push(m); return { messageId: "m" + (sent.length + alerts.length) }; } };
 // each room's game: whether it has ended, and the closing times the Registry gives it
@@ -261,6 +261,20 @@ check("…and unmuting brings it back", s === 200 && !j.muted.length && /IndexNo
   const r2 = (await (await W("/api/admin/rooms", { headers: { Authorization: "Bearer adm" } })).json()).rooms.find((r) => r.room === "KW0001");
   const d3 = (await (await reg.fetch(new Request("https://registry/digest", { method: "POST", body: "{}" }))).json()).body;
   check("ratings: kept on the room for the admin's list, and in the morning summary", r2.rated === 3 && r2.rating === 4.7 && /^Rated at the end of the game: KW0001 4\.7 out of 5 \(3 players\)$/m.test(d3), [r2.rated, r2.rating, d3.split("\n").find((l) => l.startsWith("Rated"))]);
+}
+
+// the wrong-code count outlasts a restart of the Registry (a deploy): a new one on the same storage still refuses
+{
+  const st = store(), r1 = new Registry({ storage: st }, {}), hit = (r, path) => r.fetch(new Request("https://registry" + path, { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.9" }, body: "{}" }));
+  for (let i = 0; i < 20; i++) await hit(r1, "/signin-failed");
+  const r2 = new Registry({ storage: st }, {});
+  check("limits: twenty wrong tries still count after the Registry restarts, for that address only", (await hit(r2, "/signin-check")).status === 429 && (await r2.fetch(new Request("https://registry/signin-check", { method: "POST", headers: { "CF-Connecting-IP": "203.0.113.10" }, body: "{}" }))).status === 200);
+}
+// the admin's backup: codes, rooms and reports in one file; not the error log, the snapshots or the limits
+{
+  await reg.storage.put("repx:R-TEST01:0", "snapshot"); await reg.storage.put("limits", { fails: {} });
+  const [s9, j9] = await W("/api/admin/export", { headers: { Authorization: "Bearer adm" } }).then(J), ks = Object.keys(j9.data || {});
+  check("backup: every code, room and report, without the error log, snapshots or limits; for the admin only", s9 === 200 && j9.keys === ks.length && ks.some((k) => k.startsWith("pass:")) && ks.some((k) => k.startsWith("room:")) && ks.some((k) => k.startsWith("rep:")) && !ks.some((k) => /^(err:|hook:|repx:|limits$)/.test(k)) && (await W("/api/admin/export")).status === 401, [s9, ks.length]);
 }
 
 // the email's closing time, in UK time

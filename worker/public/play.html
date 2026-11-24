@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261123110011">
+<meta name="build" content="20261124101649">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1454,7 +1454,7 @@ let roomInfo = null, roomMissing = false, roomExpired = false;
 const roomUrl = host => location.origin + "/t/" + ROOM + (host ? "#keeper" : "");
 
 let db = null, remote = false, lastJson = "", state = null, listeners = [], skew = 0;
-let lastTag = "", limitedNow = false;
+let lastTag = "", limitedNow = false, keepersNow = 0; // keepersNow: phones open as the Keeper, when more than this one
 let authed = false, serverHasGame = false, pending = 0, syncErr = false, connecting = true, lastPollOk = 0, toastMsg = null, toastT = null;
 
 const now = () => Date.now() + skew;
@@ -1477,7 +1477,7 @@ const offline = () => remote && lastPollOk && Date.now() - lastPollOk > 4500;
 async function poll() {
   try {
     const pinUsed = getPin(), hdr = {};
-    if (isHost) hdr["X-Pin"] = pinUsed;
+    if (isHost) { hdr["X-Pin"] = pinUsed; hdr["X-Device"] = DEVICE }
     if (lastTag) hdr["X-Have"] = lastTag; // unchanged since last time: the reply is a few bytes, not the whole game
     const r = await fetch(API + "/state", { cache: "no-store", headers: hdr });
     if (isHost && r.status === 429 && !state) { if (!limitedNow) { limitedNow = true; serverHasGame = true; emit() } return }
@@ -1488,6 +1488,7 @@ async function poll() {
     syncClock(r); limitedNow = false;
     if (body.room) { const was = roomExpired; roomInfo = body.room; roomExpired = !!body.room.expired; if (was !== roomExpired) emit() }
     const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) { crumb("net", "back in touch with the server"); emit() }
+    if (isHost) { const k = +body.keepers || 0; if (k !== keepersNow) { if (k > 1) crumb("keepers", k + " phones open as the Keeper"); keepersNow = k; emit() } }
     if (body.same) return;
     if (pending > 0 || saveQ.length || pinUsed !== getPin()) return; // unsent saves first: the flush settles any clash
     if (j === lastJson) return;
@@ -3933,13 +3934,13 @@ function renderHost() {
   if (roomMissing) { patch(app, `<div id="host"><div class="pinwrap"><h2>No game at this code</h2><p class="note">Table codes are six letters and numbers. Start again from the home page with your booking code: entering it again brings back the same Table.</p><button class="primary" onclick="location.href='/'">Go to the home page</button></div>${hstamp()}</div>`); return }
   if (roomExpired && !state) { patch(app, `<div id="host"><div class="pinwrap"><h2>This Table has closed</h2><p class="note">Each booking runs one party for ${esc(String(48))} hours. Buy another to play again.</p><button class="primary" onclick="location.href='/'">Book another Table</button></div>${hstamp()}</div>`); return }
   if (!state || !authed) {
-    if (serverHasGame || (state && !authed)) { patch(app, `<div id="host"><div class="pinwrap"><h2>Enter the Keeper PIN</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Keeper PIN" onkeydown="if(event.key==='Enter')checkPin()"><button class="primary" onclick="checkPin()">Unlock</button><p class="note">${esc(pinMsg || (limitedNow ? "Too many wrong PINs have been tried. Wait a minute, then enter it." : "A game is in progress. The PIN was set when it was created."))}</p></div>${hstamp()}</div>`); return }
+    if (serverHasGame || (state && !authed)) { patch(app, `<div id="host"><div class="pinwrap"><h2>Enter the Keeper PIN</h2><input id="pin" type="password" inputmode="numeric" autocomplete="off" aria-label="Keeper PIN" onkeydown="if(event.key==='Enter')checkPin()"><button class="primary" onclick="checkPin()">Unlock</button><p class="note">${esc(pinMsg || (limitedNow ? "Too many wrong PINs have been tried. Wait a minute, then enter it." : "A game is in progress. The PIN was set when it was created. This page is for the Keeper only: it shows every role. Guests don’t need a phone in Classic."))}</p></div>${hstamp()}</div>`); return }
     patch(app, `<div id="host">${setupForm()}${hstamp()}${bankOpen ? bankSheet() : ""}${toastMsg ? `<div class="toast" role="status">${esc(toastMsg)}</div>` : ""}</div>`); return;
   }
   if (state.v !== SCHEMA) { patch(app, `<div id="host"><div class="pinwrap"><h2>A game from an older version is saved here</h2><p class="note">It can’t be continued in ${APPV}. Wipe it to set up a new game.</p><button class="danger" onclick="confirmNew()">Wipe the old game</button></div>${hstamp()}</div>`); return }
   const s = state, fin = isFinal(s);
   if (setupDraft && serverHasGame && authed) { setupDraft = null; try { sessionStorage.removeItem("bt-draft") } catch (e) {} } // the game exists now
-  const bar = `<div class="bar"><div class="l1"><span class="ph">${fin ? "Final round" : "Round " + s.round} · ${PHASE_NAME[s.phase] || s.phase}${s.startedAt ? " · " + elapsed(s) : ""}</span><span class="pot num">${money(s.pot)}</span><button onclick="undo()" ${canUndo() ? "" : "disabled"}>Undo</button><button onclick="menuOpen=true;renderHost()">Menu</button></div>${syncErr ? '<div class="nosync" role="status">Not synced. It retries by itself, so keep going.</div>' : offline() ? '<div class="nosync" role="status">Offline. Every change is kept on this phone.</div>' : ""}${secretLine()}</div>`;
+  const bar = `<div class="bar"><div class="l1"><span class="ph">${fin ? "Final round" : "Round " + s.round} · ${PHASE_NAME[s.phase] || s.phase}${s.startedAt ? " · " + elapsed(s) : ""}</span><span class="pot num">${money(s.pot)}</span><button onclick="undo()" ${canUndo() ? "" : "disabled"}>Undo</button><button onclick="menuOpen=true;renderHost()">Menu</button></div>${keepersNow > 1 ? `<div class="nosync" role="alert">${keepersNow} phones are open as the Keeper. Only one should be: this page shows every role. Guests should close it and watch the TV. (For everyone on their own phone, the game to play is Modern, not Classic.)</div>` : ""}${syncErr ? '<div class="nosync" role="status">Not synced. It retries by itself, so keep going.</div>' : offline() ? '<div class="nosync" role="status">Offline. Every change is kept on this phone.</div>' : ""}${secretLine()}</div>`;
   let body = "", foot = "";
   switch (s.phase) {
     case "lobby":

@@ -270,8 +270,13 @@ export class GameState {
 
     if (req.method === "GET") {
       const tag = tagOf(current, authed) + (expired ? ".x" : "");
-      if (req.headers.get("X-Have") === tag) return json({ same: true, tag });
-      return json(authed ? { state: current, auth: true, tag, room } : { state: publicView(current), auth: false, tag, room });
+      // how many phones are open as the Keeper (unlocked with the PIN, asking in the last 20 seconds): more than one and
+      // each is told, because a table that shares the Keeper's link has every role on every phone
+      let keepers = 0; const dev = clip(req.headers.get("X-Device"), 16);
+      if (authed && dev) { const t = Date.now(), k = (this.keepers = this.keepers || new Map()); k.set(dev, t); for (const [d, at] of k) if (t - at > 20000) k.delete(d); keepers = k.size; }
+      const more = keepers > 1 ? { keepers } : {};
+      if (req.headers.get("X-Have") === tag) return json({ same: true, tag, ...more });
+      return json(authed ? { state: current, auth: true, tag, room, ...more } : { state: publicView(current), auth: false, tag, room });
     }
     if (oldBuild) return text("A new version is live. Reload the page.", 426);
     if (expired) return readOnly();
@@ -516,7 +521,20 @@ export class Registry {
     this.fails.set(ip, rec); if (this.fails.size > 2000) this.fails.clear();
     return rec.length >= 20;
   }
-  failed(ip) { const rec = this.fails.get(ip) || []; rec.push(Date.now()); this.fails.set(ip, rec); }
+  failed(ip) { const rec = this.fails.get(ip) || []; rec.push(Date.now()); this.fails.set(ip, rec); this.keepLimits("fails"); }
+  // The wrong-code and free-game counts outlast a restart of the Registry (every deploy is one): read back once when it
+  // wakes, and saved when one changes, pruned to their window (an hour, a day) and to the newest 500 addresses. The
+  // app's event count (evts) is left in memory: a write an event would cost more than a reset gives away.
+  async wake() {
+    if (this.woke) return; this.woke = true;
+    const l = (await this.storage.get("limits")) || {}, t = Date.now();
+    for (const [name, ms] of [["fails", 3600000], ["frees", 86400000]]) for (const [k, v] of Object.entries(l[name] || {})) { const rec = (Array.isArray(v) ? v : []).filter((x) => t - x < ms); if (rec.length && !this[name].has(k)) this[name].set(k, rec); }
+  }
+  keepLimits() {
+    const t = Date.now(), out = {};
+    for (const [name, ms] of [["fails", 3600000], ["frees", 86400000]]) out[name] = Object.fromEntries([...this[name]].map(([k, v]) => [k, v.filter((x) => t - x < ms)]).filter(([, v]) => v.length).slice(-500));
+    return this.storage.put("limits", out).catch(() => null);
+  }
 
   async mint(count, note, source, kind, email, pool) {
     const out = [], app = pool === "app";
@@ -605,6 +623,7 @@ export class Registry {
   async fetch(req) {
     const url = new URL(req.url), env = this.env, b = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const ip = req.headers.get("CF-Connecting-IP") || "?";
+    await this.wake();
     if (url.pathname === "/mint") {
       const email = String(b.email || "").trim().slice(0, 200);
       if (email && !/^[^\s@<>,;"]+@[^\s@<>,;"]+\.[^\s@<>,;"]+$/.test(email)) return json({ error: "That isn’t an email address." }, 400);
@@ -612,6 +631,14 @@ export class Registry {
       return json({ passes: (await this.mint(Math.max(1, Math.min(200, +b.count || 1)), b.note, "admin", b.kind, email, b.pool)).map(shownPass) });
     }
     // admin sign-in: wrong passwords count with wrong pass codes (twenty an hour per address)
+    // the admin's backup: everything the Registry holds that can't be had again (codes, rooms, reports without their page
+    // snapshots, surveys, More time links, App Store and Stripe look-ups, the app's daily counts), as one JSON file. Left
+    // out: the error and webhook logs, the snapshots (repx:) and the rate limits. Games live in their own rooms.
+    if (url.pathname === "/export") {
+      const skip = /^(err:|hook:|repx:|limits$)/, data = {}; let start;
+      for (;;) { const page = await this.storage.list({ limit: 1000, ...(start ? { startAfter: start } : {}) }); if (!page.size) break; for (const [k, v] of page) { start = k; if (!skip.test(k)) data[k] = v; } if (page.size < 1000) break; }
+      return json({ exported: new Date().toISOString(), host: env.SITE_HOST || "thebetrayal.co.uk", keys: Object.keys(data).length, data });
+    }
     if (url.pathname === "/signin-check") return this.tooMany(ip) ? json({ error: "Too many attempts. Try again in an hour." }, 429) : json({ ok: true });
     if (url.pathname === "/signin-failed") { this.failed(ip); return json({ ok: true }); }
     // the master error log, the Stripe webhook log, issue reports
@@ -1193,7 +1220,7 @@ export class Registry {
     if (url.pathname === "/free") {
       const practice = b.practice === true, key = (practice ? "p:" : "") + ip, t = Date.now(), rec = (this.frees.get(key) || []).filter((x) => t - x < 86400000);
       if (rec.length >= 20) return json({ error: practice ? "That’s all the practice games for today. Try again tomorrow." : "That’s a lot of free games from here today. Try again tomorrow, or use a pass." }, 429);
-      rec.push(t); this.frees.set(key, rec); if (this.frees.size > 5000) this.frees.clear();
+      rec.push(t); this.frees.set(key, rec); if (this.frees.size > 5000) this.frees.clear(); await this.keepLimits();
       const expires = t + hours(env) * 3600000;
       return json({ room: await this.room(env, expires, null, "free", practice), expires, tier: "free", ...(practice ? { practice: true } : {}) });
     }
@@ -1483,6 +1510,17 @@ async function gate(req, env) {
   return gatePage(url.pathname + url.search, false);
 }
 
+// Every page (HTML only: never the API the app calls, app-ads.txt or any other file) says: stay on HTTPS, don't guess
+// file types, send other sites only our origin, don't be framed by another site (the admin's replay frames our own
+// pages), and no camera, microphone or location. No script policy: the pages' scripts are inline, and Tag Manager's vary.
+const SECURE = { "Strict-Transport-Security": "max-age=15552000", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Content-Security-Policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'", "X-Frame-Options": "SAMEORIGIN", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
+function secure(res) {
+  if (!res || !/^text\/html/i.test(res.headers.get("Content-Type") || "") || res.status === 101) return res;
+  const h = new Headers(res.headers); for (const [k, v] of Object.entries(SECURE)) if (!h.has(k)) h.set(k, v);
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });
+}
+
 export default {
   // every morning (wrangler.toml [triggers]): sales from adverts sent to Google Ads, then the last 24 hours' sales, Tables,
   // reports and errors, by email to ALERT_TO; and the pages changed since IndexNow last took them
@@ -1494,7 +1532,7 @@ export default {
     ctx.waitUntil((async () => { const { day } = await (await call(env, "/indexnow-day")).json(); const r = await indexNow(env, Date.now(), day); await call(env, "/indexnow-day", { day: r.through }); })().catch((e) => logErr(env, { src: "server", where: "IndexNow", msg: clip(e && e.message || e, 300) })));
   },
   async fetch(req, env) {
-    try { return await route(req, env); }
+    try { return secure(await route(req, env)); }
     catch (err) { logErr(env, { src: "server", where: req.method + " " + new URL(req.url).pathname, msg: err.message, stack: clip(err.stack, 1500) }); return json({ error: "Something went wrong on our side." }, 500); }
   },
 };
@@ -1775,6 +1813,7 @@ async function route(req, env) {
       if (p === "/api/admin/report" && req.method === "POST") return call(env, "/report-status", await req.json().catch(() => ({})));
       if (p === "/api/admin/roominfo") return call(env, "/room-info", { room: url.searchParams.get("room") });
       if (p === "/api/admin/emails") return json({ emails: sampleEmails(env) });
+      if (p === "/api/admin/export" && req.method === "GET") { const r = await registry(env).fetch("https://registry/export"); return new Response(r.body, { status: r.status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Content-Disposition": 'attachment; filename="the-betrayal-backup-' + new Date().toISOString().slice(0, 10) + '.json"' } }); }
       if (p === "/api/admin/ext-give" && req.method === "POST") return call(env, "/ext-give", await req.json().catch(() => ({})));
       const ar = p.match(/^\/api\/admin\/room\/([A-Za-z0-9]{6})\/(room|recs|rec|events|summary)$/);
       if (ar) { const inner = new URL("https://game/_admin/" + ar[2]); inner.search = url.search; return env.GAME.get(env.GAME.idFromName("room:" + ar[1].toUpperCase())).fetch(inner); }

@@ -203,6 +203,15 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   check("injected scripts' errors (line 1 of the page, Script error., __firefox__, ethereum, DarkReader) stay out of the error log; ours don't", logged.length === 1 && logged[0].msg === "TypeError: V.trial is null", logged.map((e) => e.msg));
   check("…but they're all still in the room's own trail", [...mem].filter(([k]) => k.startsWith("ev:")).flatMap(([, v]) => v.list).length === 6);
 }
+// Classic: a table that shares the Keeper's link and PIN has every role on every phone. Each phone open as the Keeper
+// is told how many there are, once there's more than one; the TV (no PIN) and a wrong PIN don't count
+{
+  const { DO } = await mk("1"); await req(DO, "PUT", "/api/state", { "X-Build": "1" }, { state: game });
+  const get = async (h) => (await req(DO, "GET", "/api/state", h)).json(), pin = game.hostPin;
+  const one = await get({ "X-Pin": pin, "X-Device": "keeper1" }), tv = await get({ "X-Device": "tv1" }), bad = await get({ "X-Pin": "0000", "X-Device": "guessr" });
+  const two = await get({ "X-Pin": pin, "X-Device": "guest01" }), same = await get({ "X-Pin": pin, "X-Device": "keeper1", "X-Have": two.tag });
+  check("Classic: one Keeper phone is told nothing; a second with the PIN and both are told there are 2 (the TV and a wrong PIN aren't counted)", one.keepers === undefined && tv.keepers === undefined && bad.keepers === undefined && two.keepers === 2 && same.same === true && same.keepers === 2, [one.keepers, tv.keepers, two.keepers, same]);
+}
 // the end screen's 1 to 5: each rating tells the Registry how many have rated and the average, for the admin and the digest
 {
   const told = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { told.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response("{}"); } }) };

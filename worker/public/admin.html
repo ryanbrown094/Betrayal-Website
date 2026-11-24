@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261123110011">
+<meta name="build" content="20261124101649">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -100,7 +100,11 @@ nav.top .links { display: none }
 .adm-row > label { display: block; font: 700 14px/1.2 var(--ui); color: var(--rose) }
 .adm-row input, .adm-row select { display: block; margin-top: 6px; min-height: 46px; padding: 8px 12px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 500 17px/1 var(--ui) }
 .btn.small { min-height: 46px; padding: 8px 18px; font-size: 16px } .btn.ghost { background: transparent; color: var(--ivory) } .btn.danger { background: transparent; border-color: #ff9dbf; color: #ff9dbf }
-.btn.tiny { min-height: 34px; padding: 4px 10px; font-size: 14px }
+.btn.tiny { min-height: 40px; padding: 6px 12px; font-size: 14px }
+#dash label small { font-size: 13px }
+dialog.ask { width: min(460px, calc(100vw - 32px)); padding: 20px; border: 1px solid rgba(230,165,140,.5); border-radius: 6px; background: #140c15; color: var(--ivory) } dialog.ask::backdrop { background: rgba(5,3,6,.72) }
+dialog.ask p { margin: 0 0 10px; overflow-wrap: anywhere } dialog.ask input { width: 100%; min-height: 46px; margin: 4px 0 14px; padding: 8px 12px; border-radius: 3px; border: 1px solid rgba(230,165,140,.45); background: #100b11; color: var(--ivory); font: 17px/1.4 var(--ui) }
+dialog.ask .adm-row { justify-content: flex-end; margin-top: 6px }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 24px; margin: 18px 0 }
 .stat { padding: 12px 0; border-top: 1px solid rgba(230,165,140,.25) } .stat b { display: block; font: 600 32px/1.1 var(--ui); color: var(--ivory); font-variant-numeric: tabular-nums lining-nums } .stat span { color: var(--ivory2); font-size: 15px }
 .msg { min-height: 1.4em; font-size: 15.5px; color: var(--ivory2); margin: 10px 0 0 } .msg.err { color: #ff9dbf }
@@ -169,6 +173,12 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   <div class="panel">
     <div class="adm-row"><button class="btn small" id="room">Open a test room</button></div>
     <p class="msg" id="rmsg">A fresh room for trying the game, open for 48 hours. It doesn’t use a booking code.</p>
+  </div>
+
+  <h2>Backup</h2>
+  <div class="panel">
+    <div class="adm-row"><a class="btn small ghost" href="/api/admin/export" download>Download a backup</a></div>
+    <p class="msg">One file with every booking code, room, report, survey and sale record. It holds customers’ email addresses, so keep it somewhere private. Games in progress aren’t in it.</p>
   </div>
 
   <h2>All booking codes</h2>
@@ -249,6 +259,24 @@ const api = async (path, body) => {
   if (!r.ok) throw new Error(j.error || "That didn’t work (" + r.status + ")");
   return j;
 };
+// Questions asked on the page, not in the browser's own pop-ups: ask() for a value (null when cancelled), sure() for a
+// yes or no (the danger button for what can't be undone), tell() for something to read. Escape or Cancel backs out.
+function box(text, { value, ok = "OK", danger, cancel = true, type = "text" } = {}) {
+  return new Promise(done => {
+    const d = document.createElement("dialog"); d.className = "ask"; const f = document.createElement("form"); f.method = "dialog";
+    for (const line of String(text).split("\n")) { const p = document.createElement("p"); p.textContent = line; f.append(p) }
+    let inp = null; if (value !== undefined) { inp = document.createElement("input"); inp.type = type; inp.value = value; inp.setAttribute("aria-label", String(text).split("\n")[0]); inp.autocomplete = "off"; f.append(inp) }
+    const row = document.createElement("div"); row.className = "adm-row"; let out = inp ? null : false;
+    const b = (label, cls, v) => { const x = document.createElement("button"); x.type = "button"; x.className = "btn small " + cls; x.textContent = label; x.onclick = () => { out = v(); d.close() }; row.append(x); return x };
+    if (cancel) b("Cancel", "ghost", () => inp ? null : false);
+    const yes = b(ok, danger ? "danger" : "", () => inp ? inp.value : true);
+    f.onsubmit = e => { e.preventDefault(); yes.click() }; f.append(row); d.append(f); document.body.append(d);
+    d.onclose = () => { d.remove(); done(out) }; d.showModal(); (inp || yes).focus(); if (inp) inp.select();
+  });
+}
+const ask = (text, value, type) => box(text, { value: value == null ? "" : String(value), type });
+const sure = (text, ok, danger) => box(text, { ok, danger });
+const tell = text => box(text, { cancel: false });
 const when = t => t ? new Date(t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
 function statusOf(p) {
   const now = Date.now();
@@ -268,12 +296,15 @@ function statusOf(p) {
 const paidOf = p => p.source === "appstore" ? (p.apple && p.apple.env && p.apple.env !== "Production" ? "App Store test purchase" : "paid, App Store" + (p.apple && p.apple.price ? " " + p.apple.price : ""))
   : String(p.source || "").startsWith("stripe") ? (p.pending ? "website" : p.amount === 0 ? "free, 100% code" : "paid" + (p.amount ? " " + gbpOf(p.amount) : "") + ", website")
   : p.source === "apology" ? "free, an apology" : "free, made here";
+// a long list shows its first 200 rows, and a button for the rest (a search or a filter narrows it sooner)
+let capP = 200, capR = 200;
+function more(el, n, cap, fn) { if (n <= cap) return; const b = document.createElement("button"); b.className = "btn tiny ghost"; b.style.marginLeft = "10px"; b.textContent = "Show all " + n; b.onclick = fn; el.append(" Showing the first " + cap + ".", b) }
 let all = [];
 try { const f = localStorage.getItem("bt-adm-codes"); if (f && $("#f option[value=" + f + "]")) $("#f").value = f } catch (e) {}
 function render() {
   const q = $("#q").value.trim().toLowerCase(), f = $("#f").value, rows = $("#rows"); rows.textContent = "";
   const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "active" && ["unused", "play", "sub"].includes(k)) || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.email, p.room, p.source, p.from].join(" ").toLowerCase().includes(q)) });
-  for (const p of list) {
+  for (const p of list.slice(0, capP)) {
     const [k, label] = statusOf(p), tr = document.createElement("tr");
     const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
     const code = document.createElement("code"); code.textContent = p.pass; code.className = "copy"; code.title = "Click to copy"; code.tabIndex = 0;
@@ -298,6 +329,7 @@ function render() {
     rows.append(tr);
   }
   say($("#tmsg"), list.length ? list.length + " of " + all.length + " codes" + (f === "active" && list.length < all.length ? " (the active ones: unused, in play or subscribed). Show “All” for the rest." : "") : all.length ? (f === "active" ? "No active codes. Show “All” for the rest." : "Nothing matches.") : "No booking codes yet.");
+  more($("#tmsg"), list.length, capP, () => { capP = Infinity; render() });
 }
 function stats() {
   const c = k => all.filter(p => statusOf(p)[0] === k).length, subs = all.filter(p => p.kind === "sub" && p.subActive && !p.revoked);
@@ -307,39 +339,39 @@ function stats() {
 async function load() { try { all = (await api("passes")).passes || []; stats(); render() } catch (e) { say($("#tmsg"), e.message, true) } }
 // keep a Table open longer: from its booking code (its current Table) or from the Table itself
 async function extend(target, until, done) {
-  const ans = prompt("Keep it open how many more hours?" + (until ? "\nIt " + (until > Date.now() ? "closes" : "closed") + " " + when(until) + (until > Date.now() ? "." : ", so the time counts from now.") : ""), "24");
+  const ans = await ask("Keep it open how many more hours?" + (until ? "\nIt " + (until > Date.now() ? "closes" : "closed") + " " + when(until) + (until > Date.now() ? "." : ", so the time counts from now.") : ""), "24", "number");
   if (ans === null) return;
   const hrs = Math.round(+ans);
-  if (!(hrs >= 1 && hrs <= 720)) return alert("Enter a number of hours from 1 to 720.");
-  try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + (j.waiting ? " is waiting for its game, which will now have " + j.hours + " hours once it starts." : " now stays open until " + when(j.expires) + ".")) } } catch (e) { alert(e.message) }
+  if (!(hrs >= 1 && hrs <= 720)) return tell("Enter a number of hours from 1 to 720.");
+  try { const j = await api("extend", { ...target, hours: hrs }); if (done) done(j); else { await load(); say($("#tmsg"), "Table " + j.room + (j.waiting ? " is waiting for its game, which will now have " + j.hours + " hours once it starts." : " now stays open until " + when(j.expires) + ".")) } } catch (e) { tell(e.message) }
 }
 const emailOf = p => p.email || (/@/.test(p.note || "") ? String(p.note).trim() : "");
 async function setEmail(p) {
-  const e = prompt("Email address for " + p.pass + " (its booking emails go here; leave empty to clear):", p.email || (/@/.test(p.note || "") ? p.note : ""));
+  const e = await ask("Email address for " + p.pass + " (its booking emails go here; leave empty to clear):", p.email || (/@/.test(p.note || "") ? p.note : ""), "email");
   if (e === null) return;
   try { await api("setemail", { pass: p.pass, email: e.trim() }); await load(); say($("#tmsg"), e.trim() ? p.pass + " now emails " + e.trim() + "." : "Cleared the email address on " + p.pass + ".") } catch (err) { say($("#tmsg"), err.message, true) }
 }
 async function del(pass) {
-  if (!confirm("Delete " + pass + " from the list? This can't be undone. Stripe keeps its own record of the sale.")) return;
+  if (!(await sure("Delete " + pass + " from the list? This can’t be undone. Stripe keeps its own record of the sale.", "Delete it", true))) return;
   try { await api("delete", { pass }); await load(); say($("#tmsg"), "Deleted " + pass + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function resend(p) {
-  const to = prompt("Email " + p.pass + " to:", emailOf(p));
+  const to = await ask("Email " + p.pass + " to:", emailOf(p), "email");
   if (to === null) return;
   try { const j = await api("resend", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Emailed " + p.pass + " to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function survey(p) {
-  const to = prompt((p.surveyed ? "Send the feedback survey again (the same link) for " : "Send the feedback survey for ") + p.pass + " to:", emailOf(p));
+  const to = await ask((p.surveyed ? "Send the feedback survey again (the same link) for " : "Send the feedback survey for ") + p.pass + " to:", emailOf(p), "email");
   if (to === null) return;
   try { const j = await api("survey", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Feedback survey sent to " + j.to + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function apologise(p) {
-  const to = prompt(p.apologised ? "Send the apology for " + p.pass + " again (the same free code, unless it's been used) to:" : "Apologise for " + p.pass + " with a free game? It emails a new one-party booking code to:", emailOf(p));
+  const to = await ask(p.apologised ? "Send the apology for " + p.pass + " again (the same free code, unless it's been used) to:" : "Apologise for " + p.pass + " with a free game? It emails a new one-party booking code to:", emailOf(p));
   if (to === null) return;
   try { const j = await api("apology", { pass: p.pass, to: to.trim() }); await load(); say($("#tmsg"), "Apology sent to " + j.to + " with the free code " + j.code + ".") } catch (e) { say($("#tmsg"), e.message, true) }
 }
 async function cancel(pass) {
-  if (!confirm("Cancel " + pass + "? It will stop working straight away.")) return;
+  if (!(await sure("Cancel " + pass + "? It will stop working straight away.", "Cancel the code", true))) return;
   try { await api("revoke", { pass }); await load() } catch (e) { say($("#tmsg"), e.message, true) }
 }
 // discount codes (Stripe promotion codes): make one, see how often each was used, switch one off
@@ -362,7 +394,7 @@ function renderDiscounts() {
   say($("#dlmsg"), list.length ? list.length + (every ? " of " + discounts.length : " live") + " code" + (list.length > 1 ? "s" : "") : discounts.length ? "No live codes. Choose “All” to see the rest." : "No discount codes yet.");
 }
 async function discountOff(d) {
-  if (!confirm("Switch off " + d.code + "? It stops working straight away.")) return;
+  if (!(await sure("Switch off " + d.code + "? It stops working straight away.", "Switch it off", true))) return;
   try { await api("discounts/off", { id: d.id }); await loadDiscounts(); say($("#dlmsg"), d.code + " is switched off.") } catch (e) { say($("#dlmsg"), e.message, true) }
 }
 $("#df").onsubmit = async e => {
@@ -374,7 +406,7 @@ $("#df").onsubmit = async e => {
   } catch (err) { say($("#dmsg"), err.message, true) }
 };
 $("#dshow").onchange = renderDiscounts; $("#dreload").onclick = loadDiscounts;
-function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load(); api("reports").then(j => { reports = j.reports || []; $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "" }).catch(() => {}); if (["discounts", "rooms", "reports", "errors", "stripe"].includes(firstTab)) showTab(firstTab) } else $("#lu").focus() }
+function show(signedIn, who) { $("#login").hidden = signedIn; $("#dash").hidden = !signedIn; if (signedIn) { $("#who").textContent = "Signed in as " + who; load(); api("reports").then(j => { reports = j.reports || []; $("#repcnt").textContent = reports.filter(r => r.status === "open").length || "" }).catch(() => {}); const [t0, id0] = firstTab.split("/"); if (["discounts", "rooms", "reports", "feedback", "errors", "stripe", "emails"].includes(t0)) { showTab(t0); if (t0 === "rooms" && /^[A-Za-z0-9]{6}$/.test(id0 || "")) openRoom(id0.toUpperCase()); if (t0 === "reports" && /^R-[A-Z0-9]{6}$/.test(id0 || "")) openReport(id0) } } else $("#lu").focus() }
 $("#lf").onsubmit = async e => {
   e.preventDefault(); say($("#lmsg"), "Signing in…");
   try { await api("login", { user: $("#lu").value, password: $("#lp").value }); $("#lp").value = ""; say($("#lmsg"), ""); show(true, $("#lu").value.trim()) }
@@ -416,6 +448,7 @@ const ap = (el, ...k) => el.append(...k.flat().filter(x => x !== null && x !== u
 const secs = t => t ? new Date(t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
 const kv = rows => h("div.kv", {}, rows.filter(Boolean).flatMap(([k, v]) => [h("b", {}, k), h("span", {}, v === undefined || v === null || v === "" ? "—" : v)]));
 const row = (cells, onclick, cls) => h("tr" + (onclick ? ".click" : "") + (cls ? "." + cls : ""), { onclick }, cells.map(c => c instanceof Node ? h("td", {}, c) : h("td", {}, c)));
+const here = x => { try { history.replaceState(null, "", "#" + x) } catch (e) {} };
 let tab = "passes";
 function showTab(t) {
   tab = t; for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", b.dataset.t === t);
@@ -443,7 +476,7 @@ async function loadEmails() {
 $("#eall").onclick = () => { for (const d of $("#elist").querySelectorAll("div[hidden]")) d.hidden = false };
 $("#epdf").onclick = () => {
   if (!emails.length) return;
-  const w = window.open("", "_blank"); if (!w) return alert("Allow pop-ups for this page to download the PDF.");
+  const w = window.open("", "_blank"); if (!w) return tell("Allow pop-ups for this page to download the PDF.");
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   // each email's own body, inline (a frame can't run over a page), its dark background kept in print
   const body = html => new DOMParser().parseFromString(html, "text/html").body.innerHTML;
@@ -478,7 +511,7 @@ function tableInfo(info, sum, code) {
 function keptRoom(v, code, info) {
   const r = info.room, k = r.summary || {};
   v.textContent = "";
-  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false } }, "← All rooms"), h("h2", {}, "Room " + code),
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; here("rooms") } }, "← All rooms"), h("h2", {}, "Room " + code),
     h("p.note", {}, r.deleted ? "This Table’s game was deleted on " + secs(r.deleted) + ", after it closed. What’s kept of it:" : "This Table’s game has been deleted. Nothing else was kept of it (it was deleted before summaries were kept)."),
     kv([["Opened", secs(r.created)], ["Closed", secs(r.expires)], ["Booking code", r.pass === "MASTER" ? "test room" : r.pass || "—"],
       r.summary && ["Mode", k.mode ? (k.mode === "modern" ? "Modern" : "Classic") : "no game was set up"],
@@ -520,7 +553,7 @@ function renderRooms() {
   const shown = rooms.filter(r => sh === "all" || (sh === "open") === openNow(r)), grp = r => RTYPE[typeOf(r)][1];
   const list = q ? rooms.filter(r => [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q))
     : shown.filter(r => ty === "every" || (ty === "games" ? !["practice", "test"].includes(grp(r)) : grp(r) === ty));
-  for (const r of list) {
+  for (const r of list.slice(0, capR)) {
     const t = typeOf(r), [label, g] = RTYPE[t];
     tb.append(row([h("code", {}, r.room), h("span", {}, h("span.ty.ty-" + g, {}, label), h("small.tynote", {}, typeNote(r, t))), when(r.created),
       r.deleted ? "ended " + when(r.expires) + " · deleted" : r.startHours ? "waiting for its game" : (r.expires > Date.now() ? "" : "ended ") + when(r.expires),
@@ -531,6 +564,7 @@ function renderRooms() {
   const n = k => shown.filter(r => typeOf(r) === k).length, box = [["Paid · website", n("web")], ["Paid · App Store", n("app")], ["Free codes", n("code")], ["Free · app", n("free")], ["Practice · app", n("practice")], ["Tests", n("test")]];
   $("#rstats").textContent = ""; for (const [l, c] of box) ap($("#rstats"), h("div.stat", {}, h("b", {}, String(c)), h("span", {}, l + (sh === "open" ? ", open now" : sh === "ended" ? ", ended" : ""))));
   say($("#rlmsg"), q ? list.length + " of " + rooms.length + " rooms match (searching every room)" : list.length + " shown, of " + shown.length + " rooms " + (sh === "open" ? "open now" : sh === "ended" ? "that have ended" : "in all") + (list.length < shown.length ? ". Type “Everything” shows the rest." : "."));
+  more($("#rlmsg"), list.length, capR, () => { capR = Infinity; renderRooms() });
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
 for (const [id, key] of [["#rshow", "bt-adm-rshow"], ["#rtype", "bt-adm-rtype"]]) $(id).onchange = () => { try { localStorage.setItem(key, $(id).value) } catch (e) {} renderRooms() };
@@ -540,13 +574,13 @@ const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.
 const ROLE = { cloak: "Forsworn", candle: "Loyal", f: "Forsworn", l: "Loyal" }, SIDE = { cloaks: "The Forsworn", candles: "The Loyal", forsworn: "The Forsworn", loyal: "The Loyal" };
 let replay = null;
 async function openRoom(code, at) {
-  const v = $("#roomview"); showTab("rooms"); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
+  const v = $("#roomview"); showTab("rooms"); here("rooms/" + code); $("#roomlist").hidden = true; v.hidden = false; v.textContent = "Loading " + code + "…";
   let d, recs, evs, sum; const info = await api("roominfo?room=" + code).catch(() => null);
   try { [d, recs, evs, sum] = await Promise.all([api("room/" + code + "/room"), api("room/" + code + "/recs"), api("room/" + code + "/events"), api("room/" + code + "/summary").catch(() => null)]) }
   catch (e) { if (info && info.room) return keptRoom(v, code, info); v.textContent = e.message; return }
   const s = d.state, m = d.meta || {}; recs = recs.recs || []; evs = evs.events || [];
   v.textContent = "";
-  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; if (replay) replay.stop() } }, "← All rooms"),
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#roomlist").hidden = false; here("rooms"); if (replay) replay.stop() } }, "← All rooms"),
     h("h2", {}, "Room " + code),
     h("p", {}, h("button.btn.ghost.small", { onclick: () => extend({ room: code }, m.expires, () => openRoom(code)) }, "Extend this Table")),
     kv([["Opened", secs(m.created)], m.startHours ? ["Open until", "waiting for its game (until " + secs(m.expires) + "); then " + m.startHours + " hours from when it starts"] : ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Booking code", m.pass ? m.pass.replace(/^CNDL-/, "OATH-") : "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
@@ -677,19 +711,19 @@ async function unzip(b64) {
 function giveBox(r) {
   const msg = h("p.msg", {});
   const go = async () => {
-    if (!confirm("Keep Table " + r.room + " open until the end of " + day(r.until) + ", and email them to say so?")) return;
+    if (!(await sure("Keep Table " + r.room + " open until the end of " + day(r.until) + ", and email them to say so?", "Give it"))) return;
     try { const j = await api("ext-give", { id: r.id }); say(msg, "Done: Table " + j.room + " is open until " + when(j.expires) + (j.mailed ? ", and " + j.to + " has been emailed." : ". The email didn’t send (see Errors), so tell them yourself.")); loadReports() }
     catch (e) { say(msg, e.message, true) }
   };
   return h("div", {}, r.status === "open" && r.until ? h("p", {}, h("button.btn.small", { onclick: go }, "Give it: open until " + day(r.until))) : null, msg);
 }
 async function openReport(id) {
-  const v = $("#repview"); $("#replist").hidden = true; v.hidden = false; v.textContent = "Loading " + id + "…";
+  const v = $("#repview"); here("reports/" + id); $("#replist").hidden = true; v.hidden = false; v.textContent = "Loading " + id + "…";
   let r; try { r = await api("report?id=" + encodeURIComponent(id)) } catch (e) { v.textContent = e.message; return }
   v.textContent = "";
   const note = h("textarea", { rows: 3, style: "width:100%", placeholder: "Your notes (only you see these)" }); note.value = r.adminNote || "";
-  const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { alert(e.message) } };
-  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false } }, "← All reports"),
+  const setStatus = async st => { try { await api("report", { id, status: st, note: note.value }); loadReports(); openReport(id) } catch (e) { tell(e.message) } };
+  ap(v, h("button.btn.ghost.small.back", { onclick: () => { v.hidden = true; $("#replist").hidden = false; here("reports") } }, "← All reports"),
     h("h2", {}, "Report " + r.id + " ", h("span.pill", { style: "color:" + (r.status === "open" ? "var(--rose)" : "#877e78") }, r.status)),
     r.spam ? h("p.note", {}, "Kept as spam, and not emailed to you: " + r.spam + ". If it’s real, tap Not spam and reply to them.") : null,
     kv([["When", secs(r.t)], ["Room", r.room ? h("a", { href: "#", onclick: e => { e.preventDefault(); openRoom(r.room) } }, r.room) : "—"], ["From", (r.url === "/contact" ? "the contact form" : r.host ? "the Keeper’s phone" : "the TV") + " · device " + r.device], ["Screen", r.screen ? r.screen.w + "×" + r.screen.h + " @" + r.screen.dpr : "—"], ["Game at", r.phase + (r.ver ? " (version " + r.ver + ")" : "")], ["Browser", r.ua], ["Build", r.build], ["Email", r.email ? h("a", { href: "mailto:" + r.email }, r.email) : "—"]]),
@@ -736,7 +770,7 @@ $("#fbreload").onclick = loadFeedback;
 // morning count; Grouped shows each kind once, with how many and when last
 let muted = new Set();
 const errKey = e => String(e.msg || e.where || "?").replace(/\d+/g, "#").slice(0, 120);
-async function mute(key, on) { try { muted = new Set((await api("err-mute", { key, on })).muted || []); renderErrors() } catch (e) { alert(e.message) } }
+async function mute(key, on) { try { muted = new Set((await api("err-mute", { key, on })).muted || []); renderErrors() } catch (e) { tell(e.message) } }
 const muteBtn = key => h("button.btn.ghost.small", { onclick: ev => { ev.stopPropagation(); mute(key, !muted.has(key)) } }, muted.has(key) ? "Unmute" : "Mute");
 async function loadErrors() { try { const j = await api("errors"); errors = j.errors || []; muted = new Set(j.muted || []); renderErrors() } catch (e) { say($("#emsg"), e.message, true) } }
 function renderErrors() {
