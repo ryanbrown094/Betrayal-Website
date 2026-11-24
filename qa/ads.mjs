@@ -14,7 +14,7 @@ const reset = () => db = {
   campaigns: [
     { id: "11", name: "Search party games", status: "ENABLED", biddingStrategyType: "MANUAL_CPC", budget: { id: "901", amountMicros: M(2.5) } },
     { id: "12", name: "Search game night", status: "ENABLED", biddingStrategyType: "TARGET_SPEND", targetSpend: { cpcBidCeilingMicros: M(0.8) }, budget: { id: "902", amountMicros: M(1.5) } },
-    { id: "13", name: "Paused test", status: "PAUSED", biddingStrategyType: "MANUAL_CPC", budget: { id: "903", amountMicros: M(1) } },
+    { id: "13", name: "Paused test", status: "PAUSED", type: "PERFORMANCE_MAX", biddingStrategyType: "MANUAL_CPC", budget: { id: "903", amountMicros: M(1) } },
   ],
   keywords: [
     { c: "11", b: "MANUAL_CPC", g: "21", k: "31", text: "party games for adults", match: "PHRASE", status: "ENABLED", bid: M(0.5) },
@@ -40,6 +40,7 @@ globalThis.fetch = async (url, init) => {
   calls.push({ version: m[1], cid: m[2], path: m[3], headers: init.headers, body });
   if (mode.fail) return mode.fail();
   if (m[3] === "googleAds:search") { const out = search(body); return out instanceof Response ? out : json(200, out) }
+  if (m[3] === "googleAds:mutate") return mode.allFail ? json(400, { error: { code: 400, message: "Request contains an invalid argument.", details: [{ errors: [{ errorCode: { adError: "TOO_LONG" }, message: "Too long." }] }] } }) : json(200, { mutateOperationResponses: body.mutateOperations.map(() => ({})) });
   const mm = m[3].match(/^(\w+):mutate$/);
   if (mm) {
     const bad = mode.partial && mode.partial.service === mm[1] ? mode.partial.index : -1;
@@ -53,9 +54,10 @@ function search({ query: q, pageToken }) {
   const range = (q.match(/DURING (\w+)/) || [])[1];
   if (/conversion_tracking_status/.test(q)) return rows([{ customer: { conversionTrackingSetting: { conversionTrackingStatus: "CONVERSION_TRACKING_MANAGED_BY_SELF" } } }]);
   if (/FROM customer LIMIT 1/.test(q)) return rows([{ customer: { id: "1234567890", descriptiveName: "The Betrayal", currencyCode: db.currency, timeZone: "Europe/London", autoTaggingEnabled: true } }]);
-  if (/FROM campaign WHERE campaign.status != 'REMOVED'$/.test(q)) return rows(db.campaigns.map((x) => ({ campaign: { id: x.id, name: x.name, status: x.status, advertisingChannelType: "SEARCH", biddingStrategyType: x.biddingStrategyType, ...(x.targetSpend ? { targetSpend: x.targetSpend } : {}) }, campaignBudget: x.budget })));
+  if (/FROM campaign WHERE campaign.status != 'REMOVED'$/.test(q)) return rows(db.campaigns.map((x) => ({ campaign: { id: x.id, name: x.name, status: x.status, advertisingChannelType: x.type || "SEARCH", biddingStrategyType: x.biddingStrategyType, networkSettings: { targetSearchNetwork: x.id !== "12" }, ...(x.targetSpend ? { targetSpend: x.targetSpend } : {}) }, campaignBudget: x.budget })));
   if (/segments.ad_network_type/.test(q)) return rows([{ campaign: { id: "11" }, segments: { adNetworkType: "CONTENT" }, metrics: { clicks: "40", costMicros: M(12) } }, { campaign: { id: "11" }, segments: { adNetworkType: "SEARCH" }, metrics: { clicks: "5", costMicros: M(3) } }, { campaign: { id: "12" }, segments: { adNetworkType: "SEARCH" }, metrics: { clicks: "9", costMicros: M(9) } }]);
   if (/FROM campaign WHERE .* DURING/.test(q)) return rows(Object.entries(db.cost[range]).map(([id, cost]) => ({ campaign: { id }, metrics: { clicks: String(Math.round(cost * 2)), costMicros: M(cost), ...(id === "11" && range === "LAST_30_DAYS" ? { conversions: 3, conversionsValue: 30 } : {}) } })));
+  if (/FROM ad_group WHERE/.test(q)) return rows([{ campaign: { id: "11" }, adGroup: { id: "21", name: "AG21", status: "ENABLED" } }, { campaign: { id: "12" }, adGroup: { id: "22", name: "AG22", status: "ENABLED" } }]);
   if (/FROM ad_group_criterion/.test(q)) return rows(db.keywords.map((x) => ({ campaign: { id: x.c, biddingStrategyType: x.b }, adGroup: { id: x.g, name: "AG" + x.g }, adGroupCriterion: { criterionId: x.k, keyword: { text: x.text, matchType: x.match }, status: x.status, ...(x.bid ? { cpcBidMicros: x.bid } : {}), effectiveCpcBidMicros: x.bid || M(0.7) } })));
   if (/FROM keyword_view/.test(q)) return rows([{ adGroup: { id: "21" }, adGroupCriterion: { criterionId: "31" }, metrics: { clicks: "20", costMicros: M(12) } }]);
   if (/FROM campaign_criterion/.test(q)) return rows(db.negatives.map((x) => ({ campaign: { id: x.c }, campaignCriterion: { keyword: { text: x.text, matchType: x.match } } })));
@@ -159,4 +161,28 @@ res = await run([{ op: "add_negative_keyword", campaignId: "11", text: "jobs" },
 check("live: one refused by Google is marked failed, with its reason, and the rest applied", res[0].status === "applied" && res[1].status === "failed" && /invalid characters/.test(res[1].reason), res);
 { const x = (await apply(client(ENV), { changes: [{ op: "pause_keyword", adGroupId: "22", criterionId: "33" }] })).results[0]; check("changes file: {changes: [...]} is accepted too", x.status === "valid", x) }
 
+// ---- search partners, and a new ad group ----
+res = await run([{ op: "set_search_partners", campaignId: "11", on: false }, { op: "set_search_partners", campaignId: "12", on: false }, { op: "set_search_partners", campaignId: "11", on: true }, { op: "set_search_partners", campaignId: "13", on: false }]);
+{ const m = calls.find((x) => x.path === "campaigns:mutate"), op = m && m.body.operations[0];
+  check("search partners: turned off where they're on (networkSettings.targetSearchNetwork false)", res[0].status === "valid" && op && op.update.networkSettings.targetSearchNetwork === false && op.updateMask === "networkSettings.targetSearchNetwork", m && m.body); }
+check("…not where they're already off, and never turned on", res[1].status === "rejected" && /already off/.test(res[1].reason) && res[2].status === "rejected" && /only turn search partners off/.test(res[2].reason), res);
+check("…and only on a Search campaign (Performance Max has no such setting)", res[3].status === "rejected" && /Search campaign/.test(res[3].reason), res[3]);
+const GROUP = { op: "add_ad_group", campaignId: "11", name: "App", finalUrl: "https://thebetrayal.co.uk/?app", path1: "iphone",
+  keywords: [{ text: "Party Game App", match: "PHRASE" }, { text: "traitors game app", match: "EXACT" }],
+  headlines: ["The Betrayal for iPhone", "Free Party Game App", "Secret Roles for 8 to 24"], descriptions: ["A party game of secret oaths for 8 to 24 friends.", "Free to play, or ad-free with a pass."] };
+res = await run([GROUP]);
+{ const m = calls.find((x) => x.path === "googleAds:mutate"), ops = (m && m.body.mutateOperations) || [];
+  check("new ad group: the group, its keywords and its ad in one all-or-nothing request, by a temporary id", res[0].status === "valid" && m && m.body.partialFailure === false && m.body.validateOnly === true
+    && ops[0].adGroupOperation.create.resourceName === "customers/1234567890/adGroups/-1" && ops.filter((o) => o.adGroupCriterionOperation).length === 2
+    && ops[1].adGroupCriterionOperation.create.keyword.text === "party game app" && ops[3].adGroupAdOperation.create.ad.responsiveSearchAd.headlines.length === 3
+    && ops[3].adGroupAdOperation.create.ad.finalUrls[0] === "https://thebetrayal.co.uk/?app", m && m.body); }
+res = await run([{ ...GROUP, name: "ag21" }, { ...GROUP, finalUrl: "https://example.com/" }, { ...GROUP, keywords: [{ text: "party game app", match: "BROAD" }] }, { ...GROUP, headlines: ["x".repeat(31), "b", "c"] },
+  { ...GROUP, descriptions: ["only one"] }, { ...GROUP, keywords: [{ text: "bbc party game app", match: "PHRASE" }] }, { ...GROUP, campaignId: "99" }]);
+check("…refused: a name already used, a page off the site, broad match, a headline over 30, one description, a keyword a negative blocks, no such campaign",
+  res.every((x) => x.status === "rejected") && /already has/.test(res[0].reason) && /thebetrayal/.test(res[1].reason) && /EXACT or PHRASE/.test(res[2].reason) && /headlines/.test(res[3].reason)
+  && /descriptions/.test(res[4].reason) && /negative "bbc"/.test(res[5].reason) && /no such campaign/.test(res[6].reason), res.map((x) => x.reason));
+res = await run([GROUP, GROUP]);
+check("…and not twice in one run", res[0].status === "valid" && res[1].status === "rejected" && /already has/.test(res[1].reason), res);
+mode.allFail = true; res = await run([GROUP], { live: true }); mode = {};
+check("…a refusal from Google marks it failed, with the reason", res[0].status === "failed" && /invalid argument|Too long/.test(res[0].reason), res);
 console.log(ok ? "RESULT: CLEAN" : "RESULT: FAILED"); process.exit(ok ? 0 : 1);

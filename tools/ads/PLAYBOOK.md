@@ -19,6 +19,8 @@ The script enforces these, and you never look for a way round them. If one gets 
   - `set_cpc_ceiling`
   - `set_budget`
   - `pause_ad`
+  - `set_search_partners`: off only, never on;
+  - `add_ad_group`: only the owner's App ad group below, exactly as written, and never any other.
 - **Proposals only:** everything else goes to the owner as a proposal, never an action. That includes:
   - enabling anything;
   - new campaigns, ads or keywords;
@@ -26,6 +28,54 @@ The script enforces these, and you never look for a way round them. If one gets 
   - bidding strategies;
   - conversion settings.
 - **At most 30 changes** in one run.
+
+## The owner's standing orders (24 November 2026)
+
+The owner doesn't make changes in Google Ads by hand: each sweep keeps the account to these, before anything else.
+
+- **Search partners off:** if a Search campaign in `campaigns` (type `SEARCH`) has `searchPartners: true`, turn them off (`set_search_partners` with `"on": false`). The account runs on Google Search alone.
+- **The App ad group:** if `groups` shows no ad group called **App** in the Search campaign, create it with `add_ad_group`, using exactly this. It catches searches for an app; its page, `?app`, shows iPhones and iPads the website's App Store banner.
+
+  ```json
+  {
+    "op": "add_ad_group",
+    "campaignId": "<the Search campaign's id>",
+    "name": "App",
+    "finalUrl": "https://thebetrayal.co.uk/?app",
+    "path1": "iphone",
+    "path2": "app",
+    "keywords": [
+      {"text": "party game app", "match": "PHRASE"},
+      {"text": "party games app", "match": "PHRASE"},
+      {"text": "group game app", "match": "PHRASE"},
+      {"text": "traitors game app", "match": "PHRASE"},
+      {"text": "traitors app", "match": "PHRASE"},
+      {"text": "murder mystery game app", "match": "PHRASE"},
+      {"text": "werewolf game app", "match": "PHRASE"},
+      {"text": "mafia game app", "match": "PHRASE"},
+      {"text": "christmas party game app", "match": "PHRASE"},
+      {"text": "party game for iphone", "match": "PHRASE"}
+    ],
+    "headlines": [
+      "The Betrayal for iPhone",
+      "Free Party Game App",
+      "Secret Roles for 8 to 24",
+      "Play on Everyone's Phone",
+      "Find Who's Lying",
+      "Christmas Quiz All December",
+      "Free on iPhone and iPad",
+      "No Board or Cards Needed"
+    ],
+    "descriptions": [
+      "A party game of secret oaths for 8 to 24 friends in one room, each on their own phone.",
+      "Free to play with ads. A Night Pass or the Host Pass makes the whole Table ad-free.",
+      "Quizzes, bluffing and a secret vote each round. Find the Forsworn before they win."
+    ],
+    "why": "the owner's App ad group"
+  }
+  ```
+
+  Its keywords then follow the usual rules (pauses, and bids if the campaign moves to manual bidding). If its ad is disapproved, propose a fix: it's the group's only ad.
 
 ## 1. Check
 
@@ -54,12 +104,11 @@ At £5 a day there's a handful of clicks a day, so act only on clear evidence. D
   - watching the TV show (bbc, iplayer, episode, cast, series, season, watch, stream, winner, contestant);
   - jobs and careers;
   - free printables or downloads;
-  - apps;
   - buying a physical board game from a shop;
   - other products or places;
   - anything that isn't about hosting a game.
 - Use PHRASE match for the telling word or phrase ("iplayer", "cast list"). Use EXACT for a whole odd query.
-- Never add a negative for words the product's own searches rely on: party, game, games, games night, hidden role, murder mystery, mafia, werewolf, traitors (as in "traitors game at home"), christmas, office, adults, group, friends. The script also refuses a negative that would block one of the campaign's own keywords.
+- Never add a negative for words the product's own searches rely on: party, game, games, games night, hidden role, murder mystery, mafia, werewolf, traitors (as in "traitors game at home"), christmas, office, adults, group, friends, and app, apps, iphone, ipad and ios (the App ad group's). The script also refuses a negative that would block one of the campaign's own keywords.
 
 **Keywords** (last 30 days)
 - **Pause:** a keyword that has cost £10 or more with no purchase. That's the price of one party. If it's its ad group's only enabled keyword, propose instead.
