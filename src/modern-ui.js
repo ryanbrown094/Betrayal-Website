@@ -474,7 +474,7 @@ function trial(me) {
 }
 function sent(v) { return `<div class="done">${ico("handshake")}<div>Locked in${v != null && v !== "" ? `: <b>${esc(v)}</b>` : ""}.<br><span class="small tick" data-fx="a${it().answered}">${it().answered} of ${it().of || "?"} in</span></div></div>`; }
 const it = () => V.trial.item;
-const form = (id, type, ph, label, extra) => `<div class="row"><input class="f" id="${id}" type="${type}" ${type === "number" ? 'inputmode="decimal"' : ""} placeholder="${esc(ph)}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" autofocus${extra || ""}></div><div style="height:10px"></div>${btn(label || "Send", "ansf", id, "big")}`;
+const form = (id, type, ph, label, extra) => `<div class="row"><input class="f" id="${id}" type="${type}" aria-label="${esc(ph)}" ${type === "number" ? 'inputmode="decimal"' : ""} placeholder="${esc(ph)}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" autofocus${extra || ""}></div><div style="height:10px"></div>${btn(label || "Send", "ansf", id, "big")}`;
 function itemPlay(me, x) {
   switch (x.k) {
     case "text": return `<p class="q">${esc(x.q)}</p>` + (x.mine != null ? sent(x.mine) : form("a" + V.trial.i, "text", "Your answer", "Send"));
@@ -484,7 +484,7 @@ function itemPlay(me, x) {
     case "word": return `<p class="sub">The longest real word from these letters. You can change it until time’s up.</p><div class="letters">${[...x.letters].map((c) => `<span>${c}</span>`).join("")}</div>` + (x.mine ? `<div class="done">${ico("scroll")}<div>Your word: <b>${esc(String(x.mine).toUpperCase())}</b></div></div><div style="height:10px"></div>` : "") + form("w" + V.trial.i, "text", "Your word", x.mine ? "Change it" : "Send", '');
     case "recall":
       if (x.stage === "study") return `<p class="sub">Remember these. They vanish in a moment.</p><div class="words">${x.words.map((w) => `<span>${esc(w)}</span>`).join("")}</div>`;
-      return `<p class="sub">Type every word you remember, separated by commas or new lines. You can send again to add more.</p><textarea class="f" id="r${V.trial.i}" autofocus autocapitalize="off" spellcheck="false">${esc(x.mine || "")}</textarea><div style="height:10px"></div>${btn(x.mine ? "Update my list" : "Send my list", "ansf", "r" + V.trial.i, "big")}`;
+      return `<p class="sub">Type every word you remember, separated by commas or new lines. You can send again to add more.</p><textarea class="f" id="r${V.trial.i}" aria-label="The words you remember" autofocus autocapitalize="off" spellcheck="false">${esc(x.mine || "")}</textarea><div style="height:10px"></div>${btn(x.mine ? "Update my list" : "Send my list", "ansf", "r" + V.trial.i, "big")}`;
     case "cell":
       if (x.stage === "study") return `<p class="sub">Study the grid.</p>${cells(x.grid)}`;
       if (x.stage === "blank") return `<p class="sub">Something is changing…</p><div class="cells blank">${"<span></span>".repeat(12)}</div>`;
@@ -654,13 +654,14 @@ function end(me) {
   <p class="sub">${r.how === "betrayed" ? andList(r.to.map(esc)) + " betrayed the others at the last, and takes it all." : r.how === "nobody" ? "Too many betrayed, so nobody takes the prize." : r.to.length ? "The prize goes to " + andList(r.to.map(esc)) + "." : ""}</p>
   <div class="card center prize" data-fx="endp"><div class="eyebrow">the prize${r.tier ? " · " + (fw ? (r.pot <= 0 ? "an empty" : "a half-empty") : r.pot >= r.cap ? "a full" : "a half-full") + " Purse" : ""}</div><p class="ans">${esc(prizeText(r))}</p><p class="small">${fw ? (r.won ? "The Loyal built " + r.pot + " of " + r.cap + ", so the Forsworn take the " + r.won + " it fell short." : "The Loyal filled the Purse, so there was nothing left for the Forsworn to take.") : "The Purse: " + r.pot + " of " + r.cap + "."}${r.coins != null ? " One coin for every 100 points." : ""}</p></div>
   ${me.won ? `<div class="banner sanct">${ico("crown")}<span>You won.</span></div>` : ""}
+  ${rateCard(me)}
   ${r.peeked && r.peeked.length ? `<p class="small">The host opened the roles in round ${r.peeked.join(", ")} (Tools, for when something went wrong).</p>` : ""}
   <h2 class="sec">Who was who</h2><ul class="roster">${V.players.slice().sort((a, b) => (a.role === "f" ? 0 : 1) - (b.role === "f" ? 0 : 1)).map((p) => `<li class="${p.role === "f" ? "f" : "l"}">${ART.seal(p)}<span>${esc(p.name)}${p.alive ? "" : ` <i>out</i>`}</span><em>${p.role === "f" ? "Forsworn" : "Loyal"}</em></li>`).join("")}</ul>
   ${r.awards && r.awards.length ? `<h2 class="sec">The awards</h2><ul class="score awards">${r.awards.map((a) => `<li>${seal(a.id)}<div><b>${esc(a.title)}</b><br><span class="small">${esc(a.name)} ${esc(a.why)}</span></div></li>`).join("")}</ul>` : ""}
-  ${rateCard(me)}${dirCard(btn("Play again with the same people", "again", null, "dark"))}${reportLink()}`;
+  ${dirCard(btn("Play again with the same people", "again", null, "dark"))}${reportLink()}`;
 }
 // one tap: how the game was (kept in the game's log, for /admin)
-const rateCard = (me) => (me.rated ? `<p class="small center">Thanks for rating it ${me.rated} out of 5.</p>` : `<div class="card"><p>How was the game? One tap helps us make it better.</p><div class="grid5">${[1, 2, 3, 4, 5].map((n) => btn(String(n), "rate", n, "dark")).join("")}</div><p class="small">1 is poor, 5 is brilliant.</p></div>`);
+const rateCard = (me) => (me.rated ? `<p class="small center">Thanks for rating it ${me.rated} out of 5.</p>` : `<div class="card hot rate"><h2>How was the game?</h2><p class="sub">One tap, 1 to 5. It’s how we make it better.</p><div class="grid5" role="group" aria-label="Rate the game from 1 to 5">${[1, 2, 3, 4, 5].map((n) => `<button class="btn dark" data-a="rate" data-v="${n}" aria-label="${n} out of 5">${n}</button>`).join("")}</div><p class="small ratekey"><span>poor</span><span>brilliant</span></p></div>`);
 const reportLink = () => `<div class="row" style="justify-content:center;margin-top:18px">${btn("Report a problem", "report1", null, "ghost sm")}</div>`;
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -697,7 +698,7 @@ function tvBody(url) {
     case "unmask": { const keep = V.players; V.players = V.unmask.order.map(P); const h = `<div class="eyebrow">the unmasking</div><h1>Who were they?</h1>${tvPeople(null, true)}`; V.players = keep; return h; }
     case "honour": return `<div class="eyebrow">the last betrayal</div><h1>Honour or betray?</h1><p class="sub">The Forsworn choose, in secret.</p><p class="tvcount tick" data-fx="h${V.honour.made}">${V.honour.made} of ${V.honour.of} chosen${V.honour.end ? " · " + clock(V.honour.end) : ""}</p>`;
     case "end": { const r = V.result, fw = r.winner === "forsworn";
-      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}" data-fx="end">${fw ? "The Forsworn win" : "The Loyal win"}</h1>${r.early ? `<p class="sub">The host ended the game here.</p>` : ""}<div class="prizecard" data-fx="endp"><span>the prize</span><h2>${esc(prizeText(r))}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}</div>
+      return `<div class="endgrid"><div class="endl"><h1 class="disp ${fw ? "blood" : ""}" data-fx="end">${fw ? "The Forsworn win" : "The Loyal win"}</h1>${r.early ? `<p class="sub">The host ended the game here.</p>` : ""}<div class="prizecard" data-fx="endp"><span>the prize</span><h2>${esc(prizeText(r))}</h2><p class="sub">${r.to.length ? "To " + esc(andList(r.to)) : "Nobody takes it"}${fw ? ", with the " + r.won + " the Purse fell short" : ", with the Purse of " + r.pot}</p></div>${r.peeked && r.peeked.length ? `<p class="tvcount">the host opened the roles in round ${r.peeked.join(", ")}</p>` : ""}<p class="tvcount">How was it? Rate the game on your phone, 1 to 5.</p></div>
       <div class="endr">${tvPeople(null, true, "end")}${r.awards && r.awards.length ? `<ul class="tvawards">${r.awards.slice(0, V.players.length > 16 ? 2 : 4).map((a) => `<li>${seal(a.id)}<span><b>${esc(a.title)}</b>${esc(a.name)} ${esc(a.why)}</span></li>`).join("")}</ul>` : ""}</div></div>`; }
   }
   return "";
