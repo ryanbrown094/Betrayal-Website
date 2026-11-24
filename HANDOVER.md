@@ -583,7 +583,7 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
   - keyword bids and Maximise-clicks bid limits are £2 at most, and move ±20% per change;
   - 30 changes a run;
   - money changes only on a GBP account;
-  - only six kinds of change: `add_negative_keyword`, `pause_keyword`, `set_keyword_bid`, `set_cpc_ceiling`, `set_budget` and `pause_ad`. Never a negative that would block a campaign's own keyword, and never an ad group's last enabled ad.
+  - only eight kinds of change: `add_negative_keyword`, `pause_keyword`, `set_keyword_bid`, `set_cpc_ceiling`, `set_budget`, `pause_ad`, `set_search_partners` (off only) and `add_ad_group` (all or nothing: the group, its keywords and one responsive search ad, leading to the site; the playbook allows only the owner's App ad group). Never a negative that would block a campaign's own keyword, and never an ad group's last enabled ad.
   - Everything else is proposed to the owner: enabling, new campaigns, ads or keywords, ad text, bidding strategy and conversion settings. `qa/ads.mjs` tests each limit.
   - Google may spend up to twice a day's budget on a busy day, but no more than 30.4 days' worth in a month.
 - **Permission to act:** in auto mode the safety check refuses any change to the live account unless a permission rule allows `node tools/ads/ads.mjs …`; without one a sweep can only report. The rule belongs in `.claude/settings.json` (`{"permissions": {"allow": ["Bash(node tools/ads/ads.mjs *)"]}}`) and is the owner's to add, since it changes what Claude may do. `LIMITS` in the script is what keeps the sweep's changes safe.

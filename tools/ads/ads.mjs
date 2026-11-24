@@ -1,10 +1,12 @@
 // Google Ads, run by Claude once a day (tools/ads/PLAYBOOK.md), through the Google Ads API's REST interface. No
 // dependencies.
 //   node tools/ads/ads.mjs check                 are the credentials, the network and the API access in place?
-//   node tools/ads/ads.mjs report [--out FILE]   the account as JSON: spend against the cap, campaigns, keywords, search
+//   node tools/ads/ads.mjs report [--out FILE]   the account as JSON: spend against the cap, campaigns, ad groups, keywords, search
 //                                                terms, ads and assets (with approvals), conversions, recent changes
 //   node tools/ads/ads.mjs apply FILE [--live]   a list of changes, each checked against LIMITS first; without --live
-//                                                Google only validates them
+//                                                Google only validates them. Besides the bid, budget, keyword and ad
+//                                                changes: set_search_partners (off only) and add_ad_group (an ad group
+//                                                with its keywords and one responsive search ad, all or nothing)
 // Credentials come from the environment, never a file: GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET,
 // GOOGLE_ADS_REFRESH_TOKEN, GOOGLE_ADS_CUSTOMER_ID, and GOOGLE_ADS_LOGIN_CUSTOMER_ID when access is through a manager
 // account. Since September 2026 API access belongs to the Google Cloud project that owns the OAuth client, and Google
@@ -88,16 +90,19 @@ export function client(env = process.env) {
   }
   // partialFailure: one bad operation doesn't stop the rest; validateOnly: Google checks them and changes nothing
   const mutate = (service, operations, validateOnly) => call("/" + service + ":mutate", { operations, partialFailure: true, validateOnly: !!validateOnly });
-  return { cid, version, search, mutate, res: (kind, id) => `customers/${cid}/${kind}/${id}` };
+  // several services in one request, all or nothing (an ad group with its keywords and ad, by temporary ids)
+  const mutateAll = (mutateOperations, validateOnly) => call("/googleAds:mutate", { mutateOperations, partialFailure: false, validateOnly: !!validateOnly });
+  return { cid, version, search, mutate, mutateAll, res: (kind, id) => `customers/${cid}/${kind}/${id}` };
 }
 
 // ---- the account's state (what report shows and apply checks against) ----
 const met = (m) => (m = m || {}, { impressions: num(m.impressions), clicks: num(m.clicks), cost: gbp(m.costMicros), conversions: +num(m.conversions).toFixed(2), value: +num(m.conversionsValue).toFixed(2) });
 const METRICS = "metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions, metrics.conversions_value";
 async function campaignState(c) {
-  const rows = await c.search("SELECT campaign.id, campaign.name, campaign.status, campaign.serving_status, campaign.advertising_channel_type, campaign.bidding_strategy_type, campaign.target_spend.cpc_bid_ceiling_micros, campaign_budget.id, campaign_budget.amount_micros, campaign_budget.explicitly_shared FROM campaign WHERE campaign.status != 'REMOVED'");
+  const rows = await c.search("SELECT campaign.id, campaign.name, campaign.status, campaign.serving_status, campaign.advertising_channel_type, campaign.bidding_strategy_type, campaign.target_spend.cpc_bid_ceiling_micros, campaign.network_settings.target_search_network, campaign_budget.id, campaign_budget.amount_micros, campaign_budget.explicitly_shared FROM campaign WHERE campaign.status != 'REMOVED'");
   return rows.map(({ campaign: x = {}, campaignBudget: b = {} }) => ({ id: String(x.id), name: x.name, status: x.status, serving: x.servingStatus, type: x.advertisingChannelType, bidding: x.biddingStrategyType,
-    cpcCeiling: x.targetSpend && x.targetSpend.cpcBidCeilingMicros ? gbp(x.targetSpend.cpcBidCeilingMicros) : null, budgetId: b.id ? String(b.id) : null, budget: gbp(b.amountMicros), sharedBudget: !!b.explicitlyShared }));
+    cpcCeiling: x.targetSpend && x.targetSpend.cpcBidCeilingMicros ? gbp(x.targetSpend.cpcBidCeilingMicros) : null, budgetId: b.id ? String(b.id) : null, budget: gbp(b.amountMicros), sharedBudget: !!b.explicitlyShared,
+    searchPartners: !!(x.networkSettings && x.networkSettings.targetSearchNetwork) }));
 }
 // the daily budgets of enabled campaigns, each shared budget counted once
 export function dailyTotal(camps, override) {
@@ -109,6 +114,10 @@ async function keywordState(c) {
   const rows = await c.search("SELECT campaign.id, campaign.bidding_strategy_type, ad_group.id, ad_group.name, ad_group_criterion.criterion_id, ad_group_criterion.keyword.text, ad_group_criterion.keyword.match_type, ad_group_criterion.status, ad_group_criterion.cpc_bid_micros, ad_group_criterion.effective_cpc_bid_micros, ad_group_criterion.quality_info.quality_score FROM ad_group_criterion WHERE ad_group_criterion.type = 'KEYWORD' AND ad_group_criterion.negative = FALSE AND ad_group_criterion.status != 'REMOVED' AND ad_group.status != 'REMOVED' AND campaign.status != 'REMOVED'");
   return rows.map(({ campaign: k = {}, adGroup: g = {}, adGroupCriterion: x = {} }) => ({ campaignId: String(k.id), bidding: k.biddingStrategyType, adGroupId: String(g.id), adGroup: g.name, criterionId: String(x.criterionId),
     text: x.keyword && x.keyword.text, match: x.keyword && x.keyword.matchType, status: x.status, bid: x.cpcBidMicros ? gbp(x.cpcBidMicros) : null, effectiveBid: x.effectiveCpcBidMicros ? gbp(x.effectiveCpcBidMicros) : null, quality: x.qualityInfo ? x.qualityInfo.qualityScore || null : null }));
+}
+async function groupState(c) {
+  const rows = await c.search("SELECT campaign.id, ad_group.id, ad_group.name, ad_group.status FROM ad_group WHERE ad_group.status != 'REMOVED' AND campaign.status != 'REMOVED'");
+  return rows.map(({ campaign: k = {}, adGroup: g = {} }) => ({ campaignId: String(k.id), id: String(g.id), name: g.name, status: g.status }));
 }
 async function negativeState(c) {
   const rows = await c.search("SELECT campaign.id, campaign_criterion.criterion_id, campaign_criterion.keyword.text, campaign_criterion.keyword.match_type FROM campaign_criterion WHERE campaign_criterion.type = 'KEYWORD' AND campaign_criterion.negative = TRUE");
@@ -138,6 +147,7 @@ export async function report(c) {
     }
     return camps;
   });
+  await part("groups", () => groupState(c));
   await part("keywords", async () => {
     const kws = await keywordState(c);
     for (const [key, range] of [["last7", "LAST_7_DAYS"], ["last30", "LAST_30_DAYS"]]) {
@@ -258,8 +268,46 @@ export function vet(ch, s) {
       ad.status = "PAUSED";
       return { ok: true, service: "adGroupAds", op: { update: { resourceName: s.res("adGroupAds", ad.adGroupId + "~" + ad.adId), status: "PAUSED" }, updateMask: "status" } };
     }
+    case "set_search_partners": {
+      // off only: Google Search without its partner sites, as the owner set the account
+      if (!camp) return no("no such campaign");
+      if (camp.type && camp.type !== "SEARCH") return no("search partners are a Search campaign's setting");
+      if (ch.on !== false) return no("a sweep may only turn search partners off");
+      if (!camp.searchPartners) return no("search partners are already off");
+      camp.searchPartners = false;
+      return { ok: true, service: "campaigns", op: { update: { resourceName: s.res("campaigns", camp.id), networkSettings: { targetSearchNetwork: false } }, updateMask: "networkSettings.targetSearchNetwork" } };
+    }
+    case "add_ad_group": {
+      // an ad group with its keywords and one responsive search ad, sent together so none exists without the others.
+      // Spend stays within the campaign's budget, which the cap already limits.
+      const name = String(ch.name || "").trim(), url = String(ch.finalUrl || ""), H = [].concat(ch.headlines || []).map(String), D = [].concat(ch.descriptions || []).map(String);
+      const words = [].concat(ch.keywords || []).map((k) => ({ text: String(k.text || "").trim().toLowerCase().replace(/\s+/g, " "), match: String(k.match || "PHRASE").toUpperCase() }));
+      if (!camp) return no("no such campaign");
+      if (camp.type && camp.type !== "SEARCH") return no("only a Search campaign takes a new ad group");
+      if (!name || name.length > 80) return no("an ad group needs a name of up to 80 characters");
+      if (s.groups.some((g) => g.campaignId === camp.id && g.name.toLowerCase() === name.toLowerCase())) return no(`the campaign already has an ad group called "${name}"`);
+      if (!/^https:\/\/thebetrayal\.co\.uk\//.test(url)) return no("the ad must lead to a page on https://thebetrayal.co.uk/");
+      if (!words.length || words.length > 20) return no("1 to 20 keywords");
+      for (const k of words) {
+        if (!k.text || k.text.split(" ").length > 10 || /[^\p{L}\p{N} '&.-]/u.test(k.text)) return no(`"${k.text}" isn't 1 to 10 plain words`);
+        if (!["EXACT", "PHRASE"].includes(k.match)) return no("keywords here are EXACT or PHRASE");
+        const neg = s.negs.find((x) => x.campaignId === camp.id && (x.match === "EXACT" ? k.text === String(x.text).toLowerCase() : String(x.text).toLowerCase().split(" ").every((w) => k.text.split(" ").includes(w))));
+        if (neg) return no(`the campaign's negative "${neg.text}" would block "${k.text}"`);
+      }
+      if (H.length < 3 || H.length > 15 || H.some((h) => !h.trim() || h.length > 30) || new Set(H).size !== H.length) return no("3 to 15 different headlines of up to 30 characters");
+      if (D.length < 2 || D.length > 4 || D.some((d) => !d.trim() || d.length > 90)) return no("2 to 4 descriptions of up to 90 characters");
+      if ([ch.path1, ch.path2].some((x) => x != null && String(x).length > 15)) return no("display paths are up to 15 characters");
+      s.groups.push({ campaignId: camp.id, id: "new", name, status: "ENABLED" });
+      const g = s.res("adGroups", "-1");
+      return { ok: true, service: "googleAds", op: [
+        { adGroupOperation: { create: { resourceName: g, campaign: s.res("campaigns", camp.id), name, status: "ENABLED", type: "SEARCH_STANDARD" } } },
+        ...words.map((k) => ({ adGroupCriterionOperation: { create: { adGroup: g, status: "ENABLED", keyword: { text: k.text, matchType: k.match } } } })),
+        { adGroupAdOperation: { create: { adGroup: g, status: "ENABLED", ad: { finalUrls: [url], responsiveSearchAd: { headlines: H.map((text) => ({ text })), descriptions: D.map((text) => ({ text })),
+          ...(ch.path1 ? { path1: String(ch.path1) } : {}), ...(ch.path2 ? { path2: String(ch.path2) } : {}) } } } } },
+      ] };
+    }
     default:
-      return no(`"${ch.op}" isn't a change a sweep may make (allowed: add_negative_keyword, pause_keyword, set_keyword_bid, set_cpc_ceiling, set_budget, pause_ad)`);
+      return no(`"${ch.op}" isn't a change a sweep may make (allowed: add_negative_keyword, pause_keyword, set_keyword_bid, set_cpc_ceiling, set_budget, pause_ad, set_search_partners, add_ad_group)`);
   }
 }
 
@@ -268,8 +316,11 @@ export async function apply(c, changes, { live = false } = {}) {
   if (!Array.isArray(changes)) throw new AdsError("The changes file must hold a list of changes, or {\"changes\": [...]}");
   const [acct] = await c.search("SELECT customer.currency_code FROM customer LIMIT 1");
   const camps = await campaignState(c);
-  const s = { currency: acct && acct.customer && acct.customer.currencyCode, camps, kws: await keywordState(c), ads: await adState(c), negs: await negativeState(c), res: c.res, budgets: new Map() };
+  const s = { currency: acct && acct.customer && acct.customer.currencyCode, camps, kws: await keywordState(c), ads: await adState(c), negs: await negativeState(c), groups: await groupState(c), res: c.res, budgets: new Map() };
   const results = changes.map((ch, i) => i >= LIMITS.maxChanges ? { change: ch, status: "rejected", reason: `more than ${LIMITS.maxChanges} changes in one run` } : (() => { const v = vet(ch || {}, s); return v.ok ? { change: ch, status: "pending", service: v.service, op: v.op } : { change: ch, status: "rejected", reason: v.reason }; })());
+  for (const r of results.filter((x) => x.status === "pending" && x.service === "googleAds")) { // each all or nothing, on its own
+    try { await c.mutateAll(r.op, !live); r.status = live ? "applied" : "valid"; } catch (e) { r.status = "failed"; r.reason = e.message + (e.hint ? " (" + e.hint + ")" : ""); }
+  }
   for (const service of [...new Set(results.filter((r) => r.status === "pending").map((r) => r.service))]) {
     const batch = results.filter((r) => r.status === "pending" && r.service === service);
     try {
