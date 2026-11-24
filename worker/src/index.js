@@ -270,8 +270,13 @@ export class GameState {
 
     if (req.method === "GET") {
       const tag = tagOf(current, authed) + (expired ? ".x" : "");
-      if (req.headers.get("X-Have") === tag) return json({ same: true, tag });
-      return json(authed ? { state: current, auth: true, tag, room } : { state: publicView(current), auth: false, tag, room });
+      // how many phones are open as the Keeper (unlocked with the PIN, asking in the last 20 seconds): more than one and
+      // each is told, because a table that shares the Keeper's link has every role on every phone
+      let keepers = 0; const dev = clip(req.headers.get("X-Device"), 16);
+      if (authed && dev) { const t = Date.now(), k = (this.keepers = this.keepers || new Map()); k.set(dev, t); for (const [d, at] of k) if (t - at > 20000) k.delete(d); keepers = k.size; }
+      const more = keepers > 1 ? { keepers } : {};
+      if (req.headers.get("X-Have") === tag) return json({ same: true, tag, ...more });
+      return json(authed ? { state: current, auth: true, tag, room, ...more } : { state: publicView(current), auth: false, tag, room });
     }
     if (oldBuild) return text("A new version is live. Reload the page.", 426);
     if (expired) return readOnly();

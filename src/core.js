@@ -13,7 +13,7 @@ let roomInfo = null, roomMissing = false, roomExpired = false;
 const roomUrl = host => location.origin + "/t/" + ROOM + (host ? "#keeper" : "");
 
 let db = null, remote = false, lastJson = "", state = null, listeners = [], skew = 0;
-let lastTag = "", limitedNow = false;
+let lastTag = "", limitedNow = false, keepersNow = 0; // keepersNow: phones open as the Keeper, when more than this one
 let authed = false, serverHasGame = false, pending = 0, syncErr = false, connecting = true, lastPollOk = 0, toastMsg = null, toastT = null;
 
 const now = () => Date.now() + skew;
@@ -36,7 +36,7 @@ const offline = () => remote && lastPollOk && Date.now() - lastPollOk > 4500;
 async function poll() {
   try {
     const pinUsed = getPin(), hdr = {};
-    if (isHost) hdr["X-Pin"] = pinUsed;
+    if (isHost) { hdr["X-Pin"] = pinUsed; hdr["X-Device"] = DEVICE }
     if (lastTag) hdr["X-Have"] = lastTag; // unchanged since last time: the reply is a few bytes, not the whole game
     const r = await fetch(API + "/state", { cache: "no-store", headers: hdr });
     if (isHost && r.status === 429 && !state) { if (!limitedNow) { limitedNow = true; serverHasGame = true; emit() } return }
@@ -47,6 +47,7 @@ async function poll() {
     syncClock(r); limitedNow = false;
     if (body.room) { const was = roomExpired; roomInfo = body.room; roomExpired = !!body.room.expired; if (was !== roomExpired) emit() }
     const wasOff = offline(); lastPollOk = Date.now(); if (wasOff) { crumb("net", "back in touch with the server"); emit() }
+    if (isHost) { const k = +body.keepers || 0; if (k !== keepersNow) { if (k > 1) crumb("keepers", k + " phones open as the Keeper"); keepersNow = k; emit() } }
     if (body.same) return;
     if (pending > 0 || saveQ.length || pinUsed !== getPin()) return; // unsent saves first: the flush settles any clash
     if (j === lastJson) return;
