@@ -1,7 +1,7 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
 import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys, hiloRef, roundsFor, finalFor } from "../worker/src/modern.js";
-import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES } from "../worker/src/content.gen.js";
+import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES, XMAS_E, XMAS_M, XMAS_H, XMAS_LIKELY } from "../worker/src/content.gen.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const dict = { has: (w) => w.length >= 3 };
@@ -772,6 +772,25 @@ for (const key of ["rps", "oneleg"]) {
   check("…a word can still be changed", A(g, p.id, { a: "ans", v: L.slice(0, 5) }) === null && it.inputs[p.id].v === L.slice(0, 5));
   run(g, it.end - g.now + 1000);
   check("…and it ends when time's up", it.stage === "reveal" || s.trial.item !== it, it.stage);
+}
+{
+  // December: the Christmas Quiz (the App Store's in-app event) — all fifteen questions, and Most Likely To's prompts, festive
+  const g = begin(10), s = g.s; g.now = Date.UTC(2026, 11, 5, 20);
+  const xq = new Set([...XMAS_E, ...XMAS_M, ...XMAS_H].map((q) => q[0])), asked = [];
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  for (let guard = 0; s.trial.stage !== "done" && guard < 3000; guard++) { const it = s.trial.item; if (it && it.stage === "open" && !asked.includes(it.q)) asked.push(it.q); answerAll(g); g.now += 1000; tick(s, g.now, ctx); }
+  check(`Christmas Quiz: in December all fifteen questions are Christmas ones (${asked.filter((q) => xq.has(q)).length} of ${asked.length})`, asked.length === 15 && asked.every((q) => xq.has(q)), asked.filter((q) => !xq.has(q)));
+  A(g, g.dir, { a: "cont" }); const lq = [];
+  setStep(g, { k: "trial", key: "likely" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" });
+  for (let guard = 0; s.trial.stage !== "done" && guard < 3000; guard++) { const it = s.trial.item; if (it && it.stage === "open" && !lq.includes(it.q)) lq.push(it.q); answerAll(g); g.now += 1000; tick(s, g.now, ctx); }
+  check("…and Most Likely To's prompts are Christmas ones", lq.length === 5 && lq.every((q) => XMAS_LIKELY.includes(q)), lq);
+  const h = begin(10), hs = h.s, plain = [];
+  setStep(h, { k: "trial", key: "quiz" }); A(h, h.dir, { a: "next" }); A(h, h.dir, { a: "cont" });
+  for (let guard = 0; hs.trial.stage !== "done" && guard < 3000; guard++) { const it = hs.trial.item; if (it && it.stage === "open" && !plain.includes(it.q)) plain.push(it.q); answerAll(h); h.now += 1000; tick(hs, h.now, ctx); }
+  check("…and out of December, none are", plain.length === 15 && !plain.some((q) => xq.has(q)));
+  const all = [...XMAS_E, ...XMAS_M, ...XMAS_H];
+  check(`…every Christmas answer is marked right as written (${all.length} questions, no repeats)`, all.every(([, a]) => marks(a, a)) && xq.size === all.length && new Set(XMAS_LIKELY).size === XMAS_LIKELY.length && XMAS_LIKELY.every((q) => /^Most likely to /.test(q)));
+  check("…and as people would type them", marks("kermit", "Kermit the Frog") && marks("dickens", "Charles Dickens") && marks("10", "Ten") && marks("nakatomi", "Nakatomi Plaza") && marks("george v", "George V") && marks("pear tree", "A pear tree"));
 }
 check("quiz marking: 'six' = 6, a small slip, a surname", marks("six", "6") && marks("canbera", "Canberra") && marks("da vinci", "Leonardo da Vinci") && !marks("paris", "Rome") && !marks("", "x"));
 console.log("RESULT: " + (fails ? "FAILED " + fails : "CLEAN")); process.exit(fails ? 1 : 0);

@@ -5,7 +5,7 @@
 //
 // Everything here is pure: (state, input, now) → state. The Durable Object (index.js) stores the state, calls tick()
 // on every request so clocks move on, and answers each phone with viewFor().
-import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, MEMSETS, CHARADES, SONGS, SNAPSYM, PICTIONARY, COLORS } from "./content.gen.js";
+import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, MEMSETS, CHARADES, SONGS, SNAPSYM, PICTIONARY, COLORS, XMAS_E, XMAS_M, XMAS_H, XMAS_LIKELY } from "./content.gen.js";
 
 // the default prize: chocolate coins, one for every 100 points the winners take from the Purse (coinsOf)
 export const PRIZE0 = "chocolate coins";
@@ -216,16 +216,19 @@ export function hiloRef(q, a, now, rnd) {
 // Items: a Trial is a run of items (a question, a turn, a bout). Each is open (answers come in) until everyone has
 // answered or its clock runs out (Longest Word, whose word can be changed until time's up, always to its clock), then
 // shows its result for a moment, then the next one starts by itself.
+// December (UTC): the Christmas Quiz, the App Store's in-app event. The Quiz Trial's questions and Most Likely To's
+// prompts come from the Christmas banks
+const december = (now) => new Date(now).getUTCMonth() === 11;
 const OPEN = { text: 20, number: 25, hilo: 15, vote: 25, word: 45, recall: 45, cell: 20, rps: 15, tempt: 30, truths: 25 };
 function makeItem(s, t, now, rnd) {
   const n = t.i, A = alive(s), used = (s.used = s.used || {});
   const fresh = (bank, key) => { const n = reach(s, bank), u = (used[key] = used[key] || []), pool = bank.slice(0, n).map((_, i) => i).filter((i) => !u.includes(i)); const i = pool.length ? pick(pool, rnd) : Math.floor(rnd() * n); u.push(i); return bank[i]; };
   const base = { stage: "open", inputs: {}, opened: now };
   switch (t.key) {
-    case "quiz": { if (n >= 15) return null; const lv = Math.floor(n / 5), q = fresh([QUIZ_E, QUIZ_M, QUIZ_H][lv], ["qe", "qm", "qh"][lv]); return { ...base, k: "text", q: q[0], a: String(q[1]), part: ["easy", "medium", "brutal"][lv], end: now + OPEN.text * 1000 }; }
+    case "quiz": { if (n >= 15) return null; const lv = Math.floor(n / 5), x = december(now), q = fresh((x ? [XMAS_E, XMAS_M, XMAS_H] : [QUIZ_E, QUIZ_M, QUIZ_H])[lv], (x ? ["xe", "xm", "xh"] : ["qe", "qm", "qh"])[lv]); return { ...base, k: "text", q: q[0], a: String(q[1]), part: ["easy", "medium", "brutal"][lv], end: now + OPEN.text * 1000 }; }
     case "estimate": { if (n >= 5) return null; const q = fresh(ESTIMATE, "est"); return { ...base, k: "number", q: q[0], a: +q[1], end: now + OPEN.number * 1000 }; }
     case "hilo": { if (n >= 6) return null; const q = fresh(ESTIMATE, "est"), a = +q[1]; return { ...base, k: "hilo", q: q[0], ref: hiloRef(q[0], a, now, rnd), a, end: now + OPEN.hilo * 1000 }; }
-    case "likely": { if (n >= 5) return null; return { ...base, k: "vote", q: "Most likely to " + String(fresh(LIKELY, "lk")).replace(/^most likely to /i, ""), end: now + OPEN.vote * 1000 }; }
+    case "likely": { if (n >= 5) return null; return { ...base, k: "vote", q: "Most likely to " + String(december(now) ? fresh(XMAS_LIKELY, "xl") : fresh(LIKELY, "lk")).replace(/^most likely to /i, ""), end: now + OPEN.vote * 1000 }; }
     case "countdown": { if (n >= 3) return null; return { ...base, k: "word", letters: letters12(rnd), end: now + OPEN.word * 1000 }; }
     case "memory": { if (n >= 2) return null; const set = shuffle(fresh(MEMSETS, "mem"), rnd).slice(0, 12); return { ...base, k: "recall", stage: "study", words: set, end: now + 20000 }; }
     case "change": { if (n >= 4) return null; const grid = shuffle(CHSYM, rnd).slice(0, 12); return { ...base, k: "cell", stage: "study", grid, end: now + 12000 }; }
