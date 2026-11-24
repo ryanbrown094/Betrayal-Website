@@ -187,6 +187,33 @@ const PIN = "4821", game = { hostPin: PIN, gid: "g", ver: 1, v: 8, phase: "lobby
   const batches = [...mem].filter(([k]) => k.startsWith("ev:")).flatMap(([, v]) => v.list.map((x) => x.m));
   check("…but they're all still in the room's own trail", batches.includes("Type an answer first.") && batches.includes(told.error));
 }
+// what a browser put on the page itself (Brave's scripts, extensions) stays in the room's trail, out of the error log: an
+// error at line 1 of the page (the doctype, so never ours), an opaque "Script error.", or a global only they define
+{
+  const logged = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { if (new URL(u).pathname === "/err") logged.push(JSON.parse(i.body)); return new Response("{}"); } }) };
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1", REGISTRY: REG });
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "E5RZ58", expires: Date.now() + 48 * 3600e3 }) }));
+  const pg = "https://thebetrayal.co.uk/m/E5RZ58";
+  await req(DO, "POST", "/api/events", {}, { device: "brave", host: true, events: [
+    { k: "error", m: "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')", stack: "global code@" + pg + ":1:19", src: pg + ":1:19" },
+    { k: "error", m: "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')", stack: "global code@" + pg + ":1:16", src: pg + ":1:16" },
+    { k: "error", m: "ReferenceError: Can't find variable: DarkReader", src: pg + ":1:11" }, { k: "error", m: "Script error.", src: ":0:0" },
+    { k: "error", m: "ReferenceError: Can't find variable: whatever", stack: "global code@" + pg + ":1:4", src: pg + ":1:4" },
+    { k: "error", m: "TypeError: V.trial is null", stack: "draw@https://thebetrayal.co.uk/m/E5RZ58:1402:31", src: pg + ":1402:31" }] });
+  check("injected scripts' errors (line 1 of the page, Script error., __firefox__, ethereum, DarkReader) stay out of the error log; ours don't", logged.length === 1 && logged[0].msg === "TypeError: V.trial is null", logged.map((e) => e.msg));
+  check("…but they're all still in the room's own trail", [...mem].filter(([k]) => k.startsWith("ev:")).flatMap(([, v]) => v.list).length === 6);
+}
+// the end screen's 1 to 5: each rating tells the Registry how many have rated and the average, for the admin and the digest
+{
+  const told = [], REG = { idFromName: () => 1, get: () => ({ fetch: async (u, i) => { told.push([new URL(u).pathname, JSON.parse(i.body)]); return new Response("{}"); } }) };
+  const mem = new Map(), DO = new GameState({ storage: store(mem) }, { BUILD: "1", REGISTRY: REG });
+  await DO.fetch(new Request("http://x/_init", { method: "POST", body: JSON.stringify({ room: "RATEME", expires: Date.now() + 48 * 3600e3 }) }));
+  const a = await (await req(DO, "POST", "/api/m/create", {}, { name: "Ann" })).json(), b = await (await req(DO, "POST", "/api/m/join", {}, { name: "Bob" })).json();
+  const st = mem.get("modern"); st.phase = "end"; st.result = { winner: "loyal", to: [], awards: [], prize: "", won: 0 }; mem.set("modern", st);
+  await req(DO, "POST", "/api/m/act", { "X-Tok": a.tok }, { a: "rate", v: 5 }); await req(DO, "POST", "/api/m/act", { "X-Tok": b.tok }, { a: "rate", v: 4 });
+  const again = await req(DO, "POST", "/api/m/act", { "X-Tok": b.tok }, { a: "rate", v: 1 }), rt = told.filter(([p]) => p === "/room-rated");
+  check("ratings: each one tells the Registry the count and the average (a second from one phone doesn't)", rt.length === 2 && rt[1][1].room === "RATEME" && rt[1][1].rated === 2 && rt[1][1].rating === 4.5 && again.status === 409, rt);
+}
 // the host on another browser (the Google app's, then Safari's): their booking code puts them back in as host, once the
 // old phone has gone quiet; while it's still open they're told to close it; someone without the code can't
 {

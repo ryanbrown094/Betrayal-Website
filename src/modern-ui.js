@@ -331,7 +331,7 @@ function quick(me) {
 const topBar = (me) => `<div class="top"><span class="me">${seal(me.id)}<span class="nm">${esc(me.name)}</span>${me.director ? `<i class="hosttag">host</i>` : ""}</span><span class="row" style="flex:none;gap:12px"><span class="pot num">${["lobby", "oath", "roles"].includes(V.phase) ? "Table " + CODE : "Purse " + V.pot}</span>${me.director && screen !== "replay" && !V.paused && !["lobby", "end"].includes(V.phase) ? `<button class="btn ghost sm tbtn" data-a="pause" aria-label="Pause the game"><span class="pz" aria-hidden="true"><i></i><i></i></span><span class="lbl">Pause</span></button>` : ""}${me.director && screen !== "replay" ? `<button class="btn ghost sm tbtn" data-a="tools" aria-label="Host tools">${tools ? "Close" : "Tools"}</button>` : ""}</span></div>`;
 function phone0(me, body) {
   return `${topBar(me)}
-  ${rejoinCard()}${takeOverCard()}${awayCard(me)}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You still watch, cheer and call it at the Reckoning, but you don’t vote or play.</span></div>` : ""}
+  ${rejoinCard()}${takeOverCard()}${awayCard(me)}${!me.alive && !["lobby", "oath", "roles", "end", "dawn", "reveal"].includes(V.phase) && !(V.trial && V.trial.key === "statue") ? `<div class="banner ghost">${ico("ghost")}<span>You’re a Ghost. You don’t vote, but you still call it at the Reckoning, and in most Trials you play on for the Ghosts’ own score. It never touches the Purse.</span></div>` : ""}
   ${holdings(me)}${["lobby", "oath", "roles", "end"].includes(V.phase) ? "" : `<div class="row" style="justify-content:flex-end;margin:-4px 0 10px">${btn("Your role", "myrole1", null, "ghost sm")}</div>`}
   ${toast ? `<div class="banner" role="status"><span>${esc(toast.replace(/^!/, ""))}</span></div>` : ""}
   <div data-k="${V.phase}.${V.trial ? V.trial.stage + V.trial.i + (V.trial.item ? V.trial.item.stage : "") : ""}">${body}</div>${online ? "" : `<div class="live">Reconnecting…</div>`}${pauseBox(me)}`;
@@ -423,7 +423,7 @@ function roleCard(me) {
 }
 function day(me) {
   let h = `${V.final ? "" : `<div class="eyebrow">round ${V.round}</div>`}<h1>${V.final ? "The final" : V.roundTrials ? "Back at the table" : "A new day"}</h1>
-  <p class="sub">${V.final ? "Five or fewer remain. An exile’s role stays hidden until the end. When the table trusts everyone left, it ends." : "Talk among yourselves, and watch each other."}</p>${people(V.players)}`;
+  <p class="sub">${V.final ? `${["", "One", "Two", "Three", "Four", "Five", "Six", "Seven"][alive().length] || alive().length} remain. An exile’s role stays hidden until the end. When the table trusts everyone left, it ends.` : "Talk among yourselves, and watch each other."}</p>${people(V.players)}`;
   h += `<p class="small" style="margin-top:12px">Next: <b>${esc(V.next || "")}</b>${V.tiers ? " · the Purse decides the prize" : ""}</p>`;
   if (!me.director) return h + waitHost();
   return h + `<div class="card dir"><div class="stack">${btn("Begin: " + esc(V.next || "next"), "next", null, "big")}${btn("A short break first · 10 min", "break", "interval", "ghost sm")}</div></div>`;
@@ -463,14 +463,14 @@ function peekScreen() {
 function trial(me) {
   const t = V.trial, it = t.item;
   if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1>${esc(t.title)}</h1><p>${esc(t.rules)}</p>
-    ${me.role === "f" && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer${t.key === "quiz" ? " before the brutal questions" : ""} costs the Purse 50, and if you win you take every point it falls short, so sabotage quietly.</div>` : ""}
+    ${me.role === "f" && me.alive && t.key !== "tempt" && t.key !== "likely" ? `<div class="banner">Forsworn: every wrong answer${t.key === "quiz" ? " before the brutal questions" : ""} costs the Purse 50, and if you win you take every point it falls short, so sabotage quietly.</div>` : ""}
     ${t.introEnd ? `<p class="sub">Starts in ${clock(t.introEnd)}</p>` : me.director ? dirCard(`${btn("Start the Trial", "cont", null, "big")}<p class="small center">When everyone has heard the rules.</p>`) : waitHost()}`;
   if (t.stage === "done") return trialDone(me);
   if (!it) return "";
   const head = `<div class="ihead"><div class="eyebrow">${esc(t.title)} · ${it.part ? esc(it.part) + " · " : ""}${it.stage === "reveal" ? t.i : t.i + 1}</div>${it.stage === "open" || it.stage === "study" || it.stage === "prep" ? clock(it.end) : ""}</div>${["open", "study", "prep", "blank"].includes(it.stage) && it.end && it.from ? `<div class="bar sticky"><i data-from="${it.from}" data-end="${it.end}"></i></div>` : ""}`;
-  const watching = !me.alive && !(it.k === "survive" && t.key === "statue");
+  const watching = !me.alive && !it.ghostPlay && !(it.k === "survive" && t.key === "statue");
   if (!me.alive && it.k === "survive" && t.key === "statue" && it.stage === "open") return head + `<p class="q">You’re a Ghost, so haunt them.</p><p class="sub">Make the statues move or laugh, anything short of touching. Still standing: ${esc(andList(alive().filter((p) => !it.out.includes(p.id)).map((p) => p.name)))}.</p>`;
-  return head + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it));
+  return head + (it.ghostPlay && it.stage !== "reveal" ? `<p class="small ghostline">${ico("ghost")} For the Ghosts’ score, not the Purse.</p>` : "") + (it.stage === "reveal" ? itemReveal(me, it) : watching ? tvItem(it, true) : itemPlay(me, it));
 }
 function sent(v) { return `<div class="done">${ico("handshake")}<div>Locked in${v != null && v !== "" ? `: <b>${esc(v)}</b>` : ""}.<br><span class="small tick" data-fx="a${it().answered}">${it().answered} of ${it().of || "?"} in</span></div></div>`; }
 const it = () => V.trial.item;
@@ -524,7 +524,7 @@ function cells(grid, tap, mine, hit) { return `<div class="cells">${grid.map((c,
 function itemReveal(me, x) {
   const r = x.res || {}, pts = r.pts || {}, mine = pts[me.id];
   const said = x.mine != null && x.mine !== "" ? " You said “" + esc(String(x.mine).slice(0, 40)) + "”." : "";
-  const you = !me.alive ? "" : mine > 0 ? `<p class="you good">+${mine} for you</p>` : mine < 0 ? `<p class="you bad">${mine} for you</p>` : ["text", "number", "hilo", "cell", "word", "recall"].includes(x.k) ? `<p class="you">${x.mine != null ? "Not this time." + said : "You didn’t answer in time."}</p>` : "";
+  const you = !me.alive ? (!x.ghostPlay ? "" : x.gpts > 0 ? `<p class="you good">+${x.gpts} to your Ghost score</p>` : x.gpts < 0 ? `<p class="you bad">${x.gpts} to your Ghost score</p>` : x.mine != null && x.mine !== "" ? `<p class="you">Not this time.${said}</p>` : "") : mine > 0 ? `<p class="you good">+${mine} for you</p>` : mine < 0 ? `<p class="you bad">${mine} for you</p>` : ["text", "number", "hilo", "cell", "word", "recall"].includes(x.k) ? `<p class="you">${x.mine != null ? "Not this time." + said : "You didn’t answer in time."}</p>` : "";
   const names = (ids) => (ids && ids.length ? ids.map((id) => esc(P(id).name)).join(", ") : "nobody");
   switch (x.k) {
     case "text": return `<p class="q">${esc(x.q)}</p><p class="ans">${esc(x.a)}</p><p>Right: ${names(r.right)}${r.first ? ` · fastest ${N(r.first)}` : ""}</p>${you}` +
@@ -558,6 +558,8 @@ function trialDone(me) {
   if (me.gave === "cast") h += `<div class="banner">${ico("scales")}<span>You won the Casting Vote. If a Reckoning ties and you voted for one of them, your vote decides it. Only you know.</span></div>`;
   if (me.gave === "confess") h += `<div class="banner ghost">${ico("eye")}<span>You won the Confessor’s prize: ${me.confess === "self" ? "no other Forsworn is left at the table." : "<b>" + esc(me.confess || "") + "</b> is Forsworn. Keep it to yourself."}</span></div>`;
   if (sc.length && t.key !== "tempt" && t.key !== "likely") h += `<ul class="score">${sc.map(([id, n]) => `<li class="${id === me.id ? "me" : ""}">${seal(id)}${N(id)}<span class="n">${n}</span></li>`).join("")}</ul>`;
+  if (t.ghostBest) h += `<div class="banner ghost">${ico("ghost")}<span>Best Ghost: ${esc(andList(t.ghostBest.ids.map((id) => P(id).name)))}, ${plural(t.ghostBest.pts, "point")}.${me.ghostPts != null ? " Your Ghost score: " + me.ghostPts + "." : ""}</span></div>`;
+  else if (me.ghostPts) h += `<div class="banner ghost">${ico("ghost")}<span>Your Ghost score: ${me.ghostPts}.</span></div>`;
   return h + dirCard(btn("Back to the table", "cont")) + waitHost();
 }
 // ---- the Reckoning
@@ -683,7 +685,7 @@ function tvBody(url) {
     case "trial": {
       const t = V.trial, x = t.item;
       if (t.stage === "intro") return `<div class="eyebrow">trial${t.special === "cast" ? " · the Casting Vote to the winner" : t.special === "crown" ? " · the Crown to the winner" : t.special === "secret" ? " · a special prize" : t.prize ? " · Sanctuary to the winner" : ""}</div><h1 class="disp">${esc(t.title)}</h1><p class="sub">${esc(t.rules)}</p>${t.introEnd ? `<p>${clock(t.introEnd)}</p>` : ""}`;
-      if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie at the top, settled by lot</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} takes the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won holds it. Only they know.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} takes Sanctuary.</p>` : t.prize && w ? `<p class="sub">Did they take Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}`; }
+      if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie at the top, settled by lot</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} takes the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won holds it. Only they know.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} takes Sanctuary.</p>` : t.prize && w ? `<p class="sub">Did they take Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}${t.ghostBest ? `<p class="tvcount">best Ghost: ${esc(andList(t.ghostBest.ids.map((id) => P(id).name)))}, ${plural(t.ghostBest.pts, "point")}</p>` : ""}`; }
       return x ? `<div class="eyebrow">${esc(t.title)} · ${x.stage === "reveal" ? t.i : t.i + 1}</div>` + (x.stage === "reveal" ? tvReveal(x) : tvItem(x)) : "";
     }
     case "talk": return `<div class="eyebrow">the reckoning</div><h1>Make your accusations</h1><p>${clock(V.vote.talkEnd)}</p>${tvPeople()}`;

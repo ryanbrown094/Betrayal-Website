@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261110224550">
+<meta name="build" content="20261123110011">
 <title>Admin · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="Admin.">
@@ -106,7 +106,11 @@ nav.top .links { display: none }
 .msg { min-height: 1.4em; font-size: 15.5px; color: var(--ivory2); margin: 10px 0 0 } .msg.err { color: #ff9dbf }
 .codes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px } .codes code { padding: 6px 10px; border-radius: 3px; background: #100b11; border: 1px solid rgba(230,165,140,.35); font-size: 16px; color: var(--ivory) }
 table.passes td, table.passes th { font-size: 15px; white-space: nowrap } table.passes td.mailcol { white-space: normal; min-width: 160px; max-width: 220px; overflow-wrap: break-word; word-break: normal } table.passes td.fromcol { white-space: normal; min-width: 90px; max-width: 170px; overflow-wrap: break-word }
-.ptype { display: block; font-size: 13px; color: #877e78; margin-top: 2px } table.passes td:nth-child(2) { white-space: normal; max-width: 130px }
+.ptype { display: block; font-size: 13px; color: #877e78; margin-top: 2px }
+.tynote { display: block; font-size: 13px; color: #877e78; margin-top: 3px }
+.ty { display: inline-block; padding: 1px 8px; border: 1px solid; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap }
+.ty-paid { color: #7fd3b4; border-color: rgba(127,211,180,.55); background: rgba(127,211,180,.1) } .ty-free { color: #e8c07a; border-color: rgba(232,192,122,.55); background: rgba(232,192,122,.08) }
+.ty-practice { color: #a9bbd4; border-color: rgba(169,187,212,.45) } .ty-test, .ty-gone { color: #877e78; border-color: rgba(135,126,120,.5) } table.passes td:nth-child(2) { white-space: normal; max-width: 130px }
 table.passes td.acts { white-space: normal } table.passes td.acts > .btn { margin: 2px 6px 2px 0 } @media (min-width: 1041px) { table.passes td.acts { white-space: nowrap } }
 code.copy { cursor: copy } code.copy:hover { border-color: var(--rose) } code.copy.copied::after { content: " ✓ copied"; color: #7fd3b4; font-size: 13px }
 .tag { font-size: 14.5px; font-weight: 700 }
@@ -171,7 +175,7 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   <div class="adm-row" style="margin-bottom:10px">
     <label style="flex:1;min-width:200px">Search <input id="q" placeholder="Code, note, email, room" style="width:100%"></label>
     <label>Show <select id="f">
-      <option value="all">All</option><option value="unused">Unused</option><option value="play">In play</option><option value="used">Used</option>
+      <option value="active">Active</option><option value="all">All</option><option value="unused">Unused</option><option value="play">In play</option><option value="used">Used</option>
       <option value="sub">Subscriptions</option><option value="refunded">Refunded</option><option value="failed">Payment failed</option><option value="pending">Awaiting payment</option><option value="cancel">Cancelled</option>
     </select></label>
     <button class="btn ghost small" id="reload">Refresh</button>
@@ -200,8 +204,8 @@ details.devs > summary { cursor: pointer } details.devs > summary h2 { display: 
   </div>
 
   <div id="t-rooms" hidden>
-    <div id="roomlist"><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <input id="rq" placeholder="Room, code, note" style="width:100%"></label><label>Show <select id="rshow"><option value="all">All rooms</option><option value="real">Hide test rooms</option></select></label><button class="btn ghost small" id="rreload">Refresh</button></div>
-      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Opened</th><th>Open until</th><th>Booking code</th><th>Email</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
+    <div id="roomlist"><div class="stats" id="rstats"></div><div class="adm-row" style="margin:14px 0 10px"><label style="flex:1;min-width:200px">Search <small>(every room)</small> <input id="rq" placeholder="Room, code, note, email" style="width:100%"></label><label>Show <select id="rshow"><option value="open">Open now</option><option value="ended">Ended</option><option value="all">All</option></select></label><label>Type <select id="rtype"><option value="games">Paid and free games</option><option value="paid">Paid</option><option value="free">Free</option><option value="practice">Practice (app)</option><option value="test">Tests</option><option value="every">Everything</option></select></label><button class="btn ghost small" id="rreload">Refresh</button></div>
+      <div class="table-scroll"><table class="list"><thead><tr><th>Room</th><th>Type</th><th>Opened</th><th>Open until</th><th>Rated</th><th>Booking code</th><th>Email</th></tr></thead><tbody id="rrows"></tbody></table></div><p class="msg" id="rlmsg"></p></div>
     <div id="roomview" hidden></div>
   </div>
 
@@ -251,22 +255,30 @@ function statusOf(p) {
   if (p.failed && !p.paid) return ["failed", "Payment failed" + (p.fails > 1 ? " ×" + p.fails : "") + (p.revoked ? " · checkout closed" : "")];
   if (p.revoked) return ["cancel", p.refunded ? "Refunded" : "Cancelled"];
   if (p.pending) return ["pending", "Awaiting payment"];
+  // the app's passes: a Night Pass's 24 hours start with its first game; a Host Pass is a subscription
+  if (p.kind === "night") return p.activeUntil ? now < p.activeUntil ? ["play", "Night on until " + when(p.activeUntil)] : ["used", "Night used"] : ["unused", "Ready"];
+  if (p.kind === "host") return p.subActive ? ["sub", (p.subStatus === "free" ? "Free Host Pass" : "Host Pass") + (p.subExpires && p.subStatus !== "free" ? " · renews " + when(p.subExpires) : "")] : ["cancel", "Host Pass " + (p.subStatus || "inactive").replace("_", " ")];
   if (p.kind === "sub") return p.subActive ? ["sub", (p.subStatus === "free" ? "Free unlimited" : "Subscribed") + (p.refunded ? " · a payment refunded" : "")] : ["cancel", "Subscription " + (p.subStatus || "inactive").replace("_", " ")];
   const rf = p.refunded ? " · refunded" : "";
   if (p.room && now < p.expires) return ["play", "In play until " + when(p.expires) + rf];
   if (p.room) return ["used", "Used" + rf];
   return ["unused", "Unused"];
 }
+// how a code was paid for: on the website (Stripe), in the app (the App Store), or not at all (made here, an apology)
+const paidOf = p => p.source === "appstore" ? (p.apple && p.apple.env && p.apple.env !== "Production" ? "App Store test purchase" : "paid, App Store" + (p.apple && p.apple.price ? " " + p.apple.price : ""))
+  : String(p.source || "").startsWith("stripe") ? (p.pending ? "website" : p.amount === 0 ? "free, 100% code" : "paid" + (p.amount ? " " + gbpOf(p.amount) : "") + ", website")
+  : p.source === "apology" ? "free, an apology" : "free, made here";
 let all = [];
+try { const f = localStorage.getItem("bt-adm-codes"); if (f && $("#f option[value=" + f + "]")) $("#f").value = f } catch (e) {}
 function render() {
   const q = $("#q").value.trim().toLowerCase(), f = $("#f").value, rows = $("#rows"); rows.textContent = "";
-  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.email, p.room, p.source, p.from].join(" ").toLowerCase().includes(q)) });
+  const list = all.filter(p => { const [k] = statusOf(p); return (f === "all" || f === k || (f === "active" && ["unused", "play", "sub"].includes(k)) || (f === "sub" && p.kind === "sub") || (f === "refunded" && p.refunded)) && (!q || [p.pass, p.note, p.email, p.room, p.source, p.from].join(" ").toLowerCase().includes(q)) });
   for (const p of list) {
     const [k, label] = statusOf(p), tr = document.createElement("tr");
     const cell = (l, v, cls) => { const td = document.createElement("td"); td.dataset.l = l; if (cls) td.className = cls; if (v instanceof Node) td.append(v); else td.textContent = v; tr.append(td); return td };
     const code = document.createElement("code"); code.textContent = p.pass; code.className = "copy"; code.title = "Click to copy"; code.tabIndex = 0;
     code.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(p.pass); code.classList.add("copied"); setTimeout(() => code.classList.remove("copied"), 1200) };
-    const ty = document.createElement("small"); ty.className = "ptype"; ty.textContent = (p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party") + (p.disc ? " · code " + p.disc : "");
+    const ty = document.createElement("small"); ty.className = "ptype"; ty.textContent = (p.kind === "night" ? "App · Night Pass" : p.kind === "host" ? "App · Host Pass" : p.kind === "sub" ? (p.subStatus === "free" ? "Free unlimited" : "Unlimited £20/mo") : "One party") + " · " + paidOf(p) + (p.disc ? " · code " + p.disc : "");
     const cc = document.createElement("span"); cc.append(code, ty); cell("Code", cc);
     const tag = document.createElement("span"); tag.className = "tag t-" + k; tag.textContent = label; if (p.failed && p.failWhy) tag.title = p.failWhy; cell("Status", tag);
     const cr = cell("Created", new Date(p.created).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })); cr.title = when(p.created);
@@ -285,11 +297,11 @@ function render() {
     if (!p.revoked) act("Cancel", "danger", "", () => cancel(p.pass));
     rows.append(tr);
   }
-  say($("#tmsg"), list.length ? list.length + " of " + all.length + " codes" : all.length ? "Nothing matches." : "No booking codes yet.");
+  say($("#tmsg"), list.length ? list.length + " of " + all.length + " codes" + (f === "active" && list.length < all.length ? " (the active ones: unused, in play or subscribed). Show “All” for the rest." : "") : all.length ? (f === "active" ? "No active codes. Show “All” for the rest." : "Nothing matches.") : "No booking codes yet.");
 }
 function stats() {
   const c = k => all.filter(p => statusOf(p)[0] === k).length, subs = all.filter(p => p.kind === "sub" && p.subActive && !p.revoked);
-  const box = [["Codes", all.length - c("failed")], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length], ...(c("failed") ? [["Failed payments", c("failed")]] : [])];
+  const box = [["Codes", all.length - c("failed")], ["Unused", c("unused")], ["In play", c("play")], ["Used", c("used")], ["Paying subscribers", subs.filter(p => p.subStatus !== "free").length], ["Free unlimited", subs.filter(p => p.subStatus === "free").length], ["App Store passes", all.filter(p => p.source === "appstore" && !(p.apple && p.apple.env && p.apple.env !== "Production")).length], ...(c("failed") ? [["Failed payments", c("failed")]] : [])];
   $("#stats").textContent = ""; for (const [l, n] of box) { const d = document.createElement("div"); d.className = "stat"; const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = l; d.append(b, s); $("#stats").append(d) }
 }
 async function load() { try { all = (await api("passes")).passes || []; stats(); render() } catch (e) { say($("#tmsg"), e.message, true) } }
@@ -390,7 +402,7 @@ $("#room").onclick = async () => {
     m.append("Classic: ", a, " · ", b, ". Modern: ", c, " · ", d, ". A room plays one or the other, so use only one of these.");
   } catch (err) { say($("#rmsg"), err.message, true) }
 };
-$("#q").oninput = render; $("#f").onchange = render; $("#reload").onclick = load;
+$("#q").oninput = render; $("#f").onchange = () => { try { localStorage.setItem("bt-adm-codes", $("#f").value) } catch (e) {} render() }; $("#reload").onclick = load;
 
 /* ---- the other tabs: rooms (config, log, replay, devices), issue reports, the error log, Stripe's webhooks ---- */
 // h("tag.class", {attrs}, ...children): builds elements, so nothing a player typed is ever read as HTML
@@ -447,10 +459,12 @@ $("#epdf").onclick = () => {
 let rooms = [];
 // the Registry's side of a Table: its clock, the day-old reminder, more time; and phones that opened the join page but never joined
 const day = ymd => new Date(ymd + "T12:00:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" });
-function tableInfo(info, sum) {
+function tableInfo(info, sum, code) {
   if (!info || !info.room) return null;
-  const r = info.room, x = info.ext;
+  const r = info.room, x = info.ext, lr = rooms.find(y => y.room === code), t = lr && typeOf(lr), k = sum && sum.rated ? sum : r.rated ? r : r.summary || {};
   return [h("h3", {}, "The Table"), kv([
+    t && ["Type", h("span", {}, h("span.ty.ty-" + RTYPE[t][1], {}, RTYPE[t][0]), " ", typeNote(lr, t))],
+    ["Rated at the end", k.rated ? k.rating + " out of 5, by " + k.rated + (k.rated === 1 ? " player" : " players") : "not yet"],
     ["Its 48 hours", r.startHours ? "waiting for its game" : r.started ? "began when its game started, " + secs(r.started) : "began when it was opened"],
     ["Buyer’s email", info.email],
     sum && ["Join page, never joined", sum.joinOnly + " of " + sum.devices + " phones and screens"],
@@ -473,22 +487,53 @@ function keptRoom(v, code, info) {
       r.summary && k.mode && ["Got to", (k.phase || "?") + " · round " + (k.rounds || 0)],
       r.summary && k.mode && ["Winner", k.winner ? SIDE[k.winner] || k.winner : "—"],
       r.summary && k.minutes != null && ["Played for", k.minutes + " minutes"],
-      r.summary && k.rated ? ["Rated", k.rating + " out of 5, by " + k.rated] : null,
       r.summary && ["Join page, never joined", (k.joinOnly || 0) + " of " + (k.devices || 0) + " phones and screens"]]),
-    tableInfo({ ...info, room: { ...r } }, null).slice(1));
+    tableInfo({ ...info, room: { ...r } }, null, code).slice(1));
 }
 async function loadRooms() { try { rooms = (await api("rooms")).rooms || []; renderRooms() } catch (e) { say($("#rlmsg"), e.message, true) } }
-// a test room has no booking code: opened with the master code, or by nobody's code; "Hide test rooms" is remembered
-const testRoom = r => !r.pass || r.pass === "MASTER";
-try { if (localStorage.getItem("bt-adm-rooms") === "real") $("#rshow").value = "real" } catch (e) {}
+// what a room is: paid (on the website, or an App Store pass in the app), free (a free booking code, or the app's free
+// games, with ads), the app's practice games (one person and the bots), or a test (the master code, an App Store sandbox
+// purchase, or a room opened with no code outside the app). "gone": its booking code was deleted (cancelled, then deleted)
+const RTYPE = { web: ["Paid · website", "paid"], app: ["Paid · App Store", "paid"], code: ["Free code", "free"], free: ["Free · app", "free"], practice: ["Practice · app", "practice"], test: ["Test", "test"], gone: ["Booking code", "gone"] };
+function typeOf(r) {
+  if (r.pass === "MASTER" || (!r.pass && !r.tier) || r.sandbox) return "test";
+  if (r.practice) return "practice";
+  if (!r.pass) return "free";
+  if (!r.source) return "gone";
+  if (r.source === "appstore") return "app";
+  if (r.source === "stripe" && r.amount !== 0) return "web";
+  return "code";
+}
+const gbpOf = p => "£" + (p / 100).toFixed(2).replace(/\.00$/, "");
+function typeNote(r, t) {
+  return (t === "web" ? (r.amount ? gbpOf(r.amount) : "paid") + (r.disc ? " · code " + r.disc : "") + (r.kind === "sub" ? " · a Regular" : "")
+    : t === "app" ? (r.kind === "host" ? "Host Pass" : "Night Pass") + (r.price ? " · " + r.price : "")
+    : t === "code" ? (r.source === "apology" ? "an apology" : r.source === "stripe" ? "100% off" + (r.disc ? ", code " + r.disc : "") : "made here") + (r.kind === "sub" ? " · free unlimited" : r.kind === "night" || r.kind === "host" ? " · app " + r.kind + " code" : "")
+    : t === "free" ? "with ads" : t === "practice" ? "against the bots" : t === "gone" ? "its code was deleted"
+    : r.pass === "MASTER" ? "master code" : r.sandbox ? "App Store test purchase" : "no code") + (r.refunded ? " · refunded" : "");
+}
+const openNow = r => !r.deleted && r.expires > Date.now();
+// Search looks through every room; otherwise Show and Type (remembered) narrow the list, open paid and free games first
+try { const a = localStorage.getItem("bt-adm-rshow"), b = localStorage.getItem("bt-adm-rtype"); if (a && $("#rshow option[value=" + a + "]")) $("#rshow").value = a; if (b && $("#rtype option[value=" + b + "]")) $("#rtype").value = b } catch (e) {}
 function renderRooms() {
-  const q = $("#rq").value.trim().toLowerCase(), real = $("#rshow").value === "real", list = rooms.filter(r => (!real || !testRoom(r)) && (!q || [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q))), tb = $("#rrows"); tb.textContent = "";
-  for (const r of list) tb.append(row([h("code", {}, r.room), when(r.created), r.startHours ? "waiting for its game" : (r.expires > Date.now() ? "" : "ended ") + when(r.expires), r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
-  const hidden = real ? rooms.filter(testRoom).length : 0;
-  say($("#rlmsg"), list.length + " of " + rooms.length + " rooms" + (hidden ? " (" + hidden + " test room" + (hidden === 1 ? "" : "s") + " hidden)" : ""));
+  const q = $("#rq").value.trim().toLowerCase(), sh = $("#rshow").value, ty = $("#rtype").value, tb = $("#rrows"); tb.textContent = "";
+  const shown = rooms.filter(r => sh === "all" || (sh === "open") === openNow(r)), grp = r => RTYPE[typeOf(r)][1];
+  const list = q ? rooms.filter(r => [r.room, r.pass, r.note, r.email].join(" ").toLowerCase().includes(q))
+    : shown.filter(r => ty === "every" || (ty === "games" ? !["practice", "test"].includes(grp(r)) : grp(r) === ty));
+  for (const r of list) {
+    const t = typeOf(r), [label, g] = RTYPE[t];
+    tb.append(row([h("code", {}, r.room), h("span", {}, h("span.ty.ty-" + g, {}, label), h("small.tynote", {}, typeNote(r, t))), when(r.created),
+      r.deleted ? "ended " + when(r.expires) + " · deleted" : r.startHours ? "waiting for its game" : (r.expires > Date.now() ? "" : "ended ") + when(r.expires),
+      r.rated ? r.rating + " of 5, by " + r.rated : r.summary && r.summary.rated ? r.summary.rating + " of 5, by " + r.summary.rated : "",
+      r.pass === "MASTER" ? "test room" : r.pass || "—", r.email || ""], () => openRoom(r.room)));
+  }
+  // the counts above the list, for what Show picks
+  const n = k => shown.filter(r => typeOf(r) === k).length, box = [["Paid · website", n("web")], ["Paid · App Store", n("app")], ["Free codes", n("code")], ["Free · app", n("free")], ["Practice · app", n("practice")], ["Tests", n("test")]];
+  $("#rstats").textContent = ""; for (const [l, c] of box) ap($("#rstats"), h("div.stat", {}, h("b", {}, String(c)), h("span", {}, l + (sh === "open" ? ", open now" : sh === "ended" ? ", ended" : ""))));
+  say($("#rlmsg"), q ? list.length + " of " + rooms.length + " rooms match (searching every room)" : list.length + " shown, of " + shown.length + " rooms " + (sh === "open" ? "open now" : sh === "ended" ? "that have ended" : "in all") + (list.length < shown.length ? ". Type “Everything” shows the rest." : "."));
 }
 $("#rq").oninput = renderRooms; $("#rreload").onclick = loadRooms;
-$("#rshow").onchange = () => { try { localStorage.setItem("bt-adm-rooms", $("#rshow").value) } catch (e) {} renderRooms() };
+for (const [id, key] of [["#rshow", "bt-adm-rshow"], ["#rtype", "bt-adm-rtype"]]) $(id).onchange = () => { try { localStorage.setItem(key, $(id).value) } catch (e) {} renderRooms() };
 const RULE_WORDS = { rounds: "Rounds", perRound: "Trials a round (0 = by the clock)", dinnerAfter: "Dinner after round (0 = none)", mingle: "Interval", pool: "Trial pool", kill: "Kill", ghosts: "Ghosts", convert: "Whisper", bargain: "Last Offer", quests: "Errands", shield: "Sanctuaries", blade: "Casting Vote", champion: "Crown", witness: "Confessor", dilemma: "Temptation" };
 const yes = v => v === true ? "on" : v === false ? "off" : Array.isArray(v) ? v.join(", ") : v === null ? "all" : String(v);
 // the public words for the roles and sides the game code names cloak/candle (Classic) and f/l or forsworn/loyal (Modern)
@@ -506,7 +551,7 @@ async function openRoom(code, at) {
     h("p", {}, h("button.btn.ghost.small", { onclick: () => extend({ room: code }, m.expires, () => openRoom(code)) }, "Extend this Table")),
     kv([["Opened", secs(m.created)], m.startHours ? ["Open until", "waiting for its game (until " + secs(m.expires) + "); then " + m.startHours + " hours from when it starts"] : ["Open until", secs(m.expires) + (m.expires < Date.now() ? " (ended)" : "")], ["Booking code", m.pass ? m.pass.replace(/^CNDL-/, "OATH-") : "—"], m.keepUntil && ["Kept until", secs(m.keepUntil) + " (issue reported)"], m.reports && ["Reports", m.reports.length + ""], ["Saves recorded", d.recN + ""], ["Device reports", d.evN + " batches"],
       ["Links", h("span", {}, h("a", { href: "/t/" + code, target: "_blank" }, "TV"), " · ", h("a", { href: "/t/" + code + "#keeper", target: "_blank" }, "Keeper phone"))]]),
-    tableInfo(info, sum));
+    tableInfo(info, sum, code));
   const md = d.modern;
   if (md) {
     // a Modern game: the server ran it, so the whole state is here (the admin sees every role)

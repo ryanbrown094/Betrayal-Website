@@ -124,7 +124,7 @@ label.l { display: block; font: 600 15px/1.3 var(--ui); color: var(--tallow2); m
 .meter span { position: relative; z-index: 1; display: block; text-align: center; font: 700 14px/22px var(--ui); color: #fff; text-shadow: 0 1px 2px #000 }
 .snapprev { display: flex; align-items: center; justify-content: center; gap: 6px } .snapprev .ico { width: 22px; height: 22px; color: var(--brass2) }
 .snapbtn:active { filter: brightness(1.4) }
-.banner.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 }
+.banner.ghost { background: #121620; border-color: #33415a; color: #c4d2e4 } .ghostline { display: flex; align-items: center; gap: 6px; margin: -2px 0 10px; color: #a9bbd4 }
 .banner.sanct { background: #0f2019; border-color: var(--verd2); color: #cfe9de }
 .ihead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px } .ihead .eyebrow { margin: 0 }
 .row { display: flex; gap: 10px; align-items: center } .row > * { flex: 1 }

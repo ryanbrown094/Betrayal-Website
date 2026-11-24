@@ -16,7 +16,7 @@ The party game of loyalty and lies, for 8 to 24 guests (best with 8 to 16), and 
 2. **The Oath.** Every phone asks the same question in secret: **“Would you like to be Forsworn?”** (Yes, make me Forsworn / I’d rather be Loyal / Either way). Nobody sees anyone’s answer. The game uses the answers when it deals the roles, but can’t always give everyone what they asked for.
 3. **Roles.** Each guest holds their phone close and taps to see their role. The Forsworn see each other’s names on their phones (a lone Forsworn is told they’re alone). Everyone taps “Got it” and the role hides again.
 4. **Rounds**, each: Trial(s) → the result and prizes → (a break) → the Reckoning → reveal → night → dawn.
-5. **The final**, with five or fewer: from here on exiles aren’t revealed, and the table votes TRUST or DOUBT on their phones.
+5. **The final**, with five or fewer (four or fewer at 8 players, which gives them a second night): from here on exiles aren’t revealed, and the table votes TRUST or DOUBT on their phones.
 6. **The Unmasking**: every seal turned, the winners, the prize the Purse has earned, then **Honour or Betray** if two or more Forsworn survived.
 7. **Awards**, up to six. Then the host can **play again with the same people**.
 
@@ -36,7 +36,7 @@ Any laptop cast to the TV, at `thebetrayal.co.uk/t/CODE`. It shows the QR code a
 |---|---|---|---|
 | **Loyal** | most guests | only their own role | every Forsworn is gone at the end |
 | **Forsworn** | about one in four or five, dealt by the game with the Oath answers in mind (2 for 8–10 players, 3 for 11–16, 4 for 17–22, 5 for 23–24) | each other | at least one Forsworn is still at the table at the end |
-| **Ghost** | anyone exiled or killed | what they see; they don’t vote or play Trials | they win or lose with their side; they still call it at each Reckoning and haunt the living in the Statue, and the Ghost who calls the most exiles can win an award |
+| **Ghost** | anyone exiled or killed | what they see; they don’t vote | they win or lose with their side; they still call it at each Reckoning, play most Trials for the Ghosts’ own score (never the Purse, the Trial’s winner or Sanctuary) and haunt the living in the Statue; the Ghost who calls the most exiles, and the one who scores the most, can each win an award |
 | **the host** | whoever opened the Table | only their own role | plays like everyone else; their phone also moves the evening on |
 
 Nobody is told how many Forsworn there are.
@@ -72,10 +72,10 @@ Nobody is told how many Forsworn there are.
 ### 4.5 The night
 - **Heads down.** Every living player taps a name on their phone, so nobody can tell who is really choosing. Only the Forsworn’s choices count. Once the Forsworn agree, the last player still to tap has thirty seconds.
 - **Forsworn whispers:** at night the Forsworn can send each other set phrases (“Vote with me tomorrow”). Not the Classic twist called the Whisper.
-- **Victims per night** grow with the table so the final still starts with five: 1 below 12 alive, up to 2 from 12, up to 3 from 20.
+- **Victims per night** grow with the table so the final still starts with five (four at 8 players): 1 below 12 alive, up to 2 from 12, up to 3 from 20.
 - **The victim learns in secret, on their phone.** They were **poisoned**: “Say nothing yet”; when the host reveals the night, they get thirty seconds of spoken **last words**.
 - Sanctuary saves its holder: “nobody died”, and the table doesn’t learn why.
-- Five left after the Reckoning: **no night**. The final round starts.
+- Five left after the Reckoning (four at 8 players): **no night**. The final round starts.
 
 ### 4.6 Dawn
 The host taps **Reveal the night**: every phone (and the TV) shows who died, and the poisoned have their last words.
@@ -94,8 +94,8 @@ The Whisper, the Last Offer and Errands are Classic only (section 10).
 
 ## 6. The end game
 
-- **The final always aims to start with five.** The game sizes every earlier round to land there.
-- **With five or fewer**, exiles aren’t revealed.
+- **The final always aims to start with five** (four at 8 players, so they get a second night). The game sizes every earlier round to land there.
+- **With five or fewer** (four at 8), exiles aren’t revealed.
 - **Trust or Doubt:** each player votes on their phone, in secret: TRUST (every Forsworn is gone) or DOUBT (one’s still here). Once all but one have chosen, the last has thirty seconds; no answer counts as a doubt. Unanimous TRUST ends the game. Anything else: back to the Reckoning for another unrevealed exile, then vote again.
 - **The prize:** the host sets it before the game (the default is **chocolate coins**: every 100 points in the Purse is one coin, so the end screens say, for example, “15 chocolate coins” for a Purse of 1,500; for the Forsworn, what the Purse fell short, converted the same way). Optionally, **better prizes for a fuller Purse**: one at a half-full Purse, one at a full Purse. If the Forsworn win it works the other way round: half empty wins them the better prize, empty the best. Nobody sees them until the end.
 - **The Unmasking:** seals turn one by one.
@@ -106,7 +106,7 @@ The Whisper, the Last Offer and Errands are Classic only (section 10).
 
 ## 7. Awards (up to six, shown at the very end, one at a time)
 
-Modern hands them out from the votes, the Trials and the night: The Sharpest Eye (voted for a Forsworn most) · The Grand Deceiver (the Forsworn who drew the fewest votes all night) · Trial Machine (most Trials won) · The Lightning Rod (most votes against) · First Blood (the first to die) · The Ghost Who Saw (called the most exiles from beyond the table) · Barking Up the Wrong Tree (voted for the Loyal most).
+Modern hands them out from the votes, the Trials and the night: The Sharpest Eye (voted for a Forsworn most) · The Grand Deceiver (the Forsworn who drew the fewest votes all night) · Trial Machine (most Trials won) · The Lightning Rod (most votes against) · First Blood (the first to die) · The Restless Ghost (scored the most in the Ghosts’ Trials) · The Ghost Who Saw (called the most exiles from beyond the table) · Barking Up the Wrong Tree (voted for the Loyal most).
 
 Classic draws from the full list: The Sharpest Eye · The Grand Deceiver · The Deciding Vote · The Turncoat (converted) · Couldn’t Be Bought (refused the Forsworn) · The Ghost Who Saw · The Confessor · The Backstabber (a Forsworn who chalked a fellow Forsworn) · The Narrow Escape (Sanctuary saved them) · First Blood · The Martyr (an exiled Loyal) · Trial Machine · The Kingmaker · The Lightning Rod · The Wild Card (most wrong shouts) · Barking Up the Wrong Tree · Sanctuary Seeker · The Hoarder · The Lone Wolf · The Untouchable · Last Oath Standing.
 

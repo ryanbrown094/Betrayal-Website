@@ -1,6 +1,6 @@
 // Modern's rules engine on its own (no server, no browser): whole games played by simulated phones, every Trial,
 // the Oath, ties, nights, Sanctuary, the final, Honour or Betray, and what each phone may see. node qa/modern-engine.mjs
-import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys, hiloRef } from "../worker/src/modern.js";
+import { newGame, join, act, tick, viewFor, TRIALS, marks, forswornFor, addBots, BASE_TRIALS, SOLO_OFF, trialKeys, hiloRef, roundsFor, finalFor } from "../worker/src/modern.js";
 import { QUIZ_E, QUIZ_M, QUIZ_H, LIKELY, ESTIMATE, CHARADES } from "../worker/src/content.gen.js";
 let fails = 0; const check = (name, cond, extra) => { console.log((cond ? "PASS " : "FAIL ") + name + (!cond && extra !== undefined ? " — " + JSON.stringify(extra).slice(0, 300) : "")); if (!cond) fails++; };
 let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -150,18 +150,23 @@ check("dinner is optional: courses are off unless the host switches them on", ne
   vote(h, (p) => alive(h.s).find((q) => q.id !== p.id && q.id !== king));
   check("…the exile falls elsewhere", h.s.phase === "reveal" && h.s.reveal.id !== king);
 
-  // the Confessor: at five with one Forsworn left, the final's Trial names that Forsworn to a Loyal winner
-  const c = begin(8); const F = c.s.players.filter((p) => p.role === "f"), L = c.s.players.filter((p) => p.role === "l");
-  F[1].alive = false; L[0].alive = false; L[1].alive = false; c.s.final = true; c.s.round = 3; c.s.phase = "day"; c.s.steps = []; c.s.done.dessert = true; tick(c.s, c.now, ctx); A(c, c.dir, { a: "next" });
+  // the Confessor: at five with one Forsworn left, the final's Trial names that Forsworn to a Loyal winner (ten players,
+  // whose final is at five; eight players' is at four, below)
+  const c = begin(10); const F = c.s.players.filter((p) => p.role === "f"), L = c.s.players.filter((p) => p.role === "l");
+  for (const p of [F[1], L[0], L[1], L[2], L[3]]) p.alive = false; c.s.final = true; c.s.round = 3; c.s.phase = "day"; c.s.steps = []; c.s.done.dessert = true; tick(c.s, c.now, ctx); A(c, c.dir, { a: "next" });
   check("the final: five left, one Forsworn: its Trial carries the Confessor", c.s.trial && c.s.trial.special === "confess" && /special prize/.test(c.s.trial.rules), c.s.trial);
   for (const [id] of Object.entries(c.s.trial.scores)) delete c.s.trial.scores[id];
   const cw = alive(c.s).find((p) => p.role === "l"); c.s.trial.scores[cw.id] = 5; A(c, c.dir, { a: "tool", v: "endTrial" });
   check("…a Loyal winner learns the Forsworn's name, privately", viewFor(c.s, cw.id, c.now).me.confess === F[0].name && !viewFor(c.s, F[0].id, c.now).me.confess && !JSON.stringify(viewFor(c.s, null, c.now)).includes('"confess"'));
   // …but not with no Forsworn left to name (a final reached by exiling every one of them), and no Sanctuary in the final
-  const c2 = begin(8); const F2 = c2.s.players.filter((p) => p.role === "f"), L2 = c2.s.players.filter((p) => p.role === "l");
-  F2.forEach((p) => (p.alive = false)); L2[0].alive = false; c2.s.final = true; c2.s.round = 3; c2.s.phase = "day"; c2.s.steps = []; c2.s.done.dessert = true; tick(c2.s, c2.now, ctx); A(c2, c2.dir, { a: "next" });
+  const c2 = begin(10); const F2 = c2.s.players.filter((p) => p.role === "f"), L2 = c2.s.players.filter((p) => p.role === "l");
+  F2.forEach((p) => (p.alive = false)); for (const p of L2.slice(0, 3)) p.alive = false; c2.s.final = true; c2.s.round = 3; c2.s.phase = "day"; c2.s.steps = []; c2.s.done.dessert = true; tick(c2.s, c2.now, ctx); A(c2, c2.dir, { a: "next" });
   check("the final: five left, no Forsworn: no Confessor", alive(c2.s).length === 5 && c2.s.trial && c2.s.trial.special !== "confess", c2.s.trial && c2.s.trial.special);
   check("…and the final's Trial doesn't promise Sanctuary, to the phones or the TV", viewFor(c2.s, null, c2.now).trial.prize === false && viewFor(c2.s, c2.dir, c2.now).trial.prize === false);
+  // eight players: the final is at four, so the Confessor comes with four left
+  const c3 = begin(8); const F3 = c3.s.players.filter((p) => p.role === "f"), L3 = c3.s.players.filter((p) => p.role === "l");
+  for (const p of [F3[1], L3[0], L3[1], L3[2]]) p.alive = false; c3.s.final = true; c3.s.round = 3; c3.s.phase = "day"; c3.s.steps = []; c3.s.done.dessert = true; tick(c3.s, c3.now, ctx); A(c3, c3.dir, { a: "next" });
+  check("eight players: the final is at four, and its Trial carries the Confessor there", c3.s.finalAt === 4 && alive(c3.s).length === 4 && c3.s.trial && c3.s.trial.special === "confess", [c3.s.finalAt, c3.s.trial && c3.s.trial.special]);
 
   // twists off
   const o = begin(12, { twists: false }); const all = []; for (let r = 1; r < o.s.total; r++) { o.s.round = r; o.s.steps = []; o.s.phase = "day"; o.s.trial = null; A(o, o.dir, { a: "next" }); all.push(JSON.stringify(o.s.steps)); }
@@ -210,6 +215,75 @@ for (const [n, fw] of [[9, 0], [8, 1], [13, 0], [17, 1], [24, 0], [11, 1], [16, 
   const v = viewFor(g.s, g.ids[2], g.now); check(`${n} players: at the end every role is shown`, v.players.every((p) => p.role));
   const ag = A(g, g.dir, { a: "again" }); check(`${n} players: again? the same players, new roles`, ag === null && g.s.phase === "lobby" && g.s.players.length === n && g.s.players.every((p) => !p.role));
 }
+// the second night at eight: the final at four (8 → 7 → 6 → 5 → 4), so two poisonings; ten keep the final at five
+for (const [n, fin, nights, old] of [[8, 4, 2], [10, 5, 2], [8, 5, 1, true]]) {
+  const g = begin(n); let guard = 0; const nightsAt = new Set(); let finalAlive = null;
+  if (old) delete g.s.finalAt; // a game dealt before the change: the final at five
+  while (g.s.phase !== "end" && guard++ < 300) {
+    const st = g.s;
+    if (st.final && finalAlive === null) finalAlive = alive(st).length;
+    if (st.phase === "day") { A(g, g.dir, { a: "next" }); continue; }
+    if (st.phase === "break") { A(g, g.dir, { a: "brkEnd" }); continue; }
+    if (st.phase === "trial") { finishCurrentTrial(g); A(g, g.dir, { a: "cont" }); continue; }
+    if (st.phase === "talk" || st.phase === "vote") { vote(g, (p) => alive(st).find((q) => q.id !== p.id && q.role === "l") || alive(st).find((q) => q.id !== p.id)); continue; } // the Loyal go: the Forsworn last to the final
+    if (st.phase === "night") { nightsAt.add(st.round); night(g); continue; }
+    if (st.phase === "dawn") { A(g, g.dir, { a: "cont" }); A(g, g.dir, { a: "cont" }); continue; }
+    if (st.phase === "reveal") { run(g, 6000); A(g, g.dir, { a: "cont" }); continue; }
+    if (st.phase === "trust") { for (const p of alive(st)) A(g, p.id, { a: "trust", v: "trust" }); run(g, 8000); A(g, g.dir, { a: "cont" }); continue; }
+    run(g, 3000);
+  }
+  check(`${n} players${old ? ", dealt before the change" : ""}: the final starts at ${fin} or fewer, after ${nights} night${nights > 1 ? "s" : ""}`, (g.s.finalAt || 5) === fin && finalAlive !== null && finalAlive <= fin && finalAlive > fin - 2 && nightsAt.size === nights && g.s.phase === "end", { finalAt: g.s.finalAt, finalAlive, nights: [...nightsAt], phase: g.s.phase, guard });
+}
+check("rounds planned: 8 players still three (the extra night is in round two)", roundsFor(8) === 3 && roundsFor(8, 5) === 3 && roundsFor(10) === roundsFor(10, 5));
+
+// the Ghosts' Trials: a Ghost answers along with the living, for the Ghosts' score and an award; never the Purse, the
+// Trial's winner or Sanctuary, and the living never wait for them
+{
+  const g = begin(10), ghost = g.s.players.find((p) => p.role === "l" && p.id !== g.dir), ghost2 = g.s.players.find((p) => p.role === "l" && p.id !== g.dir && p.id !== ghost.id);
+  ghost.alive = false; ghost.died = 1; ghost2.alive = false; ghost2.died = 1;
+  setStep(g, { k: "trial", key: "quiz" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" }); run(g, 6000);
+  const it = g.s.trial.item, liveIds = alive(g.s).map((p) => p.id);
+  const gv = viewFor(g.s, ghost.id, g.now).trial.item;
+  check("Ghosts' Trials: a Ghost's phone is offered the question (to play for the Ghosts)", it && it.k === "text" && gv.ghostPlay === true && gv.mine === undefined, gv);
+  check("…and answers it", A(g, ghost.id, { a: "ans", v: it.a }) === null && g.s.trial.item.ghost[ghost.id].v === it.a);
+  A(g, ghost2.id, { a: "ans", v: "no idea" });
+  check("…once", !!A(g, ghost.id, { a: "ans", v: it.a }).error);
+  const lv = viewFor(g.s, liveIds[0], g.now).trial.item;
+  check("…the living don't see a Ghost's answer, nor count it as theirs", !lv.who.includes(ghost.id) && lv.answered === 0 && !lv.ghostPlay);
+  for (const id of liveIds) A(g, id, { a: "ans", v: "wrong" });
+  run(g, 1000);
+  const done1 = g.s.trial.item || g.s.trial.results.length;
+  check("…the item closes when the living are in (the Ghosts don't hold it open)", g.s.trial.item.stage === "reveal" || g.s.trial.i === 1, g.s.trial.item && g.s.trial.item.stage);
+  const r1 = g.s.trial.results[0], gr = viewFor(g.s, ghost.id, g.now).trial.item;
+  check("…the Ghost scores for the Ghosts (+2, first right), the wrong Ghost nothing; the living's result is untouched", g.s.stats.ghostPts[ghost.id] === 2 && !g.s.stats.ghostPts[ghost2.id] && !(r1.right || []).includes(ghost.id) && !(ghost.id in g.s.trial.scores) && gr.gpts === 2, [g.s.stats.ghostPts, r1.right]);
+  // the rest of the quiz: only the Ghost gets anything right
+  let guard = 0; while (g.s.trial.stage !== "done" && guard++ < 400) { const x = g.s.trial.item; if (x && x.stage === "open") { if (!(ghost.id in (x.ghost || {}))) A(g, ghost.id, { a: "ans", v: x.a }); for (const id of liveIds) if (!(id in x.inputs)) A(g, id, { a: "ans", v: "wrong" }); } g.now += 1000; tick(g.s, g.now, ctx); }
+  const t = g.s.trial;
+  check("…the Trial: no living winner from the Ghost's answers, no Sanctuary for a Ghost, and the Purse only from the living", t.stage === "done" && !(t.winners || []).includes(ghost.id) && !ghost.shield && t.points <= 0, { winners: t.winners, points: t.points });
+  check("…the Trial names the best Ghost, on every phone and the TV", t.ghostBest && t.ghostBest.ids[0] === ghost.id && viewFor(g.s, null, g.now).trial.ghostBest.pts === t.ghostBest.pts && viewFor(g.s, ghost.id, g.now).me.ghostPts === g.s.stats.ghostPts[ghost.id]);
+  A(g, g.dir, { a: "cont" });
+  // a Trial a Ghost can't play: Most Likely To, the knockouts, the acting ones
+  setStep(g, { k: "trial", key: "likely" }); g.s.done.likely = false; A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" }); run(g, 6000);
+  const lk = g.s.trial.item;
+  check("…not Most Likely To: a Ghost watches", lk && lk.k === "vote" && !viewFor(g.s, ghost.id, g.now).trial.item.ghostPlay && !!A(g, ghost.id, { a: "ans", v: liveIds[0] }).error);
+  finishCurrentTrial(g); A(g, g.dir, { a: "cont" });
+  // Snap: a Ghost's taps count for the Ghosts, not against the living's snaps
+  setStep(g, { k: "trial", key: "snap" }); A(g, g.dir, { a: "next" }); A(g, g.dir, { a: "cont" }); run(g, 6000);
+  const sn = g.s.trial.item; g.now = sn.start + sn.step * (sn.seq.findIndex((v, i) => i > 0 && v === sn.seq[i - 1])) + 50; tick(g.s, g.now, ctx);
+  if (sn.seq.some((v, i) => i > 0 && v === sn.seq[i - 1])) { A(g, ghost.id, { a: "ans" }); check("…Snap: a Ghost's tap is kept apart from the living's", (sn.gtaps || []).length === 1 && !sn.taps.some((x) => x.id === ghost.id)); }
+  finishCurrentTrial(g); A(g, g.dir, { a: "cont" });
+  // the end: the Restless Ghost
+  A(g, g.dir, { a: "tool", v: "end" });
+  const aw = (g.s.result && g.s.result.awards) || [];
+  check("the end: the Ghost with the most points takes The Restless Ghost", aw.some((x) => x.title === "The Restless Ghost" && x.id === ghost.id), aw.map((x) => x.title));
+  // a pause moves a Ghost's answer times with the rest
+  const g2 = begin(10), gh = g2.s.players.find((p) => p.role === "l" && p.id !== g2.dir); gh.alive = false;
+  setStep(g2, { k: "trial", key: "estimate" }); A(g2, g2.dir, { a: "next" }); A(g2, g2.dir, { a: "cont" }); run(g2, 6000);
+  A(g2, gh.id, { a: "ans", v: "5" }); const t0 = g2.s.trial.item.ghost[gh.id].t;
+  A(g2, g2.dir, { a: "pause" }); g2.now += 60000; A(g2, g2.dir, { a: "pause", v: "off" });
+  check("…a pause moves a Ghost's answer time on with every clock", !g2.s.paused && g2.s.trial.item.ghost[gh.id].t === t0 + 60000, [t0, g2.s.trial.item.ghost[gh.id].t]);
+}
+
 { // the prize in the lobby: chocolate coins by default, and the lobby explains them; a prize the host types has no coins
   const g = setup(8), o = () => viewFor(g.s, g.dir, g.now).opts;
   check("lobby: no kill option, and the default prize is chocolate coins", o().kill === undefined && o().prize === "chocolate coins" && o().coins === true && viewFor(g.s, g.ids[1], g.now).opts.coins === undefined);
