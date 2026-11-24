@@ -25,7 +25,7 @@ BUILD=$(date -u +%Y%m%d%H%M%S)
 # the home page: sell, redeem a booking code, join a room (site/index.html, self-contained)
 # Google Tag Manager goes first in the head (site/gtm.html, at __GTM__) and straight after <body> (site/gtm-body.html, at
 # __GTM_BODY__) of the home page and every site page but /admin.
-awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{while((getline l < "site/gtm-body.html")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
+awk -v b="$BUILD" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{while((getline l < "site/gtm.html")>0) print l; next} /^__APPBAR__$/{while((getline l < "site/appbar.html")>0) print l; close("site/appbar.html"); next} /^__GTM_BODY__$/{while((getline l < "site/gtm-body.html")>0) print l; next} {gsub("__BUILD__", b); print}' site/index.html > worker/public/index.html
 # the legal, checkout and guide pages: site/pages/NAME.html in site/page.html → worker/public/NAME.html, served at /NAME.
 # Each starts with <!-- title: … --> (short name: nav, breadcrumbs; the <title> is "NAME · The Betrayal") and
 # <!-- desc: … -->; an optional <!-- fulltitle: … --> replaces the whole <title>. The head gets a BreadcrumbList, plus
@@ -56,7 +56,7 @@ for f in site/pages/*.html; do
       "$SITE" "$slug" "$ft" "$d" "$SITE" "$slug" "$SITE" "$slug" "$(firstmod "$f")" "$mod" "$SITE" "$org" "$org" "$SITE" >> "$hf"
     upd="<p class=\"updated\">Updated <time datetime=\"$mod\">$(longdate "$mod")</time></p>" ;;
   esac
-  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" -v upd="$upd" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin" && slug != "survey" && slug != "extend") while((getline l < "site/gtm.html")>0) print l; next} /^__GTM_BODY__$/{if (slug != "admin" && slug != "survey" && slug != "extend") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; if (upd != "") print upd; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
+  awk -v b="$BUILD" -v t="$t" -v ft="$ft" -v d="$d" -v slug="$slug" -v body="$f" -v hf="$hf" -v upd="$upd" '/\/\*__FONTS__\*\//{while((getline l < "src/fonts.css")>0) print l; next} /^__GTM__$/{if (slug != "admin" && slug != "survey" && slug != "extend") while((getline l < "site/gtm.html")>0) print l; next} /^__APPBAR__$/{while((getline l < "site/appbar.html")>0) print l; close("site/appbar.html"); next} /^__GTM_BODY__$/{if (slug != "admin" && slug != "survey" && slug != "extend") while((getline l < "site/gtm-body.html")>0) print l; next} /^__HEAD__$/{while((getline l < hf)>0) print l; next} /^__BODY__$/{getline l < body; while((getline l < body)>0) if (l !~ /^<!-- (desc|fulltitle): /) print l; if (upd != "") print upd; next} {gsub("__BUILD__", b); gsub("__FULLTITLE__", ft); gsub("__TITLE__", t); gsub("__DESC__", d); gsub("__SLUG__", slug); print}' site/page.html > "worker/public/$(basename "$f")"
   rm -f "$hf"
 done
 # the sitemap: the home page and every indexable page, each dated by the last commit of its source (lastmod, above)
