@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261125132437">
+<meta name="build" content="20261125233456">
 <meta name="theme-color" content="#09070a">
 <meta name="robots" content="noindex">
 <title>The Betrayal</title>
@@ -1286,7 +1286,11 @@ function peekScreen() {
 }
 // ---- the Trials
 // the label over a Trial's introduction, on the phone and the TV: what it's played for
-const trialBrow = (t) => (t.key === "tempt" ? "a twist" : "a trial" + (t.special === "cast" ? " for the Casting Vote" : t.special === "crown" ? " for the Crown" : t.special === "secret" ? " for a secret prize" : t.prize ? " for Sanctuary" : ""));
+// Most Likely To's end: who the table picked most over all its prompts (t.tally), never a winner or the Purse
+const likelyTop = (t) => { const x = t.tally || []; return { ids: x.filter((e) => e[1] === (x[0] || [])[1]).map((e) => e[0]), n: x.length ? x[0][1] : 0 }; };
+const likelyHead = (t) => { const k = likelyTop(t); return !k.ids.length ? "Nobody voted" : k.ids.length === 1 ? N(k.ids[0]) + " got the most votes" : andList(k.ids.map(N)) + " tied for the most votes"; };
+const LIKELY_NOTE = "That was just a warm-up to get everyone talking. It doesn’t change the Purse, and nobody wins Sanctuary.";
+const trialBrow = (t) => (t.key === "tempt" ? "a twist" : t.key === "likely" ? "the icebreaker" : "a trial" + (t.special === "cast" ? " for the Casting Vote" : t.special === "crown" ? " for the Crown" : t.special === "secret" ? " for a secret prize" : t.prize ? " for Sanctuary" : ""));
 function trial(me) {
   const t = V.trial, it = t.item;
   if (t.stage === "intro") return `<div class="eyebrow">${trialBrow(t)}</div><h1>${esc(t.title)}</h1><p>${esc(t.rules)}</p>${t.prize && !t.special ? `<p class="small">The winner gets Sanctuary, so the Forsworn can’t poison them tonight.</p>` : ""}${V.final && t.key !== "tempt" ? `<p class="small">This is the last Trial. If everyone plays well, it can fill the Purse right to the top.</p>` : ""}
@@ -1376,6 +1380,7 @@ const temptHead = (t) => (!t.last || !t.last.self ? "The table held" : t.last.se
 function trialDone(me) {
   const t = V.trial, sc = Object.entries(t.scores || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const w = t.winners && t.winners[0];
+  if (t.key === "likely") { const k = likelyTop(t); return `<div class="eyebrow">${esc(t.title)} · the table’s verdict</div><h1>${likelyHead(t)}</h1>${k.n ? `<p class="sub">${plural(k.n, "vote")}${k.ids.length > 1 ? " each" : ""}, over all the questions.</p>` : ""}${(t.tally || []).length ? `<ul class="score">${t.tally.map(([id, n]) => `<li class="${id === me.id ? "me" : ""}">${seal(id)}${N(id)}<span class="n">${n}</span></li>`).join("")}</ul>` : ""}<p class="small">${LIKELY_NOTE}</p>` + dirCard(btn("Back to the table", "cont")) + waitHost(); }
   let h = `<div class="eyebrow">${esc(t.title)} · the result</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${t.special === "cast" ? `<p class="sub">Whoever won has it now, and only they know it’s them.</p>` : ""}${w && t.byLot && t.key !== "tempt" ? `<p class="small">There was a tie for first place, so the game picked the winner at random.</p>` : ""}
   <p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} <span class="small">to the Purse</span></p>${purse(V.pot)}${t.wrongF ? `<p class="small">The Forsworn gave ${plural(t.wrongF, "wrong answer")}, which took points out of the Purse.</p>` : ""}`;
   if (t.sanctPublic) h += `<div class="banner sanct">${N(t.sanctPublic)} wins Sanctuary, so they can’t be poisoned tonight.</div>`;
@@ -1513,6 +1518,7 @@ function tvBody(url) {
     case "trial": {
       const t = V.trial, x = t.item;
       if (t.stage === "intro") return `<div class="eyebrow">${trialBrow(t)}</div><h1 class="disp">${esc(t.title)}</h1><p class="sub">${esc(t.rules)}</p>${t.introEnd ? `<p>${clock(t.introEnd)}</p>` : ""}`;
+      if (t.stage === "done" && t.key === "likely") { const k = likelyTop(t), x = t.tally || []; return `<div class="eyebrow">${esc(t.title)} · the table’s verdict</div><h1>${likelyHead(t)}</h1>${k.n ? `<p class="tvcount">${plural(k.n, "vote")}${k.ids.length > 1 ? " each" : ""}</p>` : ""}<p class="sub">That was just for fun. The Purse hasn’t changed.</p>${x.length ? `<ul class="tvscore">${x.map(([id, n]) => `<li class="${k.ids.includes(id) ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}`; }
       if (t.stage === "done") { const w = t.winners && t.winners[0], sc = Object.entries(t.scores || {}).sort((a, b) => (b[0] === w) - (a[0] === w) || b[1] - a[1]).slice(0, 10); return `<div class="eyebrow">${esc(t.title)}</div><h1>${t.key === "tempt" ? temptHead(t) : t.special === "cast" ? "The Casting Vote is taken" : w ? esc(P(w).name) + " wins" : "No winner"}</h1>${w && t.byLot && t.key !== "tempt" ? `<p class="tvcount">a tie for first, settled at random</p>` : ""}<p class="ans num">${t.points >= 0 ? "+" + t.points : "−" + -t.points} to the Purse</p>${purse(V.pot)}${t.gave ? `<p class="sub">${N(t.gave)} wins the Crown.</p>` : t.special === "cast" ? `<p class="sub">Whoever won it is keeping it secret.</p>` : t.special === "secret" && w ? `<p class="sub">The special prize is on their phone.</p>` : t.sanctPublic ? `<p class="sub">${N(t.sanctPublic)} wins Sanctuary for tonight.</p>` : t.prize && w ? `<p class="sub">Did they win Sanctuary? Only they know.</p>` : ""}${sc.length && !["tempt", "likely"].includes(t.key) ? `<ul class="tvscore">${sc.map(([id, n]) => `<li class="${id === w ? "win" : ""}">${seal(id)}${N(id)}<b>${n}</b></li>`).join("")}</ul>` : ""}${t.ghostBest ? `<p class="tvcount">best Ghost: ${esc(andList(t.ghostBest.ids.map((id) => P(id).name)))}, ${plural(t.ghostBest.pts, "point")}</p>` : ""}`; }
       return x ? `<div class="eyebrow">${esc(t.title)} · ${x.stage === "reveal" ? t.i : t.i + 1}</div>` + (x.stage === "reveal" ? tvReveal(x) : tvItem(x)) : "";
     }

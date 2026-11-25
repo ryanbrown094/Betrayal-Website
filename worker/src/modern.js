@@ -36,7 +36,7 @@ export const TRIALS = {
   quiz: { title: "Rapid Quiz", prize: true, rules: "Fifteen questions: five easy, five medium and five brutal. Type your answer on your phone before the clock runs out. Every right answer scores a point, and the fastest right answer scores one more." },
   estimate: { title: "Closest Guess", prize: true, rules: "Five questions, each with a number for an answer. Type your best guess on your phone. The closest guess scores two points, and the next closest scores one." },
   hilo: { title: "Higher or Lower", prize: true, rules: "Six questions, each shown with a number. Is the real answer higher or lower than that number? Tap your choice. Every right choice scores a point." },
-  likely: { title: "Most Likely To", prize: false, rules: "Five “Most likely to…” questions. For each one, tap the person you think it fits best. Then everyone sees who the table chose. There’s no prize this time, just a reputation." },
+  likely: { title: "Most Likely To", prize: false, rules: "The icebreaker, a warm-up to get everyone talking. There are five “Most likely to…” questions. For each one, tap the person you think it fits best, and everyone sees who the table chose. It’s just for fun: it doesn’t change the Purse, and nobody wins Sanctuary." },
   countdown: { title: "Longest Word", prize: true, rules: "Three rounds, each with twelve letters. Type the longest real word you can make from them. You can change it until time runs out. The longest word scores two points, and any other word of six letters or more scores one." },
   memory: { title: "Memory Wall", prize: true, rules: "Twelve words appear for twenty seconds, then disappear. Type as many as you can remember. Every one you get right scores a point. There are two rounds." },
   change: { title: "What Changed?", prize: true, rules: "Study the grid of twelve symbols. It disappears, then comes back with something different. Tap a symbol that changed or moved. The first right answer scores two points, and every other right answer scores one." },
@@ -422,6 +422,8 @@ function finishTrial(s, now, rnd) {
     const live = Object.keys(t.scores).filter((id) => P(s, id) && P(s, id).alive), best = Math.max(0, ...live.map((id) => t.scores[id])); let w = best > 0 ? live.filter((id) => t.scores[id] === best) : [];
     if (w.length > 1) { w = [pick(w, rnd)]; t.byLot = true; } // one Sanctuary a Trial: a tie is settled by lot
     t.winners = w;
+    // Most Likely To is the icebreaker: no winner and nothing for the Purse, just who the table picked most, all five prompts together
+    if (t.key === "likely") { const c = {}; for (const r of t.results) for (const [id, n] of (r && r.counts) || []) c[id] = (c[id] || 0) + n; t.tally = Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 5); t.points = 0; }
     if (t.special && w.length) {
       const p = P(s, w[0]);
       if (t.special === "cast") s.cast = { id: p.id, used: false, round: s.round };
@@ -437,7 +439,7 @@ function finishTrial(s, now, rnd) {
     t.ghostBest = gb.length ? { ids: gb.filter((x) => x[1] === gb[0][1]).map((x) => x[0]), pts: gb[0][1] } : null; // the Ghosts' own result
   }
   const before = s.pot; s.pot = Math.max(0, Math.min(s.opts.potCap, s.pot + t.points)); t.points = s.pot - before;
-  say(s, t.title + " done: " + (t.winners && t.winners.length ? P(s, t.winners[0]).name + " won" : "no winner") + ", Purse " + (t.points >= 0 ? "+" : "") + t.points, now);
+  say(s, t.title + " done: " + (t.key === "likely" ? (t.tally.length ? "most votes " + names(s, t.tally.filter((x) => x[1] === t.tally[0][1]).map((x) => x[0])) : "nobody voted") + ", just for fun" : (t.winners && t.winners.length ? P(s, t.winners[0]).name + " won" : "no winner") + ", Purse " + (t.points >= 0 ? "+" : "") + t.points), now);
 }
 // thirty seconds of talk a player, but never more than four minutes: at big tables hosts opened the vote early every time
 const TALKMAX = 240000;
@@ -803,7 +805,7 @@ export function viewFor(s, pid, now) {
   if (based(s)) o.locked = Object.keys(TRIALS).filter((k) => !BASE_TRIALS.includes(k)).map((k) => TRIALS[k].title); // what a pass would add
   if (s.trial) {
     const t = s.trial, it = t.item;
-    o.trial = { key: t.key, title: t.title, rules: t.rules, stage: t.stage, ghostBest: t.stage === "done" && t.ghostBest ? t.ghostBest : undefined, introEnd: t.introEnd, i: t.i, prize: t.prize && !s.final, offer: t.offer, scores: t.stage === "done" && t.special !== "cast" ? t.scores : undefined, winners: t.stage === "done" && t.special !== "cast" ? t.winners : undefined, points: t.stage === "done" ? t.points : undefined, sanctPublic: t.stage === "done" && t.sanct && s.opts.shield === "public" ? t.sanct : undefined, wrongF: t.stage === "done" ? t.wrongF || 0 : undefined, special: t.special === "confess" ? "secret" : t.special, byLot: t.stage === "done" ? !!t.byLot : undefined, gave: t.stage === "done" && t.gave === "crown" ? t.winners[0] : undefined };
+    o.trial = { key: t.key, title: t.title, rules: t.rules, stage: t.stage, ghostBest: t.stage === "done" && t.ghostBest ? t.ghostBest : undefined, introEnd: t.introEnd, i: t.i, prize: t.prize && !s.final, offer: t.offer, scores: t.stage === "done" && t.special !== "cast" ? t.scores : undefined, winners: t.stage === "done" && t.special !== "cast" ? t.winners : undefined, points: t.stage === "done" ? t.points : undefined, sanctPublic: t.stage === "done" && t.sanct && s.opts.shield === "public" ? t.sanct : undefined, wrongF: t.stage === "done" ? t.wrongF || 0 : undefined, special: t.special === "confess" ? "secret" : t.special, byLot: t.stage === "done" ? !!t.byLot : undefined, tally: t.stage === "done" && t.key === "likely" ? t.tally || [] : undefined, gave: t.stage === "done" && t.gave === "crown" ? t.winners[0] : undefined };
     if (it) {
       const x = { k: it.k, stage: it.stage, end: it.end, from: it.from || it.opened, who: Object.keys(it.inputs), revealEnd: it.revealEnd, q: it.q, part: it.part, ref: it.ref, letters: it.letters, answered: Object.keys(it.inputs).length, of: owedCount(s, it) };
       if (it.k === "recall" && it.stage === "study") x.words = it.words;

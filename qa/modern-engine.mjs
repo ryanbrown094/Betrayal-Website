@@ -334,6 +334,16 @@ const exile = (g, i) => { if (g.s.phase === "day") { setStep(g, { k: "reckon" })
   check("Most Likely To: the table's verdict is kept for the dawn", playTrial((A(g, g.dir, { a: "cont" }), g), "likely") === null && Object.values(s.stats.likely || {}).every((q) => /^Most likely to /.test(q)) && Object.keys(s.stats.likely || {}).length > 0, s.stats.likely);
 }
 {
+  // the icebreaker: no winner and nothing for the Purse, just who the table picked most over all five prompts
+  const g = begin(10), s = g.s, pot0 = s.pot;
+  playTrial(g, "likely"); const t = s.trial, tv = viewFor(s, g.ids[1], g.now).trial;
+  const sum = {}; for (const r of t.results) for (const [id, n] of r.counts || []) sum[id] = (sum[id] || 0) + n;
+  const most = Math.max(0, ...Object.values(sum));
+  check("Most Likely To: no winner, no Sanctuary and the Purse untouched", t.key === "likely" && t.stage === "done" && !t.winners.length && t.points === 0 && s.pot === pot0 && !s.players.some((p) => p.shield), { winners: t.winners, points: t.points });
+  check("…the phones get the table's tally over all its prompts, most votes first", Array.isArray(tv.tally) && tv.tally.length > 0 && tv.tally.length <= 5 && tv.tally[0][1] === most && tv.tally.every(([id, n], i) => sum[id] === n && (i === 0 || n <= tv.tally[i - 1][1])), tv.tally);
+  check("…and no other Trial carries one", (playTrial((A(g, g.dir, { a: "cont" }), g), "quiz"), viewFor(s, g.ids[1], g.now).trial.tally === undefined));
+}
+{
   const g = begin(10, { kill: "murder" }), s = g.s; roles(g, [3, 4]); A(g, g.dir, { a: "cont" }); // an older room saved with kill "murder" plays as poison
   const X = exile(g, 6);
   check("last words: the exiled may type one line", s.phase === "reveal" && viewFor(s, X.id, g.now).me.words === "" && viewFor(s, g.ids[1], g.now).me.words === undefined);
