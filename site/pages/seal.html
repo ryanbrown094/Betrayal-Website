@@ -1,10 +1,10 @@
 <!-- title: The broken seal -->
 <!-- desc: You looked closely. That’s exactly what the Forsworn are afraid of. -->
 <h1>The broken seal</h1>
-<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead, and a mind that checks everything twice is what the Forsworn fear most.</p>
+<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead. A mind that checks everything twice is what the Forsworn, the game’s secret traitors, fear most.</p>
 
 <div class="panel">
-<p id="offer">For that, <b>10% off</b> one party (a single Table; the Regular plan isn’t discounted). We’ll remember it on this browser and take it off automatically when you book.</p>
+<p id="offer">For that, you get <b>10% off</b> one party, which is a single Table. The Regular plan isn’t discounted. We’ll remember it on this browser and take it off automatically when you book.</p>
 <button class="btn" id="claim">Claim 10% off</button>
 <p id="msg" class="formmsg" role="status"></p>
 </div>
@@ -14,7 +14,7 @@
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
-fetch("/api/egg").then(r => r.json()).then(j => { if (!j.on) { $("#offer").textContent = "The discount isn’t open yet. Check back soon: the seal will still be broken."; $("#claim").hidden = true } }).catch(() => {});
+fetch("/api/egg").then(r => r.json()).then(j => { if (!j.on) { $("#offer").textContent = "The discount isn’t open yet. Check back soon, and the seal will still be broken."; $("#claim").hidden = true } }).catch(() => {});
 $("#claim").onclick = () => {
   try { localStorage.setItem("bt-egg", "1") } catch (e) { $("#msg").textContent = "Your browser won’t let us remember it. Try again outside private browsing."; $("#msg").className = "formmsg err"; return }
   location.href = "/buy";

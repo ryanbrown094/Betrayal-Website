@@ -56,7 +56,7 @@ async function openReport() {
 <label for="rp-what">What happened?</label><textarea id="rp-what" rows="4" placeholder="e.g. The TV froze on the votes after I tapped Reveal…"></textarea>
 <label for="rp-exp">What did you expect to happen? <small>(optional)</small></label><textarea id="rp-exp" rows="2"></textarea>
 <label for="rp-mail">Your email, if you’d like a reply <small>(optional)</small></label><input id="rp-mail" type="email" autocomplete="email" spellcheck="false">
-<label class="rp-chk"><input id="rp-snap" type="checkbox" checked> Include a snapshot of this screen${isHost ? " (it can show who the Forsworn are, and only we will see it)" : ""}</label>
+<label class="rp-chk"><input id="rp-snap" type="checkbox" checked> Include a snapshot of this screen${isHost ? ". It may show who the Forsworn are, but only we will see it." : ""}</label>
 <p class="rp-msg" id="rp-msg" role="status"></p><div class="rp-row"><button type="button" class="rp-cancel">Cancel</button><button type="submit" class="rp-send">Send report</button></div></form>`;
   document.body.appendChild(box);
   const close = () => { box.remove(); reportBox = null };

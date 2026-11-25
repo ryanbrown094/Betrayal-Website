@@ -1,5 +1,5 @@
 <!-- title: Feedback -->
-<!-- desc: Tell us how your game of The Betrayal went: five quick questions, and 30% off your next Table for answering. -->
+<!-- desc: Tell us how your game of The Betrayal went. Answer five quick questions and get 30% off your next Table. -->
 <style>
 .q { border: 0; margin: 26px 0 0; padding: 0; min-width: 0 } .q legend { padding: 0; margin: 0 0 12px; font: 400 22px/1.25 var(--book); color: var(--ivory) }
 .opts { display: flex; flex-wrap: wrap; gap: 8px } .opts label { position: relative } .opts input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer }
@@ -19,12 +19,12 @@
 <p id="wait" class="lede">One moment…</p>
 
 <form id="sv" hidden novalidate>
-<p class="lede">Five quick questions about your game of The Betrayal, and a box for anything else. Answer them and we’ll give you <b>30% off your next Table</b>, or a code to pass to a friend.</p>
+<p class="lede">Here are five quick questions about your game of The Betrayal, and a box for anything else. Answer them and we’ll give you <b>30% off your next Table</b>. You can use the code yourself or pass it to a friend.</p>
 <fieldset class="q" data-q="overall"><legend>1. How was the game overall?</legend><div class="opts">
 <label><input type="radio" name="overall" value="1"><span>Poor</span></label><label><input type="radio" name="overall" value="2"><span>OK</span></label><label><input type="radio" name="overall" value="3"><span>Good</span></label><label><input type="radio" name="overall" value="4"><span>Great</span></label><label><input type="radio" name="overall" value="5"><span>Brilliant</span></label>
 </div></fieldset>
 <fieldset class="q" data-q="recommend"><legend>2. How likely are you to recommend The Betrayal to a friend?</legend><div class="opts n" id="nps"></div><p class="scale" aria-hidden="true"><span>0: not at all likely</span><span>10: extremely likely</span></p></fieldset>
-<fieldset class="q" data-q="setup"><legend>3. How easy was it to get going: booking, setting up and everyone joining?</legend><div class="opts">
+<fieldset class="q" data-q="setup"><legend>3. How easy was it to get going, from booking to setting up and everyone joining?</legend><div class="opts">
 <label><input type="radio" name="setup" value="Very easy"><span>Very easy</span></label><label><input type="radio" name="setup" value="Easy"><span>Easy</span></label><label><input type="radio" name="setup" value="A bit fiddly"><span>A bit fiddly</span></label><label><input type="radio" name="setup" value="Difficult"><span>Difficult</span></label>
 </div></fieldset>
 <fieldset class="q" data-q="length"><legend>4. Was the game the right length?</legend><div class="opts">
@@ -33,7 +33,7 @@
 <fieldset class="q" data-q="again"><legend>5. Would you host another game?</legend><div class="opts">
 <label><input type="radio" name="again" value="Yes"><span>Yes</span></label><label><input type="radio" name="again" value="Maybe"><span>Maybe</span></label><label><input type="radio" name="again" value="No"><span>No</span></label>
 </div></fieldset>
-<label class="fl" for="comment">Anything else?<small>What did you love, what got in the way, what would you change? Optional.</small></label>
+<label class="fl" for="comment">Anything else?<small>What did you love, what got in the way, and what would you change? This one is optional.</small></label>
 <textarea id="comment" rows="6" maxlength="2000"></textarea>
 <label class="check"><input type="checkbox" id="quote"> <span>You may quote what I wrote on the website.</span></label>
 <div id="qn" hidden><label class="fl" for="qname" style="margin-top:4px">Your first name, for the quote</label><input id="qname" maxlength="40" autocomplete="given-name"></div>
@@ -43,7 +43,7 @@
 
 <div id="done" hidden>
 <p class="lede">Thank you for telling us how it went.</p>
-<div id="gotcode"><p>Here’s your code: 30% off one Table, for you or for a friend to host their own.</p>
+<div id="gotcode"><p>Here’s your code. It gives 30% off one Table, for you or for a friend to host their own game.</p>
 <div class="gift"><small>30% off one Table</small><b id="code"></b></div>
 <p id="until"></p>
 <p><a class="btn" id="book" href="/buy">Book a Table with it</a></p></div>

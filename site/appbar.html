@@ -23,7 +23,7 @@
   if (!ios || !want) return;
   const bar = document.createElement("div");
   bar.className = "appbar"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "The Betrayal app");
-  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
+  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free to download on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
   bar.querySelector(".x").onclick = () => { bar.remove(); try { sessionStorage.setItem("bt-app-hide", "1") } catch (e) {} };
   bar.querySelector(".get").onclick = () => { (window.dataLayer = window.dataLayer || []).push({ event: "app_banner_tap" }) };
   document.body.prepend(bar);

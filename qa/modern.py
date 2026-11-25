@@ -88,7 +88,7 @@ with sync_playwright() as p:
     check("no kill choice in the lobby (poison is the only kill), and the default prize explains its chocolate coins", host.locator("[data-a=opt][data-k=kill]").count() == 0 and host.input_value("#prize") == "chocolate coins" and "Every 100 points in the Purse is one chocolate coin" in host.inner_text("#app"))
     host.click("summary:has-text('Better prizes')"); host.fill("#tier1", "champagne"); host.locator("#tier1").dispatch_event("change")
     check("the host's settings: a better prize for a half-full Purse (saved, so the next tap isn't lost to the redraw)", until(lambda: host.evaluate("()=>!!(V&&V.opts&&(V.opts.prizes||[]).some(x=>x.what==='champagne'))")))
-    check("twists on by default, and no dinner setting (dinner is for Classic)", "Once each: the Casting Vote, the Temptation, the Crown" in host.inner_text("#app") and host.locator("[data-a=opt][data-k=courses]").count() == 0 and "dinner in courses" not in host.inner_text("#app").lower())
+    check("twists on by default, and no dinner setting (dinner is for Classic)", "each come once in the evening: the Casting Vote, the Temptation, the Crown" in host.inner_text("#app") and host.locator("[data-a=opt][data-k=courses]").count() == 0 and "dinner in courses" not in host.inner_text("#app").lower())
     shot(host, "01-lobby-host"); shot(tv, "tv-01-lobby")
     def dialogs(d):
         if d.type == "prompt": d.accept("SHOW THE ROLES")
@@ -249,7 +249,7 @@ with sync_playwright() as p:
     check("…which it takes: Sam once, on the new phone", until(lambda: "You’re in" in sam.inner_text("#app") and h2.inner_text("#app").count("Sam") == 1, 5))
     errs[:] = [e for e in errs if "400" not in e]  # the taken name above is a 400, as it should be
     time.sleep(42)
-    check("the host is told a phone has been quiet a minute, and takes it off the list", until(lambda: "Kit: this phone hasn’t been seen for a minute" in h2.inner_text("#app"), 10), h2.inner_text("#app")[:300])
+    check("the host is told a phone has been quiet a minute, and takes it off the list", until(lambda: "The game hasn’t heard from Kit’s phone for a minute" in h2.inner_text("#app"), 10), h2.inner_text("#app")[:300])
     h2.click("[data-a=tool][data-v=remove]")
     check("…Kit is gone, Sam stays", until(lambda: "Kit" not in h2.inner_text("#app") and "Sam" in h2.inner_text("#app"), 5))
     h2.context.close(); sam.on("dialog", lambda d: d.accept())  # the host's phone is lost; nothing else changes in the lobby

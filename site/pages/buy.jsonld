@@ -7,7 +7,7 @@
  "@id": "https://thebetrayal.co.uk/#game",
  "name": "The Betrayal",
  "alternateName": "The Betrayal party game",
- "description": "The party game of loyalty and lies: a hidden-role party game for 8 to 24 players in one room, played on everyone’s own phone in the browser. A few players are secretly the Forsworn; the Loyal have one evening to find them through Trials, a secret vote and a poisoning each night. About an hour for 8 to 10 players, up to about two hours for 24.",
+ "description": "The party game of loyalty and lies. It’s a hidden-role party game for 8 to 24 players in one room, played on everyone’s own phone in the browser. A few players are secretly the Forsworn, and the Loyal have one evening to find them through Trials, a secret vote and a poisoning each night. About 45 minutes for 8 to 10 players, and up to about two hours for 24.",
  "url": "https://thebetrayal.co.uk/",
  "image": [
   "https://thebetrayal.co.uk/media/og-card.png",
@@ -34,7 +34,7 @@
   {
    "@type": "Offer",
    "name": "A Table",
-   "description": "One party of 8 to 24 players. The Table stays open for 48 hours from the first use of its booking code.",
+   "description": "One party of 8 to 24 players. The Table stays open for 48 hours from when its game starts.",
    "price": "10.00",
    "priceCurrency": "GBP",
    "availability": "https://schema.org/InStock",

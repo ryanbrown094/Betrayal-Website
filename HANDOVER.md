@@ -239,7 +239,7 @@ The Worker names, the `CNDL-` storage prefix, the cookie names and the gate's ha
 - **The Temptation:** everyone answers PURSE or SELF in secret. Exactly one SELF takes Sanctuary and the Purse grows; nobody: the Purse grows double; two or more: nobody gets it and the Purse shrinks.
 - **The Reckoning:** talk (thirty seconds a player still in, `opts.talkEach`, four minutes at most, `TALKMAX`), then a 2-minute vote. Ghosts vote too, as "calls" that don't count but are named. A tie goes to a 90-second revote between the tied; the **Casting Vote** settles a tie its holder voted in (the table sees it was used, never by whom); a second tie, or no votes, is settled by lot. The exile's role is shown five seconds later (not in the final). The **Crown** holder may lay it down once, during the talk or the vote, to be safe from that exile. Above 16 players a second Reckoning follows the first.
 - **The last call** (`lastCalls` in `modern.js`, since November 2026): once all but one of the living have voted, the vote's clock drops to 30 seconds (`LASTCALL`); the same in Trust or Doubt, and at night once the Forsworn agree and one of the Loyal has still to tap (never while the Forsworn are still choosing). Once a vote or a night (`lastCall` on the vote, trust or night), so the host's "+1 minute" holds afterwards; a revote has its own; the Crown laid down gives the voters it undid at least 30 seconds. The straggler's phone buzzes 10 seconds before the clock closes (`owedEnd` on the page), and the clock shown on every phone and the TV is the shortened one, so the page needed no change. In simulated games of 24 the table spent about 7½ minutes a game waiting on one last voter or sleeper; the last call takes about 3 minutes off that (under a minute at 8).
-- **The Ghosts' Trials** (since November 2026, `GHOSTK` and `ghostScore` in `modern.js`): a Ghost's phone shows the same question as the living's, marked "For the Ghosts' score, not the Purse", in the Trials whose items are answers (`text`, `number`, `hilo`, `word`, `recall`, `cell`, `snap`, `truths`); Most Likely To, Rock Paper Scissors Royale, One Leg, the acting Trials and the Temptation stay watch-only, and The Statue is still for haunting. Their answers go in `it.ghost` and Snap taps in `it.gtaps`, scored by the living's rules among the Ghosts only into `it.gres`, `t.gscores` and `s.stats.ghostPts`; nothing reads them for `t.scores`, the winner, Sanctuary or the Purse, and the living never wait for a Ghost (`owed` counts the living). The result names the best Ghost (`t.ghostBest`) on the phones and the TV; a Ghost's phone shows their total (`me.ghostPts`), and the top Ghost at the end takes **The Restless Ghost**, placed before The Ghost Who Saw in `awardsOf` (still six at most, so with every award earned it can push out Barking Up the Wrong Tree). The iPhone app doesn't play them yet: a Ghost there still sees the watching view.
+- **The Ghosts' Trials** (since November 2026, `GHOSTK` and `ghostScore` in `modern.js`): a Ghost's phone shows the same question as the living's, marked "You’re playing for the Ghosts’ score. It doesn’t change the Purse.", in the Trials whose items are answers (`text`, `number`, `hilo`, `word`, `recall`, `cell`, `snap`, `truths`); Most Likely To, Rock Paper Scissors Royale, One Leg, the acting Trials and the Temptation stay watch-only, and The Statue is still for haunting. Their answers go in `it.ghost` and Snap taps in `it.gtaps`, scored by the living's rules among the Ghosts only into `it.gres`, `t.gscores` and `s.stats.ghostPts`; nothing reads them for `t.scores`, the winner, Sanctuary or the Purse, and the living never wait for a Ghost (`owed` counts the living). The result names the best Ghost (`t.ghostBest`) on the phones and the TV; a Ghost's phone shows their total (`me.ghostPts`), and the top Ghost at the end takes **The Restless Ghost**, placed before The Ghost Who Saw in `awardsOf` (still six at most, so with every award earned it can push out Barking Up the Wrong Tree). The iPhone app doesn't play them yet: a Ghost there still sees the watching view.
 - **Last words:** an exiled player (not in the final) gets one optional typed line of up to 140 characters; the TV shows it and the narrator reads it. The poisoned get 30 seconds of spoken last words each at dawn.
 - **Night** (2 minutes): the Forsworn choose on their phones; the Loyal tap to sleep. With two or more Forsworn alive they can send set phrases (`WHISPERS`, up to 8 each a night), seen only by the Forsworn. If they choose nobody, the house chooses. Sanctuary saves its holder.
 - **Dawn:** names the victims; if one topped a Most Likely To prompt, the TV says so.
@@ -342,6 +342,29 @@ Setup also takes the Purse target and whether a Loyal wrong shout costs anything
 - **Big tables** on the TV: above 16 the final roll goes six across without seals and the Ghost-rules screen hides the rail; the rules card mentions two exiles and several victims when they apply.
 
 ---
+
+### 5.9 The words players see
+
+Since November 2026 every screen, page and line read aloud follows one voice, in both modes, on the website and in
+the app. The owner asked for it: things were too terse and too complex.
+
+- **Full, short sentences that a 10-year-old can follow.** One idea each, plain words, no semicolons, no chains of
+  colons, nothing a player needs hidden in brackets.
+- **What is happening, what this person should do, and why**, in that order where there's room. Say who does what
+  ("Tap the name of…", "The host starts the Trial…").
+- **Keep the game's names, and explain each where a player first meets it** on a screen or page: "the Forsworn, the
+  secret traitors", "You won Sanctuary. That means the Forsworn can't poison you tonight." The plain meanings:
+  the Forsworn (the secret traitors), the Loyal (everyone else), the Purse (the shared prize pot the Trials fill),
+  Sanctuary (safe from the poison for one night), the Reckoning (the debate and secret vote), exiled (voted out),
+  Ghosts (players who are out, still watching and playing for their own score), the Casting Vote (a secret
+  tie-breaker), the Crown (Sanctuary that night, and once it can be laid down to escape a vote), the Confessor (told
+  one Forsworn's name), Trust or Doubt (the final vote, where only an all-TRUST ends the game), Honour or Betray (the
+  surviving Forsworn share or take it all).
+- **Only slightly longer than before.** One to three short sentences on a phone. The TV stays short enough to read across
+  a room, with the detail on the phones. Titles, the narrator and the Keeper's lines can keep their mood, but every
+  instruction must make sense to someone who has never played.
+- **True to the code.** Every sentence says what the rules do. Check `modern.js` or `core.js` rather than guess.
+- Not changed by this: the names (game, Trials, awards, passes), the question banks, the legal pages and `/admin`.
 
 ## 6. Operations
 

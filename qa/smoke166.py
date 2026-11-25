@@ -63,7 +63,7 @@ try:
         check("TV after the ceremony: the Champion was chosen in secret, and the wrong-shout cost", "Crown" in tvtxt and "Wrong shouts cost it" in tvtxt, tvtxt)
         # the table: a secret Crown isn't named; its Casting Vote only breaks a tie, once every board is in
         E("()=>openTable()"); t = h.inner_text("#host")
-        check("talk line reminds a secret Champion without naming them", "if any of you wears the Crown" in t and "Tom: you wear the Crown" not in t)
+        check("talk line reminds a secret Champion without naming them", "if any of you wears the Crown" in t and "Tom, you wear the Crown" not in t)
         E("()=>{act(s=>{s.table.stage='votes'});const A=aliveOf(state);castBallot(A[2].id,A[5].id)}")
         once = E("()=>state.table.votes[aliveOf(state)[5].id]")
         E("()=>{const A=aliveOf(state);for(const p of A)if(!(p.id in state.table.ballots))castBallot(p.id,A[5].id)}"); allin = E("()=>state.table.votes[aliveOf(state)[5].id]")
