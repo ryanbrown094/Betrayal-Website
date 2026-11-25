@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261124193102">
+<meta name="build" content="20261125110840">
 <title>More time · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
-<meta name="description" content="Keep your Table of The Betrayal open longer, or have it reset: add 24 hours free, or ask us.">
+<meta name="description" content="Keep your Table of The Betrayal open longer, or have it reset. Add 24 hours free, or ask us.">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://thebetrayal.co.uk/extend">
-<meta property="og:title" content="More time · The Betrayal"><meta property="og:description" content="Keep your Table of The Betrayal open longer, or have it reset: add 24 hours free, or ask us."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/extend"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
-<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png?v=d57d1bee"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="More time · The Betrayal"><meta name="twitter:description" content="Keep your Table of The Betrayal open longer, or have it reset: add 24 hours free, or ask us.">
+<meta property="og:title" content="More time · The Betrayal"><meta property="og:description" content="Keep your Table of The Betrayal open longer, or have it reset. Add 24 hours free, or ask us."><meta property="og:type" content="website"><meta property="og:url" content="https://thebetrayal.co.uk/extend"><meta property="og:site_name" content="The Betrayal"><meta property="og:locale" content="en_GB">
+<meta property="og:image" content="https://thebetrayal.co.uk/media/og-card.png?v=d57d1bee"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="The Betrayal: the party game of loyalty and lies"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="More time · The Betrayal"><meta name="twitter:description" content="Keep your Table of The Betrayal open longer, or have it reset. Add 24 hours free, or ask us.">
 <link rel="preload" href="/fonts/GrenzeGotisch-n300_900-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/IMFellDWPica-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/AlegreyaSans-n400-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -118,7 +118,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
 <h2 id="askhead">Need longer?</h2>
 <form id="askform" novalidate>
 <p id="askintro">Tell us why, and pick the date you’d like your Table open until. We’ll read it and email you, usually within a day.</p>
-<label class="fl" for="reason"><span id="reasonlabel">Why do you need longer?</span><small id="reasonhint">For example: half the party couldn’t make it, and we’re finishing the game next weekend.</small></label>
+<label class="fl" for="reason"><span id="reasonlabel">Why do you need longer?</span><small id="reasonhint">For example, half the party couldn’t make it, and we’re finishing the game next weekend.</small></label>
 <textarea id="reason" rows="4" maxlength="1000"></textarea>
 <label class="fl" for="until"><span id="untillabel">Keep it open until</span><small id="untilhint" hidden>We’ll keep it open until the end of that day.</small></label>
 <input type="date" id="until">
@@ -150,7 +150,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
   // the Table closed before its game was played: no free 24 hours here, just a request to reset it for the day they'll play
   const resetMode = () => {
     reset = true; document.querySelector("h1").textContent = "Reset your Table"; document.title = "Reset your Table · The Betrayal"; $("#add").hidden = true;
-    $("#when").textContent = "We’re sorry: Table " + room + " closed before your game got going. Nothing’s lost: tell us when you’d like to play, and we’ll reset it for you.";
+    $("#when").textContent = "We’re sorry. Table " + room + " closed before your game got going, but nothing’s lost. Tell us when you’d like to play, and we’ll reset it for you.";
     $("#askhead").textContent = "Ask us to reset it"; $("#askintro").textContent = "Pick the day you’d like to play. We’ll reopen your Table, free, and email you, usually within a day.";
     $("#reasonlabel").textContent = "Anything we should know?"; $("#reasonhint").textContent = "Optional."; $("#untillabel").textContent = "The day you’d like to play"; $("#untilhint").hidden = false;
     $("#askbtn").textContent = "Ask us to reset it";
@@ -228,7 +228,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 0 18px; margin-bottom: 12px } 
   if (!ios || !want) return;
   const bar = document.createElement("div");
   bar.className = "appbar"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "The Betrayal app");
-  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
+  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free to download on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
   bar.querySelector(".x").onclick = () => { bar.remove(); try { sessionStorage.setItem("bt-app-hide", "1") } catch (e) {} };
   bar.querySelector(".get").onclick = () => { (window.dataLayer = window.dataLayer || []).push({ event: "app_banner_tap" }) };
   document.body.prepend(bar);

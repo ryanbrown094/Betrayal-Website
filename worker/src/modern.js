@@ -33,21 +33,21 @@ export function roundsFor(n, fin = finalFor(n)) { let a = n, r = 1; while (a > f
 // ---------------------------------------------------------------------------------------------------------------
 // The Trials, as they are played on phones. kind: how the phones take part. prize: whether the winner takes Sanctuary.
 export const TRIALS = {
-  quiz: { title: "Rapid Quiz", prize: true, rules: "Fifteen questions: five easy, five medium, five brutal. Type your answer before the clock runs out. A point for every right answer, and one more for the fastest." },
-  estimate: { title: "Closest Guess", prize: true, rules: "Five questions with a number for an answer. Guess on your phone. The closest takes two points, the next closest one." },
-  hilo: { title: "Higher or Lower", prize: true, rules: "Six numbers. Is the true answer higher or lower? A point for every right call." },
-  likely: { title: "Most Likely To", prize: false, rules: "Five prompts. Vote for the person each one fits best. Everyone sees the verdict. No Sanctuary here: just a reputation." },
-  countdown: { title: "Longest Word", prize: true, rules: "Twelve letters, three rounds. Type the longest real word you can make from them. The longest wins the round." },
-  memory: { title: "Memory Wall", prize: true, rules: "Twelve words appear for twenty seconds, then vanish. Type every one you remember. A point for each." },
-  change: { title: "What Changed?", prize: true, rules: "Study the grid. It disappears, then comes back with something different. Tap what changed. The first right answer scores double." },
-  snap: { title: "Snap", prize: true, rules: "A symbol changes every few seconds. When it matches the one before, tap SNAP. First right tap scores; a wrong tap loses a point." },
-  rps: { title: "Rock Paper Scissors Royale", prize: true, rules: "Paired off at random, rock, paper or scissors on your phone. Lose and you're out. The last one standing wins." },
-  oneleg: { title: "One Leg", prize: true, rules: "Everyone up, standing on one leg. Put a foot down and tap “I’m out” on your phone. Last one standing wins." },
-  statue: { title: "The Statue", prize: true, ghosts: true, rules: "The living freeze. The Ghosts may do anything, short of touching, to make them move or laugh. Move and tap “I’m out”. Last statue standing wins." },
-  charades: { title: "Screen Charades", prize: true, actor: 60, bank: "charades", rules: "One player at a time gets a secret word on their phone and acts it out, no words. When someone guesses it, the actor taps who. A point each to actor and guesser." },
-  hum: { title: "Hum It", prize: true, actor: 30, bank: "songs", rules: "One player at a time gets a secret song on their phone and hums it. When someone names it, the hummer taps who. A point each." },
-  draw: { title: "Draw It", prize: true, actor: 60, bank: "draw", rules: "One player at a time gets a secret word and draws it (paper, a chalkboard, the air). When someone guesses, the artist taps who. A point each." },
-  truths: { title: "Two Truths and a Lie", prize: true, rules: "Three players take a turn: say three things about yourself, one of them a lie. Everyone else votes for the lie on their phone. A point for every right vote, and one to the teller for every fool." },
+  quiz: { title: "Rapid Quiz", prize: true, rules: "Fifteen questions: five easy, five medium and five brutal. Type your answer on your phone before the clock runs out. Every right answer scores a point, and the fastest right answer scores one more." },
+  estimate: { title: "Closest Guess", prize: true, rules: "Five questions, each with a number for an answer. Type your best guess on your phone. The closest guess scores two points, and the next closest scores one." },
+  hilo: { title: "Higher or Lower", prize: true, rules: "Six questions, each shown with a number. Is the real answer higher or lower than that number? Tap your choice. Every right choice scores a point." },
+  likely: { title: "Most Likely To", prize: false, rules: "Five “Most likely to…” questions. For each one, tap the person you think it fits best. Then everyone sees who the table chose. There’s no prize this time, just a reputation." },
+  countdown: { title: "Longest Word", prize: true, rules: "Three rounds, each with twelve letters. Type the longest real word you can make from them. You can change it until time runs out. The longest word scores two points, and any other word of six letters or more scores one." },
+  memory: { title: "Memory Wall", prize: true, rules: "Twelve words appear for twenty seconds, then disappear. Type as many as you can remember. Every one you get right scores a point. There are two rounds." },
+  change: { title: "What Changed?", prize: true, rules: "Study the grid of twelve symbols. It disappears, then comes back with something different. Tap a symbol that changed or moved. The first right answer scores two points, and every other right answer scores one." },
+  snap: { title: "Snap", prize: true, rules: "A new symbol appears every few seconds. When it’s the same as the one before, tap SNAP. The first person to tap on each match scores a point. A wrong tap loses you a point." },
+  rps: { title: "Rock Paper Scissors Royale", prize: true, rules: "Everyone is paired up at random. Choose rock, paper or scissors on your phone. If you lose, you’re out, and if you draw, you both go through. The last one standing wins." },
+  oneleg: { title: "One Leg", prize: true, rules: "Everyone stand up on one leg. If your other foot touches the floor, tap “I’m out” on your phone. The last one standing wins." },
+  statue: { title: "The Statue", prize: true, ghosts: true, rules: "Everyone still in the game freezes like a statue. The Ghosts, the players already out, try to make the statues move or laugh. They can do anything except touch them. If you move, tap “I’m out”. The last statue standing wins." },
+  charades: { title: "Screen Charades", prize: true, actor: 60, bank: "charades", rules: "One player at a time gets a secret word on their phone and acts it out without speaking. Everyone else shouts their guesses. When someone gets it, the actor taps their name, and both of them score a point." },
+  hum: { title: "Hum It", prize: true, actor: 30, bank: "songs", rules: "One player at a time gets a secret song on their phone and hums it. Everyone else shouts their guesses. When someone names it, the hummer taps their name, and both of them score a point." },
+  draw: { title: "Draw It", prize: true, actor: 60, bank: "draw", rules: "One player at a time gets a secret word on their phone and draws it, on paper, a board or in the air. When someone guesses it, the artist taps their name, and both of them score a point." },
+  truths: { title: "Two Truths and a Lie", prize: true, rules: "Three players take a turn each. On your turn, tell everyone three things about yourself, and make one of them a lie. Everyone else votes on their phone for the lie. A right vote scores a point, and the teller scores a point for everyone they fool." },
 };
 // The iPhone app's free games (opts.content "base", worker/src/tiers.js) play these Trials and the first half of each
 // question bank; everything else (the website's games, and the app's with a pass) plays them all.
@@ -65,7 +65,7 @@ export const WHISPERS = ["Agreed", "Not that one", "I’m under suspicion", "Vot
 const WORDS = 140; // the most a last word, or a chat message, may run to
 const chatting = (s, me) => me && me.alive && me.role === "f" && forsworn(s).length > 1 && !["lobby", "oath", "end"].includes(s.phase);
 const chat = (s, pid, text, now) => { s.chat = (s.chat || []).concat([{ f: pid, m: clip(text, WORDS), t: now }]).slice(-200); };
-const TEMPT = { title: "The Temptation", prize: false, rules: "One word, in secret: PURSE, for the table, or SELF, for yourself. Exactly one SELF takes Sanctuary and the Purse grows. Nobody: the Purse grows double. Two or more: nobody gets it, and the Purse shrinks." };
+const TEMPT = { title: "The Temptation", prize: false, rules: "Everyone chooses in secret: PURSE, for the table, or SELF, for yourself. If exactly one person chooses SELF, they get Sanctuary and the Purse grows. If nobody does, the Purse grows by double. If two or more do, nobody gets Sanctuary and the Purse shrinks." };
 
 // ---------------------------------------------------------------------------------------------------------------
 const alive = (s) => s.players.filter((p) => p.alive && !p.left);
@@ -94,9 +94,9 @@ export function join(s, name, now, rnd, bot) {
   name = clip(String(name || "").replace(/\s+/g, " ").trim(), NAMEMAX);
   if (!name) return { error: "Type your name." };
   const same = s.players.find((p) => p.name.toLowerCase() === name.toLowerCase());
-  if (same) return { error: "Someone here is already called " + same.name + ". Add an initial." };
-  if (s.phase !== "lobby") return { error: "This game has already started. Ask the host to let you back in." };
-  if (s.players.length >= MAXP) return { error: "This Table is full (" + MAXP + " players)." };
+  if (same) return { error: "Someone here is already called " + same.name + ". Add an initial to your name, so everyone can tell you apart." };
+  if (s.phase !== "lobby") return { error: "This game has already started, so new players can’t join. If you were already playing, ask the host to let you back in." };
+  if (s.players.length >= MAXP) return { error: "This Table is full. It already has " + MAXP + " players, the most a game can have." };
   const id = "p" + (s.players.length + 1) + Math.floor(rnd() * 1e6).toString(36), tok = newTok();
   s.players.push({ id, tok, name, color: COLORS[s.players.length % COLORS.length], role: null, alive: true, left: false, optIn: null, acked: false, shield: null, joined: now, ...(bot ? { bot: true } : {}) });
   if (!s.director) s.director = id;
@@ -353,9 +353,9 @@ function offerOf(s) { const left = Math.max(0, s.opts.potCap - s.pot); if (s.fin
 // last round before the final, and the Confessor in the final's Trial at its full size (five, or four at 8 players).
 const BREAKS = { interval: [10, "The Interval"], starter: [15, "The Starter"], main: [25, "The Main Course"], dessert: [15, "Dessert"] };
 const SPECIAL = {
-  cast: "The winner takes the Casting Vote instead of Sanctuary: if a Reckoning ties, their vote decides it. Once.",
-  crown: "The winner takes the Crown: Sanctuary tonight, and once, at a Reckoning, they may lay it down to be safe from that exile.",
-  confess: "The winner takes a special prize. What it is stays secret.",
+  cast: "This time the winner gets the Casting Vote, not Sanctuary. It’s a secret tie-breaker that works once. If a vote ties and they voted for one of the tied players, their vote decides it.",
+  crown: "The winner gets the Crown. It protects them from poison tonight, just like Sanctuary. And once, at any Reckoning, they can lay it down so nobody can vote them out.",
+  confess: "The winner gets a special prize. It’s sent to their phone in secret, and nobody else learns what it is.",
 };
 function planDay(s) {
   const nf = Math.max(1, s.total - 1), r = s.round, tw = s.opts.twists, steps = [];
@@ -532,14 +532,14 @@ function awardsOf(s) {
   const out = [], taken = new Set(), give = (title, id, why) => { if (id && !taken.has(id) && P(s, id)) { taken.add(id); out.push({ title, id, name: P(s, id).name, why }); } };
   const hitF = {}, hitL = {}; for (const v of s.stats.votes) for (const [voter, tg] of Object.entries(v.ballots)) { const p = P(s, tg); if (!p) continue; (p.role === "f" ? hitF : hitL)[voter] = ((p.role === "f" ? hitF : hitL)[voter] || 0) + 1; }
   const best = (o) => { const e = Object.entries(o).sort((a, b) => b[1] - a[1]); return e.length && (e.length < 2 || e[0][1] > e[1][1]) ? e[0] : null; };
-  let b = best(hitF); if (b) give("The Sharpest Eye", b[0], "voted for a Forsworn " + b[1] + (b[1] === 1 ? " time" : " times"));
-  const F = s.players.filter((p) => p.role === "f"); const dec = F.map((p) => [p.id, (s.stats.against[p.id] || []).length]).sort((a, c) => a[1] - c[1])[0]; if (dec) give("The Grand Deceiver", dec[0], dec[1] ? "drew only " + dec[1] + (dec[1] === 1 ? " vote" : " votes") + " all night" : "drew no votes all night");
+  let b = best(hitF); if (b) give("The Sharpest Eye", b[0], "voted against a Forsworn " + b[1] + (b[1] === 1 ? " time" : " times"));
+  const F = s.players.filter((p) => p.role === "f"); const dec = F.map((p) => [p.id, (s.stats.against[p.id] || []).length]).sort((a, c) => a[1] - c[1])[0]; if (dec) give("The Grand Deceiver", dec[0], dec[1] ? "was Forsworn, but had only " + dec[1] + (dec[1] === 1 ? " vote" : " votes") + " against them all night" : "was Forsworn, but had no votes against them all night");
   b = best(s.stats.wins); if (b) give("Trial Machine", b[0], "won " + b[1] + (b[1] === 1 ? " Trial" : " Trials"));
-  b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "drew " + b[1] + (b[1] === 1 ? " vote" : " votes"));
-  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "the first to be poisoned");
-  b = best(s.stats.ghostPts || {}); if (b && b[1] > 0) give("The Restless Ghost", b[0], "scored " + b[1] + (b[1] === 1 ? " point" : " points") + " in the Ghosts’ Trials");
-  b = best(s.stats.calls); if (b) give("The Ghost Who Saw", b[0], "called " + b[1] + (b[1] === 1 ? " exile" : " exiles") + " from beyond the table");
-  b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "voted for the Loyal " + b[1] + (b[1] === 1 ? " time" : " times"));
+  b = best(Object.fromEntries(Object.entries(s.stats.against).map(([k, v]) => [k, v.length]))); if (b) give("The Lightning Rod", b[0], "had " + b[1] + (b[1] === 1 ? " vote" : " votes") + " against them, more than anyone else");
+  if (s.stats.firstBlood) give("First Blood", s.stats.firstBlood, "was the first to be poisoned");
+  b = best(s.stats.ghostPts || {}); if (b && b[1] > 0) give("The Restless Ghost", b[0], "scored " + b[1] + (b[1] === 1 ? " point" : " points") + " in the Trials as a Ghost");
+  b = best(s.stats.calls); if (b) give("The Ghost Who Saw", b[0], "guessed who would be voted out " + b[1] + (b[1] === 1 ? " time" : " times") + " as a Ghost");
+  b = best(hitL); if (b) give("Barking Up the Wrong Tree", b[0], "voted against a Loyal player " + b[1] + (b[1] === 1 ? " time" : " times"));
   return out.slice(0, 6);
 }
 
@@ -654,14 +654,14 @@ export function act(s, pid, a, now, ctx) {
   const dir = s.director === pid, rnd = ctx.rnd, it = s.trial && s.trial.item, v = a && a.v;
   const done = () => { s.ver++; return null; };
   const need = (ok, msg) => (ok ? null : { error: msg || "That can’t be done right now." });
-  if (s.paused && !["pause", "tool", "words", "chat", "whisper"].includes(a && a.a)) return need(false, "The game is paused.");
+  if (s.paused && !["pause", "tool", "words", "chat", "whisper"].includes(a && a.a)) return need(false, "The game is paused. Wait for the host to carry on.");
   switch (a && a.a) {
     // --- the lobby and the oath
     case "opts": { if (!dir || s.phase !== "lobby") return need(false); const o = a.opts || {}; if (["secret", "public"].includes(o.shield)) s.opts.shield = o.shield; if (typeof o.prize === "string") s.opts.prize = clip(o.prize.trim(), 80) || PRIZE0; if (Array.isArray(o.prizes)) s.opts.prizes = o.prizes.filter((x) => x && x.what).slice(0, 2).map((x) => ({ at: +x.at === 1 ? 1 : 0.5, what: clip(x.what, 80) })); if (typeof o.title === "string") s.opts.title = clip(o.title.trim(), 40) || "The Betrayal"; if (typeof o.twists === "boolean") s.opts.twists = o.twists; if (typeof o.courses === "boolean") s.opts.courses = o.courses; return done(); }
     case "bots": { if (!dir || !(s.test || s.practice) || s.phase !== "lobby") return need(false); addBots(s, Math.min(s.practice ? 16 : MAXP, Math.max(s.players.length + 1, +v || 8)), now, rnd); return done(); }
     case "start": {
       if (!dir || s.phase !== "lobby") return need(false);
-      if (s.players.length < MINP) return { error: "The game needs at least " + MINP + " players. " + s.players.length + " have joined." };
+      if (s.players.length < MINP) return { error: "The game needs at least " + MINP + " players, and " + s.players.length + (s.players.length === 1 ? " has" : " have") + " joined so far." };
       s.phase = "oath"; s.started = now; if (!s.plan.length) s.plan = shuffle(Object.keys(TRIALS), rnd); say(s, "The Oath: " + s.players.length + " players", now); return done();
     }
     case "optin": { if (s.phase !== "oath" || !["yes", "no", "any"].includes(v)) return need(false); me.optIn = v; if (s.players.every((p) => p.left || p.optIn)) deal(s, now, rnd); return done(); }
@@ -699,7 +699,7 @@ export function act(s, pid, a, now, ctx) {
         if (pid in G && it.k !== "recall" && it.k !== "word") return need(false, "You’ve already answered.");
         G[pid] = { v: clip(v, it.k === "recall" ? 600 : 80), t: now }; return done();
       }
-      if (!it || it.stage !== "open" || !me.alive) return need(false, "Too late. That one has closed.");
+      if (!it || it.stage !== "open" || !me.alive) return need(false, "Too late. That question has already closed.");
       if (["text", "number", "hilo", "vote", "word", "recall", "cell", "tempt"].includes(it.k)) { if (pid in it.inputs && it.k !== "recall" && it.k !== "word") return need(false, "You’ve already answered."); it.inputs[pid] = { v: clip(v, it.k === "recall" ? 600 : 80), t: now }; return done(); }
       if (it.k === "rps") { if (!it.pairs.flat().includes(pid) || pid in it.inputs || !["rock", "paper", "scissors"].includes(v)) return need(false); it.inputs[pid] = { v, t: now }; return done(); }
       if (it.k === "snap") { if (now < it.start) return need(false); if (it.taps.filter((x) => x.id === pid && now - x.t < 600).length) return null; it.taps.push({ id: pid, t: now }); return done(); }

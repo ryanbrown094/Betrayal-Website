@@ -21,7 +21,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MW8SWKVS');</script>
 <!-- End Google Tag Manager -->
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="build" content="20261124193102">
+<meta name="build" content="20261125110840">
 <title>The broken seal · The Betrayal</title>
 <meta name="theme-color" content="#09070a">
 <meta name="description" content="You looked closely. That’s exactly what the Forsworn are afraid of.">
@@ -116,10 +116,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <nav class="top" aria-label="Site"><a class="home" href="/"><svg viewBox="0 0 120 140" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M60 5l55 65-55 65L5 70z"/><path d="M60 29C51 35 44.5 44 44 56c-.3 6 1.5 8-.5 14-2.5 8-1.5 17-3.5 26h40c-2-9-1-18-3.5-26-2-6-.2-8-.5-14-.5-12-7-21-16-27z"/><path d="M60 48c3 4.4 4.6 7.2 4.6 9.5a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-5.1 4.6-9.5z" fill="currentColor" fill-opacity=".35"/></svg><span translate="no">The Betrayal</span></a><span class="links"><a href="/rules">How to play</a><a href="/tour">See a game</a><a class="btn small" href="/buy">Book a Table</a></span></nav>
 <main id="main">
 <h1>The broken seal</h1>
-<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead, and a mind that checks everything twice is what the Forsworn fear most.</p>
+<p class="lede">Most people scan a code and expect to join a game. You scanned the one in our picture and found this instead. A mind that checks everything twice is what the Forsworn, the game’s secret traitors, fear most.</p>
 
 <div class="panel">
-<p id="offer">For that, <b>10% off</b> one party (a single Table; the Regular plan isn’t discounted). We’ll remember it on this browser and take it off automatically when you book.</p>
+<p id="offer">For that, you get <b>10% off</b> one party, which is a single Table. The Regular plan isn’t discounted. We’ll remember it on this browser and take it off automatically when you book.</p>
 <button class="btn" id="claim">Claim 10% off</button>
 <p id="msg" class="formmsg" role="status"></p>
 </div>
@@ -129,7 +129,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
-fetch("/api/egg").then(r => r.json()).then(j => { if (!j.on) { $("#offer").textContent = "The discount isn’t open yet. Check back soon: the seal will still be broken."; $("#claim").hidden = true } }).catch(() => {});
+fetch("/api/egg").then(r => r.json()).then(j => { if (!j.on) { $("#offer").textContent = "The discount isn’t open yet. Check back soon, and the seal will still be broken."; $("#claim").hidden = true } }).catch(() => {});
 $("#claim").onclick = () => {
   try { localStorage.setItem("bt-egg", "1") } catch (e) { $("#msg").textContent = "Your browser won’t let us remember it. Try again outside private browsing."; $("#msg").className = "formmsg err"; return }
   location.href = "/buy";
@@ -169,7 +169,7 @@ $("#claim").onclick = () => {
   if (!ios || !want) return;
   const bar = document.createElement("div");
   bar.className = "appbar"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", "The Betrayal app");
-  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
+  bar.innerHTML = '<button class="x" type="button" aria-label="Close">×</button><img src="/icon-180.png" alt=""><div><b>The Betrayal for iPhone</b><small>Free to download on the App Store</small></div><a class="get" href="https://apps.apple.com/app/id6827224159">Get</a>';
   bar.querySelector(".x").onclick = () => { bar.remove(); try { sessionStorage.setItem("bt-app-hide", "1") } catch (e) {} };
   bar.querySelector(".get").onclick = () => { (window.dataLayer = window.dataLayer || []).push({ event: "app_banner_tap" }) };
   document.body.prepend(bar);
